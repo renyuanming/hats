@@ -5018,4 +5018,9 @@ public class DatabaseDescriptor
     {
         return conf.sai_sstable_indexes_per_query_fail_threshold;
     }
+
+    public static boolean isMotivationExperiment()
+    {
+        return conf.motivation;
+    }
 }

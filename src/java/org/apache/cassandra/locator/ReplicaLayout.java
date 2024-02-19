@@ -329,7 +329,10 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     public static ReplicaLayout.ForTokenRead forTokenReadLiveSorted(AbstractReplicationStrategy replicationStrategy, Token token)
     {
         EndpointsForToken replicas = replicationStrategy.getNaturalReplicasForToken(token);
-        replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
+
+        if(!DatabaseDescriptor.isMotivationExperiment()) {
+            replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
+        }
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForTokenRead(replicationStrategy, replicas);
     }
