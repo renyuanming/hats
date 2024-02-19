@@ -26,8 +26,10 @@ import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.Keyspace;
+import org.apache.cassandra.db.PartitionRangeReadCommand;
 import org.apache.cassandra.db.ReadCommand;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
+import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.PartitionIterator;
 import org.apache.cassandra.db.transform.DuplicateRowChecker;
 import org.apache.cassandra.exceptions.ReadFailureException;
@@ -42,12 +44,18 @@ import org.apache.cassandra.locator.ReplicaPlans;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageProxy.LocalReadRunnable;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.reads.repair.ReadRepair;
 import org.apache.cassandra.tracing.TraceState;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 
 import static com.google.common.collect.Iterables.all;
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
+import org.apache.cassandra.dht.Token;
+
+import java.util.List;
+
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 
 /**
@@ -62,16 +70,17 @@ public abstract class AbstractReadExecutor
 {
     private static final Logger logger = LoggerFactory.getLogger(AbstractReadExecutor.class);
 
-    protected final ReadCommand command;
+    protected ReadCommand command;
     private   final ReplicaPlan.SharedForTokenRead replicaPlan;
     protected final ReadRepair<EndpointsForToken, ReplicaPlan.ForTokenRead> readRepair;
     protected final DigestResolver<EndpointsForToken, ReplicaPlan.ForTokenRead> digestResolver;
     protected final ReadCallback<EndpointsForToken, ReplicaPlan.ForTokenRead> handler;
     protected final TraceState traceState;
-    protected final ColumnFamilyStore cfs;
+    protected ColumnFamilyStore cfs;
     protected final long queryStartNanoTime;
     private   final int initialDataRequestCount;
     protected volatile PartitionIterator result = null;
+    private final List<InetAddressAndPort> sendRequestAddresses;
 
     AbstractReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, int initialDataRequestCount, long queryStartNanoTime)
     {
@@ -86,7 +95,21 @@ public abstract class AbstractReadExecutor
         this.traceState = Tracing.instance.get();
         this.queryStartNanoTime = queryStartNanoTime;
 
-
+        long tStart = nanoTime();
+        if (command.metadata().keyspace.equals("ycsb")) {
+            Token tokenForRead = (command instanceof SinglePartitionReadCommand
+                    ? ((SinglePartitionReadCommand) command).partitionKey().getToken()
+                    : ((PartitionRangeReadCommand) command).dataRange().keyRange.left.getToken());
+            this.sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(this.cfs.keyspace.getName(), tokenForRead);
+            // This is for debugging purpose, test whether we can get the correct replica plan for the token with our own method
+            if(!sendRequestAddresses.get(0).equals(replicaPlan.contacts().endpoints().iterator().next())) {
+                logger.debug("[rym] For token = {}, sendRequestAddresses = {}, replica plan = {}", 
+                             tokenForRead, sendRequestAddresses,replicaPlan.contacts().endpoints());
+            }
+        } else {
+            this.sendRequestAddresses = replicaPlan.contacts().endpointList();
+        }
+        Tracing.trace("[rym] Executed get send target list time {}\u03bcs", "AbstractReadExecutor", (nanoTime() - tStart) / 1000);
         // Set the digest version (if we request some digests). This is the smallest version amongst all our target replicas since new nodes
         // knows how to produce older digest but the reverse is not true.
         // TODO: we need this when talking with pre-3.0 nodes. So if we preserve the digest format moving forward, we can get rid of this once
@@ -160,6 +183,89 @@ public abstract class AbstractReadExecutor
         }
     }
 
+    private int makeDataRequestForMLSM(ReadCommand readCommand, Iterable<Replica> replicas) {
+
+        assert all(replicas, Replica::isFull);
+
+        long tStart1 = nanoTime();
+        boolean hasLocalEndpoint = false;
+        Message<ReadCommand> message = null;
+        int usedAddressNumber = 0;
+
+        // TODO: We need to check whether the size of replicas equals to the read consistency level?
+
+        for(Replica replica : replicas) 
+        {
+            assert replica.isFull() || readCommand.acceptsTransient();
+
+            InetAddressAndPort endpoint = replica.endpoint();
+            if (replica.isSelf())
+            {
+                hasLocalEndpoint = true;
+                usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
+                continue;
+            }
+
+            if (traceState != null)
+                traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
+
+            if (null == message)
+                message = readCommand.createMessage(false);
+
+            MessagingService.instance().sendWithCallback(message, endpoint, handler);
+        }
+
+        Tracing.trace("[rym] Executed data send request time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart1) / 1000);
+        
+        // We delay the local (potentially blocking) read till the end to avoid stalling remote requests.
+        if (hasLocalEndpoint) 
+        {
+            long tStart = nanoTime();
+            switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) 
+            {
+                case 0:
+                    // In case received request is not for primary LSM tree
+                    readCommand.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable0").metadata());
+                    ColumnFilter newColumnFilter = ColumnFilter.allRegularColumnsBuilder(readCommand.metadata(), false).build();
+                    readCommand.updateColumnFilter(newColumnFilter);
+                    this.command = readCommand;
+                    this.cfs = Keyspace.open("ycsb").getColumnFamilyStore("usertable0");
+                    // if (readCommand.isDigestQuery() == true) {
+                    //     logger.error("[rym-ERROR] Local Should not perform digest query on the primary lsm-tree");
+                    // }
+                    break;
+                case 1:
+                    readCommand.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
+                    ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(readCommand.metadata(), false).build();
+                    readCommand.updateColumnFilter(newColumnFilter1);
+                    this.command = readCommand;
+                    this.cfs = Keyspace.open("ycsb").getColumnFamilyStore("usertable1");
+                    // logger.debug("[rym] Local Should perform online recovery on the secondary lsm-tree usertable 1");
+                    // readCommand.setShouldPerformOnlineRecoveryDuringRead(true);
+                    break;
+                case 2:
+                    readCommand.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
+                    ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(readCommand.metadata(), false).build();
+                    readCommand.updateColumnFilter(newColumnFilter2);
+                    this.command = readCommand;
+                    this.cfs = Keyspace.open("ycsb").getColumnFamilyStore("usertable2");
+                    // logger.debug("[rym] Local Should perform online recovery on the secondary lsm-tree usertable 2");
+                    // readCommand.setShouldPerformOnlineRecoveryDuringRead(true);
+                    break;
+                default:
+                    logger.error("[rym-ERROR] Not support replication factor larger than 3");
+                    break;
+            }
+            Tracing.trace("[rym] Executed local data read time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart) / 1000);
+            Stage.READ.maybeExecuteImmediately(new LocalReadRunnable(readCommand, handler));
+        } 
+        else 
+        {
+            logger.debug("[rym] No local endpoint, skip local read");
+        }
+        return usedAddressNumber;
+    }
+
     /**
      * Perform additional requests if it looks like the original will time out.  May block while it waits
      * to see if the original requests are answered first.
@@ -168,14 +274,32 @@ public abstract class AbstractReadExecutor
 
     /**
      * send the initial set of requests
+     * How are read requests accomplished:
+     * https://docs.datastax.com/en/cassandra-oss/3.x/cassandra/dml/dmlClientRequestsRead.html
      */
     public void executeAsync()
     {
         EndpointsForToken selected = replicaPlan().contacts();
         EndpointsForToken fullDataRequests = selected.filter(Replica::isFull, initialDataRequestCount);
-        makeFullDataRequests(fullDataRequests);
-        makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
-        makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
+        if (this.command.metadata().keyspace.equals("ycsb"))
+        {
+            // Send a direct read request
+            makeDataRequestForMLSM(command, fullDataRequests);
+            
+            // [rymTODO]
+            // Send a digest read request
+            // makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
+
+            // Send a transient read request
+
+        }
+        else
+        {
+            makeFullDataRequests(fullDataRequests);
+            makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
+            makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
+        }
+
     }
 
     /**

@@ -168,6 +168,10 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
     @VisibleForTesting
     final Set<InetAddressAndPort> seeds = new ConcurrentSkipListSet<>();
 
+    
+    static final Set<InetAddressAndPort> allNodes = new HashSet<>();
+    static final Set<Long> tokenRanges = new HashSet<>();
+
     /* map where key is the endpoint and value is the state associated with the endpoint.
      * This is made public to be consumed by the GossipInfoTable virtual table */
     public final ConcurrentMap<InetAddressAndPort, EndpointState> endpointStateMap = new ConcurrentHashMap<>();
@@ -2053,6 +2057,28 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
                 continue;
             seeds.add(seed);
         }
+    }
+
+    public static void buildNodeAndTokenList() 
+    {
+        for (InetAddressAndPort seed : DatabaseDescriptor.getSeeds())
+        {
+            allNodes.add(seed);
+        }
+
+        for (String token : DatabaseDescriptor.getTokenRanges())
+        {
+            tokenRanges.add(Long.parseLong(token));
+        }
+    }
+
+    public static Set<InetAddressAndPort> getAllNodesBasedOnSeeds() {
+        return allNodes;
+    }
+
+
+    public static Set<Long> getTokenRanges() {
+        return tokenRanges;
     }
 
     /**

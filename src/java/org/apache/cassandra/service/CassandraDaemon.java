@@ -719,6 +719,7 @@ public class CassandraDaemon
             registerNativeAccess();
 
             setup();
+            loadMetadataForAdaptiveKV();
 
             String pidFile = CASSANDRA_PID_FILE.getString();
 
@@ -761,6 +762,10 @@ public class CassandraDaemon
                 exitOrFail(3, "Exception encountered during startup: " + e.getMessage());
             }
         }
+    }
+
+    private void loadMetadataForAdaptiveKV() {
+        Gossiper.buildNodeAndTokenList();
     }
 
     @VisibleForTesting

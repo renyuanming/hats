@@ -55,6 +55,7 @@ import org.apache.cassandra.cql3.functions.Function;
 import org.apache.cassandra.cql3.functions.FunctionName;
 import org.apache.cassandra.cql3.selection.ResultSetBuilder;
 import org.apache.cassandra.cql3.statements.*;
+import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.rows.Row;
 import org.apache.cassandra.db.rows.RowIterator;
@@ -254,6 +255,31 @@ public class QueryProcessor implements QueryHandler
         ResultMessage result = options.getConsistency() == ConsistencyLevel.NODE_LOCAL
                              ? processNodeLocalStatement(statement, queryState, options)
                              : statement.execute(queryState, options, queryStartNanoTime);
+        
+        if(CreateTableStatement.class.isInstance(statement)) {
+            CreateTableStatement tableStatement = (CreateTableStatement) statement;
+            String ks = tableStatement.keyspace();
+            String tn = tableStatement.tableName.substring(0, tableStatement.tableName.length() - 1);
+            logger.debug("rym-Debug: create table-> the table name is {}, the keyspace name is {}", tn, ks);
+            if(ks.equals("ycsb")) {
+                // logger.debug("rym-Debug: this CreateTableStatement is belong to ks ycsb");
+                if(options.getConsistency() == ConsistencyLevel.NODE_LOCAL) {
+                    // logger.debug("rym-Debug: consistency level is equal to local, use processNodeLocalStatement()");
+                } else {
+                    int rf = Keyspace.open(tableStatement.keyspace()).getAllReplicationFactor();
+                    // logger.debug("rym-Debug: replica factor is {}", rf);
+                    for(int i=1; i < rf; i++) {
+                        String tableName = tn + Integer.toString(i);
+                        CreateTableStatement ts = tableStatement.copyObjects(tableName);
+                        // logger.debug("rym-Debug: create table {}, new table statement is {}", tableName, ts);
+                        ResultMessage rs = ts.execute(queryState, options, queryStartNanoTime);
+                        // logger.debug("rym-Debug: create new table {}, result is {}", tableName, rs);
+                    }
+                }
+            } else {
+                // logger.debug("rym-Debug: this CreateTableStatement is not belong to ycsb, it belongs to {}", ks);
+            }
+        }
 
         return result == null ? new ResultMessage.Void() : result;
     }

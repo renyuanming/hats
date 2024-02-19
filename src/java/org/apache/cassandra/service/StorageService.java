@@ -193,6 +193,7 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -5037,6 +5038,44 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         ranges.add(range);
 
         return ranges;
+    }
+
+
+    /**
+     * When the node failure happens, we can still get all replica nodes based on the token.
+    */
+    public List<InetAddressAndPort> getReplicaNodesWithPortFromTokenForDegradeRead(String keyspaceName, Token token) {
+
+        List<InetAddressAndPort> allHosts = new ArrayList<InetAddressAndPort>(Gossiper.getAllNodesBasedOnSeeds());
+        List<InetAddressAndPort> replicaNodes = new ArrayList<>();
+
+        long targetToken = (long) token.getTokenValue();
+        int index = 0;
+        for (long currentToken : Gossiper.getTokenRanges()) {
+            if (currentToken >= targetToken) {
+                break;
+            }
+            index++;
+        }
+
+        if (index == Gossiper.getTokenRanges().size())
+            index = 0;
+
+        int rf = Keyspace.open(keyspaceName).getAllReplicationFactor();
+        int endIndex = index + rf;
+
+        if (endIndex > allHosts.size()) {
+            replicaNodes.addAll(allHosts.subList(index, allHosts.size()));
+            replicaNodes.addAll(allHosts.subList(0, endIndex % allHosts.size()));
+        } else {
+            replicaNodes.addAll(allHosts.subList(index, endIndex));
+        }
+
+        logger.debug("rym-Debug: token is ({}), replica nodes are ({}), all hosts are ({}), token ranges are ({})", 
+                     token, replicaNodes, allHosts, Gossiper.getTokenRanges());
+
+        return replicaNodes;
+
     }
 
     /**

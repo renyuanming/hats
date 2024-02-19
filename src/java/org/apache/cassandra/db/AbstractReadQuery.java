@@ -31,11 +31,11 @@ import org.apache.cassandra.schema.TableMetadata;
  */
 abstract class AbstractReadQuery extends MonitorableImpl implements ReadQuery
 {
-    private final TableMetadata metadata;
+    private TableMetadata metadata;
     private final long nowInSec;
 
-    private final ColumnFilter columnFilter;
-    private final RowFilter rowFilter;
+    private ColumnFilter columnFilter;
+    private RowFilter rowFilter;
     private final DataLimits limits;
 
     protected AbstractReadQuery(TableMetadata metadata, long nowInSec, ColumnFilter columnFilter, RowFilter rowFilter, DataLimits limits)
@@ -51,6 +51,12 @@ abstract class AbstractReadQuery extends MonitorableImpl implements ReadQuery
     public TableMetadata metadata()
     {
         return metadata;
+    }
+
+    
+    public Boolean updateTableMetadata(TableMetadata newTableMetadata) {
+        metadata = newTableMetadata;
+        return true;
     }
 
     // Monitorable interface
@@ -87,6 +93,16 @@ abstract class AbstractReadQuery extends MonitorableImpl implements ReadQuery
     public ColumnFilter columnFilter()
     {
         return columnFilter;
+    }
+    
+    public Boolean updateColumnFilter(ColumnFilter newFilter) {
+        this.columnFilter = newFilter;
+        return newFilter == columnFilter ? true : false;
+    }
+
+    public Boolean updateRowFilter(RowFilter newFilter) {
+        this.rowFilter = newFilter;
+        return newFilter == rowFilter ? true : false;
     }
 
     /**

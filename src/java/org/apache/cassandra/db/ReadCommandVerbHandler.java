@@ -20,19 +20,26 @@ package org.apache.cassandra.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
+
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.QueryCancelledException;
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
+import org.apache.cassandra.utils.FBUtilities;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
+import java.util.List;
 
 public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 {
@@ -48,6 +55,67 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         }
 
         ReadCommand command = message.payload;
+
+
+
+        long tStart = nanoTime();
+        if (command.metadata().keyspace.equals("ycsb")) {
+
+            Token tokenForRead = (command instanceof SinglePartitionReadCommand ? 
+                                 ((SinglePartitionReadCommand) command).partitionKey().getToken() : 
+                                 ((PartitionRangeReadCommand) command).dataRange().keyRange.right.getToken());
+
+            List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(
+                                                            command.metadata().keyspace, tokenForRead);
+
+            switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
+                case 0:
+                    // StorageService.instance.timeCounter.increment();
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable0").metadata());
+                    ColumnFilter newColumnFilter = ColumnFilter.
+                                                   allRegularColumnsBuilder(command.metadata(), false).
+                                                   build();
+                    command.updateColumnFilter(newColumnFilter);
+                    // if (command.isDigestQuery() == true) {
+                    //     logger.error("[rym-ERROR] Remote Should not perform digest query on the primary lsm-tree");
+                    // }
+                    break;
+                case 1:
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
+                    ColumnFilter newColumnFilter1 = ColumnFilter.
+                                                    allRegularColumnsBuilder(command.metadata(), false).
+                                                    build();
+                    command.updateColumnFilter(newColumnFilter1);
+                    // if (command.isDigestQuery() == false) {
+                    //     logger.debug("[rym] Remote Should perform online recovery on the secondary lsm-tree usertable 1");
+                    //     command.setShouldPerformOnlineRecoveryDuringRead(true);
+                    // }
+                    break;
+                case 2:
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
+                    ColumnFilter newColumnFilter2 = ColumnFilter.
+                                                    allRegularColumnsBuilder(command.metadata(), false).
+                                                    build();
+                    command.updateColumnFilter(newColumnFilter2);
+                    // if (command.isDigestQuery() == false) {
+                    //     logger.debug("[rym] Remote Should perform online recovery on the secondary lsm-tree usertable 2");
+                    //     command.setShouldPerformOnlineRecoveryDuringRead(true);
+                    // }
+                    break;
+                default:
+                    logger.error("[rym-ERROR] Not support replication factor larger than 3");
+                    break;
+            }
+            logger.debug("[rym] For token = {}, read {} from target table = {}, replication group = {}",
+                    tokenForRead,
+                    command.isDigestQuery() == true ? "digest" : "data",
+                    command.metadata().name, sendRequestAddresses);
+        }
+        Tracing.trace("[rym] Executed remote modify read command time {}\u03bcs", "ReadCommandVerbHandler",
+                (nanoTime() - tStart) / 1000);
+
+
+
         validateTransientStatus(message);
         MessageParams.reset();
 

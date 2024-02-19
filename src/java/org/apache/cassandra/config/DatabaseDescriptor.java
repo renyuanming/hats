@@ -2036,6 +2036,10 @@ public class DatabaseDescriptor
         return tokensFromString(INITIAL_TOKEN.getString(conf.initial_token));
     }
 
+    public static Collection<String> getTokenRanges() {
+        return tokensFromString(conf.token_ranges);
+    }
+
     public static String getAllocateTokensForKeyspace()
     {
         return ALLOCATE_TOKENS_FOR_KEYSPACE.getString(conf.allocate_tokens_for_keyspace);

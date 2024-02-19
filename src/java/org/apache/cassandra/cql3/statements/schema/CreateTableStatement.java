@@ -55,7 +55,7 @@ import static com.google.common.collect.Iterables.concat;
 public final class CreateTableStatement extends AlterSchemaStatement
 {
     private static final Logger logger = LoggerFactory.getLogger(CreateTableStatement.class);
-    private final String tableName;
+    public final String tableName;
 
     private final Map<ColumnIdentifier, ColumnProperties.Raw> rawColumns;
     private final Set<ColumnIdentifier> staticColumns;
@@ -93,6 +93,15 @@ public final class CreateTableStatement extends AlterSchemaStatement
         this.ifNotExists = ifNotExists;
         this.useCompactStorage = useCompactStorage;
     }
+
+    public CreateTableStatement copyObjects(String tableName) {
+        return new CreateTableStatement(this.keyspaceName, tableName,
+                                        this.rawColumns, this.staticColumns,
+                                        this.partitionKeyColumns, this.clusteringColumns,
+                                        this.clusteringOrder, this.attrs,
+                                        this.ifNotExists, this.useCompactStorage);
+    }
+
 
     public Keyspaces apply(Keyspaces schema)
     {
