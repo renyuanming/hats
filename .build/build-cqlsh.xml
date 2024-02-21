@@ -19,6 +19,6 @@
 <project basedir="." name="apache-cassandra-cqlsh-tasks"
          xmlns:if="ant:if">
     <target name="set-cqlsh-version">
-        <echo file="pylib/cqlshlib/serverversion.py" append="false">version = "${base.version}"${line.separator}</echo>
+        <!-- <echo file="pylib/cqlshlib/serverversion.py" append="false">version = "${base.version}"${line.separator}</echo> -->
     </target>
 </project>

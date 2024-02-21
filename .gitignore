@@ -10,6 +10,7 @@ doc/cql3/CQL.html
 doc/build/
 lib/
 pylib/src/
+pylib/cqlshlib/serverversion.py
 **/cqlshlib.xml
 !lib/cassandra-driver-internal-only-*.zip
 !lib/puresasl-*.zip
