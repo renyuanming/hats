@@ -15,6 +15,7 @@ pylib/cqlshlib/serverversion.py
 !lib/cassandra-driver-internal-only-*.zip
 !lib/puresasl-*.zip
 **/*.so
+conf/*
 # C* debs
 build-stamp
 build.properties
