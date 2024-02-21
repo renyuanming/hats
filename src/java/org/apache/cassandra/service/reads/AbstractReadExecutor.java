@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.concurrent.Stage;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.DecoratedKey;
@@ -193,26 +194,49 @@ public abstract class AbstractReadExecutor
         int usedAddressNumber = 0;
 
         // TODO: We need to check whether the size of replicas equals to the read consistency level?
-
-        for(Replica replica : replicas) 
+        if(!DatabaseDescriptor.isMotivationExperiment()) 
         {
-            assert replica.isFull() || readCommand.acceptsTransient();
-
-            InetAddressAndPort endpoint = replica.endpoint();
-            if (replica.isSelf())
+            for(Replica replica : replicas) 
             {
-                hasLocalEndpoint = true;
-                usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
-                continue;
+                assert replica.isFull() || readCommand.acceptsTransient();
+
+                InetAddressAndPort endpoint = replica.endpoint();
+                if (replica.isSelf())
+                {
+                    hasLocalEndpoint = true;
+                    usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
+                    continue;
+                }
+
+                if (traceState != null)
+                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
+
+                if (null == message)
+                    message = readCommand.createMessage(false);
+
+                MessagingService.instance().sendWithCallback(message, endpoint, handler);
             }
-
-            if (traceState != null)
-                traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
-
-            if (null == message)
-                message = readCommand.createMessage(false);
-
-            MessagingService.instance().sendWithCallback(message, endpoint, handler);
+        }
+        else
+        {
+            Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
+            for (InetAddressAndPort endpoint : sendRequestAddresses) {
+                usedAddressNumber++;
+                if (!replicaPlan().contacts().contains(endpoint)) {
+                    logger.debug("[ELECT] target node {} is not in the replica plan, may failed, skip", endpoint);
+                    continue;
+                }
+                if (traceState != null)
+                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest"
+                            : "data", endpoint);
+    
+                if (endpoint.equals(FBUtilities.getBroadcastAddressAndPort())) {
+                    hasLocalEndpoint = true;
+                } else {
+                    MessagingService.instance().sendWithCallback(messageForDataRequest, endpoint, handler);
+                }
+                break;
+            }
         }
 
         Tracing.trace("[rym] Executed data send request time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart1) / 1000);
