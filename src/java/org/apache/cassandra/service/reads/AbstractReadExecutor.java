@@ -198,23 +198,28 @@ public abstract class AbstractReadExecutor
         {
             logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
             Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
-            for (InetAddressAndPort endpoint : sendRequestAddresses) {
-                usedAddressNumber++;
-                // if (!replicaPlan().contacts().contains(endpoint)) {
-                //     logger.debug("[rym] target node {} is not in the replica plan, may failed, skip", endpoint);
-                //     continue;
-                // }
-                if (traceState != null)
-                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest"
-                            : "data", endpoint);
-    
-                if (endpoint.equals(FBUtilities.getBroadcastAddressAndPort())) {
-                    hasLocalEndpoint = true;
-                } else {
-                    MessagingService.instance().sendWithCallback(messageForDataRequest, endpoint, handler);
-                }
-                break;
+            if(sendRequestAddresses.get(0).equals(FBUtilities.getBroadcastAddressAndPort())){
+                hasLocalEndpoint = true;
+            } else {
+                MessagingService.instance().sendWithCallback(messageForDataRequest, sendRequestAddresses.get(0), handler);
             }
+            // for (InetAddressAndPort endpoint : sendRequestAddresses) {
+            //     usedAddressNumber++;
+            //     // if (!replicaPlan().contacts().contains(endpoint)) {
+            //     //     logger.debug("[rym] target node {} is not in the replica plan, may failed, skip", endpoint);
+            //     //     continue;
+            //     // }
+            //     if (traceState != null)
+            //         traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest"
+            //                 : "data", endpoint);
+    
+            //     if (endpoint.equals(FBUtilities.getBroadcastAddressAndPort())) {
+            //         hasLocalEndpoint = true;
+            //     } else {
+            //         MessagingService.instance().sendWithCallback(messageForDataRequest, endpoint, handler);
+            //     }
+            //     break;
+            // }
         }
         else
         {

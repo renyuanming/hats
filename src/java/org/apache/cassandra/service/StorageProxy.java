@@ -2110,10 +2110,10 @@ public class StorageProxy implements StorageProxyMBean
 
         // if we have a speculating read executor and it looks like we may not receive a response from the initial
         // set of replicas we sent messages to, speculatively send an additional messages to an un-contacted replica
-        for (int i=0; i<cmdCount; i++)
-        {
-            reads[i].maybeTryAdditionalReplicas();
-        }
+        // for (int i=0; i<cmdCount; i++)
+        // {
+        //     reads[i].maybeTryAdditionalReplicas();
+        // }
 
         // wait for enough responses to meet the consistency level. If there's a digest mismatch, begin the read
         // repair process by sending full data reads to all replicas we received responses from.
