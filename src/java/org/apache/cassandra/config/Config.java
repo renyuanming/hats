@@ -129,7 +129,7 @@ public class Config
     public String initial_token;
     public Integer num_tokens;
     public String token_ranges;
-    public boolean motivation = false;
+    public boolean motivation;
     /** Triggers automatic allocation of tokens if set, using the replication strategy of the referenced keyspace */
     public String allocate_tokens_for_keyspace = null;
     /** Triggers automatic allocation of tokens if set, based on the provided replica count for a datacenter */

@@ -194,7 +194,29 @@ public abstract class AbstractReadExecutor
         int usedAddressNumber = 0;
 
         // TODO: We need to check whether the size of replicas equals to the read consistency level?
-        if(!DatabaseDescriptor.isMotivationExperiment()) 
+        if(DatabaseDescriptor.isMotivationExperiment()) 
+        {
+            logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
+            Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
+            for (InetAddressAndPort endpoint : sendRequestAddresses) {
+                usedAddressNumber++;
+                if (!replicaPlan().contacts().contains(endpoint)) {
+                    logger.debug("[rym] target node {} is not in the replica plan, may failed, skip", endpoint);
+                    continue;
+                }
+                if (traceState != null)
+                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest"
+                            : "data", endpoint);
+    
+                if (endpoint.equals(FBUtilities.getBroadcastAddressAndPort())) {
+                    hasLocalEndpoint = true;
+                } else {
+                    MessagingService.instance().sendWithCallback(messageForDataRequest, endpoint, handler);
+                }
+                break;
+            }
+        }
+        else
         {
             for(Replica replica : replicas) 
             {
@@ -215,27 +237,6 @@ public abstract class AbstractReadExecutor
                     message = readCommand.createMessage(false);
 
                 MessagingService.instance().sendWithCallback(message, endpoint, handler);
-            }
-        }
-        else
-        {
-            Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
-            for (InetAddressAndPort endpoint : sendRequestAddresses) {
-                usedAddressNumber++;
-                if (!replicaPlan().contacts().contains(endpoint)) {
-                    logger.debug("[ELECT] target node {} is not in the replica plan, may failed, skip", endpoint);
-                    continue;
-                }
-                if (traceState != null)
-                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest"
-                            : "data", endpoint);
-    
-                if (endpoint.equals(FBUtilities.getBroadcastAddressAndPort())) {
-                    hasLocalEndpoint = true;
-                } else {
-                    MessagingService.instance().sendWithCallback(messageForDataRequest, endpoint, handler);
-                }
-                break;
             }
         }
 
