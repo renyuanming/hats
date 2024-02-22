@@ -200,10 +200,10 @@ public abstract class AbstractReadExecutor
             Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
             for (InetAddressAndPort endpoint : sendRequestAddresses) {
                 usedAddressNumber++;
-                if (!replicaPlan().contacts().contains(endpoint)) {
-                    logger.debug("[rym] target node {} is not in the replica plan, may failed, skip", endpoint);
-                    continue;
-                }
+                // if (!replicaPlan().contacts().contains(endpoint)) {
+                //     logger.debug("[rym] target node {} is not in the replica plan, may failed, skip", endpoint);
+                //     continue;
+                // }
                 if (traceState != null)
                     traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest"
                             : "data", endpoint);
