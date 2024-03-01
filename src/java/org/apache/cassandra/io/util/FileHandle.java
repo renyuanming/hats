@@ -423,7 +423,8 @@ public class FileHandle extends SharedCloseableImpl
                     if (compressionMetadata != null)
                     {
                         // rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier));
-                        logger.debug("rymDebug: FileHandle.complete() - useDirectIO: {}, the compressionMetadata is not null: {}", useDirectIO, compressionMetadata.toString());
+                        logger.debug("rymDebug: FileHandle.complete() - useDirectIO: {}, the compressionMetadata is not null: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}"
+                                     , useDirectIO, compressionMetadata.toString(), channel.getFileDescriptor(), compressionMetadata.chunksIndexFile, compressionMetadata.compressedFileLength, compressionMetadata.dataLength);
                         rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier, useDirectIO));
                     }
                     else
