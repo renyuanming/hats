@@ -96,7 +96,7 @@ public class DirectIOUtils
     * @return the number of bytes read.
     * @throws IOException
     */
-    public static int read(FileChannel channel, ByteBuffer dst, long position) throws IOException
+    public static synchronized int read(FileChannel channel, ByteBuffer dst, long position) throws IOException
     {
         int lim = dst.limit();
         int r = (int) (position & (BLOCK_SIZE - 1));
