@@ -190,7 +190,7 @@ public class BtiTableReaderLoadingBuilder extends SortedTableReaderLoadingBuilde
         assert rowIndexFileBuilder == null || rowIndexFileBuilder.file.equals(descriptor.fileFor(Components.ROW_INDEX));
 
         if (rowIndexFileBuilder == null)
-            rowIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.ROW_INDEX), DatabaseDescriptor.useDirectIO());
+            rowIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.ROW_INDEX));
 
         rowIndexFileBuilder.withChunkCache(chunkCache);
         rowIndexFileBuilder.mmapped(ioOptions.indexDiskAccessMode);
@@ -203,7 +203,7 @@ public class BtiTableReaderLoadingBuilder extends SortedTableReaderLoadingBuilde
         assert partitionIndexFileBuilder == null || partitionIndexFileBuilder.file.equals(descriptor.fileFor(Components.PARTITION_INDEX));
 
         if (partitionIndexFileBuilder == null)
-            partitionIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.PARTITION_INDEX), DatabaseDescriptor.useDirectIO());
+            partitionIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.PARTITION_INDEX));
 
         partitionIndexFileBuilder.withChunkCache(chunkCache);
         partitionIndexFileBuilder.mmapped(ioOptions.indexDiskAccessMode);

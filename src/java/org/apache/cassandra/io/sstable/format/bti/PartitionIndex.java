@@ -179,7 +179,7 @@ public class PartitionIndex implements SharedCloseable
 
     public static Pair<DecoratedKey, DecoratedKey> readFirstAndLastKey(File file, IPartitioner partitioner) throws IOException
     {
-        try (PartitionIndex index = load(new FileHandle.Builder(file, DatabaseDescriptor.useDirectIO()), partitioner, false))
+        try (PartitionIndex index = load(new FileHandle.Builder(file), partitioner, false))
         {
             return Pair.create(index.firstKey(), index.lastKey());
         }
