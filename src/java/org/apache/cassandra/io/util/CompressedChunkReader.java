@@ -162,7 +162,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         int compressedGetInt = compressed.getInt();
                         if (compressedGetInt != checksum)
                         {
-                            logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
+                            // logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
 
@@ -210,7 +210,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
             {
                 // Make sure reader does not see stale data.
                 uncompressed.position(0).limit(0);
-                // throw new CorruptSSTableException(e, channel.filePath());
+                throw new CorruptSSTableException(e, channel.filePath());
             }
         }
 
