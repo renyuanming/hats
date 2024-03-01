@@ -130,9 +130,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                 CompressionMetadata.Chunk chunk = metadata.chunkFor(position);
                 boolean shouldCheckCrc = shouldCheckCrc();
-                // int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
-                                            // : chunk.length;
-                int length = chunk.length;
+                int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
+                                            : chunk.length;
 
                 if (chunk.length < maxCompressedLength)
                 {
@@ -153,23 +152,23 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     }
                     uncompressed.clear();
 
-                    // if (shouldCheckCrc)
-                    // {
-                    //     int cpos = compressed.position(); // always 0 if not using direct IO
-                    //     int checksum = (int) ChecksumType.CRC32.of(compressed);
+                    if (shouldCheckCrc)
+                    {
+                        int cpos = compressed.position(); // always 0 if not using direct IO
+                        int checksum = (int) ChecksumType.CRC32.of(compressed);
 
-                    //     compressed.limit(cpos + length);
-                    //     // compressed.limit(length);
-                    //     int compressedGetInt = compressed.getInt();
-                    //     if (compressedGetInt != checksum)
-                    //     {
-                    //         // logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
-                    //         throw new CorruptBlockException(channel.filePath(), chunk);
-                    //     }
+                        compressed.limit(cpos + length);
+                        // compressed.limit(length);
+                        int compressedGetInt = compressed.getInt();
+                        if (compressedGetInt != checksum)
+                        {
+                            // logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
+                            throw new CorruptBlockException(channel.filePath(), chunk);
+                        }
 
-                    //     // compressed.position(0).limit(chunk.length);
-                    //     compressed.position(cpos).limit(cpos + chunk.length);
-                    // }
+                        // compressed.position(0).limit(chunk.length);
+                        compressed.position(cpos).limit(cpos + chunk.length);
+                    }
 
                     try
                     {
@@ -186,21 +185,21 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     if (channel.read(uncompressed, chunk.offset) != chunk.length)
                         throw new CorruptBlockException(channel.filePath(), chunk);
 
-                    // if (shouldCheckCrc)
-                    // {
-                    //     if (!useDirectIO)
-                    //         uncompressed.flip();
+                    if (shouldCheckCrc)
+                    {
+                        if (!useDirectIO)
+                            uncompressed.flip();
                         
-                    //     int cpos = uncompressed.position(); // always 0 if not using direct IO
-                    //     int checksum = (int) ChecksumType.CRC32.of(uncompressed);
-                    //     uncompressed.position(cpos).limit(cpos);
+                        int cpos = uncompressed.position(); // always 0 if not using direct IO
+                        int checksum = (int) ChecksumType.CRC32.of(uncompressed);
+                        uncompressed.position(cpos).limit(cpos);
 
-                    //     ByteBuffer scratch = bufferHolder.getBuffer(Integer.BYTES, useDirectIO);
+                        ByteBuffer scratch = bufferHolder.getBuffer(Integer.BYTES, useDirectIO);
 
-                    //     if (channel.read(scratch, chunk.offset + chunk.length) != Integer.BYTES
-                    //             || scratch.getInt(!useDirectIO ? 0 : scratch.position()) != checksum)
-                    //         throw new CorruptBlockException(channel.filePath(), chunk);
-                    // }
+                        if (channel.read(scratch, chunk.offset + chunk.length) != Integer.BYTES
+                                || scratch.getInt(!useDirectIO ? 0 : scratch.position()) != checksum)
+                            throw new CorruptBlockException(channel.filePath(), chunk);
+                    }
                 }
                 if (!useDirectIO) 
                 {
