@@ -169,6 +169,11 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                             // logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
+                        else
+                        {
+                            logger.debug("rymDebug: the CRC check correct for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}"
+                                         , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength);
+                        }
 
                         // compressed.position(0).limit(chunk.length);
                         compressed.position(cpos).limit(cpos + chunk.length);
