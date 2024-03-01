@@ -129,7 +129,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                 if (chunk.length < maxCompressedLength)
                 {
-                    ByteBuffer compressed = bufferHolder.getBuffer(length);
+                    ByteBuffer compressed = bufferHolder.getBuffer(length, useDirectIO);
 
                     if (channel.read(compressed, chunk.offset) != length)
                         throw new CorruptBlockException(channel.filePath(), chunk);
@@ -182,7 +182,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         int checksum = (int) ChecksumType.CRC32.of(uncompressed);
                         uncompressed.position(cpos).limit(cpos);
 
-                        ByteBuffer scratch = bufferHolder.getBuffer(Integer.BYTES);
+                        ByteBuffer scratch = bufferHolder.getBuffer(Integer.BYTES, useDirectIO);
 
                         if (channel.read(scratch, chunk.offset + chunk.length) != Integer.BYTES
                                 || scratch.getInt(!useDirectIO ? 0 : scratch.position()) != checksum)
