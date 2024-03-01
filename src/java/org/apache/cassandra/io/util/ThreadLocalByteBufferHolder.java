@@ -24,12 +24,16 @@ import java.util.EnumMap;
 import io.netty.util.concurrent.FastThreadLocal;
 
 import org.apache.cassandra.io.compress.BufferType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class that allow buffers to be reused by storing them in a thread local instance.
  */
 public final class ThreadLocalByteBufferHolder
 {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ThreadLocalByteBufferHolder.class);
     private static final EnumMap<BufferType, FastThreadLocal<ByteBuffer>> reusableBBHolder = new EnumMap<>(BufferType.class);
     // Convenience variable holding a ref to the current resuableBB to avoid map lookups
     private final FastThreadLocal<ByteBuffer> reusableBB;
@@ -53,10 +57,15 @@ public final class ThreadLocalByteBufferHolder
      */
     private final BufferType bufferType;
 
+    public ThreadLocalByteBufferHolder(BufferType bufferType, Boolean useDirectIO)
+    {
+        this.bufferType = useDirectIO ? BufferType.OFF_HEAP : bufferType;
+        this.reusableBB = reusableBBHolder.get(bufferType);
+    }
+
     public ThreadLocalByteBufferHolder(BufferType bufferType)
     {
-        this.bufferType = bufferType;
-        this.reusableBB = reusableBBHolder.get(bufferType);
+        this(bufferType, false);
     }
 
     /**
@@ -80,6 +89,10 @@ public final class ThreadLocalByteBufferHolder
         if (buffer.capacity() < size)
         {
             FileUtils.clean(buffer);
+            if(buffer.isDirect() && useDirectIO)
+            {
+                logger.debug("rymERROR: We want the useDirectIO: {}, but we get a buffer type: {}", useDirectIO, bufferType);
+            }
             // We allocate a buffer that is BLOCK_SIZE larger than the requested size to allow for the buffer to be aligned
             buffer = useDirectIO ? 
                      BufferType.OFF_HEAP.allocate(size + DirectIOUtils.BLOCK_SIZE, true) : 

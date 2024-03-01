@@ -110,7 +110,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
         public Standard(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier, Boolean useDirectIO)
         {
             super(channel, metadata, crcCheckChanceSupplier, useDirectIO);
-            bufferHolder = new ThreadLocalByteBufferHolder(metadata.compressor().preferredBufferType());
+            bufferHolder = new ThreadLocalByteBufferHolder(metadata.compressor().preferredBufferType(), useDirectIO);
             this.useDirectIO = useDirectIO;
         }
         
@@ -147,10 +147,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     }
                     else
                     {
-                        compressed.flip();
-                        compressed.limit(chunk.length);
-                        // // after direct io channel read position is the starting position of valid data
-                        // compressed.position(0).limit(compressed.position() + chunk.length);
+                        // after direct io channel read position is the starting position of valid data
+                        compressed.position(0).limit(compressed.position() + chunk.length);
                     }
                     uncompressed.clear();
 
