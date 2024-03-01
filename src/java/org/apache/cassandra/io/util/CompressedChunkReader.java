@@ -147,7 +147,10 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     }
                     else
                     {
-                        compressed.position(0).limit(compressed.position() + chunk.length);
+                        compressed.flip();
+                        compressed.limit(chunk.length);
+                        // // after direct io channel read position is the starting position of valid data
+                        // compressed.position(0).limit(compressed.position() + chunk.length);
                     }
                     uncompressed.clear();
 
@@ -161,7 +164,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         int compressedGetInt = compressed.getInt();
                         if (compressedGetInt != checksum)
                         {
-                            logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, compressed.limit(): {}, checksum: {}, compressed.getInt: {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), compressed.limit(), checksum, compressedGetInt);
+                            logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt);
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
 
