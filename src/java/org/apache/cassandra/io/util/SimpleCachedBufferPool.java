@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.compress.BufferType;
 import org.jctools.queues.MpmcArrayQueue;
 
@@ -62,7 +63,7 @@ public class SimpleCachedBufferPool
         this.maxBufferPoolSize = maxBufferPoolSize;
         this.bufferSize = bufferSize;
         this.preferredReusableBufferType = preferredReusableBufferType;
-        this.bufferHolder = new ThreadLocalByteBufferHolder(preferredReusableBufferType);
+        this.bufferHolder = new ThreadLocalByteBufferHolder(preferredReusableBufferType, DatabaseDescriptor.useDirectIO());
     }
 
     public ByteBuffer createBuffer()
