@@ -30,15 +30,10 @@
  import org.apache.cassandra.config.DatabaseDescriptor;
  import org.apache.cassandra.exceptions.ConfigurationException;
  
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
- public class DirectIOUtils
- {
+public class DirectIOUtils
+{
     public static final int BLOCK_SIZE;
-     
-    private static final Logger logger = LoggerFactory.getLogger(ChannelProxy.class);
- 
+
     static
     {
         try
@@ -65,7 +60,7 @@ import org.slf4j.LoggerFactory;
             throw new RuntimeException(e);
         }
     }
- 
+
     /**
      * Allocates a block aligned direct byte buffer. The size of the returned
     * buffer is the nearest multiple of BLOCK_SIZE to the requested size.
@@ -80,7 +75,6 @@ import org.slf4j.LoggerFactory;
             int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
             Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
             ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
-            logger.debug("rymDebug: DirectIOUtils.BLOCK_SIZE: {}, the size is {}, n is {}", BLOCK_SIZE, size, n);
             return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
         }
         catch (Exception e) {
@@ -114,4 +108,4 @@ import org.slf4j.LoggerFactory;
         dst.position(r).limit(r + n);
         return n;
     }
- }
+}
