@@ -158,9 +158,12 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                         compressed.limit(cpos + length);
                         // compressed.limit(length);
-                        logger.debug("rymDebug: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, compressed.limit(): {}, checksum: {}, compressed.getInt: {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), compressed.limit(), checksum, compressed.getInt());
-                        if (compressed.getInt() != checksum)
+                        int compressedGetInt = compressed.getInt();
+                        if (compressedGetInt != checksum)
+                        {
+                            logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, compressed.limit(): {}, checksum: {}, compressed.getInt: {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), compressed.limit(), checksum, compressedGetInt);
                             throw new CorruptBlockException(channel.filePath(), chunk);
+                        }
 
                         // compressed.position(0).limit(chunk.length);
                         compressed.position(cpos).limit(cpos + chunk.length);
