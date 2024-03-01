@@ -34,6 +34,9 @@ import org.apache.cassandra.utils.concurrent.Ref;
 import org.apache.cassandra.utils.concurrent.RefCounted;
 import org.apache.cassandra.utils.concurrent.SharedCloseableImpl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * {@link FileHandle} provides access to a file for reading, including the ones written by various {@link SequentialWriter}
  * instances, and it is typically used by {@link org.apache.cassandra.io.sstable.format.SSTableReader}.
@@ -51,6 +54,7 @@ public class FileHandle extends SharedCloseableImpl
     public final ChannelProxy channel;
 
     public final long onDiskLength;
+    private static final Logger logger = LoggerFactory.getLogger(FileHandle.class);
 
     /*
      * Rebufferer factory to use when constructing RandomAccessReaders
@@ -319,13 +323,13 @@ public class FileHandle extends SharedCloseableImpl
          */
         public Builder mmapped(boolean mmapped)
         {
-            this.mmapped = useDirectIO ? false : mmapped;
+            this.mmapped = this.useDirectIO ? false : mmapped;
             return this;
         }
 
         public Builder mmapped(Config.DiskAccessMode diskAccessMode)
         {
-            this.mmapped = useDirectIO ? false : diskAccessMode == Config.DiskAccessMode.mmap;
+            this.mmapped = this.useDirectIO ? false : diskAccessMode == Config.DiskAccessMode.mmap;
             return this;
         }
 
@@ -419,6 +423,7 @@ public class FileHandle extends SharedCloseableImpl
                     if (compressionMetadata != null)
                     {
                         // rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier));
+                        logger.debug("rymDebug: FileHandle.complete() - useDirectIO: {}, the compressionMetadata is not null: {}", useDirectIO, compressionMetadata.toString());
                         rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier, useDirectIO));
                     }
                     else

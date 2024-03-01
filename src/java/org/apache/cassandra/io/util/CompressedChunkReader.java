@@ -133,6 +133,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
                                             : chunk.length;
 
+                
+                logger.debug("rymDebug: This is readChunk(), the metadata is {}", metadata.toString());                            
                 if (chunk.length < maxCompressedLength)
                 {
                     ByteBuffer compressed = bufferHolder.getBuffer(length, useDirectIO);
