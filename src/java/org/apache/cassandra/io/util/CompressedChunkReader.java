@@ -18,6 +18,10 @@
 
 package org.apache.cassandra.io.util;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
@@ -38,6 +42,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
     final int maxCompressedLength;
     final Supplier<Double> crcCheckChanceSupplier;
     final boolean useDirectIO;
+    
+    private static final Logger logger = LoggerFactory.getLogger(CompressedChunkReader.class);
 
     protected CompressedChunkReader(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier, Boolean useDirectIO)
     {
@@ -152,6 +158,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                         compressed.limit(cpos + length);
                         // compressed.limit(length);
+                        logger.debug("rymDebug: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, compressed.limit(): {}, checksum: {}, compressed.getInt()", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), compressed.limit(), checksum, compressed.getInt());
                         if (compressed.getInt() != checksum)
                             throw new CorruptBlockException(channel.filePath(), chunk);
 

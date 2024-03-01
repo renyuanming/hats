@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  {
     public static final int BLOCK_SIZE;
      
-    private static final Logger logger = LoggerFactory.getLogger(ChannelProxy.class);
+    private static final Logger logger = LoggerFactory.getLogger(DirectIOUtils.class);
  
     static
     {
