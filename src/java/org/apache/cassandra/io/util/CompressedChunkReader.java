@@ -210,7 +210,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
             {
                 // Make sure reader does not see stale data.
                 uncompressed.position(0).limit(0);
-                throw new CorruptSSTableException(e, channel.filePath());
+                // throw new CorruptSSTableException(e, channel.filePath());
             }
         }
 
