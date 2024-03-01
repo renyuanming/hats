@@ -19,10 +19,12 @@
  package org.apache.cassandra.io.util;
 
  import java.io.IOException;
+ import java.lang.reflect.Method;
  import java.nio.ByteBuffer;
  import java.nio.channels.FileChannel;
  import java.nio.file.FileStore;
  import java.nio.file.Files;
+ import java.nio.file.Path;
  import java.nio.file.Paths;
  
  import org.apache.cassandra.config.DatabaseDescriptor;
@@ -35,7 +37,7 @@ import org.slf4j.LoggerFactory;
  {
     public static final int BLOCK_SIZE;
      
-    private static final Logger logger = LoggerFactory.getLogger(DirectIOUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChannelProxy.class);
  
     static
     {
@@ -45,12 +47,14 @@ import org.slf4j.LoggerFactory;
             int blockSize = 0;
             for (String datadir : DatabaseDescriptor.getAllDataFileLocations())
             {
-                if (datadir == null)
-                    throw new ConfigurationException("data_file_directories must not contain empty entry", false);
+                Path path = Paths.get(datadir);
+                if (datadir == null || !Files.exists(path))
+                    throw new ConfigurationException("data_file_directories is not set or does not exist.", false);
 
-                FileStore fs = Files.getFileStore(Paths.get(datadir));
+                FileStore fs = Files.getFileStore(path);
+                Method method = FileStore.class.getDeclaredMethod("getBlockSize");
 
-                int n = (int) fs.getBlockSize();
+                int n = ((Long) method.invoke(fs)).intValue();
                 if (n > blockSize)
                     blockSize = n;
             }
@@ -74,7 +78,10 @@ import org.slf4j.LoggerFactory;
         try
         {
             int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
-            return ByteBuffer.allocateDirect(n * BLOCK_SIZE).alignedSlice(BLOCK_SIZE);
+            Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
+            ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
+            logger.debug("rymDebug: DirectIOUtils.BLOCK_SIZE: {}, the size is {}, n is {}", BLOCK_SIZE, size, n);
+            return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
@@ -100,8 +107,7 @@ import org.slf4j.LoggerFactory;
         int lim = dst.limit();
         int r = (int) (position & (BLOCK_SIZE - 1));
         int len = lim + r;
-        int newLimit = (len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE;
-        dst.limit(newLimit);
+        dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
         int n = channel.read(dst, position & -BLOCK_SIZE);
         n -= r;
         n = n < lim ? n : lim;
