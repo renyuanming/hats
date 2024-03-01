@@ -325,7 +325,7 @@ public class FileHandle extends SharedCloseableImpl
 
         public Builder mmapped(Config.DiskAccessMode diskAccessMode)
         {
-            this.mmapped = diskAccessMode == Config.DiskAccessMode.mmap;
+            this.mmapped = useDirectIO ? false : diskAccessMode == Config.DiskAccessMode.mmap;
             return this;
         }
 
@@ -418,8 +418,8 @@ public class FileHandle extends SharedCloseableImpl
                 {
                     if (compressionMetadata != null)
                     {
-                        rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier));
-                        // rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier, useDirectIO));
+                        // rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier));
+                        rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier, useDirectIO));
                     }
                     else
                     {
