@@ -130,8 +130,9 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                 CompressionMetadata.Chunk chunk = metadata.chunkFor(position);
                 boolean shouldCheckCrc = shouldCheckCrc();
-                int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
-                                            : chunk.length;
+                // int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
+                                            // : chunk.length;
+                int length = chunk.length;
 
                 if (chunk.length < maxCompressedLength)
                 {
