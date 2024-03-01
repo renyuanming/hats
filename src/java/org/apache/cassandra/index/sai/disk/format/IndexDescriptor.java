@@ -28,7 +28,7 @@ import com.google.common.base.Objects;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ClusteringComparator;
 import org.apache.cassandra.db.lifecycle.LifecycleNewTracker;
 import org.apache.cassandra.dht.IPartitioner;
@@ -268,7 +268,7 @@ public class IndexDescriptor
             if (logger.isTraceEnabled())
                 logger.trace(logMessage("Opening file handle for {} ({})"), file, FBUtilities.prettyPrintMemory(file.length()));
 
-            return new FileHandle.Builder(file).mmapped(true).complete();
+            return new FileHandle.Builder(file, DatabaseDescriptor.useDirectIO()).mmapped(true).complete();
         }
         catch (Throwable t)
         {
@@ -290,7 +290,7 @@ public class IndexDescriptor
             if (logger.isTraceEnabled())
                 logger.trace(logMessage("Opening file handle for {} ({})"), file, FBUtilities.prettyPrintMemory(file.length()));
 
-            return new FileHandle.Builder(file).mmapped(true).complete();
+            return new FileHandle.Builder(file, DatabaseDescriptor.useDirectIO()).mmapped(true).complete();
         }
         catch (Throwable t)
         {

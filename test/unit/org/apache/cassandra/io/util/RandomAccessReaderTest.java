@@ -146,7 +146,7 @@ public class RandomAccessReaderTest
 
         try (FileHandle fh = new FileHandle.Builder(new File("abc")).bufferType(params.bufferType)
                                                                     .bufferSize(params.bufferSize)
-                                                                    .complete(f -> new ChannelProxy(f, new FakeFileChannel(SIZE)));
+                                                                    .complete((f, g) -> new ChannelProxy(f, new FakeFileChannel(SIZE)));
              RandomAccessReader reader = fh.createReader())
         {
             assertEquals(fh.channel.size(), reader.length());

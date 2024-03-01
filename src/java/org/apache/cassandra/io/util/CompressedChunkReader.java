@@ -37,14 +37,21 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
     final CompressionMetadata metadata;
     final int maxCompressedLength;
     final Supplier<Double> crcCheckChanceSupplier;
+    final boolean useDirectIO;
 
-    protected CompressedChunkReader(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier)
+    protected CompressedChunkReader(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier, Boolean useDirectIO)
     {
         super(channel, metadata.dataLength);
         this.metadata = metadata;
         this.maxCompressedLength = metadata.maxCompressedLength();
         this.crcCheckChanceSupplier = crcCheckChanceSupplier;
+        this.useDirectIO = useDirectIO;
         assert Integer.bitCount(metadata.chunkLength()) == 1; //must be a power of two
+    }
+
+    protected CompressedChunkReader(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier)
+    {
+        this(channel, metadata, crcCheckChanceSupplier, false);
     }
 
     @VisibleForTesting
@@ -92,11 +99,18 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
     {
         // we read the raw compressed bytes into this buffer, then uncompressed them into the provided one.
         private final ThreadLocalByteBufferHolder bufferHolder;
+        private boolean useDirectIO;
 
+        public Standard(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier, Boolean useDirectIO)
+        {
+            super(channel, metadata, crcCheckChanceSupplier, useDirectIO);
+            bufferHolder = new ThreadLocalByteBufferHolder(metadata.compressor().preferredBufferType());
+            this.useDirectIO = useDirectIO;
+        }
+        
         public Standard(ChannelProxy channel, CompressionMetadata metadata, Supplier<Double> crcCheckChanceSupplier)
         {
-            super(channel, metadata, crcCheckChanceSupplier);
-            bufferHolder = new ThreadLocalByteBufferHolder(metadata.compressor().preferredBufferType());
+            this(channel, metadata, crcCheckChanceSupplier, false);
         }
 
         @Override
@@ -120,19 +134,28 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     if (channel.read(compressed, chunk.offset) != length)
                         throw new CorruptBlockException(channel.filePath(), chunk);
 
-                    compressed.flip();
-                    compressed.limit(chunk.length);
+                    if(!useDirectIO)
+                    {
+                        compressed.flip();
+                        compressed.limit(chunk.length);
+                    }
+                    else
+                    {
+                        compressed.position(0).limit(compressed.position() + chunk.length);
+                    }
                     uncompressed.clear();
 
                     if (shouldCheckCrc)
                     {
+                        int cpos = compressed.position(); // always 0 if not using direct IO
                         int checksum = (int) ChecksumType.CRC32.of(compressed);
 
-                        compressed.limit(length);
+                        compressed.limit(cpos + length);
                         if (compressed.getInt() != checksum)
                             throw new CorruptBlockException(channel.filePath(), chunk);
 
-                        compressed.position(0).limit(chunk.length);
+                        // compressed.position(0).limit(chunk.length);
+                        compressed.position(cpos).limit(cpos + chunk.length);
                     }
 
                     try
@@ -152,17 +175,25 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                     if (shouldCheckCrc)
                     {
-                        uncompressed.flip();
+                        if (!useDirectIO)
+                            uncompressed.flip();
+                        
+                        int cpos = uncompressed.position(); // always 0 if not using direct IO
                         int checksum = (int) ChecksumType.CRC32.of(uncompressed);
+                        uncompressed.position(cpos).limit(cpos);
 
                         ByteBuffer scratch = bufferHolder.getBuffer(Integer.BYTES);
 
                         if (channel.read(scratch, chunk.offset + chunk.length) != Integer.BYTES
-                                || scratch.getInt(0) != checksum)
+                                || scratch.getInt(!useDirectIO ? 0 : scratch.position()) != checksum)
                             throw new CorruptBlockException(channel.filePath(), chunk);
                     }
                 }
-                uncompressed.flip();
+                if (!useDirectIO) 
+                {
+                    uncompressed.flip();
+                    
+                }
             }
             catch (CorruptBlockException e)
             {
@@ -170,6 +201,11 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 uncompressed.position(0).limit(0);
                 throw new CorruptSSTableException(e, channel.filePath());
             }
+        }
+
+        @Override
+        public boolean useDirectIO() {
+            return useDirectIO;
         }
     }
 
@@ -240,6 +276,11 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
         {
             regions.closeQuietly();
             super.close();
+        }
+
+        @Override
+        public boolean useDirectIO() {
+            return useDirectIO;
         }
     }
 }

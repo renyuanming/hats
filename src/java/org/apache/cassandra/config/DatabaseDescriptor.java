@@ -107,6 +107,7 @@ import org.apache.cassandra.security.SSLFactory;
 import org.apache.cassandra.service.CacheService.CacheType;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.utils.FBUtilities;
+import org.apache.cassandra.utils.JavaUtils;
 import org.apache.cassandra.utils.StorageCompatibilityMode;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.ALLOCATE_TOKENS_FOR_KEYSPACE;
@@ -390,6 +391,15 @@ public class DatabaseDescriptor
                                      ? new YamlConfigurationLoader()
                                      : FBUtilities.construct(loaderClass, "configuration loading");
         Config config = loader.loadConfig();
+
+        if(config.enable_direct_io_for_read_path)
+        {
+            logger.info("[rym-Info]: Initializing Direct I/O for read path");
+            if(JavaUtils.parseJavaVersion(System.getProperty("java.version")) < 11)
+            {
+                throw new RuntimeException("Java 11 required, but found " + System.getProperty("java.version"));
+            }
+        }
 
         if (!hasLoggedConfig)
         {
@@ -5022,5 +5032,10 @@ public class DatabaseDescriptor
     public static boolean isMotivationExperiment()
     {
         return conf.motivation;
+    }
+
+    public static boolean useDirectIO()
+    {
+        return conf.enable_direct_io_for_read_path;
     }
 }

@@ -128,8 +128,14 @@ public class Config
     /* initial token in the ring */
     public String initial_token;
     public Integer num_tokens;
+
+    // [AdaptiveKV]
     public String token_ranges;
-    public boolean motivation;
+    public boolean motivation = false;
+    public boolean enable_direct_io_for_read_path = false;
+
+
+
     /** Triggers automatic allocation of tokens if set, using the replication strategy of the referenced keyspace */
     public String allocate_tokens_for_keyspace = null;
     /** Triggers automatic allocation of tokens if set, based on the provided replica count for a datacenter */

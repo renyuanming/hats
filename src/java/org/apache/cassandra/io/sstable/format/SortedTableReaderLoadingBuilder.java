@@ -20,7 +20,7 @@ package org.apache.cassandra.io.sstable.format;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.sstable.SSTable;
 import org.apache.cassandra.io.sstable.format.bti.BtiFormat;
 import org.apache.cassandra.io.sstable.metadata.StatsMetadata;
@@ -58,7 +58,7 @@ extends SSTableReaderLoadingBuilder<R, B>
         int bufferSize = ioOptions.diskOptimizationStrategy.bufferSize(recordSize);
 
         if (dataFileBuilder == null)
-            dataFileBuilder = new FileHandle.Builder(descriptor.fileFor(BtiFormat.Components.DATA));
+            dataFileBuilder = new FileHandle.Builder(descriptor.fileFor(BtiFormat.Components.DATA), DatabaseDescriptor.useDirectIO());
 
         dataFileBuilder.bufferSize(bufferSize);
         dataFileBuilder.withChunkCache(chunkCache);

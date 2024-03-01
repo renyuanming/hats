@@ -29,6 +29,12 @@ import org.apache.cassandra.utils.NativeLibrary;
 import org.apache.cassandra.utils.concurrent.RefCounted;
 import org.apache.cassandra.utils.concurrent.SharedCloseableImpl;
 
+
+import com.sun.nio.file.ExtendedOpenOption;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A proxy of a FileChannel that:
  *
@@ -43,6 +49,23 @@ public final class ChannelProxy extends SharedCloseableImpl
     private final File file;
     private final String filePath;
     private final FileChannel channel;
+    
+    private boolean useDirectIO;
+    private static final Logger logger = LoggerFactory.getLogger(ChannelProxy.class);
+
+    public static FileChannel openChannel(File file, boolean useDirectIO)
+    {
+        try
+        {
+            return useDirectIO ?
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) :
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static FileChannel openChannel(File file)
     {
@@ -56,24 +79,41 @@ public final class ChannelProxy extends SharedCloseableImpl
         }
     }
 
+    
+    public ChannelProxy(String filePath, FileChannel channel, boolean useDirectIO)
+    {
+        super(new Cleanup(filePath, channel));
+        this.file = new File(filePath);
+        this.filePath = filePath;
+        this.channel = channel;
+        this.useDirectIO = useDirectIO;
+    }
+
+
     public ChannelProxy(String path)
     {
-        this (new File(path));
+        this (new File(path), false);
     }
 
     public ChannelProxy(File file)
     {
-        this(file, openChannel(file));
+        this(file, false);
     }
 
     public ChannelProxy(File file, FileChannel channel)
     {
-        super(new Cleanup(file.path(), channel));
-
-        this.file = file;
-        this.filePath = file.path();
-        this.channel = channel;
+        // super(new Cleanup(file.path(), channel));
+        this(file.path(), channel, false);
     }
+
+    public ChannelProxy(File file, boolean useDirectIO) {
+        this(file.path(), openChannel(file, useDirectIO), useDirectIO);
+    }
+
+    public ChannelProxy(String path, boolean useDirectIO) {
+        this(new File(path), useDirectIO);
+    }
+
 
     public ChannelProxy(ChannelProxy copy)
     {
@@ -82,6 +122,7 @@ public final class ChannelProxy extends SharedCloseableImpl
         this.file = copy.file;
         this.filePath = copy.filePath;
         this.channel = copy.channel;
+        this.useDirectIO = copy.useDirectIO;
     }
 
     private final static class Cleanup implements RefCounted.Tidy
@@ -143,7 +184,8 @@ public final class ChannelProxy extends SharedCloseableImpl
         try
         {
             // FIXME: consider wrapping in a while loop
-            return channel.read(buffer, position);
+            // return channel.read(buffer, position);
+            return useDirectIO ? DirectIOUtils.read(channel, buffer, position) : channel.read(buffer, position);
         }
         catch (IOException e)
         {

@@ -20,26 +20,41 @@ package org.apache.cassandra.io.util;
 
 import java.nio.ByteBuffer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.cassandra.io.compress.BufferType;
 
 class SimpleChunkReader extends AbstractReaderFileProxy implements ChunkReader
 {
     private final int bufferSize;
     private final BufferType bufferType;
+    private boolean useDirectIO;
+    private static final Logger logger = LoggerFactory.getLogger(SimpleChunkReader.class);
 
-    SimpleChunkReader(ChannelProxy channel, long fileLength, BufferType bufferType, int bufferSize)
+    SimpleChunkReader(ChannelProxy channel, long fileLength, BufferType bufferType, int bufferSize, boolean useDirectIO)
     {
         super(channel, fileLength);
         this.bufferSize = bufferSize;
         this.bufferType = bufferType;
+        this.useDirectIO = useDirectIO;
     }
+
+    SimpleChunkReader(ChannelProxy channel, long fileLength, BufferType bufferType, int bufferSize)
+    {
+        this(channel, fileLength, bufferType, bufferSize, false);
+    }
+
 
     @Override
     public void readChunk(long position, ByteBuffer buffer)
     {
         buffer.clear();
         channel.read(buffer, position);
-        buffer.flip();
+        if(!useDirectIO)
+        {
+            buffer.flip();
+        }
     }
 
     @Override
@@ -71,5 +86,12 @@ class SimpleChunkReader extends AbstractReaderFileProxy implements ChunkReader
                              channel.filePath(),
                              bufferSize,
                              fileLength());
+    }
+
+    
+    @Override
+    public boolean useDirectIO()
+    {
+        return useDirectIO;
     }
 }

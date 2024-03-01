@@ -29,7 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.DeletionPurger;
 import org.apache.cassandra.db.DeletionTime;
@@ -82,7 +82,7 @@ public abstract class SortedTableWriter<P extends SortedTablePartitionWriter, I 
     protected final SequentialWriter dataWriter;
     protected final I indexWriter;
     protected final P partitionWriter;
-    private final FileHandle.Builder dataFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.DATA));
+    private final FileHandle.Builder dataFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.DATA), DatabaseDescriptor.useDirectIO());
     private DecoratedKey lastWrittenKey;
     private DataPosition dataMark;
     private long lastEarlyOpenLength;

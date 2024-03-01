@@ -18,7 +18,7 @@
 package org.apache.cassandra.io.util;
 
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -261,9 +261,21 @@ public class FileHandle extends SharedCloseableImpl
         private long lengthOverride = -1;
         private MmappedRegionsCache mmappedRegionsCache;
 
+        
+        private boolean useDirectIO = false;
+
         public Builder(File file)
         {
+            this(file, false);
+        }
+
+        public Builder(File file, boolean useDirectIO)
+        {
             this.file = file;
+            if (useDirectIO) {
+                this.bufferType = BufferType.OFF_HEAP;
+                this.useDirectIO = useDirectIO;
+            }
         }
 
         /**
@@ -300,14 +312,14 @@ public class FileHandle extends SharedCloseableImpl
         }
 
         /**
-         * Set whether to use mmap for reading
+         * Set whether to use mmap for reading. For Direct_IO, we will force a non-memory-mapped read
          *
          * @param mmapped true if using mmap
          * @return this instance
          */
         public Builder mmapped(boolean mmapped)
         {
-            this.mmapped = mmapped;
+            this.mmapped = useDirectIO ? false : mmapped;
             return this;
         }
 
@@ -369,7 +381,7 @@ public class FileHandle extends SharedCloseableImpl
         }
 
         @VisibleForTesting
-        public FileHandle complete(Function<File, ChannelProxy> channelProxyFactory)
+        public FileHandle complete(BiFunction<File, Boolean, ChannelProxy> channelProxyFactory)
         {
             ChannelProxy channel = null;
             MmappedRegions regions = null;
@@ -377,7 +389,7 @@ public class FileHandle extends SharedCloseableImpl
             try
             {
                 compressionMetadata = this.compressionMetadata != null ? this.compressionMetadata.sharedCopy() : null;
-                channel = channelProxyFactory.apply(file);
+                channel = channelProxyFactory.apply(file, useDirectIO);
 
                 long fileLength = (compressionMetadata != null) ? compressionMetadata.compressedFileLength : channel.size();
                 long length = lengthOverride > 0 ? lengthOverride : fileLength;
@@ -406,12 +418,14 @@ public class FileHandle extends SharedCloseableImpl
                 {
                     if (compressionMetadata != null)
                     {
-                        rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier));
+                        // rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier));
+                        rebuffererFactory = maybeCached(new CompressedChunkReader.Standard(channel, compressionMetadata, crcCheckChanceSupplier, useDirectIO));
                     }
                     else
                     {
                         int chunkSize = DiskOptimizationStrategy.roundForCaching(bufferSize, ChunkCache.roundUp);
-                        rebuffererFactory = maybeCached(new SimpleChunkReader(channel, length, bufferType, chunkSize));
+                        // rebuffererFactory = maybeCached(new SimpleChunkReader(channel, length, bufferType, chunkSize));
+                        rebuffererFactory = maybeCached(new SimpleChunkReader(channel, length, bufferType, chunkSize, useDirectIO));
                     }
                 }
                 Cleanup cleanup = new Cleanup(channel, rebuffererFactory, compressionMetadata, chunkCache);

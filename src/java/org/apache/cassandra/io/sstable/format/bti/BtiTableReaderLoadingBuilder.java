@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.io.compress.CompressionMetadata;
@@ -190,7 +190,7 @@ public class BtiTableReaderLoadingBuilder extends SortedTableReaderLoadingBuilde
         assert rowIndexFileBuilder == null || rowIndexFileBuilder.file.equals(descriptor.fileFor(Components.ROW_INDEX));
 
         if (rowIndexFileBuilder == null)
-            rowIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.ROW_INDEX));
+            rowIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.ROW_INDEX), DatabaseDescriptor.useDirectIO());
 
         rowIndexFileBuilder.withChunkCache(chunkCache);
         rowIndexFileBuilder.mmapped(ioOptions.indexDiskAccessMode);
@@ -203,7 +203,7 @@ public class BtiTableReaderLoadingBuilder extends SortedTableReaderLoadingBuilde
         assert partitionIndexFileBuilder == null || partitionIndexFileBuilder.file.equals(descriptor.fileFor(Components.PARTITION_INDEX));
 
         if (partitionIndexFileBuilder == null)
-            partitionIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.PARTITION_INDEX));
+            partitionIndexFileBuilder = new FileHandle.Builder(descriptor.fileFor(Components.PARTITION_INDEX), DatabaseDescriptor.useDirectIO());
 
         partitionIndexFileBuilder.withChunkCache(chunkCache);
         partitionIndexFileBuilder.mmapped(ioOptions.indexDiskAccessMode);

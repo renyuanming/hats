@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.PartitionPosition;
 import org.apache.cassandra.dht.IPartitioner;
@@ -179,7 +179,7 @@ public class PartitionIndex implements SharedCloseable
 
     public static Pair<DecoratedKey, DecoratedKey> readFirstAndLastKey(File file, IPartitioner partitioner) throws IOException
     {
-        try (PartitionIndex index = load(new FileHandle.Builder(file), partitioner, false))
+        try (PartitionIndex index = load(new FileHandle.Builder(file, DatabaseDescriptor.useDirectIO()), partitioner, false))
         {
             return Pair.create(index.firstKey(), index.lastKey());
         }
