@@ -77,6 +77,11 @@ public class SimpleCachedBufferPool
         return preferredReusableBufferType.allocate(bufferSize);
     }
 
+    public ByteBuffer getThreadLocalReusableBuffer(int size, boolean useDirectIO)
+    {
+        return bufferHolder.getBuffer(size, useDirectIO);
+    }
+
     public ByteBuffer getThreadLocalReusableBuffer(int size)
     {
         return bufferHolder.getBuffer(size);
