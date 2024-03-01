@@ -30,82 +30,90 @@
  import org.apache.cassandra.config.DatabaseDescriptor;
  import org.apache.cassandra.exceptions.ConfigurationException;
  
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
  public class DirectIOUtils
  {
-     public static final int BLOCK_SIZE;
+    public static final int BLOCK_SIZE;
+     
+    private static final Logger logger = LoggerFactory.getLogger(ChannelProxy.class);
  
-     static
-     {
-         try
-         {
-             // BLOCK_SIZE is the max of the block sizes of the data file directories.
-             int blockSize = 0;
-             for (String datadir : DatabaseDescriptor.getAllDataFileLocations())
-             {
-                 Path path = Paths.get(datadir);
-                 if (datadir == null || !Files.exists(path))
-                     throw new ConfigurationException("data_file_directories is not set or does not exist.", false);
+    static
+    {
+        try
+        {
+            // BLOCK_SIZE is the max of the block sizes of the data file directories.
+            int blockSize = 0;
+            for (String datadir : DatabaseDescriptor.getAllDataFileLocations())
+            {
+                Path path = Paths.get(datadir);
+                if (datadir == null || !Files.exists(path))
+                    throw new ConfigurationException("data_file_directories is not set or does not exist.", false);
+
+                FileStore fs = Files.getFileStore(path);
+                Method method = FileStore.class.getDeclaredMethod("getBlockSize");
+
+                int n = ((Long) method.invoke(fs)).intValue();
+                if (n > blockSize)
+                    blockSize = n;
+            }
+            BLOCK_SIZE = blockSize;
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
  
-                 FileStore fs = Files.getFileStore(path);
-                 Method method = FileStore.class.getDeclaredMethod("getBlockSize");
- 
-                 int n = ((Long) method.invoke(fs)).intValue();
-                 if (n > blockSize)
-                     blockSize = n;
-             }
-             BLOCK_SIZE = blockSize;
-         }
-         catch (Exception e)
-         {
-             throw new RuntimeException(e);
-         }
-     }
- 
-     /**
-      * Allocates a block aligned direct byte buffer. The size of the returned
-      * buffer is the nearest multiple of BLOCK_SIZE to the requested size.
-      *
-      * @param size the requested size of a byte buffer.
-      * @return aligned byte buffer.
-      */
-     public static ByteBuffer allocate(int size)
-     {
-         try
-         {
-             int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
-             Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
-             ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
-             return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
-         }
-         catch (Exception e) {
-             throw new RuntimeException(e);
-         }
-     }
- 
-     /**
-      * Reads a sequence of bytes from the file channel into the given byte buffer.
-      *
-      * We rely on ByteBuffer.compact() method so that the caller of this method
-      * can safely flip() the buffer for reading. Avoiding compact() improves
-      * performance but requires callers of this method to avoid using flip() and
-      * not rely on a position-0 invariant for chunk reader.
-      *
-      * @param channel the channel to read from.
-      * @param dst the destination byte buffer.
-      * @param position the position of the channel to start reading from.
-      * @return the number of bytes read.
-      * @throws IOException
-      */
-     public static int read(FileChannel channel, ByteBuffer dst, long position) throws IOException
-     {
-         int lim = dst.limit();
-         int r = (int) (position & (BLOCK_SIZE - 1));
-         int len = lim + r;
-         dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
-         int n = channel.read(dst, position & -BLOCK_SIZE);
-         n -= r;
-         n = n < lim ? n : lim;
-         dst.position(r).limit(r + n);
-         return n;
-     }
+    /**
+     * Allocates a block aligned direct byte buffer. The size of the returned
+    * buffer is the nearest multiple of BLOCK_SIZE to the requested size.
+    *
+    * @param size the requested size of a byte buffer.
+    * @return aligned byte buffer.
+    */
+    public static ByteBuffer allocate(int size)
+    {
+        try
+        {
+            int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
+            Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
+            ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
+            logger.debug("rymDebug: DirectIOUtils.BLOCK_SIZE: {}, the size is {}, n is {}", BLOCK_SIZE, size, n);
+            return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Reads a sequence of bytes from the file channel into the given byte buffer.
+    *
+    * We rely on ByteBuffer.compact() method so that the caller of this method
+    * can safely flip() the buffer for reading. Avoiding compact() improves
+    * performance but requires callers of this method to avoid using flip() and
+    * not rely on a position-0 invariant for chunk reader.
+    *
+    * @param channel the channel to read from.
+    * @param dst the destination byte buffer.
+    * @param position the position of the channel to start reading from.
+    * @return the number of bytes read.
+    * @throws IOException
+    */
+    public static int read(FileChannel channel, ByteBuffer dst, long position) throws IOException
+    {
+        int lim = dst.limit();
+        int r = (int) (position & (BLOCK_SIZE - 1));
+        int len = lim + r;
+        int newLimit = (len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE;
+        logger.debug("rymDebug: position: {}, lim: {}, r: {}, len: {}, newLimit: {}, block size: {}, capacity: {}", position, lim, r, len, newLimit, BLOCK_SIZE, dst.capacity());
+        dst.limit(newLimit);
+        int n = channel.read(dst, position & -BLOCK_SIZE);
+        n -= r;
+        n = n < lim ? n : lim;
+        dst.position(r).limit(r + n);
+        return n;
+    }
  }
