@@ -147,15 +147,16 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                     if (shouldCheckCrc)
                     {
-                        int cpos = compressed.position(); // always 0 if not using direct IO
+                        // int cpos = compressed.position(); // always 0 if not using direct IO
                         int checksum = (int) ChecksumType.CRC32.of(compressed);
 
-                        compressed.limit(cpos + length);
+                        // compressed.limit(cpos + length);
+                        compressed.limit(length);
                         if (compressed.getInt() != checksum)
                             throw new CorruptBlockException(channel.filePath(), chunk);
 
-                        // compressed.position(0).limit(chunk.length);
-                        compressed.position(cpos).limit(cpos + chunk.length);
+                        compressed.position(0).limit(chunk.length);
+                        // compressed.position(cpos).limit(cpos + chunk.length);
                     }
 
                     try
@@ -192,7 +193,6 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 if (!useDirectIO) 
                 {
                     uncompressed.flip();
-                    
                 }
             }
             catch (CorruptBlockException e)
