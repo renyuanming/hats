@@ -72,10 +72,11 @@ public class DirectIOUtils
     {
         try
         {
-            int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
-            Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
-            ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
-            return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
+            // int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
+            // Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
+            // ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
+            // return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
+            return ByteBuffer.allocateDirect(Math.addExact(size, BLOCK_SIZE - 1)).alignedSlice(BLOCK_SIZE);
         }
         catch (Exception e) {
             throw new RuntimeException(e);

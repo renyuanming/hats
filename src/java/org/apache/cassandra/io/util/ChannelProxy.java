@@ -22,7 +22,9 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.OpenOption;
+import java.nio.file.Files;
+// import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
@@ -61,7 +63,8 @@ public final class ChannelProxy extends SharedCloseableImpl
         {
             return useDirectIO ?
                    FileChannel.open(file.toPath(), StandardOpenOption.READ) : 
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ, (OpenOption) Enum.valueOf((Class<? extends Enum>) Class.forName("com.sun.nio.file.ExtendedOpenOption"), "DIRECT"));
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT);
+                //    FileChannel.open(file.toPath(), StandardOpenOption.READ, (OpenOption) Enum.valueOf((Class<? extends Enum>) Class.forName("com.sun.nio.file.ExtendedOpenOption"), "DIRECT"));
             // return FileChannel.open(file.toPath(), StandardOpenOption.READ);
         }
         catch (Exception e)
@@ -246,30 +249,25 @@ public final class ChannelProxy extends SharedCloseableImpl
     public static void main(String[] args) {
         // 文件路径
         String filePath = "/home/rym/direct_io_example.txt";
+        Path p = Paths.get(filePath);
 
         try {
+            int blockSize = Math.toIntExact(Files.getFileStore(p).getBlockSize());
+            // print the block size of the file store
+            System.out.println("Block size: " + blockSize);
+            ByteBuffer block =  ByteBuffer.allocateDirect(Math.addExact(blockSize, blockSize - 1)).alignedSlice(blockSize);
             // 打开文件通道，传入READ参数以支持直接I/O
-            FileChannel channel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ, ExtendedOpenOption.DIRECT);
+            FileChannel channel = FileChannel.open(p, StandardOpenOption.READ, ExtendedOpenOption.DIRECT);
 
-            // 获取文件大小
-            int fileSize = (int) channel.size();
-
-            // 分配直接内存缓冲区
-            ByteBuffer buffer = ByteBuffer.allocateDirect(fileSize);
-            // 从文件通道读取数据到缓冲区
-            channel.read(buffer);
-
-            // 切换缓冲区为读模式
-            buffer.flip();
-
-            // 读取缓冲区中的数据
-            byte[] data = new byte[buffer.remaining()];
-            buffer.get(data);
-
-            // 将字节数组转换为字符串并输出
-            String content = new String(data);
-            System.out.println("Data read from file: " + content);
-
+            int result = channel.read(block);
+            
+            // output the content of block
+            block.flip();
+            while (block.hasRemaining()) {
+                System.out.print((char) block.get());
+            }
+            System.out.println();
+            
             // 关闭文件通道
             channel.close();
         } catch (IOException e) {
