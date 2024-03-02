@@ -160,6 +160,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     {
                         int cpos = compressed.position(); // always 0 if not using direct IO
                         int checksum = (int) ChecksumType.CRC32.of(compressed);
+                        if(cpos==0 && useDirectIO)
+                            logger.debug("rymDebug: the cpos is 0 in the direct io mode");
 
                         compressed.limit(cpos + length);
                         // compressed.limit(length);
