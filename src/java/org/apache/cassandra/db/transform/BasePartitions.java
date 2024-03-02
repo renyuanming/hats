@@ -22,7 +22,11 @@ package org.apache.cassandra.db.transform;
 
 import org.apache.cassandra.db.partitions.BasePartitionIterator;
 import org.apache.cassandra.db.rows.BaseRowIterator;
+import org.apache.cassandra.io.util.CompressedChunkReader;
 import org.apache.cassandra.utils.Throwables;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.cassandra.utils.Throwables.merge;
 
@@ -30,6 +34,8 @@ public abstract class BasePartitions<R extends BaseRowIterator<?>, I extends Bas
 extends BaseIterator<BaseRowIterator<?>, I, R>
 implements BasePartitionIterator<R>
 {
+    
+    private static final Logger logger = LoggerFactory.getLogger(BasePartitions.class);
 
     public BasePartitions(I input)
     {
@@ -90,6 +96,11 @@ implements BasePartitionIterator<R>
                 while (!stop.isSignalled && !stopChild.isSignalled && input.hasNext())
                 {
                     next = input.next();
+                    if (next.metadata().name.contains("24101c25a2ae3af787c1b40ee1aca33f"))
+                    {
+                        logger.debug("rymDebug: BasePartitions.hasNext() - next.metadata().name: {}, stop.isSignalled: {}, stopChild.isSignalled: {}", next.metadata().name, stop.isSignalled, stopChild.isSignalled);
+                    }
+
                     for (int i = 0 ; next != null & i < len ; i++)
                         next = fs[i].applyToPartition(next);
 
