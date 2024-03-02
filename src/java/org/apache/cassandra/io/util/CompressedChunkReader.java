@@ -30,6 +30,7 @@ import java.util.function.Supplier;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 
+import org.apache.cassandra.adaptivekv.AKUtils;
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.compress.CompressionMetadata;
 import org.apache.cassandra.io.compress.CorruptBlockException;
@@ -171,6 +172,10 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         }
                         else
                         {
+                            if(metadata.chunksIndexFile.path().contains("24101c25a2ae3af787c1b40ee1aca33f")){
+                                AKUtils.printStackTace(String.format("rymDebug: the CRC check correct for the compression data: %s, the file is %s, chunksIndexFile: %s, compressedFileLength: %s, dataLength: %s, the checksum is %s, the compressed.getInt is %s"
+                                , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt));
+                            }
                             logger.debug("rymDebug: the CRC check correct for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}"
                                          , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength);
                         }
