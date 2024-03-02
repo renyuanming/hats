@@ -25,6 +25,8 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
+import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.adaptivekv.AKUtils.AKLogLevels;
 import org.apache.cassandra.db.SerializationHeader;
 import org.apache.cassandra.exceptions.UnknownColumnException;
 import org.apache.cassandra.io.FSWriteError;
@@ -64,6 +66,7 @@ public class StatsComponent
         }
         catch (IOException e)
         {
+            AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: load file %s ERROR: %s", descriptor.fileFor(Components.STATS), e));
             throw new CorruptSSTableException(e, descriptor.fileFor(Components.STATS));
         }
 
