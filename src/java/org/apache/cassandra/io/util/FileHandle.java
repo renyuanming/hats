@@ -323,13 +323,15 @@ public class FileHandle extends SharedCloseableImpl
          */
         public Builder mmapped(boolean mmapped)
         {
-            this.mmapped = this.useDirectIO ? false : mmapped;
+            // this.mmapped = this.useDirectIO ? false : mmapped;
+            this.mmapped = mmapped;
             return this;
         }
 
         public Builder mmapped(Config.DiskAccessMode diskAccessMode)
         {
-            this.mmapped = this.useDirectIO ? false : diskAccessMode == Config.DiskAccessMode.mmap;
+            // this.mmapped = this.useDirectIO ? false : diskAccessMode == Config.DiskAccessMode.mmap;
+            this.mmapped = diskAccessMode == Config.DiskAccessMode.mmap;
             return this;
         }
 
