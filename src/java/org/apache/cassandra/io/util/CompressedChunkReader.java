@@ -164,8 +164,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         int compressedGetInt = compressed.getInt();
                         if (compressedGetInt != checksum)
                         {
-                            logger.error("rymERROR: the CRC check failed for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}"
-                                         , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength);
+                            logger.error("rymERROR: the CRC check failed for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}, the checksum is {}, the compressed.getInt is {}"
+                                         , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt);
                             // logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
