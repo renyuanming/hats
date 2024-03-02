@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import org.apache.cassandra.io.FSReadError;
@@ -58,8 +60,8 @@ public final class ChannelProxy extends SharedCloseableImpl
         try
         {
             return useDirectIO ?
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) :
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ);
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ) : 
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ, (OpenOption) Enum.valueOf((Class<? extends Enum>) Class.forName("com.sun.nio.file.ExtendedOpenOption"), "DIRECT"));
             // return FileChannel.open(file.toPath(), StandardOpenOption.READ);
         }
         catch (Exception e)
@@ -239,5 +241,39 @@ public final class ChannelProxy extends SharedCloseableImpl
     public String toString()
     {
         return filePath();
+    }
+
+    public static void main(String[] args) {
+        // 文件路径
+        String filePath = "/home/rym/direct_io_example.txt";
+
+        try {
+            // 打开文件通道，传入READ参数以支持直接I/O
+            FileChannel channel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ, ExtendedOpenOption.DIRECT);
+
+            // 获取文件大小
+            int fileSize = (int) channel.size();
+
+            // 分配直接内存缓冲区
+            ByteBuffer buffer = ByteBuffer.allocateDirect(fileSize);
+            // 从文件通道读取数据到缓冲区
+            channel.read(buffer);
+
+            // 切换缓冲区为读模式
+            buffer.flip();
+
+            // 读取缓冲区中的数据
+            byte[] data = new byte[buffer.remaining()];
+            buffer.get(data);
+
+            // 将字节数组转换为字符串并输出
+            String content = new String(data);
+            System.out.println("Data read from file: " + content);
+
+            // 关闭文件通道
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
