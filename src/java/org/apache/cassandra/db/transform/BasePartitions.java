@@ -96,10 +96,7 @@ implements BasePartitionIterator<R>
                 while (!stop.isSignalled && !stopChild.isSignalled && input.hasNext())
                 {
                     next = input.next();
-                    if (next.metadata().name.contains("24101c25a2ae3af787c1b40ee1aca33f"))
-                    {
-                        logger.debug("rymDebug: BasePartitions.hasNext() - next.metadata().name: {}, stop.isSignalled: {}, stopChild.isSignalled: {}", next.metadata().name, stop.isSignalled, stopChild.isSignalled);
-                    }
+                    logger.debug("rymDebug: BasePartitions.hasNext() - next.metadata().name: {}, stop.isSignalled: {}, stopChild.isSignalled: {}, next is {}", next.metadata().name, stop.isSignalled, stopChild.isSignalled, next);
 
                     for (int i = 0 ; next != null & i < len ; i++)
                         next = fs[i].applyToPartition(next);
