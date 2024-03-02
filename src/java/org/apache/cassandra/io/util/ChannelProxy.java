@@ -57,9 +57,10 @@ public final class ChannelProxy extends SharedCloseableImpl
     {
         try
         {
-            return useDirectIO ?
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) :
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ);
+            // return useDirectIO ?
+            //        FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) :
+            //        FileChannel.open(file.toPath(), StandardOpenOption.READ);
+            return FileChannel.open(file.toPath(), StandardOpenOption.READ);
         }
         catch (Exception e)
         {
