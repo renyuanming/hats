@@ -24,9 +24,22 @@ public class AKUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(AKUtils.class);
 
-    public static void printStackTace(String msg) 
+    public enum AKLogLevels {
+        TRACE, 
+        DEBUG, 
+        INFO, 
+        WARN, 
+        ERROR
+    }
+
+    public static void printStackTace(AKLogLevels logLevel, String msg) 
     {
-        logger.debug("stack trace {}", new Exception(msg));
+        if (logLevel.equals(AKLogLevels.DEBUG))
+            logger.debug("stack trace {}", new Exception(msg));
+        if (logLevel.equals(AKLogLevels.ERROR))
+            logger.error("stack trace {}", new Exception(msg));
+        if (logLevel.equals(AKLogLevels.INFO))
+            logger.info("stack trace {}", new Exception(msg));
     }
 
 

@@ -190,8 +190,8 @@ public final class ChannelProxy extends SharedCloseableImpl
         try
         {
             // FIXME: consider wrapping in a while loop
-            return channel.read(buffer, position);
-            // return useDirectIO ? DirectIOUtils.read(channel, buffer, position) : channel.read(buffer, position);
+            // return channel.read(buffer, position);
+            return useDirectIO ? DirectIOUtils.read(channel, buffer, position) : channel.read(buffer, position);
         }
         catch (IOException e)
         {
