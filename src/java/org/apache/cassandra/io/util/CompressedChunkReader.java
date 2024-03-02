@@ -165,10 +165,9 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         int compressedGetInt = compressed.getInt();
                         if (compressedGetInt != checksum)
                         {
-                            logger.error("rymERROR: the CRC check failed for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}, the checksum is {}, the compressed.getInt is {}"
-                                         , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt);
-                            // logger.debug("rymERROR: compressed.limit: {}, length: {}, chunk.length: {}, Integer.bytes: {}, cpos: {}, compressed.capacity(): {}, checksum: {}, compressed.getInt: {}, channel.useDirectIO: {}, stack trace {}", compressed.limit(), length, chunk.length, Integer.BYTES, cpos, compressed.capacity(), checksum, compressedGetInt, channel.useDirectIO, new Exception(""));
-                            throw new CorruptBlockException(channel.filePath(), chunk);
+                            AKUtils.printStackTace(String.format("rymERROR: the CRC check failed for the compression data: %s, the file is %s, chunksIndexFile: %s, compressedFileLength: %s, dataLength: %s, the checksum is %s, the compressed.getInt is %s"
+                                , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt));
+                            // throw new CorruptBlockException(channel.filePath(), chunk);
                         }
                         else
                         {
@@ -176,8 +175,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                                 AKUtils.printStackTace(String.format("rymDebug: the CRC check correct for the compression data: %s, the file is %s, chunksIndexFile: %s, compressedFileLength: %s, dataLength: %s, the checksum is %s, the compressed.getInt is %s"
                                 , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt));
                             }
-                            logger.debug("rymDebug: the CRC check correct for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}"
-                                         , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength);
+                            // logger.debug("rymDebug: the CRC check correct for the compression data: {}, the file is {}, chunksIndexFile: {}, compressedFileLength: {}, dataLength: {}"
+                            //              , metadata.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength);
                         }
 
                         // compressed.position(0).limit(chunk.length);
@@ -224,7 +223,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
             {
                 // Make sure reader does not see stale data.
                 uncompressed.position(0).limit(0);
-                throw new CorruptSSTableException(e, channel.filePath());
+                // throw new CorruptSSTableException(e, channel.filePath());
             }
         }
 
