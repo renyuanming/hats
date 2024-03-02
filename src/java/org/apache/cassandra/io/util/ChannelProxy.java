@@ -57,10 +57,10 @@ public final class ChannelProxy extends SharedCloseableImpl
     {
         try
         {
-            return useDirectIO ?
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) :
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ);
-            // return FileChannel.open(file.toPath(), StandardOpenOption.READ);
+            // return useDirectIO ?
+            //        FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) :
+            //        FileChannel.open(file.toPath(), StandardOpenOption.READ);
+            return FileChannel.open(file.toPath(), StandardOpenOption.READ);
         }
         catch (Exception e)
         {
@@ -185,8 +185,8 @@ public final class ChannelProxy extends SharedCloseableImpl
         try
         {
             // FIXME: consider wrapping in a while loop
-            // return channel.read(buffer, position);
-            return useDirectIO ? DirectIOUtils.read(channel, buffer, position) : channel.read(buffer, position);
+            return channel.read(buffer, position);
+            // return useDirectIO ? DirectIOUtils.read(channel, buffer, position) : channel.read(buffer, position);
         }
         catch (IOException e)
         {

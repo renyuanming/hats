@@ -22,7 +22,6 @@ package org.apache.cassandra.db.transform;
 
 import org.apache.cassandra.db.partitions.BasePartitionIterator;
 import org.apache.cassandra.db.rows.BaseRowIterator;
-import org.apache.cassandra.io.util.CompressedChunkReader;
 import org.apache.cassandra.utils.Throwables;
 
 import org.slf4j.Logger;
@@ -96,7 +95,6 @@ implements BasePartitionIterator<R>
                 while (!stop.isSignalled && !stopChild.isSignalled && input.hasNext())
                 {
                     next = input.next();
-                    logger.debug("rymDebug: BasePartitions.hasNext() - next.metadata().name: {}, stop.isSignalled: {}, stopChild.isSignalled: {}, next is {}", next.metadata().name, stop.isSignalled, stopChild.isSignalled, next);
 
                     for (int i = 0 ; next != null & i < len ; i++)
                         next = fs[i].applyToPartition(next);
