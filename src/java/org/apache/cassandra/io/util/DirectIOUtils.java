@@ -107,10 +107,10 @@ public class DirectIOUtils
         int r = (int) (position & (BLOCK_SIZE - 1));
         int len = lim + r;
         dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
-        int n = channel.read(dst, 0);
+        int n = channel.read(dst);
         logger.debug("rymDebug: read file : {}, position: {}, n: {}, lim: {}, r: {}, len: {}", channel.toString(),  position, n, lim, r, len);
         // n -= r;
-        n = n < lim ? n : lim;
+        // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
         return n;
     }
