@@ -107,7 +107,7 @@ public class DirectIOUtils
         // n -= r;
         // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
-        dst.flip();
+        // dst.flip();
         return n;
     }
 }
