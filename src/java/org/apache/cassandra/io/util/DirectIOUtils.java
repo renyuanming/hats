@@ -111,7 +111,7 @@ public class DirectIOUtils
         logger.debug("rymDebug: read file : {}, position: {}, n: {}, lim: {}, r: {}, len: {}", channel.toString(),  position, n, lim, r, len);
         // n -= r;
         n = n < lim ? n : lim;
-        dst.position(r).limit(r + n);
+        // dst.position(r).limit(r + n);
         return n;
     }
 }
