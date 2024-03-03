@@ -110,8 +110,8 @@ public class DirectIOUtils
         int n = channel.read(dst, position);
         logger.debug("rymDebug: read file : {}, position: {}, n: {}, lim: {}, r: {}, len: {}", channel.toString(),  position, n, lim, r, len);
         // n -= r;
-        // n = n < lim ? n : lim;
-        // dst.position(r).limit(r + n);
+        n = n < lim ? n : lim;
+        dst.position(r).limit(r + n);
         return n;
     }
 }
