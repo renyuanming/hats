@@ -99,17 +99,17 @@ public class DirectIOUtils
     */
     public static int read(FileChannel channel, ByteBuffer dst, long position) throws IOException
     {
-        int lim = dst.limit();
-        int r = (int) (position & (BLOCK_SIZE - 1));
-        int len = lim + r;
-        dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
+        // int lim = dst.limit();
+        // int r = (int) (position & (BLOCK_SIZE - 1));
+        // int len = lim + r;
+        // dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
         // int n = channel.read(dst, position & -BLOCK_SIZE);
         // int n = channel.read(dst, position - r);
         // n -= r;
         // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
         int n = channel.read(dst, position);
-        dst.flip();
+        // dst.flip();
         
         return n;
     }
