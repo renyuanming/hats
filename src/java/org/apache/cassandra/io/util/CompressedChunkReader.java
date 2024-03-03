@@ -140,6 +140,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 if (chunk.length < maxCompressedLength)
                 {
                     ByteBuffer compressed = bufferHolder.getBuffer(length, useDirectIO);
+                    compressed.clear().limit(length);
 
                     int readLength = channel.read(compressed, chunk.offset);
                     if (readLength != length)
