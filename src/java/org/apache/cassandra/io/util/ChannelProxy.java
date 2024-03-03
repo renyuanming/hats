@@ -17,21 +17,26 @@
  */
 package org.apache.cassandra.io.util;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.Files;
 // import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import org.apache.cassandra.io.FSReadError;
+import org.apache.cassandra.io.directio.DirectRandomAccessFile;
 import org.apache.cassandra.utils.NativeLibrary;
 import org.apache.cassandra.utils.concurrent.RefCounted;
 import org.apache.cassandra.utils.concurrent.SharedCloseableImpl;
+// import java.io.File;
 
 
 import com.sun.nio.file.ExtendedOpenOption;
@@ -61,9 +66,9 @@ public final class ChannelProxy extends SharedCloseableImpl
     {
         try
         {
-            return useDirectIO ?
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ) : 
-                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT);
+            return useDirectIO ? 
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ, ExtendedOpenOption.DIRECT) : 
+                   FileChannel.open(file.toPath(), StandardOpenOption.READ);
                 //    FileChannel.open(file.toPath(), StandardOpenOption.READ, (OpenOption) Enum.valueOf((Class<? extends Enum>) Class.forName("com.sun.nio.file.ExtendedOpenOption"), "DIRECT"));
             // return FileChannel.open(file.toPath(), StandardOpenOption.READ);
         }
@@ -246,32 +251,47 @@ public final class ChannelProxy extends SharedCloseableImpl
         return filePath();
     }
 
-    public static void main(String[] args) {
-        // 文件路径
-        String filePath = "/home/rym/direct_io_example.txt";
-        Path p = Paths.get(filePath);
+    public static void main(String[] args) throws IOException {
+		boolean directIO = false;
+		int bufferSize =  (1<<30); // 4gb
+		String inputFile = "/home/rym/test/testfile";
+		String outputFile = "/home/rym/test/outputfile";
 
-        try {
-            int blockSize = Math.toIntExact(Files.getFileStore(p).getBlockSize());
-            // print the block size of the file store
-            System.out.println("Block size: " + blockSize);
-            ByteBuffer block =  ByteBuffer.allocateDirect(Math.addExact(blockSize, blockSize - 1)).alignedSlice(blockSize);
-            // 打开文件通道，传入READ参数以支持直接I/O
-            FileChannel channel = FileChannel.open(p, StandardOpenOption.READ, ExtendedOpenOption.DIRECT);
+		if(directIO) 
+		{			
+			byte[] buf = new byte[bufferSize];
+			DirectRandomAccessFile fin = new DirectRandomAccessFile(new File(inputFile), "r", bufferSize);
+			DirectRandomAccessFile fout = new DirectRandomAccessFile(new File(outputFile), "rw", bufferSize);
+			
+			while (fin.getFilePointer() < fin.length()) {
+				int remaining = (int)Math.min(bufferSize, fin.length()-fin.getFilePointer());
+				fin.read(buf,0,remaining);
+				fout.write(buf,0,remaining);
+			}
+			
+			fin.close();
+			fout.close();
+		}
+		else {
+            InputStream in = null;
+            OutputStream out = null;
+            try {
+                in = new FileInputStream(inputFile);
+                out = new FileOutputStream(outputFile);
 
-            int result = channel.read(block);
-            
-            // output the content of block
-            block.flip();
-            while (block.hasRemaining()) {
-                System.out.print((char) block.get());
+                byte[] buffer = new byte[bufferSize];
+                int length;
+                while ((length = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, length);
+                }
+            } finally {
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
             }
-            System.out.println();
-            
-            // 关闭文件通道
-            channel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
