@@ -30,10 +30,14 @@
  import org.apache.cassandra.config.DatabaseDescriptor;
  import org.apache.cassandra.exceptions.ConfigurationException;
  
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DirectIOUtils
 {
     public static int BLOCK_SIZE = 4096;
 
+    private static final Logger logger = LoggerFactory.getLogger(DirectIOUtils.class);
     static
     {
         try
@@ -104,6 +108,7 @@ public class DirectIOUtils
         int len = lim + r;
         dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
         int n = channel.read(dst, position);
+        logger.debug("rymDebug: read file : {}, position: {}, n: {}, lim: {}, r: {}, len: {}", channel.toString(),  position, n, lim, r, len);
         // n -= r;
         // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
