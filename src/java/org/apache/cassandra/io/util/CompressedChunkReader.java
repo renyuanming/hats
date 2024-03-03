@@ -32,6 +32,7 @@ import com.google.common.primitives.Ints;
 
 import org.apache.cassandra.adaptivekv.AKUtils;
 import org.apache.cassandra.adaptivekv.AKUtils.AKLogLevels;
+import org.apache.cassandra.index.Index.LoadType;
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.compress.CompressionMetadata;
 import org.apache.cassandra.io.compress.CorruptBlockException;
@@ -141,8 +142,12 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 {
                     ByteBuffer compressed = bufferHolder.getBuffer(length, useDirectIO);
 
-                    if (channel.read(compressed, chunk.offset) != length)
+                    int readLength = channel.read(compressed, chunk.offset);
+                    if (readLength != length)
+                    {
+                        AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: the compressed.limit: %s, chunk.offset is %s, length is %s, the read length is %s", compressed.limit(), chunk.offset, length, readLength));
                         throw new CorruptBlockException(channel.filePath(), chunk);
+                    }
 
                     if(!useDirectIO)
                     {
