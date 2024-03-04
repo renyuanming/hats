@@ -112,7 +112,20 @@ public class DirectIOUtils
         {
             logger.debug("rymDebug: The file {} length {} is different from the read length {}, lim: {}, r: {}, position is {}, position & -BLOCK_SIZE is {}", channel.toString(), n, length, lim, r, position, position & -BLOCK_SIZE);
         }
-        dst.position(n-length).limit(n);
+        int cpos;
+        int end;
+
+        if(position == 0)
+        {
+            cpos = n - length;
+            end = n;
+        }
+        else
+        {
+            cpos = r;
+            end = (int) (position + length);
+        }
+        dst.position(cpos).limit(end);
         // n -= r;
         // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
