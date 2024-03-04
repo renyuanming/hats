@@ -147,7 +147,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     }
 
                     if (metadata.chunksIndexFile.path().contains("7ad54392bcdd35a684174e047860b377")){
-                        logger.debug("rymDebug: the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength);
+                        logger.debug("rymDebug: the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength, chunk.offset);
                         // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
                     }
 
