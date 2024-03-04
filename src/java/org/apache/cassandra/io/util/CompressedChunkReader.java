@@ -151,7 +151,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
                     }
 
-                    if(chunk.offset != 0)
+                    if(chunk.offset != 0 && useDirectIO)
                     {
                         compressed.limit(compressed.position() + chunk.length);
                     }
