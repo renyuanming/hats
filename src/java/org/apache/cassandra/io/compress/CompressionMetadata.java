@@ -236,7 +236,7 @@ public class CompressionMetadata extends WrappedSharedCloseable
      * @param position Position in the file.
      * @return pair of chunk offset and length.
      */
-    public Chunk chunkFor(long position)
+    public Chunk chunkFor(long position, boolean useDirectIO)
     {
         // position of the chunk
         long idx = 8 * (position / parameters.chunkLength());
@@ -249,11 +249,25 @@ public class CompressionMetadata extends WrappedSharedCloseable
                                               chunksIndexFile);
 
         long chunkOffset = chunkOffsets.getLong(idx);
-        long nextChunkOffset = (idx + 8 == chunkOffsetsSize)
+
+        long nextChunkOffset;
+        if(useDirectIO)
+        {
+            nextChunkOffset = compressedFileLength;
+        }
+        else{
+            nextChunkOffset = (idx + 8 == chunkOffsetsSize)
                                 ? compressedFileLength
                                 : chunkOffsets.getLong(idx + 8);
+        }
+
         logger.debug("rymDebug: The file is {}, compressed file length is {}, chunk index file length is: {}, Chunk offset: {}, next chunk offset: {}, posistion: {}, idx is: {}, parameters.chunkLength is {}, chunkOffset is {}, ChunkoffsetSize is {}", chunksIndexFile.path(), compressedFileLength, chunksIndexFile.length(), chunkOffset, nextChunkOffset, position, idx, parameters.chunkLength(), chunkOffset, chunkOffsetsSize);
         return new Chunk(chunkOffset, (int) (nextChunkOffset - chunkOffset - 4)); // "4" bytes reserved for checksum
+    }
+
+    public Chunk chunkFor(long position)
+    {
+        return chunkFor(position, false);
     }
 
     public long getDataOffsetForChunkOffset(long chunkOffset)

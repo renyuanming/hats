@@ -130,7 +130,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 assert (position & -uncompressed.capacity()) == position;
                 assert position <= fileLength;
 
-                CompressionMetadata.Chunk chunk = metadata.chunkFor(position);
+                CompressionMetadata.Chunk chunk = metadata.chunkFor(position, useDirectIO);
                 boolean shouldCheckCrc = shouldCheckCrc();
                 int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
                                             : chunk.length;
