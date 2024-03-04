@@ -38,6 +38,7 @@ import org.apache.cassandra.io.FSWriteError;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
+import org.apache.cassandra.io.util.CompressedChunkReader;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.io.util.File;
@@ -49,6 +50,8 @@ import org.apache.cassandra.schema.CompressionParams;
 import org.apache.cassandra.utils.concurrent.Ref;
 import org.apache.cassandra.utils.concurrent.Transactional;
 import org.apache.cassandra.utils.concurrent.WrappedSharedCloseable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Holds metadata about compressed file
@@ -65,6 +68,7 @@ public class CompressionMetadata extends WrappedSharedCloseable
     private final long chunkOffsetsSize;
     public final File chunksIndexFile;
     public final CompressionParams parameters;
+    private static final Logger logger = LoggerFactory.getLogger(CompressedChunkReader.class);
 
     @VisibleForTesting
     public static CompressionMetadata open(File chunksIndexFile, long compressedLength, boolean hasMaxCompressedSize)
@@ -248,7 +252,7 @@ public class CompressionMetadata extends WrappedSharedCloseable
         long nextChunkOffset = (idx + 8 == chunkOffsetsSize)
                                 ? compressedFileLength
                                 : chunkOffsets.getLong(idx + 8);
-
+        logger.debug("rymDebug: The file is {}, compressed file length is {}, chunk index file length is: {}, Chunk offset: {}, next chunk offset: {}, posistion: {}", chunksIndexFile.path(), compressedFileLength, chunksIndexFile.length(), chunkOffset, nextChunkOffset, position);
         return new Chunk(chunkOffset, (int) (nextChunkOffset - chunkOffset - 4)); // "4" bytes reserved for checksum
     }
 
