@@ -19,7 +19,6 @@
 package org.apache.cassandra.io.sstable.format;
 
 import org.apache.cassandra.cache.ChunkCache;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.IOOptions;
 import org.apache.cassandra.io.sstable.SSTable;
@@ -30,7 +29,7 @@ public class IndexComponent
 {
     public static FileHandle.Builder fileBuilder(File file, IOOptions ioOptions, ChunkCache chunkCache)
     {
-        return new FileHandle.Builder(file, DatabaseDescriptor.useDirectIO()).withChunkCache(chunkCache)
+        return new FileHandle.Builder(file).withChunkCache(chunkCache)
                                            .mmapped(ioOptions.indexDiskAccessMode);
     }
 

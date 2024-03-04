@@ -24,7 +24,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.common.primitives.Ints;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.util.Rebufferer.BufferHolder;
 
@@ -329,7 +328,7 @@ public class RandomAccessReader extends RebufferingInputStream implements FileDa
     @SuppressWarnings({ "resource", "RedundantSuppression" }) // reader is closed along with the returned RandomAccessReader instance
     public static RandomAccessReader open(File file)
     {
-        ChannelProxy channel = new ChannelProxy(file, DatabaseDescriptor.useDirectIO());
+        ChannelProxy channel = new ChannelProxy(file);
         try
         {
             ChunkReader reader = new SimpleChunkReader(channel, -1, BufferType.OFF_HEAP, DEFAULT_BUFFER_SIZE);

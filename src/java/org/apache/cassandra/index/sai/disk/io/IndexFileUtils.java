@@ -82,7 +82,7 @@ public class IndexFileUtils
 
     public IndexInput openBlockingInput(File file)
     {
-        FileHandle fileHandle = new FileHandle.Builder(file, DatabaseDescriptor.useDirectIO()).complete();
+        FileHandle fileHandle = new FileHandle.Builder(file).complete();
         RandomAccessReader randomReader = fileHandle.createReader();
 
         return IndexInputReader.create(randomReader, fileHandle::close);

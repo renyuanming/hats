@@ -23,7 +23,6 @@ import java.util.zip.CRC32;
 
 import com.google.common.base.Preconditions;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.util.*;
 import org.apache.cassandra.utils.Throwables;
@@ -73,7 +72,7 @@ public class ChecksummedDataInput extends RebufferingInputStream
 
     public static ChecksummedDataInput open(File file)
     {
-        ChannelProxy channel = new ChannelProxy(file, DatabaseDescriptor.useDirectIO());
+        ChannelProxy channel = new ChannelProxy(file);
         try
         {
             return new ChecksummedDataInput(channel);
