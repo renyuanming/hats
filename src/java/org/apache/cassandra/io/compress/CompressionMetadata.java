@@ -252,7 +252,7 @@ public class CompressionMetadata extends WrappedSharedCloseable
         long nextChunkOffset = (idx + 8 == chunkOffsetsSize)
                                 ? compressedFileLength
                                 : chunkOffsets.getLong(idx + 8);
-        logger.debug("rymDebug: The file is {}, compressed file length is {}, chunk index file length is: {}, Chunk offset: {}, next chunk offset: {}, posistion: {}", chunksIndexFile.path(), compressedFileLength, chunksIndexFile.length(), chunkOffset, nextChunkOffset, position);
+        logger.debug("rymDebug: The file is {}, compressed file length is {}, chunk index file length is: {}, Chunk offset: {}, next chunk offset: {}, posistion: {}, idx is: {}, parameters.chunkLength is {}, chunkOffset is {}, ChunkoffsetSize is {}", chunksIndexFile.path(), compressedFileLength, chunksIndexFile.length(), chunkOffset, nextChunkOffset, position, idx, parameters.chunkLength(), chunkOffset, chunkOffsetsSize);
         return new Chunk(chunkOffset, (int) (nextChunkOffset - chunkOffset - 4)); // "4" bytes reserved for checksum
     }
 
