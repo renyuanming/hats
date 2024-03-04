@@ -57,7 +57,7 @@ public final class ChannelProxy extends SharedCloseableImpl
 {
     private final File file;
     private final String filePath;
-    private final FileChannel channel;
+    public final FileChannel channel;
     
     public boolean useDirectIO;
     private static final Logger logger = LoggerFactory.getLogger(ChannelProxy.class);
