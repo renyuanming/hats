@@ -113,6 +113,6 @@ public class DirectIOUtils
         // n -= r;
         // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
-        return n-length;
+        return length;
     }
 }
