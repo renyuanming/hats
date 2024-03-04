@@ -135,12 +135,9 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 int length = shouldCheckCrc ? chunk.length + Integer.BYTES // compressed length + checksum length
                                             : chunk.length;
 
-                
-                // logger.debug("rymDebug: This is readChunk(), the metadata is {}", metadata.toString());                            
                 if (chunk.length < maxCompressedLength)
                 {
                     ByteBuffer compressed = bufferHolder.getBuffer(length, useDirectIO);
-                    compressed.clear().limit(length);
 
                     int readLength = channel.read(compressed, chunk.offset);
                     if (readLength != length)
@@ -167,6 +164,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                             }
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
+
                         compressed.position(0).limit(chunk.length);
                     }
 
@@ -188,7 +186,6 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     if (shouldCheckCrc)
                     {
                         uncompressed.flip();
-                        
                         int checksum = (int) ChecksumType.CRC32.of(uncompressed);
 
                         ByteBuffer scratch = bufferHolder.getBuffer(Integer.BYTES, useDirectIO);
@@ -199,7 +196,6 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     }
                 }
                 uncompressed.flip();
-                
             }
             catch (CorruptBlockException e)
             {
