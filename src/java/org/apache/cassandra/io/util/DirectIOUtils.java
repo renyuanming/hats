@@ -101,7 +101,7 @@ public class DirectIOUtils
     * @return the number of bytes read.
     * @throws IOException
     */
-    public static int read(FileChannel channel, ByteBuffer dst, long position) throws IOException
+    public static int read(FileChannel channel, ByteBuffer dst, long position, int length) throws IOException
     {
         int lim = dst.limit();
         int r = (int) (position & (BLOCK_SIZE - 1));
@@ -109,9 +109,10 @@ public class DirectIOUtils
         dst.limit((len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE);
         int n = channel.read(dst, position);
         logger.debug("rymDebug: read file : {}, position: {}, n: {}, lim: {}, r: {}, len: {}", channel.toString(),  position, n, lim, r, len);
+        dst.position(n-length).limit(n);
         // n -= r;
         // n = n < lim ? n : lim;
         // dst.position(r).limit(r + n);
-        return n;
+        return n-length;
     }
 }
