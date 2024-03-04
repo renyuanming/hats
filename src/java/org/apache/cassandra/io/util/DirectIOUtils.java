@@ -123,7 +123,7 @@ public class DirectIOUtils
         else
         {
             cpos = r;
-            end = (int) (position + length);
+            end = r + length;
         }
         dst.position(cpos).limit(end);
         // n -= r;
