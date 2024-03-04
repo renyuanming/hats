@@ -150,16 +150,9 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         logger.debug("rymDebug: read file %s, the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
                         // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
                     }
-
-                    if(useDirectIO)
-                    {
-                        compressed.limit(compressed.position() + chunk.length);
-                    }
-                    else 
-                    {
-                        compressed.flip();
-                        compressed.limit(chunk.length);
-                    }
+                    
+                    compressed.flip();
+                    compressed.limit(chunk.length);
                     uncompressed.clear();
 
                     if (shouldCheckCrc)
@@ -172,8 +165,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         if (compressedGetInt != checksum)
                         {
                             // if(metadata.chunksIndexFile.path().contains("24101c25a2ae3af787c1b40ee1aca33f")){
-                            AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: the CRC check failed for the channel: %s, the file is %s, chunksIndexFile: %s, compressedFileLength: %s, dataLength: %s, the checksum is %s, the compressed.getInt is %s"
-                                    , channel.channel.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt));
+                            AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: the CRC check failed for the channel: %s, the file is %s, chunksIndexFile: %s, compressedFileLength: %s, dataLength: %s, the checksum is %s, the compressed.getInt is %s, compressed.position is %s, compressed.limit is %s, chunk.offset is %s"
+                                    , channel.channel.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt, compressed.position(), compressed.limit(), chunk.offset));
                             // }
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
