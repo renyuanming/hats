@@ -204,6 +204,11 @@ public final class ChannelProxy extends SharedCloseableImpl
         }
     }
 
+    public int read(ByteBuffer buffer, long position)
+    {
+        return read(buffer, position, 0);
+    }
+
     public long transferTo(long position, long count, WritableByteChannel target)
     {
         try
