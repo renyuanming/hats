@@ -109,7 +109,8 @@ public class DirectIOUtils
         int newLimit = (len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE;
         if(newLimit > dst.capacity())
         {
-            logger.error("rymERROR: The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r);
+            logger.error("rymERROR: The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
+            newLimit = dst.capacity();
         }
 
         dst.limit(newLimit);
