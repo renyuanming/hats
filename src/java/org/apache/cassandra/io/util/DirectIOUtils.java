@@ -76,10 +76,6 @@ public class DirectIOUtils
     {
         try
         {
-            // int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
-            // Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
-            // ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
-            // return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
             return ByteBuffer.allocateDirect(Math.addExact(size, BLOCK_SIZE - 1)).alignedSlice(BLOCK_SIZE);
         }
         catch (Exception e) {
@@ -115,7 +111,6 @@ public class DirectIOUtils
         // else
         // {
         //     logger.debug("rymDebug: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
-
         // }
 
         dst.limit(newLimit);
