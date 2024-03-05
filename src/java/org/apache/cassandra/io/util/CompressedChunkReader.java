@@ -142,7 +142,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     int readLength = channel.read(compressed, chunk.offset, length);
                     if (readLength != length)
                     {
-                        AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: read file %s, the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, fileLength is %s", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength));
+                        AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: read file %s, the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, channel.filePath().length is %s", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, channel.filePath().length()));
                         throw new CorruptBlockException(channel.filePath(), chunk);
                     }
 
