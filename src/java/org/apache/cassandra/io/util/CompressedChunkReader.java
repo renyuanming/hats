@@ -156,7 +156,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                         if(chunk.offset != 0 && useDirectIO)
                         {
-                            newLimit = compressed.position() + chunk.length < compressed.limit() ? compressed.position() + chunk.length : compressed.limit();
+                            newLimit = compressed.position() + chunk.length < compressed.capacity() ? compressed.position() + chunk.length : compressed.capacity();
                             compressed.limit(newLimit);
                         }
                         else 
