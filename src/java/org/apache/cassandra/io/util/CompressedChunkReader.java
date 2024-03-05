@@ -152,17 +152,14 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                             // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
                         }
 
-                        int newLimit = chunk.length;
-
                         if(chunk.offset != 0 && useDirectIO)
                         {
-                            newLimit = compressed.position() + chunk.length < compressed.capacity() ? compressed.position() + chunk.length : compressed.capacity();
-                            compressed.limit(newLimit);
+                            compressed.limit(compressed.position() + chunk.length);
                         }
                         else 
                         {
                             compressed.flip();
-                            compressed.limit(newLimit);
+                            compressed.limit(chunk.length);
                         }
                         uncompressed.clear();
 
@@ -171,7 +168,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                             int cpos = compressed.position();
                             int checksum = (int) ChecksumType.CRC32.of(compressed);
 
-                            compressed.limit(newLimit);
+                            compressed.limit(cpos + length);
                             int compressedGetInt = compressed.getInt();
                             if (compressedGetInt != checksum)
                             {
