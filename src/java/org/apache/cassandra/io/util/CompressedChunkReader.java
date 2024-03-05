@@ -153,6 +153,10 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
 
                     if(chunk.offset != 0 && useDirectIO)
                     {
+                        if(compressed.capacity() < compressed.position() + chunk.length)
+                        {
+                            logger.debug("rymDebug: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
+                        }
                         compressed.limit(compressed.position() + chunk.length);
                     }
                     else 
