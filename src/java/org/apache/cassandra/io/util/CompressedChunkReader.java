@@ -147,7 +147,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     }
 
                     if (metadata.chunksIndexFile.path().contains("7ad54392bcdd35a684174e047860b377")){
-                        logger.debug("rymDebug: read file %s, the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
+                        logger.debug("rymDebug: read file {}, the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
                         // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
                     }
 
@@ -159,7 +159,7 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                     {
                         if(chunk.offset != 0)
                         {
-                            logger.debug("rymDebug: useDirectIO %s read file %s, the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
+                            logger.debug("rymDebug: useDirectIO {} read file {}, the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
                         }
                         compressed.flip();
                         compressed.limit(chunk.length);
