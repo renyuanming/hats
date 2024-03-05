@@ -115,7 +115,6 @@ public class DirectIOUtils
         else
         {
             logger.debug("rymDebug: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
-            newLimit = dst.capacity();
 
         }
 
@@ -127,12 +126,12 @@ public class DirectIOUtils
         if(position == 0)
         {
             cpos = n - length;
-            end = n;
+            end = n < dst.capacity()? n : dst.capacity();
         }
         else
         {
             cpos = r;
-            end = r + length;
+            end = r + length < dst.capacity() ? r + length : dst.capacity();
         }
 
         dst.position(cpos).limit(end);
