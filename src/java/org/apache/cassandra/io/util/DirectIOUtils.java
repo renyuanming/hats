@@ -128,7 +128,7 @@ public class DirectIOUtils
         if(newLimit > dst.capacity())
         {
             logger.error("rymERROR: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
-            newLimit = dst.capacity();
+            // newLimit = dst.capacity();
         }
         else
         {
