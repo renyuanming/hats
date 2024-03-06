@@ -95,7 +95,7 @@ public final class ThreadLocalByteBufferHolder
             // }
             // We allocate a buffer that is BLOCK_SIZE larger than the requested size to allow for the buffer to be aligned
             buffer = useDirectIO ? 
-                     BufferType.OFF_HEAP.allocate(size + DirectIOUtils.BLOCK_SIZE, true) : 
+                     BufferType.OFF_HEAP.allocate(size + DirectIOUtils.BLOCK_SIZE * 2, true) : 
                      bufferType.allocate(size);
             reusableBB.set(buffer);
         }
