@@ -76,7 +76,7 @@ public class DirectIOUtils
     {
         try
         {
-            int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
+            int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 2;
             return ByteBuffer.allocateDirect(n * BLOCK_SIZE).alignedSlice(BLOCK_SIZE);
         }
         catch (Exception e) {
@@ -128,7 +128,7 @@ public class DirectIOUtils
         if(newLimit > dst.capacity())
         {
             logger.error("rymERROR: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, len is position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
-            newLimit = dst.capacity();
+            // newLimit = dst.capacity();
         }
         else
         {
