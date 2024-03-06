@@ -86,7 +86,7 @@ public final class ThreadLocalByteBufferHolder
     public ByteBuffer getBuffer(int size, boolean useDirectIO)
     {
         ByteBuffer buffer = reusableBB.get();
-        if (buffer.capacity() < size)
+        if (buffer.capacity() < size + DirectIOUtils.BLOCK_SIZE)
         {
             FileUtils.clean(buffer);
             // if(buffer.isDirect() && useDirectIO)
