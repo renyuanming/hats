@@ -151,31 +151,32 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                         // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
                     }
 
-                    if(chunk.offset != 0 && useDirectIO)
+                    // if(chunk.offset != 0 && useDirectIO)
+                    // {
+                    //     if(compressed.capacity() < compressed.position() + chunk.length)
+                    //     {
+                    //         logger.error("rymERROR: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
+                    //     }
+                    //     compressed.limit(compressed.position() + chunk.length);
+                    // }
+                    // else 
+                    // {
+                    if(chunk.offset != 0)
                     {
-                        if(compressed.capacity() < compressed.position() + chunk.length)
-                        {
-                            logger.error("rymERROR: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
-                        }
-                        compressed.limit(compressed.position() + chunk.length);
+                        logger.debug("rymDebug: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
                     }
-                    else 
-                    {
-                        if(chunk.offset != 0)
-                        {
-                            logger.debug("rymDebug: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
-                        }
-                        compressed.flip();
-                        compressed.limit(chunk.length);
-                    }
+                    compressed.flip();
+                    compressed.limit(chunk.length);
+                    // }
                     uncompressed.clear();
 
                     if (shouldCheckCrc)
                     {
-                        int cpos = compressed.position();
+                        // int cpos = compressed.position();
                         int checksum = (int) ChecksumType.CRC32.of(compressed);
 
-                        compressed.limit(cpos + length);
+                        // compressed.limit(cpos + length);
+                        compressed.limit(length);
                         int compressedGetInt = compressed.getInt();
                         if (compressedGetInt != checksum)
                         {
@@ -186,7 +187,8 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                             throw new CorruptBlockException(channel.filePath(), chunk);
                         }
 
-                        compressed.position(cpos).limit(cpos + chunk.length);
+                        compressed.position(0).limit(chunk.length);
+                        // compressed.position(cpos).limit(cpos + chunk.length);
                     }
 
                     try
