@@ -76,7 +76,8 @@ public class DirectIOUtils
     {
         try
         {
-            return ByteBuffer.allocateDirect(Math.addExact(size, BLOCK_SIZE - 1)).alignedSlice(BLOCK_SIZE);
+            int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
+            return ByteBuffer.allocateDirect(n * BLOCK_SIZE).alignedSlice(BLOCK_SIZE);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
