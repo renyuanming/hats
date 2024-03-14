@@ -103,8 +103,6 @@ public class CompressedSequentialWriter extends SequentialWriter
         /* Index File (-CompressionInfo.db component) and it's header */
         metadataWriter = CompressionMetadata.Writer.open(parameters, offsetsFile);
 
-        // AKUtils.printStackTace(String.format("rymDebug: We write the file: %s, the offset file: %s, the digest file: %s, the compressed buffer len: %s, the offsetfile length: %s, file length: %s", file.path(), offsetsFile.path(), digestFile.path(), compressed.capacity(), offsetsFile.length(), file.length()));
-
         this.sstableMetadataCollector = sstableMetadataCollector;
         crcMetadata = new ChecksumWriter(new DataOutputStream(Channels.newOutputStream(channel)));
     }

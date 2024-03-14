@@ -17,6 +17,11 @@
  */
 
 package org.apache.cassandra.adaptivekv;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.TreeMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,5 +47,37 @@ public class AKUtils {
             logger.info("stack trace {}", new Exception(msg));
     }
 
+    public static class TimeCounter {
+        private int cnt = 0;
+        private Map<Long, Integer> history = new TreeMap<>();
+        private Timer timer = new Timer();
+
+        public TimeCounter(int seconds) {
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    saveAndReset();
+                }
+            }, seconds * 1000, seconds * 1000);
+        }
+
+        public synchronized void increment() {
+            cnt++;
+        }
+
+        private synchronized void saveAndReset() {
+            history.put(System.currentTimeMillis() / 1000, cnt);
+            cnt = 0;
+        }
+
+        public synchronized Map<Long, Integer> getHistory() {
+            return new TreeMap<>(history);
+        }
+
+        public void stop() {
+            timer.cancel();
+        }
+    }
+    
 
 }

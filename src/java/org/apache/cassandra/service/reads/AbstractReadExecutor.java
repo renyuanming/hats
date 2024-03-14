@@ -55,7 +55,9 @@ import static com.google.common.collect.Iterables.all;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import org.apache.cassandra.dht.Token;
 
+import java.net.InetAddress;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 
@@ -332,6 +334,17 @@ public abstract class AbstractReadExecutor
 
     }
 
+    private static synchronized void recordReadCountForReplicaGroup(Keyspace keyspace, Token token)  {
+        
+        if (keyspace.getName().equals("ycsb")) {
+            InetAddress replicaGroup = StorageService.instance.getNaturalEndpointsForToken(keyspace.getName(), token).get(0);
+            if(!StorageService.instance.readCountOfEachReplicaGroup.containsKey(replicaGroup)) {
+                StorageService.instance.readCountOfEachReplicaGroup.put(replicaGroup, new AtomicLong(0));
+            }
+            StorageService.instance.readCountOfEachReplicaGroup.get(replicaGroup).incrementAndGet();
+        }
+    }
+
     /**
      * @return an executor appropriate for the configured speculative read policy
      */
@@ -342,6 +355,14 @@ public abstract class AbstractReadExecutor
         Keyspace keyspace = Keyspace.open(command.metadata().keyspace);
         ColumnFamilyStore cfs = keyspace.getColumnFamilyStore(command.metadata().id);
         SpeculativeRetryPolicy retry = cfs.metadata().params.speculativeRetry;
+
+        // Count the request count before replica selection
+        if(keyspace.getName().equals("ycsb"))
+        {   
+            recordReadCountForReplicaGroup(keyspace, command.partitionKey().getToken());
+            StorageService.instance.totalReadRequestCountBeforeReplicaSelection.incrementAndGet();
+        }
+        
 
         ReplicaPlan.ForTokenRead replicaPlan = ReplicaPlans.forRead(keyspace,
                                                                     command.partitionKey().getToken(),
