@@ -76,11 +76,8 @@ public class DirectIOUtils
     {
         try
         {
-            // int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
-            // Method method = ByteBuffer.class.getDeclaredMethod("alignedSlice", int.class);
-            // ByteBuffer buf = ByteBuffer.allocateDirect(n * BLOCK_SIZE);
-            // return (ByteBuffer) method.invoke(buf, BLOCK_SIZE);
-            return ByteBuffer.allocateDirect(Math.addExact(size, BLOCK_SIZE - 1)).alignedSlice(BLOCK_SIZE);
+            int n = (size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
+            return ByteBuffer.allocateDirect(n * BLOCK_SIZE).alignedSlice(BLOCK_SIZE);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
@@ -106,44 +103,25 @@ public class DirectIOUtils
         int lim = dst.limit();
         int r = (int) (position & (BLOCK_SIZE - 1));
         int len = lim + r;
+        
         int newLimit = (len & (BLOCK_SIZE - 1)) == 0 ? len : (len & -BLOCK_SIZE) + BLOCK_SIZE;
         if(newLimit > dst.capacity())
         {
-            logger.error("rymERROR: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
-            newLimit = dst.capacity();
+            logger.error("rymERROR: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, len is position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
+            // newLimit = dst.capacity();
         }
-        else
-        {
-            logger.debug("rymDebug: DirectIOUtils.java The file {}, newLimit {} is larger than the capacity {}, lim is {}, position is {}, BLOCK_SIZE is {}, r is {}, position & -BLOCK_SIZE is {}, length is {}", channel.toString(), newLimit, dst.capacity(), lim, position, BLOCK_SIZE, r, position & -BLOCK_SIZE, length);
-
-        }
-
         dst.limit(newLimit);
+
         int n = channel.read(dst, position & -BLOCK_SIZE);
-        int cpos;
-        int end;
+        n -= r;
+        n = n < lim ? n : lim;
 
-        if(position == 0)
+        dst.position(r).limit(r + n);
+        if (r != 0)
         {
-            cpos = n - length;
-            end = n < dst.capacity()? n : dst.capacity();
+            dst.compact();
         }
-        else
-        {
-            cpos = r;
-            end = r + length < dst.capacity() ? r + length : dst.capacity();
-        }
-
-        dst.position(cpos).limit(end);
-
-
-        if(n!=length)
-        {
-            logger.debug("rymDebug: The file {} length {} is different from the read length {}, lim: {}, r: {}, position is {}, position & -BLOCK_SIZE is {}, the start is {}, the end is {}, dst.position is {}, dst.limit is {}", channel.toString(), n, length, lim, r, position, position & -BLOCK_SIZE, cpos, end, dst.position(), dst.limit());
-        }
-        // n -= r;
-        // n = n < lim ? n : lim;
-        // dst.position(r).limit(r + n);
-        return length;
+        dst.position(n).limit(lim);
+        return n;
     }
 }

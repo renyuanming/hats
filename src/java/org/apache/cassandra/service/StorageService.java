@@ -17,8 +17,10 @@
  */
 package org.apache.cassandra.service;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.FileWriter;
 import java.io.IOError;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -91,7 +94,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.adaptivekv.AKUtils.TimeCounter;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.audit.AuditLogOptions;
 import org.apache.cassandra.auth.AuthCacheService;
@@ -288,6 +291,45 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public static final int INDEFINITE = -1;
     public static final int RING_DELAY_MILLIS = getRingDelay(); // delay after which we assume ring has stablized
     public static final int SCHEMA_DELAY_MILLIS = getSchemaDelay();
+
+    // Get the served read request
+    public volatile TimeCounter timeCounter = new TimeCounter(7200);
+    // Get the read count of each replica group before replica selection
+    public ConcurrentHashMap<InetAddress, AtomicLong> readCountOfEachReplicaGroup = new ConcurrentHashMap<InetAddress, AtomicLong>(); 
+    public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
+
+    public String getRequestDistribution() {
+        StorageService.instance.timeCounter.getHistory();
+        String result = "";
+
+        String metricDir = System.getProperty("user.dir") + "/metrics/";
+        File metricDirFolder = new File(metricDir);
+        if (!metricDirFolder.createDirectoriesIfNotExists()){
+            logger.error("Cannot create directory: " + metricDir);
+            return result;
+        }
+
+        String readCountOfEachReplicaGroupFile = metricDir + "readCountOfEachReplicaGroup.txt";
+        String serverdReadCountFile = metricDir + "serverdReadCount.txt";
+
+        try (BufferedWriter writer1 = new BufferedWriter(new FileWriter(readCountOfEachReplicaGroupFile));
+             BufferedWriter writer2 = new BufferedWriter(new FileWriter(serverdReadCountFile))) {
+            for (Map.Entry<InetAddress, AtomicLong> entry : StorageService.instance.readCountOfEachReplicaGroup.entrySet()) {
+                writer1.write(entry.getKey() + " " + entry.getValue().get() + "\n");
+            }
+
+            writer1.write("Total read count: " + StorageService.instance.totalReadRequestCountBeforeReplicaSelection.get() + "\n");
+            // writer1.write("Read in StorageProxy.read: " + StorageService.instance.readInStorageProxyRead + "\n");
+
+            for (Map.Entry<Long, Integer> entry : StorageService.instance.timeCounter.getHistory().entrySet()) {
+                writer2.write(entry.getKey() + " " + entry.getValue() + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
 
     private static final boolean REQUIRE_SCHEMAS = !BOOTSTRAP_SKIP_SCHEMA_CHECK.getBoolean();
 
@@ -5100,6 +5142,14 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public List<String> getNaturalEndpointsWithPort(String keyspaceName, String cf, String key)
     {
         return Replicas.stringify(getNaturalReplicasForToken(keyspaceName, cf, key), true);
+    }
+
+    public List<InetAddress> getNaturalEndpointsForToken(String keyspaceName, Token token) {
+        List<InetAddress> inetList = new ArrayList<>();
+        EndpointsForToken replicas = Keyspace.open(keyspaceName).getReplicationStrategy()
+                .getNaturalReplicasForToken(token);
+        replicas.forEach(r -> inetList.add(r.endpoint().getAddress()));
+        return inetList;
     }
 
     /** @deprecated See CASSANDRA-7544 */

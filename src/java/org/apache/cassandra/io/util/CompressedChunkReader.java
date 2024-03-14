@@ -30,8 +30,6 @@ import java.util.function.Supplier;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 
-import org.apache.cassandra.adaptivekv.AKUtils;
-import org.apache.cassandra.adaptivekv.AKUtils.AKLogLevels;
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.compress.CompressionMetadata;
 import org.apache.cassandra.io.compress.CorruptBlockException;
@@ -139,54 +137,24 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                 {
                     ByteBuffer compressed = bufferHolder.getBuffer(length, useDirectIO);
 
-                    int readLength = channel.read(compressed, chunk.offset, length);
-                    if (readLength != length)
+                    if (channel.read(compressed, chunk.offset, length) != length)
                     {
-                        AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: read file %s, the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, fileLength is %s", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength));
                         throw new CorruptBlockException(channel.filePath(), chunk);
                     }
 
-                    if (metadata.chunksIndexFile.path().contains("7ad54392bcdd35a684174e047860b377")){
-                        logger.debug("rymDebug: read file {}, the compressed.limit: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", channel.toString(), compressed.limit(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
-                        // AKUtils.printStackTace(AKLogLevels.INFO, String.format("rymINFO: the compressed.limit: %s, chunk.length is %s, length is %s, the read length is %s, channel is %s, the position of compressed chunk is %s, the fileLength is %s", compressed.limit(), chunk.length, length, readLength, channel.toString(), position, fileLength));
-                    }
-
-                    if(chunk.offset != 0 && useDirectIO)
-                    {
-                        if(compressed.capacity() < compressed.position() + chunk.length)
-                        {
-                            logger.error("rymERROR: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
-                        }
-                        compressed.limit(compressed.position() + chunk.length);
-                    }
-                    else 
-                    {
-                        if(chunk.offset != 0)
-                        {
-                            logger.debug("rymDebug: useDirectIO {} read file {}, the compressed.limit: {}, compress.position: {}, compress.capacity: {}, chunk.length is {}, length is {}, the read length is {}, channel is {}, the position of compressed chunk is {}, the fileLength is {}, the chunk.offset is: {}", useDirectIO, channel.toString(), compressed.limit(), compressed.position(), compressed.capacity(), chunk.length, length, readLength, channel.channel.toString(), position, fileLength, chunk.offset);
-                        }
-                        compressed.flip();
-                        compressed.limit(chunk.length);
-                    }
+                    compressed.flip();
+                    compressed.limit(chunk.length);
                     uncompressed.clear();
 
                     if (shouldCheckCrc)
                     {
-                        int cpos = compressed.position();
                         int checksum = (int) ChecksumType.CRC32.of(compressed);
 
-                        compressed.limit(cpos + length);
-                        int compressedGetInt = compressed.getInt();
-                        if (compressedGetInt != checksum)
-                        {
-                            // if(metadata.chunksIndexFile.path().contains("24101c25a2ae3af787c1b40ee1aca33f")){
-                            AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: the CRC check failed for the channel: %s, the file is %s, chunksIndexFile: %s, compressedFileLength: %s, dataLength: %s, the checksum is %s, the compressed.getInt is %s, compressed.position is %s, compressed.limit is %s, chunk.offset is %s"
-                                    , channel.channel.toString(), channel.getFileDescriptor(), metadata.chunksIndexFile, metadata.compressedFileLength, metadata.dataLength, checksum, compressedGetInt, compressed.position(), compressed.limit(), chunk.offset));
-                            // }
+                        compressed.limit(length);
+                        if (compressed.getInt() != checksum)
                             throw new CorruptBlockException(channel.filePath(), chunk);
-                        }
 
-                        compressed.position(cpos).limit(cpos + chunk.length);
+                        compressed.position(0).limit(chunk.length);
                     }
 
                     try
@@ -216,7 +184,6 @@ public abstract class CompressedChunkReader extends AbstractReaderFileProxy impl
                             throw new CorruptBlockException(channel.filePath(), chunk);
                     }
                 }
-                
                 uncompressed.flip();
             }
             catch (CorruptBlockException e)

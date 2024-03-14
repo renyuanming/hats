@@ -67,7 +67,7 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 
             List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(
                                                             command.metadata().keyspace, tokenForRead);
-
+            StorageService.instance.timeCounter.increment();
             switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
                 case 0:
                     // StorageService.instance.timeCounter.increment();
@@ -76,9 +76,6 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
                                                    allRegularColumnsBuilder(command.metadata(), false).
                                                    build();
                     command.updateColumnFilter(newColumnFilter);
-                    // if (command.isDigestQuery() == true) {
-                    //     logger.error("[rym-ERROR] Remote Should not perform digest query on the primary lsm-tree");
-                    // }
                     break;
                 case 1:
                     command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
@@ -86,10 +83,6 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
                                                     allRegularColumnsBuilder(command.metadata(), false).
                                                     build();
                     command.updateColumnFilter(newColumnFilter1);
-                    // if (command.isDigestQuery() == false) {
-                    //     logger.debug("[rym] Remote Should perform online recovery on the secondary lsm-tree usertable 1");
-                    //     command.setShouldPerformOnlineRecoveryDuringRead(true);
-                    // }
                     break;
                 case 2:
                     command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
@@ -97,10 +90,6 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
                                                     allRegularColumnsBuilder(command.metadata(), false).
                                                     build();
                     command.updateColumnFilter(newColumnFilter2);
-                    // if (command.isDigestQuery() == false) {
-                    //     logger.debug("[rym] Remote Should perform online recovery on the secondary lsm-tree usertable 2");
-                    //     command.setShouldPerformOnlineRecoveryDuringRead(true);
-                    // }
                     break;
                 default:
                     logger.error("[rym-ERROR] Not support replication factor larger than 3");
