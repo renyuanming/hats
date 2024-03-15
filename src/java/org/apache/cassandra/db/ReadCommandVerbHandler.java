@@ -67,7 +67,8 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 
             List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(
                                                             command.metadata().keyspace, tokenForRead);
-            StorageService.instance.timeCounter.increment();
+            // StorageService.instance.timeCounter.increment();
+            StorageService.instance.localReadCountOfUsertables.incrementAndGet();
             switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
                 case 0:
                     // StorageService.instance.timeCounter.increment();
@@ -99,6 +100,9 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
                     tokenForRead,
                     command.isDigestQuery() == true ? "digest" : "data",
                     command.metadata().name, sendRequestAddresses);
+        }
+        else{
+            StorageService.instance.localReadCountOfSystemTables.incrementAndGet();
         }
         Tracing.trace("[rym] Executed remote modify read command time {}\u03bcs", "ReadCommandVerbHandler",
                 (nanoTime() - tStart) / 1000);

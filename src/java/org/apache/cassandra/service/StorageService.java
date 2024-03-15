@@ -297,6 +297,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     // Get the read count of each replica group before replica selection
     public ConcurrentHashMap<InetAddress, AtomicLong> readCountOfEachReplicaGroup = new ConcurrentHashMap<InetAddress, AtomicLong>(); 
     public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
+    public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
+    public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
 
     public String getRequestDistribution() {
         StorageService.instance.timeCounter.getHistory();
@@ -321,9 +323,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             writer1.write("Total read count: " + StorageService.instance.totalReadRequestCountBeforeReplicaSelection.get() + "\n");
             // writer1.write("Read in StorageProxy.read: " + StorageService.instance.readInStorageProxyRead + "\n");
 
-            for (Map.Entry<Long, Integer> entry : StorageService.instance.timeCounter.getHistory().entrySet()) {
-                writer2.write(entry.getKey() + " " + entry.getValue() + "\n");
-            }
+            writer2.write("Local read count of usertables: " + StorageService.instance.localReadCountOfUsertables.get() + "\n");
+            writer2.write("Local read count of systemtables: " + StorageService.instance.localReadCountOfSystemTables.get() + "\n");
+            // for (Map.Entry<Long, Integer> entry : StorageService.instance.timeCounter.getHistory().entrySet()) {
+            //     writer2.write(entry.getKey() + " " + entry.getValue() + "\n");
+            // }
         } catch (IOException e) {
             e.printStackTrace();
         }
