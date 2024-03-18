@@ -124,7 +124,7 @@ public class GetBreakdown extends NodeToolCmd
             for(String table : tablesList.get(keyspace))
             { 
                 
-                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f%19f",
+                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f%19s",
                 keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinatorReadLatency.get(table), coordinatorReadCount.get(table)));
                 // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
                 // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
