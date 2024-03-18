@@ -112,7 +112,7 @@ public class GetBreakdown extends NodeToolCmd
             "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count", "Coordinator Read Latency"));
             for(String table : tablesList.get(keyspace))
             { 
-                double coordinator_read_latency = Keyspace.open(keyspace).getColumnFamilyStore(table).metric.coordinatorReadLatency.getSnapshot().getMean();
+                double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();;
                 out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f",
                 keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinator_read_latency));
                 // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
