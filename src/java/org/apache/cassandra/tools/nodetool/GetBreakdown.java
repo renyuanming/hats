@@ -105,12 +105,17 @@ public class GetBreakdown extends NodeToolCmd
 
             double averageLocalReadLatency = 0;
             double averageLocalWriteLatency = 0;
+            
+            out.println(format("%-10s%19s%19s%19s%19s%19s",
+            "Keypsace", "Table", "Local Read Latency", "Local Read Count", "Local Write Latency", "Local Write Count"));
             for(String table : tablesList.get(keyspace))
             {
-                out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
-                out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
-                out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
-                out.println(format("Local write count for table %s: %d", table, writeCount.get(table)));
+                out.println(format("%-10s%19s%19s%19s%19s%19s",
+                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table)));
+                // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
+                // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
+                // out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
+                // out.println(format("Local write count for table %s: %d", table, writeCount.get(table)));
                 averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
                 averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
             }

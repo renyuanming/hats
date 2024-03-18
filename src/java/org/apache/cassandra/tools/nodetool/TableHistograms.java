@@ -99,15 +99,15 @@ public class TableHistograms extends NodeToolCmd
                 long[] estimatedColumnCount = (long[]) probe.getColumnFamilyMetric(keyspace, table, "EstimatedColumnCountHistogram");
 
                 // build arrays to store percentile values
-                double[] estimatedRowSizePercentiles = new double[7];
-                double[] estimatedColumnCountPercentiles = new double[7];
+                double[] estimatedRowSizePercentiles = new double[8];
+                double[] estimatedColumnCountPercentiles = new double[8];
                 double[] offsetPercentiles = new double[]{0.5, 0.75, 0.95, 0.98, 0.99};
 
                 if (ArrayUtils.isEmpty(estimatedPartitionSize) || ArrayUtils.isEmpty(estimatedColumnCount))
                 {
                     out.println("No SSTables exists, unable to calculate 'Partition Size' and 'Cell Count' percentiles");
 
-                    for (int i = 0; i < 7; i++)
+                    for (int i = 0; i < 8; i++)
                     {
                         estimatedRowSizePercentiles[i] = Double.NaN;
                         estimatedColumnCountPercentiles[i] = Double.NaN;
