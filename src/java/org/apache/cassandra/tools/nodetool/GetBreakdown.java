@@ -32,6 +32,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import org.apache.cassandra.db.ColumnFamilyStoreMBean;
+import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
@@ -105,13 +106,15 @@ public class GetBreakdown extends NodeToolCmd
 
             double averageLocalReadLatency = 0;
             double averageLocalWriteLatency = 0;
+            //
             
-            out.println(format("%-10s%19s%19s%19s%19s%19s",
-            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count"));
+            out.println(format("%-10s%19s%19s%19s%19s%19s%19s",
+            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count", "Coordinator Read Latency"));
             for(String table : tablesList.get(keyspace))
-            {
-                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s",
-                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table)));
+            { 
+                double coordinator_read_latency = Keyspace.open(keyspace).getColumnFamilyStore(table).metric.coordinatorReadLatency.getSnapshot().getMean();
+                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f",
+                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinator_read_latency));
                 // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
                 // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
                 // out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
