@@ -71,7 +71,7 @@ public class TpStatsPrinter
             out.println("\nLatencies waiting in queue (micros) per dropped message types");
 
             final TableBuilder droppedBuilder = new TableBuilder();
-            droppedBuilder.add("Message type", "Dropped    ", "50%     ", "95%     ", "99%     ", "Max");
+            droppedBuilder.add("Message type", "Dropped    ", "50%     ", "95%     ", "99%     ", "Mean     ", "Max");
 
             final HashMap<String, Object> droppedMessage = new HashMap<>();
             final HashMap<String, Double[]> waitLatencies = new HashMap<>();
@@ -99,11 +99,12 @@ public class TpStatsPrinter
                     columns.addAll(Arrays.asList(latencies[0].toString(),
                                                  latencies[2].toString(),
                                                  latencies[4].toString(),
-                                                 latencies[6].toString()));
+                                                 latencies[6].toString(),
+                                                 latencies[7].toString()));
                 }
                 else
                 {
-                    columns.addAll(Arrays.asList("N/A", "N/A", "N/A", "N/A"));
+                    columns.addAll(Arrays.asList("N/A", "N/A", "N/A", "N/A" , "N/A"));
                 }
 
                 droppedBuilder.add(columns.toArray(new String[0]));

@@ -150,7 +150,7 @@ public class TableHistograms extends NodeToolCmd
                     estimatedColumnCountPercentiles[6] = columnCountHist.max();
                 }
 
-                String[] percentiles = new String[]{"50%", "75%", "95%", "98%", "99%", "Min", "Max"};
+                String[] percentiles = new String[]{"50%", "75%", "95%", "98%", "99%", "Mean", "Min", "Max"};
                 Double[] readLatency = probe.metricPercentilesAsArray((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "ReadLatency"));
                 Double[] writeLatency = probe.metricPercentilesAsArray((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency"));
                 Double[] sstablesPerRead = probe.metricPercentilesAsArray((CassandraMetricsRegistry.JmxHistogramMBean) probe.getColumnFamilyMetric(keyspace, table, "SSTablesPerReadHistogram"));

@@ -32,7 +32,7 @@ public class ProxyHistograms extends NodeToolCmd
     public void execute(NodeProbe probe)
     {
         PrintStream out = probe.output().out;
-        String[] percentiles = {"50%", "75%", "95%", "98%", "99%", "Min", "Max"};
+        String[] percentiles = {"50%", "75%", "95%", "98%", "99%", "Mean", "Min", "Max"};
         Double[] readLatency = probe.metricPercentilesAsArray(probe.getProxyMetric("Read"));
         Double[] writeLatency = probe.metricPercentilesAsArray(probe.getProxyMetric("Write"));
         Double[] rangeLatency = probe.metricPercentilesAsArray(probe.getProxyMetric("RangeSlice"));

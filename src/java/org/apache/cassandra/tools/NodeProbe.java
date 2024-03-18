@@ -2133,6 +2133,7 @@ public class NodeProbe implements AutoCloseable
                 Double.valueOf(metric.get95thPercentile()),
                 Double.valueOf(metric.get98thPercentile()),
                 Double.valueOf(metric.get99thPercentile()),
+                Double.valueOf(metric.getMean()),
                 Double.valueOf(metric.getMin()),
                 Double.valueOf(metric.getMax())};
     }
@@ -2144,6 +2145,7 @@ public class NodeProbe implements AutoCloseable
                              Double.valueOf(metric.get95thPercentile()),
                              Double.valueOf(metric.get98thPercentile()),
                              Double.valueOf(metric.get99thPercentile()),
+                             Double.valueOf(metric.getMean()),
                              Double.valueOf(metric.getMin()),
                              Double.valueOf(metric.getMax())};
     }
