@@ -86,6 +86,8 @@ public class GetBreakdown extends NodeToolCmd
             Map<String, Long> writeCount = new HashMap<>();
             Map<String, Double> readLatency = new HashMap<>();
             Map<String, Double> writeLatency = new HashMap<>();
+            Map<String, Double> coordinatorReadLatency = new HashMap<>();
+            Map<String, Double> coordinatorScanLatency = new HashMap<>();
             
             // Get local operation latecy of each table
             for(String table : tablesList.get(keyspace))
@@ -94,7 +96,8 @@ public class GetBreakdown extends NodeToolCmd
                 long tableReadCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "ReadLatency")).getCount();
                 double localReadLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "ReadLatency")).getMean();
                 double localWriteLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency")).getMean();
-
+                double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();
+                double coordinator_scan_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanLatency")).getMean();
                 
                 totalReadCount += tableReadCount;
                 totalWriteCount += tableWriteCount;
@@ -102,27 +105,34 @@ public class GetBreakdown extends NodeToolCmd
                 writeCount.put(table, tableReadCount);
                 readLatency.put(table, localReadLatency);
                 writeLatency.put(table, localWriteLatency);
+                coordinatorReadLatency.put(table, coordinator_read_latency);
+                coordinatorScanLatency.put(table, coordinator_scan_latency);
             }
 
             double averageLocalReadLatency = 0;
             double averageLocalWriteLatency = 0;
-            //
+            double averageCoordiantorReadLatency = 0;
+            double averageCoordiantorScanLatency = 0;
             
-            out.println(format("%-10s%19s%19s%19s%19s%19s%19s",
-            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count", "Coordinator Read Latency"));
+            out.println(format("%-10s%19s%19s%19s%19s%19s%19s%19s",
+            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count", "Coordinator Read", "Coordinator Scan"));
             for(String table : tablesList.get(keyspace))
             { 
-                double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();;
-                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f",
-                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinator_read_latency));
+                
+                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f%19.2f",
+                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinatorReadLatency.get(table), coordinatorScanLatency.get(table)));
                 // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
                 // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
                 // out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
                 // out.println(format("Local write count for table %s: %d", table, writeCount.get(table)));
                 averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
                 averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
+                averageCoordiantorReadLatency += coordinatorReadLatency.get(table) * readCount.get(table) / totalReadCount;
+                averageCoordiantorScanLatency += coordinatorScanLatency.get(table) * readCount.get(table) / totalReadCount;
             }
             out.println(format("%s avg. read latency: %f", keyspace, averageLocalReadLatency));
+            out.println(format("%s avg. coordinator latency: %f", keyspace, averageCoordiantorReadLatency));
+            out.println(format("%s avg. scan latency: %f", keyspace, averageCoordiantorScanLatency));
             out.println(format("Read count for %s: %d", keyspace, totalReadCount));
             out.println(format("%s avg. write latency: %f", keyspace,averageLocalWriteLatency));
             out.println(format("Write count for %s: %d", keyspace, totalWriteCount));
