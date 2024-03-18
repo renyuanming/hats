@@ -107,10 +107,10 @@ public class GetBreakdown extends NodeToolCmd
             double averageLocalWriteLatency = 0;
             
             out.println(format("%-10s%19s%19s%19s%19s%19s",
-            "Keypsace", "Table", "Local Read Latency", "Local Read Count", "Local Write Latency", "Local Write Count"));
+            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count"));
             for(String table : tablesList.get(keyspace))
             {
-                out.println(format("%-10s%19s%19s%19s%19s%19s",
+                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s",
                 keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table)));
                 // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
                 // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
@@ -119,10 +119,10 @@ public class GetBreakdown extends NodeToolCmd
                 averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
                 averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
             }
-            out.println(format("Average local read latency for keyspace %s: %f", keyspace, averageLocalReadLatency));
-            out.println(format("Total local read count for keyspace %s: %d", keyspace, totalReadCount));
-            out.println(format("Average local write latency for keyspace %s: %f", keyspace,averageLocalWriteLatency));
-            out.println(format("Total local write count for keyspace %s: %d", keyspace, totalWriteCount));
+            out.println(format("%s avg. read latency: %f", keyspace, averageLocalReadLatency));
+            out.println(format("Read count for %s: %d", keyspace, totalReadCount));
+            out.println(format("%s avg. write latency: %f", keyspace,averageLocalWriteLatency));
+            out.println(format("Write count for %s: %d", keyspace, totalWriteCount));
             out.println();
 
         }
@@ -133,16 +133,16 @@ public class GetBreakdown extends NodeToolCmd
         out.println("Print the average messaging queue wait latency for each message type:");
         for (String messageType : messageTypes)
         {
-            out.println(format("Messaging queue wait latency for %s: %f", messageType, probe.getMessagingQueueWaitMetrics(messageType).getMean()));
+            out.println(format("Wait latency for %s: %f", messageType, probe.getMessagingQueueWaitMetrics(messageType).getMean()));
         }
         out.println();
 
         // Get the network operations latency
-        String[] networkOperations = {"Read", "Write", "Range"};
+        String[] networkOperations = {"Read", "Write"};
         out.println("Print the average network operations latency for each operation type:");
         for (String operation : networkOperations)
         {
-            out.println(format("Network operations latency for %s: %f", operation, probe.getProxyMetric(operation).getMean()));
+            out.println(format("Network latency for %s: %f", operation, probe.getProxyMetric(operation).getMean()));
         }
 
     }
