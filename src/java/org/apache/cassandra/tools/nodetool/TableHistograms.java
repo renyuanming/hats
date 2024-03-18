@@ -142,12 +142,15 @@ public class TableHistograms extends NodeToolCmd
                             estimatedColumnCountPercentiles[i] = columnCountHist.percentile(offsetPercentiles[i]);
                     }
 
+                    // mean value
+                    estimatedRowSizePercentiles[5] = partitionSizeHist.mean();
+                    estimatedColumnCountPercentiles[5] = columnCountHist.mean();
                     // min value
-                    estimatedRowSizePercentiles[5] = partitionSizeHist.min();
-                    estimatedColumnCountPercentiles[5] = columnCountHist.min();
+                    estimatedRowSizePercentiles[6] = partitionSizeHist.min();
+                    estimatedColumnCountPercentiles[6] = columnCountHist.min();
                     // max value
-                    estimatedRowSizePercentiles[6] = partitionSizeHist.max();
-                    estimatedColumnCountPercentiles[6] = columnCountHist.max();
+                    estimatedRowSizePercentiles[7] = partitionSizeHist.max();
+                    estimatedColumnCountPercentiles[7] = columnCountHist.max();
                 }
 
                 String[] percentiles = new String[]{"50%", "75%", "95%", "98%", "99%", "Mean", "Min", "Max"};
