@@ -100,6 +100,7 @@ public class GetBreakdown extends NodeToolCmd
                 double localWriteLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency")).getMean();
                 long tableCoordinatorReadCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getCount();
                 double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();
+
                 double coordinator_scan_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanLatency")).getMean();
                 
                 totalReadCount += tableReadCount;
@@ -108,10 +109,38 @@ public class GetBreakdown extends NodeToolCmd
                 readCount.put(table, tableReadCount);
                 writeCount.put(table, tableReadCount);
                 coordinatorReadCount.put(table, tableCoordinatorReadCount);
-                readLatency.put(table, localReadLatency);
-                writeLatency.put(table, localWriteLatency);
-                coordinatorReadLatency.put(table, coordinator_read_latency);
-                coordinatorScanLatency.put(table, coordinator_scan_latency);
+                if(tableReadCount > 0 && !Double.isNaN(localReadLatency))
+                {
+                    readLatency.put(table, localReadLatency);
+                }
+                else
+                {
+                    readLatency.put(table, (double) 0);
+                }
+                if(tableWriteCount > 0 && !Double.isNaN(localWriteLatency))
+                {
+                    writeLatency.put(table, localWriteLatency);
+                }
+                else
+                {
+                    writeLatency.put(table, (double) 0);
+                }
+                if(tableCoordinatorReadCount > 0 && !Double.isNaN(coordinator_read_latency))
+                {
+                    coordinatorReadLatency.put(table, coordinator_read_latency);
+                }
+                else
+                {
+                    coordinatorReadLatency.put(table, (double) 0);
+                }
+                if(tableCoordinatorReadCount > 0 && !Double.isNaN(coordinator_scan_latency))
+                {
+                    coordinatorScanLatency.put(table, coordinator_scan_latency);
+                }
+                else
+                {
+                    coordinatorScanLatency.put(table, (double) 0);
+                }
             }
 
             double averageLocalReadLatency = 0;
@@ -130,18 +159,18 @@ public class GetBreakdown extends NodeToolCmd
                 // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
                 // out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
                 // out.println(format("Local write count for table %s: %d", table, writeCount.get(table)));
-                averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
-                averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
+                averageLocalReadLatency += readLatency.get(table) * (readCount.get(table) / totalReadCount);
+                averageLocalWriteLatency += writeLatency.get(table) * (writeCount.get(table) / totalWriteCount);
                 averageCoordiantorReadLatency += coordinatorReadLatency.get(table) * coordinatorReadCount.get(table) / totalCoordinatorReadCount;
             }
-            out.println(format("%s avg. read latency: %f", keyspace, averageLocalReadLatency));
-            // out.println(format("The cost of replica selection for %s: %f", keyspace, averageCoordiantorReadLatency - averageLocalReadLatency));
-            out.println(format("%s avg. scan latency: %f", keyspace, averageCoordiantorScanLatency));
-            out.println(format("Local read count for %s: %d", keyspace, totalReadCount));
-            out.println(format("%s avg. write latency: %f", keyspace,averageLocalWriteLatency));
-            out.println(format("Local write count for %s: %d", keyspace, totalWriteCount));
-            out.println(format("%s avg. coordinator latency: %f", keyspace, averageCoordiantorReadLatency));
-            out.println(format("Coordinator read count for %s: %d", keyspace, totalCoordinatorReadCount));
+            out.println(format("Local read latency: %.2f", averageLocalReadLatency));
+            // out.println(format("The cost of replica selection for %s: %f", averageCoordiantorReadLatency - averageLocalReadLatency));
+            out.println(format("Local scan latency: %.2f", averageCoordiantorScanLatency));
+            out.println(format("Local read count: %d", totalReadCount));
+            out.println(format("Local write latency: %.2f", keyspace,averageLocalWriteLatency));
+            out.println(format("Local write count: %d", totalWriteCount));
+            out.println(format("Coordinator read latency: %.2f", averageCoordiantorReadLatency));
+            out.println(format("Coordinator read count: %d", totalCoordinatorReadCount));
             out.println();
 
         }
