@@ -159,8 +159,8 @@ public class GetBreakdown extends NodeToolCmd
                 // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
                 // out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
                 // out.println(format("Local write count for table %s: %d", table, writeCount.get(table)));
-                averageLocalReadLatency += readLatency.get(table) * (readCount.get(table) / totalReadCount);
-                averageLocalWriteLatency += writeLatency.get(table) * (writeCount.get(table) / totalWriteCount);
+                averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
+                averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
                 averageCoordiantorReadLatency += coordinatorReadLatency.get(table) * coordinatorReadCount.get(table) / totalCoordinatorReadCount;
             }
             out.println(format("Local read latency: %.2f", averageLocalReadLatency));
