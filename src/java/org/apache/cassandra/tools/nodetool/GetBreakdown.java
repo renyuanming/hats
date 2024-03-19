@@ -167,7 +167,7 @@ public class GetBreakdown extends NodeToolCmd
             // out.println(format("The cost of replica selection for %s: %f", averageCoordiantorReadLatency - averageLocalReadLatency));
             out.println(format("Local scan latency: %.2f", averageCoordiantorScanLatency));
             out.println(format("Local read count: %d", totalReadCount));
-            out.println(format("Local write latency: %.2f", keyspace,averageLocalWriteLatency));
+            out.println(format("Local write latency: %.2f", averageLocalWriteLatency));
             out.println(format("Local write count: %d", totalWriteCount));
             out.println(format("Coordinator read latency: %.2f", averageCoordiantorReadLatency));
             out.println(format("Coordinator read count: %d", totalCoordinatorReadCount));
