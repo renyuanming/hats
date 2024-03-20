@@ -347,10 +347,10 @@ public abstract class AbstractReadExecutor
         Keyspace keyspace = Keyspace.open(command.metadata().keyspace);
 
         // Get the correct cfs and update command.metadata() if necessary
-        Token tokenForRead = command.partitionKey().getToken();
-        List<InetAddressAndPort> replicasInTheRing = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(keyspace.getName(), tokenForRead);
+        List<InetAddressAndPort> replicasInTheRing = null;
         if(keyspace.getName().equals("ycsb"))
         {
+            replicasInTheRing = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(keyspace.getName(), command.partitionKey().getToken());
             String tableName = "usertable" + replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort());
             command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore(tableName).metadata());
             ColumnFilter newColumnFilter = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
@@ -379,9 +379,9 @@ public abstract class AbstractReadExecutor
 
         
         // This is for debugging purpose, test whether we can get the correct replica plan for the token with our own method
-        if(!replicasInTheRing.containsAll(replicaPlan.contacts().endpointList()))
+        if(keyspace.getName().equals("ycsb") && !replicasInTheRing.containsAll(replicaPlan.contacts().endpointList()))
         {
-            logger.debug("[rym] For token = {}, replicasInTheRing = {}, replica plan = {}", tokenForRead, replicasInTheRing,replicaPlan.contacts().endpoints());
+            logger.error("[rym-ERROR] For token = {}, replicasInTheRing = {}, replica plan = {}", command.partitionKey().getToken(), replicasInTheRing,replicaPlan.contacts().endpoints());
         }
 
         // Speculative retry is disabled *OR*
