@@ -61,44 +61,38 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         long tStart = nanoTime();
         if (command.metadata().keyspace.contains("ycsb")) {
 
-            // Token tokenForRead = (command instanceof SinglePartitionReadCommand ? 
-            //                      ((SinglePartitionReadCommand) command).partitionKey().getToken() : 
-            //                      ((PartitionRangeReadCommand) command).dataRange().keyRange.right.getToken());
+            Token tokenForRead = (command instanceof SinglePartitionReadCommand ? 
+                                 ((SinglePartitionReadCommand) command).partitionKey().getToken() : 
+                                 ((PartitionRangeReadCommand) command).dataRange().keyRange.right.getToken());
 
-            // List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(command.metadata().keyspace, tokenForRead);
-            // StorageService.instance.timeCounter.increment();
+            List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(command.metadata().keyspace, tokenForRead);
+            StorageService.instance.timeCounter.increment();
             StorageService.instance.localReadCountOfUsertables.incrementAndGet();
-            // switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
-            //     case 0:
-            //         // StorageService.instance.timeCounter.increment();
-            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable0").metadata());
-            //         ColumnFilter newColumnFilter = ColumnFilter.
-            //                                        allRegularColumnsBuilder(command.metadata(), false).
-            //                                        build();
-            //         command.updateColumnFilter(newColumnFilter);
-            //         break;
-            //     case 1:
-            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
-            //         ColumnFilter newColumnFilter1 = ColumnFilter.
-            //                                         allRegularColumnsBuilder(command.metadata(), false).
-            //                                         build();
-            //         command.updateColumnFilter(newColumnFilter1);
-            //         break;
-            //     case 2:
-            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
-            //         ColumnFilter newColumnFilter2 = ColumnFilter.
-            //                                         allRegularColumnsBuilder(command.metadata(), false).
-            //                                         build();
-            //         command.updateColumnFilter(newColumnFilter2);
-            //         break;
-            //     default:
-            //         logger.error("[rym-ERROR] Not support replication factor larger than 3");
-            //         break;
-            // }
-            // logger.debug("[rym] For token = {}, read {} from target table = {}, replication group = {}",
-            //         tokenForRead,
-            //         command.isDigestQuery() == true ? "digest" : "data",
-            //         command.metadata().name, sendRequestAddresses);
+            switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
+                case 0:
+                    // StorageService.instance.timeCounter.increment();
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable0").metadata());
+                    ColumnFilter newColumnFilter = ColumnFilter. allRegularColumnsBuilder(command.metadata(), false). build();
+                    command.updateColumnFilter(newColumnFilter);
+                    break;
+                case 1:
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
+                    ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
+                    command.updateColumnFilter(newColumnFilter1);
+                    break;
+                case 2:
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
+                    ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
+                    command.updateColumnFilter(newColumnFilter2);
+                    break;
+                default:
+                    logger.error("[rym-ERROR] Not support replication factor larger than 3");
+                    break;
+            }
+            logger.debug("[rym] For token = {}, read {} from target table = {}, replication group = {}",
+                    tokenForRead,
+                    command.isDigestQuery() == true ? "digest" : "data",
+                    command.metadata().name, sendRequestAddresses);
         }
         else{
             StorageService.instance.localReadCountOfSystemTables.incrementAndGet();
