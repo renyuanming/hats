@@ -245,41 +245,6 @@ public abstract class AbstractReadExecutor
         if (hasLocalEndpoint) 
         {
             long tStart = nanoTime();
-            // switch (replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort())) 
-            // {
-            //     case 0:
-            //         // In case received request is not for primary LSM tree
-            //         readCommand.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable0").metadata());
-            //         ColumnFilter newColumnFilter = ColumnFilter.allRegularColumnsBuilder(readCommand.metadata(), false).build();
-            //         readCommand.updateColumnFilter(newColumnFilter);
-            //         this.command = readCommand;
-            //         this.cfs = Keyspace.open("ycsb").getColumnFamilyStore("usertable0");
-            //         // if (readCommand.isDigestQuery() == true) {
-            //         //     logger.error("[rym-ERROR] Local Should not perform digest query on the primary lsm-tree");
-            //         // }
-            //         break;
-            //     case 1:
-            //         readCommand.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
-            //         ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(readCommand.metadata(), false).build();
-            //         readCommand.updateColumnFilter(newColumnFilter1);
-            //         this.command = readCommand;
-            //         this.cfs = Keyspace.open("ycsb").getColumnFamilyStore("usertable1");
-            //         // logger.debug("[rym] Local Should perform online recovery on the secondary lsm-tree usertable 1");
-            //         // readCommand.setShouldPerformOnlineRecoveryDuringRead(true);
-            //         break;
-            //     case 2:
-            //         readCommand.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
-            //         ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(readCommand.metadata(), false).build();
-            //         readCommand.updateColumnFilter(newColumnFilter2);
-            //         this.command = readCommand;
-            //         this.cfs = Keyspace.open("ycsb").getColumnFamilyStore("usertable2");
-            //         // logger.debug("[rym] Local Should perform online recovery on the secondary lsm-tree usertable 2");
-            //         // readCommand.setShouldPerformOnlineRecoveryDuringRead(true);
-            //         break;
-            //     default:
-            //         logger.error("[rym-ERROR] Not support replication factor larger than 3");
-            //         break;
-            // }
             Tracing.trace("[rym] Executed local data read time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart) / 1000);
             Stage.READ.maybeExecuteImmediately(new LocalReadRunnable(readCommand, handler));
         } 
