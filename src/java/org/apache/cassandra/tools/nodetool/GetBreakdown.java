@@ -107,7 +107,7 @@ public class GetBreakdown extends NodeToolCmd
                 totalWriteCount += tableWriteCount;
                 totalCoordinatorReadCount += tableCoordinatorReadCount;
                 readCount.put(table, tableReadCount);
-                writeCount.put(table, tableReadCount);
+                writeCount.put(table, tableWriteCount);
                 coordinatorReadCount.put(table, tableCoordinatorReadCount);
                 if(tableReadCount > 0 && !Double.isNaN(localReadLatency))
                 {
