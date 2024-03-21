@@ -409,7 +409,7 @@ public class CassandraDaemon
                     store.reload(); //reload CFs in case there was a change of disk boundaries
                     if (store.getCompactionStrategyManager().shouldBeEnabled())
                     {
-                        if (DatabaseDescriptor.getAutocompactionOnStartupEnabled())
+                        if (DatabaseDescriptor.getAutocompactionOnStartupEnabled() && !keyspace.getName().contains("ycsb"))
                         {
                             store.enableAutoCompaction();
                         }
