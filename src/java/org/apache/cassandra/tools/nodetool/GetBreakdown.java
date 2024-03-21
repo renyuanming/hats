@@ -32,7 +32,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import org.apache.cassandra.db.ColumnFamilyStoreMBean;
-import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
@@ -83,12 +82,14 @@ public class GetBreakdown extends NodeToolCmd
             long totalReadCount = 0;
             long totalCoordinatorReadCount = 0;
             long totalWriteCount = 0;
+            long totalCoordinatorScanCount = 0;
             Map<String, Long> readCount = new HashMap<>();
             Map<String, Long> writeCount = new HashMap<>();
             Map<String, Double> readLatency = new HashMap<>();
             Map<String, Double> writeLatency = new HashMap<>();
             Map<String, Long> coordinatorReadCount = new HashMap<>();
             Map<String, Double> coordinatorReadLatency = new HashMap<>();
+            Map<String, Double> coordinatorScanCount = new HashMap<>();
             Map<String, Double> coordinatorScanLatency = new HashMap<>();
             
             // Get local operation latecy of each table
@@ -100,15 +101,18 @@ public class GetBreakdown extends NodeToolCmd
                 double localWriteLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency")).getMean();
                 long tableCoordinatorReadCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getCount();
                 double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();
-
+                double tableCoordinatorScanCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanCount")).getCount();
                 double coordinator_scan_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanLatency")).getMean();
+
                 
                 totalReadCount += tableReadCount;
                 totalWriteCount += tableWriteCount;
                 totalCoordinatorReadCount += tableCoordinatorReadCount;
+                totalCoordinatorScanCount += tableCoordinatorScanCount;
                 readCount.put(table, tableReadCount);
                 writeCount.put(table, tableWriteCount);
                 coordinatorReadCount.put(table, tableCoordinatorReadCount);
+                coordinatorScanCount.put(table, tableCoordinatorScanCount);
                 if(tableReadCount > 0 && !Double.isNaN(localReadLatency))
                 {
                     readLatency.put(table, localReadLatency);
@@ -133,7 +137,7 @@ public class GetBreakdown extends NodeToolCmd
                 {
                     coordinatorReadLatency.put(table, (double) 0);
                 }
-                if(tableCoordinatorReadCount > 0 && !Double.isNaN(coordinator_scan_latency))
+                if(tableCoordinatorScanCount > 0 && !Double.isNaN(coordinator_scan_latency))
                 {
                     coordinatorScanLatency.put(table, coordinator_scan_latency);
                 }
@@ -148,29 +152,27 @@ public class GetBreakdown extends NodeToolCmd
             double averageCoordiantorReadLatency = 0;
             double averageCoordiantorScanLatency = 0;
             
-            out.println(format("%-10s%19s%19s%19s%19s%19s%19s%19s",
-            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count", "Coordinator Read", "Coordinator ReadCnt"));
+            out.println(format("%-10s%19s%19s%19s%19s%19s%19s%19s%19s%19s",
+            "Keypsace", "Table", "Read Latency", "Read Count", "Write Latency", "Write Count", "Coord Read", "Coord ReadCnt", "Coord Scan", "Coord ScanCnt"));
             for(String table : tablesList.get(keyspace))
             { 
                 
-                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f%19s",
-                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinatorReadLatency.get(table), coordinatorReadCount.get(table)));
-                // out.println(format("Local read latency for table %s: %f", table, readLatency.get(table)));
-                // out.println(format("Local read count for table %s: %d", table, readCount.get(table)));
-                // out.println(format("Local write latency for table %s: %f", table, writeLatency.get(table)));
-                // out.println(format("Local write count for table %s: %d", table, writeCount.get(table)));
+                out.println(format("%-10s%19s%19.2f%19s%19.2f%19s%19.2f%19s%19.2f%19s",
+                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinatorReadLatency.get(table), coordinatorReadCount.get(table), coordinatorScanLatency.get(table), coordinatorScanCount.get(table)));
                 averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
                 averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
                 averageCoordiantorReadLatency += coordinatorReadLatency.get(table) * coordinatorReadCount.get(table) / totalCoordinatorReadCount;
+                averageCoordiantorScanLatency += coordinatorScanLatency.get(table) * coordinatorScanCount.get(table) / totalCoordinatorScanCount;
             }
             out.println(format("Local read latency: %.2f", averageLocalReadLatency));
             // out.println(format("The cost of replica selection for %s: %f", averageCoordiantorReadLatency - averageLocalReadLatency));
-            out.println(format("Local scan latency: %.2f", averageCoordiantorScanLatency));
             out.println(format("Local read count: %d", totalReadCount));
             out.println(format("Local write latency: %.2f", averageLocalWriteLatency));
             out.println(format("Local write count: %d", totalWriteCount));
             out.println(format("Coordinator read latency: %.2f", averageCoordiantorReadLatency));
             out.println(format("Coordinator read count: %d", totalCoordinatorReadCount));
+            out.println(format("Coordinator scan latency: %.2f", averageCoordiantorScanLatency));
+            out.println(format("Coordinator scan count: %d", totalCoordinatorScanCount));
             out.println();
 
         }
