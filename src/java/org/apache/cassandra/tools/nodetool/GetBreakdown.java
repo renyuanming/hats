@@ -101,7 +101,7 @@ public class GetBreakdown extends NodeToolCmd
                 double localWriteLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency")).getMean();
                 long tableCoordinatorReadCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getCount();
                 double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();
-                double tableCoordinatorScanCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getCount();
+                double tableCoordinatorScanCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanLatency")).getCount();
                 double coordinator_scan_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanLatency")).getMean();
 
                 
