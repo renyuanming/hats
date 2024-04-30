@@ -402,11 +402,6 @@ public class CassandraDaemon
 
         StorageService.instance.doAuthSetup(false);
 
-        // AdaptiveKV
-        ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
-                                      "AdaptiveKV", 
-                                      FBUtilities.getBroadcastAddressAndPort().getHostAddressAndPort(), 
-                                      Gossiper.getSeedsStr());
 
         // re-enable auto-compaction after gossip is settled, so correct disk boundaries are used
         for (Keyspace keyspace : Keyspace.all())
@@ -433,6 +428,11 @@ public class CassandraDaemon
 
         AuditLogManager.instance.initialize();
 
+        // AdaptiveKV
+        ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
+                                      "AdaptiveKV", 
+                                      DatabaseDescriptor.getBroadcastAddress()+":"+DatabaseDescriptor.getStoragePort(), 
+                                      Gossiper.getSeedsStr());
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
