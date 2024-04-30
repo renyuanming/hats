@@ -26,19 +26,9 @@ public class ElectionBootstrap {
 
     // Start elections by 3 instance. Note that if multiple instances are started on the same machine,
     // the first parameter `dataPath` should not be the same.
-    public static void main(final String[] args) {
-        if (args.length < 4) {
-            System.out
-                .println("Usage : java com.alipay.sofa.jraft.example.election.ElectionBootstrap {dataPath} {groupId} {serverId} {initConf}");
-            System.out
-                .println("Example: java com.alipay.sofa.jraft.example.election.ElectionBootstrap /tmp/server1 election_test 127.0.0.1:8081 127.0.0.1:8081,127.0.0.1:8082,127.0.0.1:8083");
-            System.exit(1);
-        }
-        final String dataPath = args[0];
-        final String groupId = args[1];
-        final String serverIdStr = args[2];
-        final String initialConfStr = args[3];
 
+    public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
+    {
         final ElectionNodeOptions electionOpts = new ElectionNodeOptions();
         electionOpts.setDataPath(dataPath);
         electionOpts.setGroupId(groupId);
@@ -63,5 +53,22 @@ public class ElectionBootstrap {
             }
         });
         node.init(electionOpts);
+    }
+
+
+    public static void main(final String[] args) {
+        if (args.length < 4) {
+            System.out
+                .println("Usage : java com.alipay.sofa.jraft.example.election.ElectionBootstrap {dataPath} {groupId} {serverId} {initConf}");
+            System.out
+                .println("Example: java com.alipay.sofa.jraft.example.election.ElectionBootstrap /tmp/server1 election_test 127.0.0.1:8081 127.0.0.1:8081,127.0.0.1:8082,127.0.0.1:8083");
+            System.exit(1);
+        }
+        final String dataPath = args[0];
+        final String groupId = args[1];
+        final String serverIdStr = args[2];
+        final String initialConfStr = args[3];
+
+        initElection(dataPath, groupId, serverIdStr, initialConfStr);
     }
 }

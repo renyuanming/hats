@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 public class AKUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(AKUtils.class);
+    private static final String raftLogPath = System.getProperty("user.dir") + "/log/raft.log";
 
     public enum AKLogLevels {
         TRACE, 
@@ -35,6 +36,11 @@ public class AKUtils {
         INFO, 
         WARN, 
         ERROR
+    }
+
+    public static String getRaftLogPath()
+    {
+        return raftLogPath;
     }
 
     public static void printStackTace(AKLogLevels logLevel, String msg) 

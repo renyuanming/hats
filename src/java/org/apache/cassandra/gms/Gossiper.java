@@ -169,7 +169,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
     final Set<InetAddressAndPort> seeds = new ConcurrentSkipListSet<>();
 
     
-    static final Set<InetAddressAndPort> allNodes = new HashSet<>();
+    static final Set<InetAddressAndPort> allSeeds = new HashSet<>();
     static final Set<Long> tokenRanges = new ConcurrentSkipListSet<>();
 
     /* map where key is the endpoint and value is the state associated with the endpoint.
@@ -2059,11 +2059,16 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
         }
     }
 
+    public static String getSeedsStr()
+    {
+        return DatabaseDescriptor.getSeeds().stream().map(InetAddressAndPort::getHostAddressAndPort).collect(Collectors.joining(","));
+    }
+
     public static void buildNodeAndTokenList() 
     {
         for (InetAddressAndPort seed : DatabaseDescriptor.getSeeds())
         {
-            allNodes.add(seed);
+            allSeeds.add(seed);
         }
 
         for (String token : DatabaseDescriptor.getTokenRanges())
@@ -2072,8 +2077,8 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
         }
     }
 
-    public static Set<InetAddressAndPort> getAllNodesBasedOnSeeds() {
-        return allNodes;
+    public static Set<InetAddressAndPort> getAllSeeds() {
+        return allSeeds;
     }
 
 

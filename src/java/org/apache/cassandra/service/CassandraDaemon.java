@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.SharedMetricRegistries;
+
+import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.adaptivekv.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.auth.AuthCacheService;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
@@ -399,6 +402,12 @@ public class CassandraDaemon
 
         StorageService.instance.doAuthSetup(false);
 
+        // AdaptiveKV
+        ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
+                                      "AdaptiveKV", 
+                                      FBUtilities.getBroadcastAddressAndPort().getHostAddressAndPort(), 
+                                      Gossiper.getSeedsStr());
+
         // re-enable auto-compaction after gossip is settled, so correct disk boundaries are used
         for (Keyspace keyspace : Keyspace.all())
         {
@@ -423,6 +432,7 @@ public class CassandraDaemon
         }
 
         AuditLogManager.instance.initialize();
+
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions

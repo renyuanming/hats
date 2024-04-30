@@ -5092,7 +5092,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     */
     public List<InetAddressAndPort> getReplicaNodesWithPortFromTokenForDegradeRead(String keyspaceName, Token token) {
 
-        List<InetAddressAndPort> allHosts = new ArrayList<InetAddressAndPort>(Gossiper.getAllNodesBasedOnSeeds());
+        List<InetAddressAndPort> allHosts = new ArrayList<InetAddressAndPort>(Gossiper.getAllSeeds());
         List<InetAddressAndPort> replicaNodes = new ArrayList<>();
 
         long targetToken = (long) token.getTokenValue();
