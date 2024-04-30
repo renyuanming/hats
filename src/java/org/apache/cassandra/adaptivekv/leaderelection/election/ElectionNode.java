@@ -89,6 +89,7 @@ public class ElectionNode implements Lifecycle<ElectionNodeOptions> {
         if (!serverId.parse(opts.getServerAddress())) {
             throw new IllegalArgumentException("Fail to parse serverId: " + opts.getServerAddress());
         }
+        LOG.debug("rymDebug: serverId.getEndpoint() is {}, opts.getServerAddress() is {}", serverId.getEndpoint(), opts.getServerAddress());
         final RpcServer rpcServer = RaftRpcServerFactory.createRaftRpcServer(serverId.getEndpoint());
         this.raftGroupService = new RaftGroupService(groupId, serverId, nodeOpts, rpcServer);
         this.node = this.raftGroupService.start();
