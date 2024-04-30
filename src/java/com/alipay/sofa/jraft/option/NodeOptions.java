@@ -20,6 +20,7 @@ import com.alipay.remoting.util.StringUtils;
 import com.alipay.sofa.jraft.JRaftServiceFactory;
 import com.alipay.sofa.jraft.StateMachine;
 import com.alipay.sofa.jraft.conf.Configuration;
+import com.alipay.sofa.jraft.core.DefaultJRaftServiceFactory;
 import com.alipay.sofa.jraft.core.ElectionPriority;
 import com.alipay.sofa.jraft.storage.SnapshotThrottle;
 import com.alipay.sofa.jraft.util.Copiable;
@@ -35,7 +36,7 @@ import com.alipay.sofa.jraft.util.Utils;
  */
 public class NodeOptions extends RpcOptions implements Copiable<NodeOptions> {
 
-    public static final JRaftServiceFactory defaultServiceFactory  = JRaftServiceLoader.load(JRaftServiceFactory.class) //
+    public static final JRaftServiceFactory defaultServiceFactory  = JRaftServiceLoader.load(DefaultJRaftServiceFactory.class) //
                                                                        .first();
 
     // A follower would become a candidate if it doesn't receive any message
