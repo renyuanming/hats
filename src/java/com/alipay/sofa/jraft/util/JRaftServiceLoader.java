@@ -92,8 +92,10 @@ public final class JRaftServiceLoader<S> implements Iterable<S> {
     public S first() {
         final Iterator<Class<S>> it = classIterator();
         Class<S> first = null;
+        LOG.debug("rymDebug: it {} is null: {}", it.toString(), it == null);
         while (it.hasNext()) {
             final Class<S> cls = it.next();
+            LOG.debug("rymDebug: first() cls: {}", cls.getName());
             if (first == null) {
                 first = cls;
             } else {

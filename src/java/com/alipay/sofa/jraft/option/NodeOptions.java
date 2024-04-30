@@ -36,8 +36,7 @@ import com.alipay.sofa.jraft.util.Utils;
  */
 public class NodeOptions extends RpcOptions implements Copiable<NodeOptions> {
 
-    public static final JRaftServiceFactory defaultServiceFactory  = JRaftServiceLoader.load(DefaultJRaftServiceFactory.class) //
-                                                                       .first();
+    public static final JRaftServiceFactory defaultServiceFactory  = JRaftServiceLoader.load(JRaftServiceFactory.class).first();
 
     // A follower would become a candidate if it doesn't receive any message
     // from the leader in |election_timeout_ms| milliseconds
