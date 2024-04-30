@@ -170,7 +170,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
 
     
     static final Set<InetAddressAndPort> allNodes = new HashSet<>();
-    static final Set<Long> tokenRanges = new HashSet<>();
+    static final Set<Long> tokenRanges = new ConcurrentSkipListSet<>();
 
     /* map where key is the endpoint and value is the state associated with the endpoint.
      * This is made public to be consumed by the GossipInfoTable virtual table */
