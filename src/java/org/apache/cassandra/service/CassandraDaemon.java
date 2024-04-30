@@ -431,7 +431,7 @@ public class CassandraDaemon
         // AdaptiveKV
         ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
                                       "AdaptiveKV", 
-                                      DatabaseDescriptor.getListenAddress()+":"+DatabaseDescriptor.getStoragePort(), 
+                                      DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getStoragePort(), 
                                       Gossiper.getSeedsStr());
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
