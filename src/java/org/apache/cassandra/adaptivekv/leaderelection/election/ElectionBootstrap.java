@@ -16,6 +16,10 @@
  */
 package org.apache.cassandra.adaptivekv.leaderelection.election;
 
+import org.apache.cassandra.service.StorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.alipay.sofa.jraft.entity.PeerId;
 
 /**
@@ -27,8 +31,12 @@ public class ElectionBootstrap {
     // Start elections by 3 instance. Note that if multiple instances are started on the same machine,
     // the first parameter `dataPath` should not be the same.
 
+    private static final Logger logger = LoggerFactory.getLogger(ElectionBootstrap.class);
     public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
     {
+        logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
+                    dataPath, groupId, serverIdStr, initialConfStr);
+
         final ElectionNodeOptions electionOpts = new ElectionNodeOptions();
         electionOpts.setDataPath(dataPath);
         electionOpts.setGroupId(groupId);
