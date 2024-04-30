@@ -133,6 +133,7 @@ public class Config
     public String token_ranges;
     public boolean motivation = false;
     public boolean enable_direct_io_for_read_path = false;
+    public int raft_port = 8081;
 
 
 

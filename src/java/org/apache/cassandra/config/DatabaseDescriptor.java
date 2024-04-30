@@ -5038,4 +5038,9 @@ public class DatabaseDescriptor
     {
         return conf.enable_direct_io_for_read_path;
     }
+
+    public static int getRaftPort()
+    {
+        return conf.raft_port;
+    }
 }
