@@ -132,4 +132,5 @@ appender reference in the root level section below.
   </root>
 
   <logger name="org.apache.cassandra" level="DEBUG"/>
+  <logger name="com.alipay.sofa.jraft" level="DEBUG"/>
 </configuration>
