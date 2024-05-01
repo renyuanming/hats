@@ -1131,13 +1131,13 @@ public class NodeImpl implements Node, RaftServerService {
     private void electSelf() {
         long oldTerm;
         try {
-            LOG.info("Node {} start vote and grant vote self, term={}.", getNodeId(), this.currTerm);
+            LOG.info("rymInfo: Node {} start vote and grant vote self, term={}.", getNodeId(), this.currTerm);
             if (!this.conf.contains(this.serverId)) {
-                LOG.warn("Node {} can't do electSelf as it is not in {}.", getNodeId(), this.conf);
+                LOG.warn("rymWarn: Node {} can't do electSelf as it is not in {}.", getNodeId(), this.conf);
                 return;
             }
             if (this.state == State.STATE_FOLLOWER) {
-                LOG.debug("Node {} stop election timer, term={}.", getNodeId(), this.currTerm);
+                LOG.debug("rymDebug: Node {} stop election timer, term={}.", getNodeId(), this.currTerm);
                 this.electionTimer.stop();
             }
             resetLeaderId(PeerId.emptyPeer(), new Status(RaftError.ERAFTTIMEDOUT,
@@ -1240,7 +1240,7 @@ public class NodeImpl implements Node, RaftServerService {
             if (peer.equals(this.serverId)) {
                 continue;
             }
-            LOG.debug("Node {} add a replicator, term={}, peer={}.", getNodeId(), this.currTerm, peer);
+            LOG.debug("rymDebug: Node {} add a replicator, term={}, peer={}.", getNodeId(), this.currTerm, peer);
             if (!this.replicatorGroup.addReplicator(peer)) {
                 LOG.error("Fail to add a replicator, peer={}.", peer);
             }
