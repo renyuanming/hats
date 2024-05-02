@@ -42,6 +42,7 @@ import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.SharedMetricRegistries;
 
 import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.adaptivekv.Scheduler;
 import org.apache.cassandra.adaptivekv.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.auth.AuthCacheService;
@@ -433,6 +434,8 @@ public class CassandraDaemon
                                       "AdaptiveKV", 
                                       DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
                                       Gossiper.getSeedsStr());
+
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 300, 1, TimeUnit.SECONDS);
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
