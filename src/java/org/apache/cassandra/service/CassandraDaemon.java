@@ -430,7 +430,7 @@ public class CassandraDaemon
         AuditLogManager.instance.initialize();
 
         // AdaptiveKV
-        if(Gossiper.getAllSeeds().size() <= 1)
+        if(Gossiper.getSeedsStr().split(",").length <= 1)
         {
             // priority election
             Scheduler.setisPriorityElection(true);
