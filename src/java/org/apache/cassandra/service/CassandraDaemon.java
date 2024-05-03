@@ -433,7 +433,7 @@ public class CassandraDaemon
         if(Gossiper.getSeedsStr().split(",").length <= 1)
         {
             // priority election
-            Scheduler.setisPriorityElection(true);
+            Scheduler.setIsPriorityElection(true);
         }
         else
         {
@@ -443,6 +443,10 @@ public class CassandraDaemon
                                             "ElectSeeds", 
                                             DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
                                             Gossiper.getSeedsStr());
+            }
+            else
+            {
+                logger.debug("rymDebug: This node is not a seed node, no need to start election");
             }
         }
 
