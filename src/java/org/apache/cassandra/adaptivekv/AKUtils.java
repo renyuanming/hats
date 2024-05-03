@@ -17,6 +17,8 @@
  */
 
 package org.apache.cassandra.adaptivekv;
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -24,7 +26,9 @@ import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,4 +97,13 @@ public class AKUtils {
     {
         return from.stream().map(ip -> ip.getHostName() + ":" + port).collect(Collectors.joining(","));
     }
+
+    public static void forceDelete(File path) {
+        try {
+            FileUtils.forceDelete(path);
+        } catch (final IOException e) {
+            logger.error("Fail to delete file {}.", path);
+        }
+    }
+
 }

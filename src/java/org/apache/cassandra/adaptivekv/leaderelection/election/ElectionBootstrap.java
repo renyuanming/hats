@@ -16,6 +16,10 @@
  */
 package org.apache.cassandra.adaptivekv.leaderelection.election;
 
+
+import java.io.File;
+
+import org.apache.cassandra.adaptivekv.AKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,12 +35,17 @@ public class ElectionBootstrap {
     // the first parameter `dataPath` should not be the same.
 
     private static final Logger logger = LoggerFactory.getLogger(ElectionBootstrap.class);
-    private static final ElectionNode node = new ElectionNode();
+    private static ElectionNode node;
     public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
     {
         logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
                     dataPath, groupId, serverIdStr, initialConfStr);
-
+        File dataPathFile = new File(dataPath);
+        if(dataPathFile.exists())
+        {
+            AKUtils.forceDelete(dataPathFile);
+        }
+        node = new ElectionNode();
         final ElectionNodeOptions electionOpts = new ElectionNodeOptions();
         electionOpts.setDataPath(dataPath);
         electionOpts.setGroupId(groupId);

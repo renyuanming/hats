@@ -18,9 +18,13 @@
 
 package org.apache.cassandra.adaptivekv;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.cassandra.adaptivekv.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class Scheduler {
 
     private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
-    private static Boolean isInitElectionBootstrap = false;
+    private static Boolean isPriorityElection = false;
 
 
     public static Runnable getSchedulerRunnable()
@@ -42,11 +46,14 @@ public class Scheduler {
         public void run()
         {
 
-            // Check if there is lived seed node, if not, start a new election scheme
-            if (!getIsInitElectionBootstrap() && !Gossiper.instance.seenAnySeed() && !Gossiper.instance.getLiveMembers().isEmpty())
+            // [TODO] Check if there is lived seed node, if not, start a new election scheme
+            Set<InetAddressAndPort> liveSeeds = Gossiper.getAllSeeds().stream().filter(Gossiper.instance::isAlive).collect(Collectors.toSet());
+            if (!getisPriorityElection() && liveSeeds.size() <= 1)
             {
-                logger.debug("rymDebug: No seed node is alive, but there are live members: {}. Start new election scheme.", Gossiper.instance.getLiveMembers());
-                setIsInitElectionBootstrap(true);
+                logger.debug("rymDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
+                setisPriorityElection(true);
+
+                // Start priority based election
                 ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
                                         "ElectDataNodes", 
                                         DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
@@ -54,7 +61,7 @@ public class Scheduler {
             }
             else
             {
-                logger.debug("rymDebug: IsInitElectionBootstrap: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsInitElectionBootstrap(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
+                logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getisPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
             }
 
             // Check if this node is the leader
@@ -74,13 +81,13 @@ public class Scheduler {
         }
     }
 
-    public static Boolean getIsInitElectionBootstrap()
+    public static Boolean getisPriorityElection()
     {
-        return isInitElectionBootstrap;
+        return isPriorityElection;
     }
 
-    public static void setIsInitElectionBootstrap(Boolean isInitElectionBootstrap)
+    public static void setisPriorityElection(Boolean isPriorityElection)
     {
-        Scheduler.isInitElectionBootstrap = isInitElectionBootstrap;
+        Scheduler.isPriorityElection = isPriorityElection;
     }
 }

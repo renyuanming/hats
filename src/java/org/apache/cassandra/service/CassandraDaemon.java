@@ -430,12 +430,20 @@ public class CassandraDaemon
         AuditLogManager.instance.initialize();
 
         // AdaptiveKV
-        if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddress().getHostAddress()))
+        if(Gossiper.getAllSeeds().size() <= 1)
         {
-            ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
-                                        "ElectSeeds", 
-                                        DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
-                                        Gossiper.getSeedsStr());
+            // priority election
+            Scheduler.setisPriorityElection(true);
+        }
+        else
+        {
+            if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddress().getHostAddress()))
+            {
+                ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
+                                            "ElectSeeds", 
+                                            DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
+                                            Gossiper.getSeedsStr());
+            }
         }
 
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 120, 1, TimeUnit.SECONDS);
