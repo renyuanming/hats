@@ -830,8 +830,8 @@ public class Replicator implements ThreadId.OnError {
 
                 addInflight(RequestType.AppendEntries, this.nextIndex, 0, 0, seq, rpcFuture);
             }
-            AKUtils.printStackTace(AKLogLevels.DEBUG, String.format("rymDebug: Node %s send HeartbeatRequest to %s term %s", this.options.getNode()
-            .getNodeId(), this.options.getPeerId(), this.options.getTerm()));
+            // AKUtils.printStackTace(AKLogLevels.DEBUG, String.format("rymDebug: Node %s send HeartbeatRequest to %s term %s", 
+            //                                                         this.options.getNode().getNodeId(), this.options.getPeerId(), this.options.getTerm()));
             LOG.debug("Node {} send HeartbeatRequest to {} term {} lastCommittedIndex {}", this.options.getNode()
                 .getNodeId(), this.options.getPeerId(), this.options.getTerm(), rb.getCommittedIndex());
         } finally {
