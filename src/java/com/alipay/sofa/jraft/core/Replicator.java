@@ -832,8 +832,8 @@ public class Replicator implements ThreadId.OnError {
             }
             // AKUtils.printStackTace(AKLogLevels.DEBUG, String.format("rymDebug: Node %s send HeartbeatRequest to %s term %s", 
             //                                                         this.options.getNode().getNodeId(), this.options.getPeerId(), this.options.getTerm()));
-            LOG.debug("Node {} send HeartbeatRequest to {} term {} lastCommittedIndex {}", this.options.getNode()
-                .getNodeId(), this.options.getPeerId(), this.options.getTerm(), rb.getCommittedIndex());
+            // LOG.debug("Node {} send HeartbeatRequest to {} term {} lastCommittedIndex {}", this.options.getNode()
+            //     .getNodeId(), this.options.getPeerId(), this.options.getTerm(), rb.getCommittedIndex());
         } finally {
                 unlockId();
         }
@@ -1246,7 +1246,7 @@ public class Replicator implements ThreadId.OnError {
                 return;
             }
             if (isLogDebugEnabled) {
-                LOG.debug(sb.toString());
+                // LOG.debug(sb.toString());
             }
             if (rpcSendTime > r.lastRpcSendTimestamp) {
                 r.lastRpcSendTimestamp = rpcSendTime;
