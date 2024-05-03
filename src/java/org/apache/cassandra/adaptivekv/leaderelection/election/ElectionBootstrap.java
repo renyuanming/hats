@@ -18,8 +18,10 @@ package org.apache.cassandra.adaptivekv.leaderelection.election;
 
 
 import java.io.File;
+import java.util.Set;
 
 import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +82,18 @@ public class ElectionBootstrap {
         
         logger.debug("rymDebug: Election node is not initialized");
         return false;
+    }
+
+    public static void shutdownElection(Set<InetAddressAndPort> liveSeeds)
+    {
+        if (node != null)
+        {
+            node.shutdown();
+        }
+        else
+        {
+            logger.debug("rymDebug: Election node is not initialized");
+        }
     }
 
 
