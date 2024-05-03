@@ -18,10 +18,13 @@
 
 package org.apache.cassandra.adaptivekv;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,4 +89,8 @@ public class AKUtils {
     }
     
 
+    public static String InetAddressAndPortSetToString(Set<InetAddressAndPort> from, int port)
+    {
+        return from.stream().map(ip -> ip.getHostName() + ":" + port).collect(Collectors.joining(","));
+    }
 }

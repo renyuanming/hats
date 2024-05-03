@@ -16,7 +16,6 @@
  */
 package org.apache.cassandra.adaptivekv.leaderelection.election;
 
-import org.apache.cassandra.service.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +31,7 @@ public class ElectionBootstrap {
     // the first parameter `dataPath` should not be the same.
 
     private static final Logger logger = LoggerFactory.getLogger(ElectionBootstrap.class);
+    private static final ElectionNode node = new ElectionNode();
     public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
     {
         logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
@@ -43,7 +43,6 @@ public class ElectionBootstrap {
         electionOpts.setServerAddress(serverIdStr);
         electionOpts.setInitialServerAddressList(initialConfStr);
 
-        final ElectionNode node = new ElectionNode();
         node.addLeaderStateListener(new LeaderStateListener() {
 
             @Override
@@ -61,6 +60,11 @@ public class ElectionBootstrap {
             }
         });
         node.init(electionOpts);
+    }
+
+    public static Boolean isLeader()
+    {
+        return node.isLeader();
     }
 
 
