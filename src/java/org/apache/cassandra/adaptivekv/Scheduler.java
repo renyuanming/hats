@@ -52,6 +52,10 @@ public class Scheduler {
                                         DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
                                         AKUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort()));
             }
+            else
+            {
+                logger.debug("rymDebug: IsInitElectionBootstrap: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsInitElectionBootstrap(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
+            }
 
             // Check if this node is the leader
             if (ElectionBootstrap.isLeader())
