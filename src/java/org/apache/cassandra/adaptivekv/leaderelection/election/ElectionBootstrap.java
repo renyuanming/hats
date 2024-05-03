@@ -64,7 +64,7 @@ public class ElectionBootstrap {
 
     public static Boolean isLeader()
     {
-        if (node==null)
+        if (!node.isStarted())
         {
             logger.debug("rymDebug: Election node is not initialized");
             return false;
