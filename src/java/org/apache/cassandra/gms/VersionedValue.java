@@ -22,8 +22,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -182,6 +185,11 @@ public class VersionedValue implements Comparable<VersionedValue>
         public VersionedValue load(double load)
         {
             return new VersionedValue(String.valueOf(load));
+        }
+
+        public VersionedValue foregroundLoad(ConcurrentHashMap<InetAddress, AtomicLong> foregroundLoad)
+        {
+            return new VersionedValue(foregroundLoad.toString());
         }
 
         public VersionedValue diskUsage(String state)
