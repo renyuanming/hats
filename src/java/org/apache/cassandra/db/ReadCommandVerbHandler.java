@@ -56,6 +56,9 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 
         ReadCommand command = message.payload;
 
+        
+        // [AdaptiveKV] TEST
+        StorageService.instance.totalReadCcount.incrementAndGet();
 
 
         long tStart = nanoTime();

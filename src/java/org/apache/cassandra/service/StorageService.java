@@ -296,7 +296,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     // Get the served read request
     public volatile TimeCounter timeCounter = new TimeCounter(7200);
     // Get the read count of each replica group before replica selection
-    public ConcurrentHashMap<InetAddress, AtomicLong> readCountOfEachReplicaGroup = new ConcurrentHashMap<InetAddress, AtomicLong>(); 
+    public ConcurrentHashMap<InetAddress, AtomicLong> readCountOfEachReplicaGroup = new ConcurrentHashMap<InetAddress, AtomicLong>();
+    public AtomicLong totalReadCcount = new AtomicLong(0);
     public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
