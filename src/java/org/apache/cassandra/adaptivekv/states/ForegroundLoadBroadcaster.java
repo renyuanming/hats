@@ -89,10 +89,10 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                     logger.trace("Disseminating load info ...");
                 logger.debug("rymDebug: foreground load {}, total read count: {}",StorageService.instance.readCountOfEachReplicaGroup, StorageService.instance.totalReadCcount.get());
                 
-                Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
-                                                           StorageService.instance.valueFactory.foregroundLoad(String.valueOf(StorageService.instance.totalReadCcount.get())));
                 // Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
-                //                                            StorageService.instance.valueFactory.foregroundLoad(StorageService.instance.readCountOfEachReplicaGroup));
+                //                                            StorageService.instance.valueFactory.foregroundLoad(String.valueOf(StorageService.instance.totalReadCcount.get())));
+                Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
+                                                           StorageService.instance.valueFactory.foregroundLoad(StorageService.instance.readCountOfEachReplicaGroup));
             }
         };
         ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 2 * Gossiper.intervalInMillis, BROADCAST_INTERVAL_MS, TimeUnit.MILLISECONDS);

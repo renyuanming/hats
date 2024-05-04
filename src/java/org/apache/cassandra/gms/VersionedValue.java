@@ -187,15 +187,15 @@ public class VersionedValue implements Comparable<VersionedValue>
             return new VersionedValue(String.valueOf(load));
         }
 
-        // public VersionedValue foregroundLoad(ConcurrentHashMap<InetAddress, AtomicLong> foregroundLoad)
-        // {
-        //     return new VersionedValue(foregroundLoad.toString());
-        // }
-
-        public VersionedValue foregroundLoad(String foregroundLoad)
+        public VersionedValue foregroundLoad(ConcurrentHashMap<InetAddress, AtomicLong> foregroundLoad)
         {
-            return new VersionedValue(foregroundLoad);
+            return new VersionedValue(foregroundLoad.toString());
         }
+
+        // public VersionedValue foregroundLoad(String foregroundLoad)
+        // {
+        //     return new VersionedValue(foregroundLoad);
+        // }
 
         public VersionedValue diskUsage(String state)
         {
