@@ -95,6 +95,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.cassandra.adaptivekv.AKUtils.TimeCounter;
+import org.apache.cassandra.adaptivekv.states.ForegroundLoadBroadcaster;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.audit.AuditLogOptions;
 import org.apache.cassandra.auth.AuthCacheService;
@@ -1229,6 +1230,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             Schema.instance.startSync();
             LoadBroadcaster.instance.startBroadcasting();
             DiskUsageBroadcaster.instance.startBroadcasting();
+            ForegroundLoadBroadcaster.instance.startBroadcasting();
             HintsService.instance.startDispatch();
             BatchlogManager.instance.start();
             startSnapshotManager();
