@@ -71,6 +71,12 @@ public class Scheduler {
             {
                 logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
                 // If this node is the leader, gathering the load statistic and  check load change happens
+                /*
+                 * Gather the load statistic has three cases:
+                 * 1. If we have multiple live seed nodes, we gathering the load statistic from these seed nodes
+                 * 2. If we have only one live seed node, we gathering the load statistic locally
+                 * 3. If we have no live seed node, we gathering the load statistic from all live members
+                 */
 
                 // If load change happens, trigger the placement algorithm
 
@@ -78,6 +84,21 @@ public class Scheduler {
             }
             else
             {
+                // Followers send the load statistic to the leader
+                if(liveSeeds.size() > 1)
+                {
+                    // If we have multiple live seed nodes, seed nodes send the load statistic to the leader
+                }
+                else if (liveSeeds.size() == 0)
+                {
+                    // If we have no live seed nodes, all the node send the load statistic to the leader
+
+                }
+                else
+                {
+                    // If we have no live seed node, we send the load statistic to all live members
+                    logger.debug("As we only has one seed node, followers do nothing.");
+                }
                 logger.debug("rymDebug: Node {} is NOT the leader. Exit the scheduler.", FBUtilities.getBroadcastAddressAndPort());
             }
         }

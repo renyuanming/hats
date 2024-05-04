@@ -299,6 +299,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
+    public long[][] foregroundReadCountOfEachReplicationGroup;
 
     public String getRequestDistribution() {
         StorageService.instance.timeCounter.getHistory();

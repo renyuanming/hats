@@ -86,7 +86,7 @@ public class ElectionBootstrap {
 
     public static void shutdownElection(Set<InetAddressAndPort> liveSeeds)
     {
-        if (node != null)
+        if (node != null && node.isStarted())
         {
             node.shutdown();
         }

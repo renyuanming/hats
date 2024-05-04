@@ -34,6 +34,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.stream.Collectors;
 
+import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.service.StorageService;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1227,6 +1229,8 @@ public class NodeImpl implements Node, RaftServerService {
     }
 
     private void becomeLeader() {
+
+        StorageService.instance.foregroundReadCountOfEachReplicationGroup = new long[Gossiper.instance.getLiveMembers().size()][3];
         Requires.requireTrue(this.state == State.STATE_CANDIDATE, "Illegal state: " + this.state);
         LOG.info("Node {} become leader of group, term={}, conf={}, oldConf={}.", getNodeId(), this.currTerm,
             this.conf.getConf(), this.conf.getOldConf());
