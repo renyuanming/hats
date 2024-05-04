@@ -36,7 +36,7 @@ import org.apache.cassandra.gms.*;
 
 public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
 {
-    static final int BROADCAST_INTERVAL_MS = 1000;
+    static final int BROADCAST_INTERVAL_MS = 10000;
 
     public static final ForegroundLoadBroadcaster instance = new ForegroundLoadBroadcaster();
 
