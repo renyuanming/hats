@@ -74,7 +74,7 @@ public class Scheduler {
             }
 
             // Check if this node is the leader
-            if (ElectionBootstrap.isLeader())
+            if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
             {
                 logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
                 // If this node is the leader, gathering the load statistic and  check load change happens

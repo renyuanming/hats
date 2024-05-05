@@ -19,8 +19,10 @@ package org.apache.cassandra.adaptivekv.leaderelection.priorityelection;
 import com.alipay.sofa.jraft.entity.PeerId;
 
 import java.io.File;
+import java.util.Set;
 
 import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +76,28 @@ public class PriorityElectionBootstrap {
 
 
 
+    public static Boolean isLeader()
+    {
+        if (node != null)
+        {
+            return node.isLeader();
+        }
+        
+        logger.debug("rymDebug: Election node is not initialized");
+        return false;
+    }
+
+    public static void shutdownElection(Set<InetAddressAndPort> liveSeeds)
+    {
+        if (node != null && node.isStarted())
+        {
+            node.shutdown();
+        }
+        else
+        {
+            logger.debug("rymDebug: Election node is not initialized");
+        }
+    }
 
     // Start elections by 3 instance. Note that if multiple instances are started on the same machine,
     // the first parameter `dataPath` should not be the same,
