@@ -134,6 +134,9 @@ public class Config
     public boolean motivation = false;
     public boolean enable_direct_io_for_read_path = false;
     public int raft_port = 8081;
+    public int scheduling_initial_delay = 120; // seconds
+    public int scheduling_interval = 60; // seconds
+    public int raft_rpc_timeout = 1000; // milliseconds
 
 
 

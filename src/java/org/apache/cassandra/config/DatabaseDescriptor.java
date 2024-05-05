@@ -5043,4 +5043,19 @@ public class DatabaseDescriptor
     {
         return conf.raft_port;
     }
+
+    public static int getRaftRpcTimeout()
+    {
+        return conf.raft_rpc_timeout;
+    }
+
+    public static int getSchedulingInitialDelay()
+    {
+        return conf.scheduling_initial_delay;
+    }
+
+    public static int getSchedulingInterval()
+    {
+        return conf.scheduling_interval;
+    }
 }

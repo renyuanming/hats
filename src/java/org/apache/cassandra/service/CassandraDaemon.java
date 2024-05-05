@@ -450,7 +450,10 @@ public class CassandraDaemon
             }
         }
 
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 120, 1, TimeUnit.SECONDS);
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 
+                                                                DatabaseDescriptor.getSchedulingInitialDelay(), 
+                                                                DatabaseDescriptor.getSchedulingInterval(),
+                                                                TimeUnit.SECONDS);
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions

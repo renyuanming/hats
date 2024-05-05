@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +101,7 @@ public class PriorityElectionNode implements Lifecycle<PriorityElectionNodeOptio
          * value.
          */
         nodeOpts.setElectionPriority(serverId.getPriority());
+        nodeOpts.setRpcConnectTimeoutMs(DatabaseDescriptor.getRaftRpcTimeout());
 
         final RpcServer rpcServer = RaftRpcServerFactory.createRaftRpcServer(serverId.getEndpoint());
         this.raftGroupService = new RaftGroupService(groupId, serverId, nodeOpts, rpcServer);
