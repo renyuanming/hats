@@ -25,7 +25,7 @@ public class RpcOptions {
      * Rpc connect timeout in milliseconds
      * Default: 1000(1s)
      */
-    private int                       rpcConnectTimeoutMs        = 1000;
+    private int                       rpcConnectTimeoutMs        = 2000;
 
     /**
      * RPC request default timeout in milliseconds
