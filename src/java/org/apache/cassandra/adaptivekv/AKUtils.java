@@ -93,9 +93,22 @@ public class AKUtils {
     }
     
 
-    public static String InetAddressAndPortSetToString(Set<InetAddressAndPort> from, int port, int priority)
+    public static String InetAddressAndPortSetToString(Set<InetAddressAndPort> from, int port, Set<InetAddressAndPort> liveSeeds)
     {
-        return from.stream().map(ip -> ip.getHostName() + ":" + port + "::" + priority).collect(Collectors.joining(","));
+        String to = "";
+        
+        for (int i = 0; i < from.size(); i++)
+        {
+            InetAddressAndPort ip = (InetAddressAndPort) from.toArray()[i];
+            if(liveSeeds.contains(ip))
+                to += ip.getHostName() + ":" + port + "::" + 200;
+            else
+                to += ip.getHostName() + ":" + port + "::" + 100;
+            if (i < from.size() - 1)
+                to += ",";
+        }
+        return to;
+        // return from.stream().map(ip -> ip.getHostName() + ":" + port + "::" + priority).collect(Collectors.joining(","));
     }
 
     public static void forceDelete(File path) {

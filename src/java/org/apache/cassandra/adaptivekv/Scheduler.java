@@ -66,7 +66,7 @@ public class Scheduler {
                 PriorityElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
                                         "ElectDataNodes", 
                                         DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort()+"::"+priority, 
-                                        AKUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), priority));
+                                        AKUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), liveSeeds));
             }
             else
             {
