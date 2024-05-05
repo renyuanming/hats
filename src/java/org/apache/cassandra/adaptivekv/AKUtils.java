@@ -93,9 +93,9 @@ public class AKUtils {
     }
     
 
-    public static String InetAddressAndPortSetToString(Set<InetAddressAndPort> from, int port)
+    public static String InetAddressAndPortSetToString(Set<InetAddressAndPort> from, int port, int priority)
     {
-        return from.stream().map(ip -> ip.getHostName() + ":" + port).collect(Collectors.joining(","));
+        return from.stream().map(ip -> ip.getHostName() + ":" + port + "::" + priority).collect(Collectors.joining(","));
     }
 
     public static void forceDelete(File path) {

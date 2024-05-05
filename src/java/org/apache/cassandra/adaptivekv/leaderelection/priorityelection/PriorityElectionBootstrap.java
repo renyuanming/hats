@@ -18,11 +18,62 @@ package org.apache.cassandra.adaptivekv.leaderelection.priorityelection;
 
 import com.alipay.sofa.jraft.entity.PeerId;
 
+import java.io.File;
+
+import org.apache.cassandra.adaptivekv.AKUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *
  * @author zongtanghu
  */
 public class PriorityElectionBootstrap {
+
+    private static final Logger logger = LoggerFactory.getLogger(PriorityElectionBootstrap.class);
+    private static PriorityElectionNode node;
+
+    public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
+    {
+
+        logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
+                    dataPath, groupId, serverIdStr, initialConfStr);
+        File dataPathFile = new File(dataPath);
+        if(dataPathFile.exists())
+        {
+            AKUtils.forceDelete(dataPathFile);
+        }
+        final PriorityElectionNodeOptions priorityElectionOpts = new PriorityElectionNodeOptions();
+        priorityElectionOpts.setDataPath(dataPath);
+        priorityElectionOpts.setGroupId(groupId);
+        priorityElectionOpts.setServerAddress(serverIdStr);
+        priorityElectionOpts.setInitialServerAddressList(initialConfStr);
+        
+        node = new PriorityElectionNode();
+        node.addLeaderStateListener(new LeaderStateListener() {
+
+            @Override
+            public void onLeaderStart(long leaderTerm) {
+
+                PeerId serverId = node.getNode().getLeaderId();
+                int priority = serverId.getPriority();
+                String ip = serverId.getIp();
+                int port = serverId.getPort();
+
+                logger.debug("rymDebug: [PriorityElectionBootstrap] Leader's ip is {}, port: {}, priority is {}", ip, port, priority);
+                logger.debug("rymDebug: [PriorityElectionBootstrap] Leader start on term: {}", leaderTerm);
+            }
+
+            @Override
+            public void onLeaderStop(long leaderTerm) {
+                logger.debug("rymDebug: [PriorityElectionBootstrap] Leader stop on term: {}", leaderTerm);
+            }
+        });
+        node.init(priorityElectionOpts);
+    }
+
+
+
 
     // Start elections by 3 instance. Note that if multiple instances are started on the same machine,
     // the first parameter `dataPath` should not be the same,
@@ -42,35 +93,6 @@ public class PriorityElectionBootstrap {
         final String groupId = args[1];
         final String serverIdStr = args[2];
         final String initialConfStr = args[3];
-
-        final PriorityElectionNodeOptions priorityElectionOpts = new PriorityElectionNodeOptions();
-        priorityElectionOpts.setDataPath(dataPath);
-        priorityElectionOpts.setGroupId(groupId);
-        priorityElectionOpts.setServerAddress(serverIdStr);
-        priorityElectionOpts.setInitialServerAddressList(initialConfStr);
-
-        final PriorityElectionNode node = new PriorityElectionNode();
-        node.addLeaderStateListener(new LeaderStateListener() {
-
-            @Override
-            public void onLeaderStart(long leaderTerm) {
-
-                PeerId serverId = node.getNode().getLeaderId();
-                int priority = serverId.getPriority();
-                String ip = serverId.getIp();
-                int port = serverId.getPort();
-
-                System.out.println("[PriorityElectionBootstrap] Leader's ip is: " + ip + ", port: " + port
-                                   + ", priority: " + priority);
-                System.out.println("[PriorityElectionBootstrap] Leader start on term: " + leaderTerm);
-            }
-
-            @Override
-            public void onLeaderStop(long leaderTerm) {
-                System.out.println("[PriorityElectionBootstrap] Leader stop on term: " + leaderTerm);
-            }
-        });
-        node.init(priorityElectionOpts);
+        initElection(dataPath, groupId, serverIdStr, initialConfStr);
     }
-
 }

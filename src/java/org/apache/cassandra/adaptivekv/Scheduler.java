@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.cassandra.adaptivekv.leaderelection.election.ElectionBootstrap;
+import org.apache.cassandra.adaptivekv.leaderelection.priorityelection.PriorityElectionBootstrap;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.locator.InetAddressAndPort;
@@ -33,6 +34,7 @@ public class Scheduler {
 
     private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
     private static Boolean isPriorityElection = false;
+    private static int priority = 100;
 
 
     public static Runnable getSchedulerRunnable()
@@ -56,10 +58,15 @@ public class Scheduler {
                 // Shutdown the current election scheme
                 ElectionBootstrap.shutdownElection(liveSeeds);
                 // Start a new priority election scheme
-                ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
+                if(liveSeeds.contains(FBUtilities.getBroadcastAddressAndPort()))
+                {
+                    priority = 200;
+                }
+
+                PriorityElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
                                         "ElectDataNodes", 
-                                        DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
-                                        AKUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort()));
+                                        DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort()+"::"+priority, 
+                                        AKUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), priority));
             }
             else
             {
@@ -96,7 +103,7 @@ public class Scheduler {
                 }
                 else
                 {
-                    // If we have no live seed node, we send the load statistic to all live members
+                    // If we only have one seed nodes, we do nothing
                     logger.debug("As we only has one seed node, followers do nothing.");
                 }
                 logger.debug("rymDebug: Node {} is NOT the leader. Exit the scheduler.", FBUtilities.getBroadcastAddressAndPort());

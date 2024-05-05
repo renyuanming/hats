@@ -61,13 +61,13 @@ public class ElectionBootstrap {
                 PeerId serverId = node.getNode().getLeaderId();
                 String ip = serverId.getIp();
                 int port = serverId.getPort();
-                logger.debug("rymDebug: Leader's ip is: {}, port: {}", ip, port);
-                logger.debug("rymDebug: Leader start on term: {}", leaderTerm);
+                logger.debug("rymDebug: [ElectionBootstrap] Leader's ip is: {}, port: {}", ip, port);
+                logger.debug("rymDebug: [ElectionBootstrap] Leader start on term: {}", leaderTerm);
             }
 
             @Override
             public void onLeaderStop(long leaderTerm) {
-                logger.debug("rymDebug: Leader stop on term: {}", leaderTerm);
+                logger.debug("rymDebug: [ElectionBootstrap] Leader stop on term: {}", leaderTerm);
             }
         });
         node.init(electionOpts);
