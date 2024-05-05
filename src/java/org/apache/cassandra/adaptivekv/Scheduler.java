@@ -60,7 +60,7 @@ public class Scheduler {
                 // Start a new priority election scheme
                 if(liveSeeds.contains(FBUtilities.getBroadcastAddressAndPort()))
                 {
-                    priority = 200;
+                    priority = 1000000000;
                 }
 
                 PriorityElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
