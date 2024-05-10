@@ -67,7 +67,7 @@ public class LocalStates {
         {
             requests += entry.getKey() + " : " + entry.getValue().size() + ",";
         }
-        return String.format("LocalStates{Latency=%f, Requests=%f}", latency, requests);
+        return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
     }
 
 }
