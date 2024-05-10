@@ -22,6 +22,7 @@ package org.apache.cassandra.adaptivekv.states;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
@@ -71,7 +72,7 @@ public class LocalStates {
     public String toString()
     {
         String requests = "";
-        for(Map.Entry<InetAddress, Queue<Long>> entry : readCounter.getCounter().entrySet())
+        for(Map.Entry<InetAddress, ConcurrentLinkedQueue<Long>> entry : readCounter.getCounter().entrySet())
         {
             requests += entry.getKey().getHostName() + ": " + entry.getValue().size() + ",";
         }

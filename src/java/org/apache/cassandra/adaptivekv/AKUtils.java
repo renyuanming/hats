@@ -129,7 +129,7 @@ public class AKUtils {
     public static class ReplicaRequestCounter
     {
         private final long intervalMillis;
-        private final ConcurrentHashMap<InetAddress, Queue<Long>> requestsPerReplica;
+        private final ConcurrentHashMap<InetAddress, ConcurrentLinkedQueue<Long>> requestsPerReplica;
     
         public ReplicaRequestCounter(long intervalMillis) {
             this.intervalMillis = intervalMillis;
@@ -138,14 +138,14 @@ public class AKUtils {
     
         public synchronized void mark(InetAddress ip) {
             long currentTime = System.currentTimeMillis();
-            Queue<Long> timestamps = requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
+            ConcurrentLinkedQueue<Long> timestamps = requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
             timestamps.add(currentTime);
             cleanupOldRequests(ip);
         }
     
         public int getCount(InetAddress ip) {
             cleanupOldRequests(ip);
-            Queue<Long> timestamps = requestsPerReplica.get(ip);
+            ConcurrentLinkedQueue<Long> timestamps = requestsPerReplica.get(ip);
             return timestamps != null ? timestamps.size() : 0;
         }
     
@@ -159,7 +159,7 @@ public class AKUtils {
             }
         }
 
-        public ConcurrentHashMap<InetAddress, Queue<Long>>  getCounter() {
+        public ConcurrentHashMap<InetAddress, ConcurrentLinkedQueue<Long>>  getCounter() {
             return requestsPerReplica;
         }
     }
