@@ -72,9 +72,10 @@ public class LocalStates {
     public String toString()
     {
         String requests = "";
-        for(Map.Entry<InetAddress, ConcurrentLinkedQueue<Long>> entry : readCounter.getCounter().entrySet())
+
+        for (InetAddress ip : readCounter.getCounter().keySet())
         {
-            requests += entry.getKey().getHostName() + ": " + entry.getValue().size() + ",";
+            requests += ip.getHostName() + ": " + readCounter.getCount(ip) + ",";
         }
         return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
     }
