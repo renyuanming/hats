@@ -139,6 +139,7 @@ public class Config
     public int raft_rpc_timeout = 1000; // milliseconds
     public double read_sensitive_factor = 0.9;
     public int state_update_interval = 10; // seconds
+    public String all_hosts = "127.0.0.1";
 
 
 

@@ -83,6 +83,7 @@ import org.apache.cassandra.utils.Pair;
 import org.apache.cassandra.utils.RecomputingSupplier;
 import org.apache.cassandra.utils.concurrent.NotScheduledFuture;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
+import org.apache.commons.lang3.StringUtils;
 
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
 import static org.apache.cassandra.config.CassandraRelevantProperties.DISABLE_GOSSIP_ENDPOINT_REMOVAL;
@@ -170,6 +171,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
 
     
     static final Set<InetAddressAndPort> allSeeds = new HashSet<>();
+    static final Set<InetAddressAndPort> allHosts = new HashSet<>();
     static final Set<Long> tokenRanges = new ConcurrentSkipListSet<>();
 
     /* map where key is the endpoint and value is the state associated with the endpoint.
@@ -2072,6 +2074,19 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
             allSeeds.add(seed);
         }
 
+        if (DatabaseDescriptor.getAllHosts() != null)
+        {
+            for (String host : StringUtils.split(DatabaseDescriptor.getAllHosts(), ','))
+            {
+                try {
+                    allHosts.add(InetAddressAndPort.getByName(host));
+                } catch (UnknownHostException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+
         for (String token : DatabaseDescriptor.getTokenRanges())
         {
             tokenRanges.add(Long.parseLong(token));
@@ -2082,6 +2097,10 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
         return allSeeds;
     }
 
+    public static Set<InetAddressAndPort> getAllHosts()
+    {
+        return allHosts;
+    }
 
     public static Set<Long> getTokenRanges() {
         return tokenRanges;
