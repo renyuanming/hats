@@ -71,7 +71,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.cassandra.adaptivekv.states.LocalStates;
 import org.apache.cassandra.cache.CounterCacheKey;
 import org.apache.cassandra.cache.IRowCacheEntry;
 import org.apache.cassandra.cache.RowCacheKey;
@@ -1479,6 +1479,10 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
                 metric.topWritePartitionSize.addSample(key.getKey(), update.dataSize());
             StorageHook.instance.reportWrite(metadata.id, update);
             metric.writeLatency.addNano(nanoTime() - start);
+            if(this.getKeyspaceName().equals("ycsb"))
+            {
+                LocalStates.recordEWMALocalWriteLatency(nanoTime() - start);
+            }
             // CASSANDRA-11117 - certain resolution paths on memtable put can result in very
             // large time deltas, either through a variety of sentinel timestamps (used for empty values, ensuring
             // a minimal write, etc). This limits the time delta to the max value the histogram

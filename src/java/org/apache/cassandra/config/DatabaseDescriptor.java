@@ -5058,4 +5058,14 @@ public class DatabaseDescriptor
     {
         return conf.scheduling_interval;
     }
+
+    public static double getReadSensitiveFactor()
+    {
+        return conf.read_sensitive_factor;
+    }
+
+    public static int getStateUpdateInterval()
+    {
+        return conf.state_update_interval;
+    }
 }

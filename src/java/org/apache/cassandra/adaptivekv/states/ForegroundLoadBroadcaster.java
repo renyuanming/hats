@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 
 import org.apache.cassandra.concurrent.ScheduledExecutors;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.*;
 
 
@@ -87,15 +88,16 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                     return;
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
-                logger.debug("rymDebug: foreground load {}, total read count: {}",StorageService.instance.readCountOfEachReplicaGroup, StorageService.instance.totalReadCcount.get());
+                LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica);
+                logger.debug("rymDebug: foreground load {}, total read count: {}, local read latency: {}, local write latency: {}, combination latency: {}", StorageService.instance.totalReadCntOfEachReplica, StorageService.instance.totalReadCcount.get(), states.getEWMALocalReadLatency(), states.getEWMALocalWriteLatency(), states.latency);
                 
                 // Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
                 //                                            StorageService.instance.valueFactory.foregroundLoad(String.valueOf(StorageService.instance.totalReadCcount.get())));
                 Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
-                                                           StorageService.instance.valueFactory.foregroundLoad(StorageService.instance.readCountOfEachReplicaGroup));
+                                                           StorageService.instance.valueFactory.foregroundLoad(states));
             }
         };
-        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 2 * Gossiper.intervalInMillis, BROADCAST_INTERVAL_MS, TimeUnit.MILLISECONDS);
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 60, DatabaseDescriptor.getStateUpdateInterval(), TimeUnit.SECONDS);
     }
 }
 

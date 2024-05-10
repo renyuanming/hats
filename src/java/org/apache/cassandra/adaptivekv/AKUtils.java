@@ -19,11 +19,15 @@
 package org.apache.cassandra.adaptivekv;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
@@ -117,6 +121,42 @@ public class AKUtils {
             FileUtils.forceDelete(path);
         } catch (final IOException e) {
             logger.error("Fail to delete file {}.", path);
+        }
+    }
+
+    public static class ReplicaRequestCounter
+    {
+        private final long intevalSeconds;
+        private final ConcurrentHashMap<InetAddress, Queue<Long>> requestsPerReplica;
+
+        public ReplicaRequestCounter(long intevalSeconds) {
+            this.intevalSeconds = intevalSeconds;
+            this.requestsPerReplica = new ConcurrentHashMap<>();
+        }
+
+        public void mark(InetAddress ip) {
+            this.requestsPerReplica.computeIfAbsent(ip, k -> new LinkedList<>()).add(System.currentTimeMillis());
+            cleanupOldRequests(ip);
+        }
+
+        public long getCount(InetAddress ip) {
+            cleanupOldRequests(ip);
+            Queue<Long> timestamps = this.requestsPerReplica.get(ip);
+            return (timestamps == null) ? 0 : timestamps.size();
+        }
+
+        private void cleanupOldRequests(InetAddress ip) {
+            Queue<Long> timestamps = this.requestsPerReplica.get(ip);
+            if (timestamps != null) {
+                long expirationTime = System.currentTimeMillis() - intevalSeconds * 1000;
+                while (!timestamps.isEmpty() && timestamps.peek() < expirationTime) {
+                    timestamps.poll();
+                }
+            }
+        }
+
+        public Map<InetAddress, Queue<Long>> getCounter() {
+            return requestsPerReplica;
         }
     }
 

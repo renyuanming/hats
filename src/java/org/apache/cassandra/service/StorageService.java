@@ -94,6 +94,8 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.adaptivekv.AKUtils.TimeCounter;
 import org.apache.cassandra.adaptivekv.states.ForegroundLoadBroadcaster;
 import org.apache.cassandra.audit.AuditLogManager;
@@ -197,7 +199,6 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
-import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -296,7 +297,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     // Get the served read request
     public volatile TimeCounter timeCounter = new TimeCounter(7200);
     // Get the read count of each replica group before replica selection
-    public ConcurrentHashMap<InetAddress, AtomicLong> readCountOfEachReplicaGroup = new ConcurrentHashMap<InetAddress, AtomicLong>();
+    public ConcurrentHashMap<InetAddress, AtomicLong> totalReadCntOfEachReplica = new ConcurrentHashMap<InetAddress, AtomicLong>();
+    public ReplicaRequestCounter readCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval());
     public AtomicLong totalReadCcount = new AtomicLong(0);
     public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
@@ -314,12 +316,12 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             return result;
         }
 
-        String readCountOfEachReplicaGroupFile = metricDir + "readCountOfEachReplicaGroup.txt";
+        String readCountOfEachReplicaGroupFile = metricDir + "totalReadCntOfEachReplica.txt";
         String serverdReadCountFile = metricDir + "serverdReadCount.txt";
 
         try (BufferedWriter writer1 = new BufferedWriter(new FileWriter(readCountOfEachReplicaGroupFile));
              BufferedWriter writer2 = new BufferedWriter(new FileWriter(serverdReadCountFile))) {
-            for (Map.Entry<InetAddress, AtomicLong> entry : StorageService.instance.readCountOfEachReplicaGroup.entrySet()) {
+            for (Map.Entry<InetAddress, AtomicLong> entry : StorageService.instance.totalReadCntOfEachReplica.entrySet()) {
                 writer1.write(entry.getKey() + " " + entry.getValue().get() + "\n");
             }
 

@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
+import org.apache.cassandra.adaptivekv.states.LocalStates;
 import org.apache.cassandra.cache.IRowCacheEntry;
 import org.apache.cassandra.cache.RowCacheKey;
 import org.apache.cassandra.cache.RowCacheSentinel;
@@ -473,6 +474,11 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
     protected void recordLatency(TableMetrics metric, long latencyNanos)
     {
         metric.readLatency.addNano(latencyNanos);
+        if (metadata().keyspace.equals("ycsb"))
+        {
+            LocalStates.recordEWMALocalReadLatency(latencyNanos / 1000);
+        }
+        
     }
 
     protected UnfilteredPartitionIterator queryStorage(final ColumnFamilyStore cfs, ReadExecutionController executionController)

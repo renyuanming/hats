@@ -33,7 +33,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.cassandra.adaptivekv.states.LocalStates;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Token;
@@ -187,7 +187,7 @@ public class VersionedValue implements Comparable<VersionedValue>
             return new VersionedValue(String.valueOf(load));
         }
 
-        public VersionedValue foregroundLoad(ConcurrentHashMap<InetAddress, AtomicLong> foregroundLoad)
+        public VersionedValue foregroundLoad(LocalStates foregroundLoad)
         {
             return new VersionedValue(foregroundLoad.toString());
         }

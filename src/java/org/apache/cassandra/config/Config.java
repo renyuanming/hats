@@ -135,8 +135,10 @@ public class Config
     public boolean enable_direct_io_for_read_path = false;
     public int raft_port = 8081;
     public int scheduling_initial_delay = 120; // seconds
-    public int scheduling_interval = 60; // seconds
+    public int scheduling_interval = 10; // seconds
     public int raft_rpc_timeout = 1000; // milliseconds
+    public double read_sensitive_factor = 0.9;
+    public int state_update_interval = 10; // seconds
 
 
 

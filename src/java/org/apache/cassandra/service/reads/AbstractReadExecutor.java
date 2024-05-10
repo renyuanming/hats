@@ -278,10 +278,13 @@ public abstract class AbstractReadExecutor
         
         if (keyspace.getName().equals("ycsb")) {
             InetAddress replicaGroup = StorageService.instance.getNaturalEndpointsForToken(keyspace.getName(), token).get(0);
-            if(!StorageService.instance.readCountOfEachReplicaGroup.containsKey(replicaGroup)) {
-                StorageService.instance.readCountOfEachReplicaGroup.put(replicaGroup, new AtomicLong(0));
+            
+            StorageService.instance.readCounterOfEachReplica.mark(replicaGroup);
+
+            if(!StorageService.instance.totalReadCntOfEachReplica.containsKey(replicaGroup)) {
+                StorageService.instance.totalReadCntOfEachReplica.put(replicaGroup, new AtomicLong(0));
             }
-            StorageService.instance.readCountOfEachReplicaGroup.get(replicaGroup).incrementAndGet();
+            StorageService.instance.totalReadCntOfEachReplica.get(replicaGroup).incrementAndGet();
         }
     }
 
