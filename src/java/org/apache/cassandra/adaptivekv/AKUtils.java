@@ -133,7 +133,7 @@ public class AKUtils {
             this.requestsPerReplica = new ConcurrentHashMap<>();
         }
 
-        public void mark(InetAddress ip) {
+        public synchronized void mark(InetAddress ip) {
             this.requestsPerReplica.computeIfAbsent(ip, k -> new LinkedList<>()).add(System.currentTimeMillis());
             cleanupOldRequests(ip);
         }

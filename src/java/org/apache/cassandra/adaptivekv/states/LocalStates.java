@@ -44,13 +44,13 @@ public class LocalStates {
 
     public static synchronized void recordEWMALocalReadLatency(long localReadLatency) {
         long latencyInMicros = localReadLatency / 1000;
-        logger.debug("rymDebug: record the read latency: {} ns, {} us, EWMA latency is {}", localReadLatency, latencyInMicros, localEWMAReadLatency);
+        // logger.debug("rymDebug: record the read latency: {} ns, {} us, EWMA latency is {}", localReadLatency, latencyInMicros, localEWMAReadLatency);
         localEWMAReadLatency = getEWMA(latencyInMicros, localEWMAReadLatency);
     }
 
     public static synchronized void recordEWMALocalWriteLatency(long localWriteLatency) {
         long latencyInMicros = localWriteLatency / 1000;
-        logger.debug("rymDebug: record the write latency: {} ns, {} us, EWMA latency is {}", localWriteLatency, latencyInMicros, localEWMAWriteLatency);
+        // logger.debug("rymDebug: record the write latency: {} ns, {} us, EWMA latency is {}", localWriteLatency, latencyInMicros, localEWMAWriteLatency);
         localEWMAWriteLatency = getEWMA(latencyInMicros, localEWMAWriteLatency);
     }
 
@@ -72,7 +72,7 @@ public class LocalStates {
         String requests = "";
         for(Map.Entry<InetAddress, Queue<Long>> entry : readCounter.getCounter().entrySet())
         {
-            requests += entry.getKey() + " : " + entry.getValue().size() + ",";
+            requests += entry.getKey().getHostName() + ": " + entry.getValue().size() + ",";
         }
         return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
     }
