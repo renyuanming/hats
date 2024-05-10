@@ -136,7 +136,7 @@ public class AKUtils {
             this.requestsPerReplica = new ConcurrentHashMap<>();
         }
     
-        public void mark(InetAddress ip) {
+        public synchronized void mark(InetAddress ip) {
             long currentTime = System.currentTimeMillis();
             Queue<Long> timestamps = requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
             timestamps.add(currentTime);
@@ -152,7 +152,7 @@ public class AKUtils {
         private void cleanupOldRequests(InetAddress ip) {
             Queue<Long> timestamps = requestsPerReplica.get(ip);
             if (timestamps != null) {
-                long cutoffTime = System.currentTimeMillis() - intervalMillis;
+                long cutoffTime = System.currentTimeMillis() - this.intervalMillis;
                 while (!timestamps.isEmpty() && timestamps.peek() < cutoffTime) {
                     timestamps.poll();
                 }
