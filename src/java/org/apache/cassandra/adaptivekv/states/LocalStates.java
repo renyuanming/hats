@@ -42,16 +42,16 @@ public class LocalStates {
         this.latency = DatabaseDescriptor.getReadSensitiveFactor() * localEWMAReadLatency + (1 - DatabaseDescriptor.getReadSensitiveFactor()) * localEWMAWriteLatency;
     }
 
-    public static synchronized double recordEWMALocalReadLatency(long localReadLatency) {
+    public static synchronized void recordEWMALocalReadLatency(long localReadLatency) {
         long latencyInMicros = localReadLatency / 1000;
         logger.debug("rymDebug: record the read latency: {} ns, {} us, EWMA latency is {}", localReadLatency, latencyInMicros, localEWMAReadLatency);
-        return getEWMA(latencyInMicros, localEWMAReadLatency);
+        localEWMAReadLatency = getEWMA(latencyInMicros, localEWMAReadLatency);
     }
 
-    public static synchronized double recordEWMALocalWriteLatency(long localWriteLatency) {
+    public static synchronized void recordEWMALocalWriteLatency(long localWriteLatency) {
         long latencyInMicros = localWriteLatency / 1000;
         logger.debug("rymDebug: record the write latency: {} ns, {} us, EWMA latency is {}", localWriteLatency, latencyInMicros, localEWMAWriteLatency);
-        return getEWMA(latencyInMicros, localEWMAWriteLatency);
+        localEWMAWriteLatency = getEWMA(latencyInMicros, localEWMAWriteLatency);
     }
 
     public static double getEWMA(double newValue, double ewmaValue)
