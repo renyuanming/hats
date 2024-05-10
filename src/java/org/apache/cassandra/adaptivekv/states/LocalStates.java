@@ -25,8 +25,11 @@ import java.util.Queue;
 
 import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LocalStates {
+    private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
     private static double localEWMAReadLatency = 0.0; // micro second
     private static double localEWMAWriteLatency = 0.0; // micro second
     private static final double ALPHA = 0.9;
@@ -39,12 +42,16 @@ public class LocalStates {
         this.latency = DatabaseDescriptor.getReadSensitiveFactor() * localEWMAReadLatency + (1 - DatabaseDescriptor.getReadSensitiveFactor()) * localEWMAWriteLatency;
     }
 
-    public static synchronized double recordEWMALocalReadLatency(double localReadLatency) {
-        return getEWMA(localReadLatency, localEWMAReadLatency);
+    public static synchronized double recordEWMALocalReadLatency(long localReadLatency) {
+        long latencyInMicros = localReadLatency / 1000;
+        logger.debug("rymDebug: record the read latency: {} ns, {} us, EWMA latency is {}", localReadLatency, latencyInMicros, localEWMAReadLatency);
+        return getEWMA(latencyInMicros, localEWMAReadLatency);
     }
 
-    public static synchronized double recordEWMALocalWriteLatency(double localWriteLatency) {
-        return getEWMA(localWriteLatency, localEWMAWriteLatency);
+    public static synchronized double recordEWMALocalWriteLatency(long localWriteLatency) {
+        long latencyInMicros = localWriteLatency / 1000;
+        logger.debug("rymDebug: record the write latency: {} ns, {} us, EWMA latency is {}", localWriteLatency, latencyInMicros, localEWMAWriteLatency);
+        return getEWMA(latencyInMicros, localEWMAWriteLatency);
     }
 
     public static double getEWMA(double newValue, double ewmaValue)

@@ -476,7 +476,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         metric.readLatency.addNano(latencyNanos);
         if (metadata().keyspace.equals("ycsb"))
         {
-            LocalStates.recordEWMALocalReadLatency(latencyNanos / 1000);
+            LocalStates.recordEWMALocalReadLatency(latencyNanos);
         }
         
     }
