@@ -140,7 +140,7 @@ public class AKUtils {
             long currentTime = System.currentTimeMillis();
             ConcurrentLinkedQueue<Long> timestamps = requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
             timestamps.add(currentTime);
-            cleanupOldRequests(ip);
+            // cleanupOldRequests(ip);
         }
     
         public int getCount(InetAddress ip) {
