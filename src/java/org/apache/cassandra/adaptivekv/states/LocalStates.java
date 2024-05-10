@@ -22,6 +22,7 @@ package org.apache.cassandra.adaptivekv.states;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.config.DatabaseDescriptor;

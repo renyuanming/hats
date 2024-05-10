@@ -20,6 +20,7 @@ package org.apache.cassandra.adaptivekv;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
@@ -28,7 +29,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.commons.io.FileUtils;
@@ -125,36 +128,38 @@ public class AKUtils {
 
     public static class ReplicaRequestCounter
     {
-        private final long intevalSeconds;
+        private final long intervalMillis;
         private final ConcurrentHashMap<InetAddress, Queue<Long>> requestsPerReplica;
-
-        public ReplicaRequestCounter(long intevalSeconds) {
-            this.intevalSeconds = intevalSeconds;
+    
+        public ReplicaRequestCounter(long intervalMillis) {
+            this.intervalMillis = intervalMillis;
             this.requestsPerReplica = new ConcurrentHashMap<>();
         }
-
-        public synchronized void mark(InetAddress ip) {
-            this.requestsPerReplica.computeIfAbsent(ip, k -> new LinkedList<>()).add(System.currentTimeMillis());
+    
+        public void mark(InetAddress ip) {
+            long currentTime = System.currentTimeMillis();
+            Queue<Long> timestamps = requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
+            timestamps.add(currentTime);
             cleanupOldRequests(ip);
         }
-
-        public long getCount(InetAddress ip) {
+    
+        public int getCount(InetAddress ip) {
             cleanupOldRequests(ip);
-            Queue<Long> timestamps = this.requestsPerReplica.get(ip);
-            return (timestamps == null) ? 0 : timestamps.size();
+            Queue<Long> timestamps = requestsPerReplica.get(ip);
+            return timestamps != null ? timestamps.size() : 0;
         }
-
+    
         private void cleanupOldRequests(InetAddress ip) {
-            Queue<Long> timestamps = this.requestsPerReplica.get(ip);
+            Queue<Long> timestamps = requestsPerReplica.get(ip);
             if (timestamps != null) {
-                long expirationTime = System.currentTimeMillis() - intevalSeconds * 1000;
-                while (!timestamps.isEmpty() && timestamps.peek() < expirationTime) {
+                long cutoffTime = System.currentTimeMillis() - intervalMillis;
+                while (!timestamps.isEmpty() && timestamps.peek() < cutoffTime) {
                     timestamps.poll();
                 }
             }
         }
 
-        public Map<InetAddress, Queue<Long>> getCounter() {
+        public ConcurrentHashMap<InetAddress, Queue<Long>>  getCounter() {
             return requestsPerReplica;
         }
     }

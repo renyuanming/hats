@@ -298,7 +298,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public volatile TimeCounter timeCounter = new TimeCounter(7200);
     // Get the read count of each replica group before replica selection
     public ConcurrentHashMap<InetAddress, AtomicLong> totalReadCntOfEachReplica = new ConcurrentHashMap<InetAddress, AtomicLong>();
-    public ReplicaRequestCounter readCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval());
+    public ReplicaRequestCounter readCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval() * 1000);
     public AtomicLong totalReadCcount = new AtomicLong(0);
     public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
