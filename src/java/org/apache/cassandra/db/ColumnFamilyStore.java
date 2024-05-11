@@ -1482,6 +1482,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             if(this.getKeyspaceName().equals("ycsb"))
             {
                 LocalStates.recordEWMALocalWriteLatency(nanoTime() - start);
+                StorageService.instance.writeLatencyCalculator.record((nanoTime() - start) / 1000);
             }
             // CASSANDRA-11117 - certain resolution paths on memtable put can result in very
             // large time deltas, either through a variety of sentinel timestamps (used for empty values, ensuring

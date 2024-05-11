@@ -77,6 +77,7 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.CacheService;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.StorageProxy;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.btree.BTreeSet;
@@ -477,6 +478,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         if (metadata().keyspace.equals("ycsb"))
         {
             LocalStates.recordEWMALocalReadLatency(latencyNanos);
+            StorageService.instance.readLatencyCalculator.record(latencyNanos / 1000);
         }
         
     }

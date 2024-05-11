@@ -20,8 +20,6 @@ package org.apache.cassandra.adaptivekv;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -30,8 +28,6 @@ import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.commons.io.FileUtils;
@@ -136,7 +132,7 @@ public class AKUtils {
             this.requestsPerReplica = new ConcurrentHashMap<>();
         }
     
-        public synchronized void mark(InetAddress ip) {
+        public void mark(InetAddress ip) {
             long currentTime = System.currentTimeMillis();
             ConcurrentLinkedQueue<Long> timestamps = requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
             timestamps.add(currentTime);

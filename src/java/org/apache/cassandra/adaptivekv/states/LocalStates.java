@@ -20,10 +20,9 @@ package org.apache.cassandra.adaptivekv.states;
 
 
 import java.net.InetAddress;
-import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -75,9 +74,62 @@ public class LocalStates {
 
         for (InetAddress ip : readCounter.getCounter().keySet())
         {
-            requests += ip.getHostName() + ": " + readCounter.getCount(ip) + ",";
+            // requests += ip.getHostName() + ": " + readCounter.getCount(ip) + ",";
+            requests += ip.getHostName() + ": " + readCounter.getCounter().get(ip).size() + ",";
         }
         return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
     }
+
+    public static class LatencyCalculator
+    {
+        private final ConcurrentLinkedQueue<Double> producer = new ConcurrentLinkedQueue<>();
+        private final AtomicReference<Double> ewmaValue = new AtomicReference<>(0.0);
+        private final AtomicBoolean running = new AtomicBoolean(true);
+        private Thread workerThread;
+
+        public LatencyCalculator() {
+            startWorker();
+        }
+
+        private void startWorker() {
+            workerThread = new Thread(() -> {
+                while (running.get()) {
+                    computeEWMA();
+                    try {
+                        Thread.sleep(1000); // Calculate every second
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            });
+            workerThread.start();
+        }
+
+        private void computeEWMA() {
+            while (producer.size() > 0) {
+                double currentValue = producer.poll();
+                ewmaValue.updateAndGet(prev -> prev == 0.0 ? currentValue : ALPHA * currentValue + (1 - ALPHA) * prev);
+            }
+        }
+
+        public void record(double latency) {
+            producer.add(latency);
+        }
+
+        public double getEWMA() {
+            return ewmaValue.get();
+        }
+
+        public void stop() {
+            running.set(false);
+            workerThread.interrupt();
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            stop();
+            super.finalize();
+        }
+        }
 
 }

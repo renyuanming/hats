@@ -98,6 +98,7 @@ import org.apache.cassandra.adaptivekv.AKUtils;
 import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.adaptivekv.AKUtils.TimeCounter;
 import org.apache.cassandra.adaptivekv.states.ForegroundLoadBroadcaster;
+import org.apache.cassandra.adaptivekv.states.LocalStates.LatencyCalculator;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.audit.AuditLogOptions;
 import org.apache.cassandra.auth.AuthCacheService;
@@ -199,6 +200,7 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -304,6 +306,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
     public long[][] foregroundReadCountOfEachReplicationGroup;
+
+    
+
+    public LatencyCalculator readLatencyCalculator = new LatencyCalculator();
+    public LatencyCalculator writeLatencyCalculator = new LatencyCalculator();
 
     public String getRequestDistribution() {
         StorageService.instance.timeCounter.getHistory();
