@@ -20,9 +20,14 @@ package org.apache.cassandra.adaptivekv.states;
 
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.DoubleAdder;
 
 import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -80,10 +85,12 @@ public class LocalStates {
         return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
     }
 
-    public static class LatencyCalculator
-    {
-        private final ConcurrentLinkedQueue<Double> producer = new ConcurrentLinkedQueue<>();
+    public static class LatencyCalculator {
+        private static final double ALPHA = 0.9; // EWMA的平滑因子
+        private final ConcurrentLinkedQueue<Double> dataQueue = new ConcurrentLinkedQueue<>();
         private final AtomicReference<Double> ewmaValue = new AtomicReference<>(0.0);
+        private final AtomicReference<Double> sampledMeanValue = new AtomicReference<>(0.0);
+        private final int sampleSize = 100; // Sampling size
         private final AtomicBoolean running = new AtomicBoolean(true);
         private Thread workerThread;
 
@@ -94,7 +101,7 @@ public class LocalStates {
         private void startWorker() {
             workerThread = new Thread(() -> {
                 while (running.get()) {
-                    computeEWMA();
+                    processMetrics();
                     try {
                         Thread.sleep(1000); // Calculate every second
                     } catch (InterruptedException e) {
@@ -105,19 +112,38 @@ public class LocalStates {
             workerThread.start();
         }
 
-        private void computeEWMA() {
-            while (producer.size() > 0) {
-                double currentValue = producer.poll();
-                ewmaValue.updateAndGet(prev -> prev == 0.0 ? currentValue : ALPHA * currentValue + (1 - ALPHA) * prev);
+        private void processMetrics() {
+            List<Double> samples = new ArrayList<>(sampleSize);
+            Double currentValue;
+            while ((currentValue = dataQueue.poll()) != null) {
+                double prevEwma = ewmaValue.get();
+                double newEwma = prevEwma == 0.0 ? currentValue : ALPHA * currentValue + (1 - ALPHA) * prevEwma;
+                ewmaValue.set(newEwma);
+
+                // Radom sample
+                if (samples.size() < sampleSize) {
+                    samples.add(currentValue);
+                } else if (ThreadLocalRandom.current().nextInt(dataQueue.size() + 1) < sampleSize) {
+                    samples.set(ThreadLocalRandom.current().nextInt(sampleSize), currentValue);
+                }
+            }
+
+            if (!samples.isEmpty()) {
+                double mean = samples.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+                sampledMeanValue.set(mean);
             }
         }
 
         public void record(double latency) {
-            producer.add(latency);
+            dataQueue.add(latency);
         }
 
         public double getEWMA() {
             return ewmaValue.get();
+        }
+
+        public double getSampledMean() {
+            return sampledMeanValue.get();
         }
 
         public void stop() {
@@ -130,6 +156,6 @@ public class LocalStates {
             stop();
             super.finalize();
         }
-        }
+    }
 
 }
