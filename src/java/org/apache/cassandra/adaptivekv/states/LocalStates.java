@@ -74,8 +74,8 @@ public class LocalStates {
 
         for (InetAddress ip : readCounter.getCounter().keySet())
         {
-            // requests += ip.getHostName() + ": " + readCounter.getCount(ip) + ",";
-            requests += ip.getHostName() + ": " + readCounter.getCounter().get(ip).size() + ",";
+            requests += ip.getHostName() + ": " + readCounter.getCount(ip) + ",";
+            // requests += ip.getHostName() + ": " + readCounter.getCounter().get(ip).size() + ",";
         }
         return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
     }
