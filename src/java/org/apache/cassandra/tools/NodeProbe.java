@@ -349,7 +349,7 @@ public class NodeProbe implements AutoCloseable
         return output;
     }
 
-    // [AdaptiveKV]
+    // [Horse]
     public String getRequestDistribution() {
         return ssProxy.getRequestDistribution();
     }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.adaptivekv.leaderelection.priorityelection;
+package org.apache.cassandra.horse.leaderelection.priorityelection;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;

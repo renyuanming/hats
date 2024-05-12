@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.cassandra.adaptivekv.states;
+package org.apache.cassandra.horse.states;
 
 
 import java.net.InetAddress;
@@ -25,12 +25,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.DoubleAdder;
 
-import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.horse.HorseUtils.ReplicaRequestCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +84,6 @@ public class LocalStates {
     }
 
     public static class LatencyCalculator {
-        private static final double ALPHA = 0.9; // EWMA的平滑因子
         private final ConcurrentLinkedQueue<Double> dataQueue = new ConcurrentLinkedQueue<>();
         private final AtomicReference<Double> ewmaValue = new AtomicReference<>(0.0);
         private final AtomicReference<Double> sampledMeanValue = new AtomicReference<>(0.0);

@@ -41,9 +41,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.SharedMetricRegistries;
 
-import org.apache.cassandra.adaptivekv.AKUtils;
-import org.apache.cassandra.adaptivekv.Scheduler;
-import org.apache.cassandra.adaptivekv.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.auth.AuthCacheService;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
@@ -61,6 +58,9 @@ import org.apache.cassandra.db.virtual.VirtualSchemaKeyspace;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.StartupException;
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.Scheduler;
+import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
@@ -429,7 +429,7 @@ public class CassandraDaemon
 
         AuditLogManager.instance.initialize();
 
-        // AdaptiveKV
+        // Horse
         if(Gossiper.getSeedsStr().split(",").length <= 1)
         {
             // priority election
@@ -439,7 +439,7 @@ public class CassandraDaemon
         {
             if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddress().getHostAddress()))
             {
-                ElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
+                ElectionBootstrap.initElection(HorseUtils.getRaftLogPath(), 
                                             "ElectSeeds", 
                                             DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
                                             Gossiper.getSeedsStr());
@@ -449,6 +449,9 @@ public class CassandraDaemon
                 logger.debug("rymDebug: This node is not a seed node, no need to start election");
             }
         }
+
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
+                                                                10, 1, TimeUnit.SECONDS);
 
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 
                                                                 DatabaseDescriptor.getSchedulingInitialDelay(), 
@@ -750,7 +753,7 @@ public class CassandraDaemon
             registerNativeAccess();
 
             setup();
-            loadMetadataForAdaptiveKV();
+            loadMetadataForHorse();
 
             String pidFile = CASSANDRA_PID_FILE.getString();
 
@@ -795,7 +798,7 @@ public class CassandraDaemon
         }
     }
 
-    private void loadMetadataForAdaptiveKV() {
+    private void loadMetadataForHorse() {
         Gossiper.buildNodeAndTokenList();
     }
 

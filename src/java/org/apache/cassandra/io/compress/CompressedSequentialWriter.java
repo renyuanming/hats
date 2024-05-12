@@ -25,7 +25,7 @@ import java.nio.channels.Channels;
 import java.util.Optional;
 import java.util.zip.CRC32;
 
-import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.io.FSReadError;
 import org.apache.cassandra.io.FSWriteError;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;

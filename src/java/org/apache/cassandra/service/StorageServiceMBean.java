@@ -41,7 +41,7 @@ public interface StorageServiceMBean extends NotificationEmitter
 {
 
     /**
-     * [AdaptiveKV] Gat request distribution.
+     * [Horse] Gat request distribution.
      */
     public String getRequestDistribution();
 

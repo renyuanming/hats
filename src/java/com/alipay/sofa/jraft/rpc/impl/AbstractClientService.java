@@ -21,8 +21,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import org.apache.cassandra.adaptivekv.AKUtils;
-import org.apache.cassandra.adaptivekv.AKUtils.AKLogLevels;
+import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,7 +156,7 @@ public abstract class AbstractClientService implements ClientService {
             return false;
         } catch (final RemotingException e) {
             LOG.error("Fail to connect {}, remoting exception: {}.", endpoint, e.getMessage());
-            AKUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: Fail to connect %s", endpoint));
+            HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: Fail to connect %s", endpoint));
             return false;
         }
     }

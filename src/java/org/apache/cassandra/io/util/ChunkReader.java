@@ -49,6 +49,6 @@ public interface ChunkReader extends RebuffererFactory
      */
     BufferType preferredBufferType();
 
-    // [AdaptiveKV]
+    // [Horse]
     boolean useDirectIO();
 }

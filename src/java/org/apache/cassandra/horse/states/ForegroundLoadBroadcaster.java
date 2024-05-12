@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.cassandra.adaptivekv.states;
+package org.apache.cassandra.horse.states;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.adaptivekv.leaderelection.priorityelection;
+package org.apache.cassandra.horse.leaderelection.election;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,10 +22,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.alipay.sofa.jraft.Lifecycle;
 import com.alipay.sofa.jraft.Node;
 import com.alipay.sofa.jraft.RaftGroupService;
@@ -37,23 +37,24 @@ import com.alipay.sofa.jraft.rpc.RpcServer;
 import com.alipay.sofa.jraft.util.internal.ThrowUtil;
 
 /**
- * @author zongtanghu
+ *
+ * @author jiachun.fjc
  */
-public class PriorityElectionNode implements Lifecycle<PriorityElectionNodeOptions> {
+public class ElectionNode implements Lifecycle<ElectionNodeOptions> {
 
-    private static final Logger              LOG       = LoggerFactory.getLogger(PriorityElectionNode.class);
+    private static final Logger             LOG       = LoggerFactory.getLogger(ElectionNode.class);
 
-    private final List<LeaderStateListener>  listeners = new CopyOnWriteArrayList<>();
-    private RaftGroupService                 raftGroupService;
-    private Node                             node;
-    private PriorityElectionOnlyStateMachine fsm;
+    private final List<LeaderStateListener> listeners = new CopyOnWriteArrayList<>();
+    private RaftGroupService                raftGroupService;
+    private Node                            node;
+    private ElectionOnlyStateMachine        fsm;
 
-    private boolean                          started;
+    private boolean                         started;
 
     @Override
-    public boolean init(final PriorityElectionNodeOptions opts) {
+    public boolean init(final ElectionNodeOptions opts) {
         if (this.started) {
-            LOG.info("[PriorityElectionNode: {}] already started.", opts.getServerAddress());
+            LOG.info("[ElectionNode: {}] already started.", opts.getServerAddress());
             return true;
         }
         // node options
@@ -61,8 +62,7 @@ public class PriorityElectionNode implements Lifecycle<PriorityElectionNodeOptio
         if (nodeOpts == null) {
             nodeOpts = new NodeOptions();
         }
-        this.fsm = new PriorityElectionOnlyStateMachine(this.listeners);
-        // Set the initial PriorityElectionOnlyStateMachine
+        this.fsm = new ElectionOnlyStateMachine(this.listeners);
         nodeOpts.setFsm(this.fsm);
         final Configuration initialConf = new Configuration();
         if (!initialConf.parse(opts.getInitialServerAddressList())) {
@@ -89,20 +89,7 @@ public class PriorityElectionNode implements Lifecycle<PriorityElectionNodeOptio
         if (!serverId.parse(opts.getServerAddress())) {
             throw new IllegalArgumentException("Fail to parse serverId: " + opts.getServerAddress());
         }
-
-        /**
-         * Set priority value, required for priority-based election, it must be a positive value when
-         * enable the feature, some special value meaning:
-         * <ul>
-         * <li>-1 : disable priority-based election.</li>
-         * <li>0: will never participate in election.</li>
-         * <li>1: minimum value</li>
-         * </ul>
-         * value.
-         */
-        nodeOpts.setElectionPriority(serverId.getPriority());
-        nodeOpts.setRpcConnectTimeoutMs(DatabaseDescriptor.getRaftRpcTimeout());
-
+        LOG.debug("rymDebug: serverId.getEndpoint() is {}, opts.getServerAddress() is {}", serverId.getEndpoint(), opts.getServerAddress());
         final RpcServer rpcServer = RaftRpcServerFactory.createRaftRpcServer(serverId.getEndpoint());
         this.raftGroupService = new RaftGroupService(groupId, serverId, nodeOpts, rpcServer);
         this.node = this.raftGroupService.start();
@@ -130,15 +117,15 @@ public class PriorityElectionNode implements Lifecycle<PriorityElectionNodeOptio
     }
 
     public Node getNode() {
-        return this.node;
+        return node;
     }
 
-    public PriorityElectionOnlyStateMachine getFsm() {
-        return this.fsm;
+    public ElectionOnlyStateMachine getFsm() {
+        return fsm;
     }
 
     public boolean isStarted() {
-        return this.started;
+        return started;
     }
 
     public boolean isLeader() {
@@ -148,5 +135,4 @@ public class PriorityElectionNode implements Lifecycle<PriorityElectionNodeOptio
     public void addLeaderStateListener(final LeaderStateListener listener) {
         this.listeners.add(listener);
     }
-
 }

@@ -57,7 +57,7 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         ReadCommand command = message.payload;
 
         
-        // [AdaptiveKV] TEST
+        // [Horse] TEST
         StorageService.instance.totalReadCcount.incrementAndGet();
 
 
@@ -69,7 +69,6 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
                                  ((PartitionRangeReadCommand) command).dataRange().keyRange.right.getToken());
 
             List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(command.metadata().keyspace, tokenForRead);
-            StorageService.instance.timeCounter.increment();
             StorageService.instance.localReadCountOfUsertables.incrementAndGet();
             switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
                 case 0:

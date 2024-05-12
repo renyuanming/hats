@@ -94,11 +94,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.cassandra.adaptivekv.AKUtils;
-import org.apache.cassandra.adaptivekv.AKUtils.ReplicaRequestCounter;
-import org.apache.cassandra.adaptivekv.AKUtils.TimeCounter;
-import org.apache.cassandra.adaptivekv.states.ForegroundLoadBroadcaster;
-import org.apache.cassandra.adaptivekv.states.LocalStates.LatencyCalculator;
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.audit.AuditLogOptions;
 import org.apache.cassandra.auth.AuthCacheService;
@@ -155,6 +150,9 @@ import org.apache.cassandra.gms.IFailureDetector;
 import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
+import org.apache.cassandra.horse.HorseUtils.ReplicaRequestCounter;
+import org.apache.cassandra.horse.states.ForegroundLoadBroadcaster;
+import org.apache.cassandra.horse.states.LocalStates.LatencyCalculator;
 import org.apache.cassandra.index.IndexStatusManager;
 import org.apache.cassandra.io.sstable.IScrubber;
 import org.apache.cassandra.io.sstable.IVerifier;
@@ -296,8 +294,6 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public static final int RING_DELAY_MILLIS = getRingDelay(); // delay after which we assume ring has stablized
     public static final int SCHEMA_DELAY_MILLIS = getSchemaDelay();
 
-    // Get the served read request
-    public volatile TimeCounter timeCounter = new TimeCounter(7200);
     // Get the read count of each replica group before replica selection
     public ConcurrentHashMap<InetAddress, AtomicLong> totalReadCntOfEachReplica = new ConcurrentHashMap<InetAddress, AtomicLong>();
     public ReplicaRequestCounter readCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval() * 1000);
@@ -313,7 +309,6 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator();
 
     public String getRequestDistribution() {
-        StorageService.instance.timeCounter.getHistory();
         String result = "";
 
         String metricDir = System.getProperty("user.dir") + "/metrics/";

@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-import org.apache.cassandra.adaptivekv.AKUtils;
-import org.apache.cassandra.adaptivekv.AKUtils.AKLogLevels;
+import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -14,64 +14,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.adaptivekv.leaderelection.election;
+package org.apache.cassandra.horse.leaderelection.priorityelection;
 
+import com.alipay.sofa.jraft.entity.PeerId;
 
 import java.io.File;
 import java.util.Set;
 
-import org.apache.cassandra.adaptivekv.AKUtils;
+import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alipay.sofa.jraft.entity.PeerId;
-
 /**
  *
- * @author jiachun.fjc
+ * @author zongtanghu
  */
-public class ElectionBootstrap {
+public class PriorityElectionBootstrap {
 
-    // Start elections by 3 instance. Note that if multiple instances are started on the same machine,
-    // the first parameter `dataPath` should not be the same.
+    private static final Logger logger = LoggerFactory.getLogger(PriorityElectionBootstrap.class);
+    private static PriorityElectionNode node;
 
-    private static final Logger logger = LoggerFactory.getLogger(ElectionBootstrap.class);
-    private static ElectionNode node;
     public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
     {
+
         logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
                     dataPath, groupId, serverIdStr, initialConfStr);
         File dataPathFile = new File(dataPath);
         if(dataPathFile.exists())
         {
-            AKUtils.forceDelete(dataPathFile);
+            HorseUtils.forceDelete(dataPathFile);
         }
-        node = new ElectionNode();
-        final ElectionNodeOptions electionOpts = new ElectionNodeOptions();
-        electionOpts.setDataPath(dataPath);
-        electionOpts.setGroupId(groupId);
-        electionOpts.setServerAddress(serverIdStr);
-        electionOpts.setInitialServerAddressList(initialConfStr);
-
+        final PriorityElectionNodeOptions priorityElectionOpts = new PriorityElectionNodeOptions();
+        priorityElectionOpts.setDataPath(dataPath);
+        priorityElectionOpts.setGroupId(groupId);
+        priorityElectionOpts.setServerAddress(serverIdStr);
+        priorityElectionOpts.setInitialServerAddressList(initialConfStr);
+        
+        node = new PriorityElectionNode();
         node.addLeaderStateListener(new LeaderStateListener() {
 
             @Override
             public void onLeaderStart(long leaderTerm) {
+
                 PeerId serverId = node.getNode().getLeaderId();
+                int priority = serverId.getPriority();
                 String ip = serverId.getIp();
                 int port = serverId.getPort();
-                logger.debug("rymDebug: [ElectionBootstrap] Leader's ip is: {}, port: {}", ip, port);
-                logger.debug("rymDebug: [ElectionBootstrap] Leader start on term: {}", leaderTerm);
+
+                logger.debug("rymDebug: [PriorityElectionBootstrap] Leader's ip is {}, port: {}, priority is {}", ip, port, priority);
+                logger.debug("rymDebug: [PriorityElectionBootstrap] Leader start on term: {}", leaderTerm);
             }
 
             @Override
             public void onLeaderStop(long leaderTerm) {
-                logger.debug("rymDebug: [ElectionBootstrap] Leader stop on term: {}", leaderTerm);
+                logger.debug("rymDebug: [PriorityElectionBootstrap] Leader stop on term: {}", leaderTerm);
             }
         });
-        node.init(electionOpts);
+        node.init(priorityElectionOpts);
     }
+
+
 
     public static Boolean isLeader()
     {
@@ -83,6 +86,19 @@ public class ElectionBootstrap {
         logger.debug("rymDebug: Election node is not initialized");
         return false;
     }
+
+    
+    public static Boolean isStarted()
+    {
+        if (node != null)
+        {
+            return node.isStarted();
+        }
+        
+        logger.debug("rymDebug: Election node is not initialized");
+        return false;
+    }
+
 
     public static void shutdownElection(Set<InetAddressAndPort> liveSeeds)
     {
@@ -96,20 +112,24 @@ public class ElectionBootstrap {
         }
     }
 
+    // Start elections by 3 instance. Note that if multiple instances are started on the same machine,
+    // the first parameter `dataPath` should not be the same,
+    // the second parameter `groupId` should be set the same value, eg: election_test,
+    // the third parameter `serverId` should be set ip and port with priority value, eg: 127.0.0.1:8081::100, and middle postion can be empty string,
+    // the fourth parameter `initialConfStr` should be set the all of endpoints in raft cluster, eg : 127.0.0.1:8081::100,127.0.0.1:8082::40,127.0.0.1:8083::40.
 
     public static void main(final String[] args) {
         if (args.length < 4) {
             System.out
-                .println("Usage : java com.alipay.sofa.jraft.example.election.ElectionBootstrap {dataPath} {groupId} {serverId} {initConf}");
+                .println("Usage : java com.alipay.sofa.jraft.example.priorityelection.PriorityElectionBootstrap {dataPath} {groupId} {serverId} {initConf}");
             System.out
-                .println("Example: java com.alipay.sofa.jraft.example.election.ElectionBootstrap /tmp/server1 election_test 127.0.0.1:8081 127.0.0.1:8081,127.0.0.1:8082,127.0.0.1:8083");
+                .println("Example: java com.alipay.sofa.jraft.example.priorityelection.PriorityElectionBootstrap /tmp/server1 election_test 127.0.0.1:8081::100 127.0.0.1:8081::100,127.0.0.1:8082::40,127.0.0.1:8083::40");
             System.exit(1);
         }
         final String dataPath = args[0];
         final String groupId = args[1];
         final String serverIdStr = args[2];
         final String initialConfStr = args[3];
-
         initElection(dataPath, groupId, serverIdStr, initialConfStr);
     }
 }

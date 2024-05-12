@@ -129,7 +129,7 @@ public class Config
     public String initial_token;
     public Integer num_tokens;
 
-    // [AdaptiveKV]
+    // [Horse]
     public String token_ranges;
     public boolean motivation = false;
     public boolean enable_direct_io_for_read_path = false;

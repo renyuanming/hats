@@ -16,15 +16,16 @@
  * limitations under the License.
  */
 
-package org.apache.cassandra.adaptivekv;
+package org.apache.cassandra.horse;
+
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.cassandra.adaptivekv.leaderelection.election.ElectionBootstrap;
-import org.apache.cassandra.adaptivekv.leaderelection.priorityelection.PriorityElectionBootstrap;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
+import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
@@ -35,20 +36,18 @@ public class Scheduler {
     private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
     private static Boolean isPriorityElection = false;
     private static int priority = 100;
+    private static Set<InetAddressAndPort> liveSeeds;
 
-
-    public static Runnable getSchedulerRunnable()
+    public static Runnable getLeaderElectionRunnable()
     {
-        return new SchedulerRunnable();
+        return new LeaderElectionRunnable();
     }
 
-    private static class SchedulerRunnable implements Runnable
+    private static class LeaderElectionRunnable implements Runnable
     {
+        // Check the seed node status, if there is less than one seed node, change the election scheme
         @Override
-        public void run()
-        {
-
-            // [TODO] Check if there is lived seed node, if not, start a new election scheme
+        public void run() {
             Set<InetAddressAndPort> liveSeeds = Gossiper.getAllSeeds().stream().filter(Gossiper.instance::isAlive).collect(Collectors.toSet());
             if (!getIsPriorityElection() && liveSeeds.size() <= 1)
             {
@@ -63,15 +62,40 @@ public class Scheduler {
                     priority = 1000000000;
                 }
 
-                PriorityElectionBootstrap.initElection(AKUtils.getRaftLogPath(), 
+                PriorityElectionBootstrap.initElection(HorseUtils.getRaftLogPath(), 
                                         "ElectDataNodes", 
                                         DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort()+"::"+priority, 
-                                        AKUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), liveSeeds));
+                                        HorseUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), liveSeeds));
             }
             else
             {
                 logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
             }
+        }
+        
+    }
+
+    public static Boolean getIsPriorityElection()
+    {
+        return isPriorityElection;
+    }
+
+    public static void setIsPriorityElection(Boolean isPriorityElection)
+    {
+        Scheduler.isPriorityElection = isPriorityElection;
+    }
+
+
+    public static Runnable getSchedulerRunnable()
+    {
+        return new SchedulerRunnable();
+    }
+
+    private static class SchedulerRunnable implements Runnable
+    {
+        @Override
+        public void run()
+        {
 
             // Check if this node is the leader
             if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
@@ -85,11 +109,16 @@ public class Scheduler {
                  * 3. If we have no live seed node, we gathering the load statistic from all live members
                  */
 
+                 if(liveSeeds.size() == 1)
+                 {
+
+                 }
+
                 // If load change happens, trigger the placement algorithm
 
                 // Distribute the placement policy to all nodes and clients
             }
-            else
+            else if (ElectionBootstrap.isStarted() || PriorityElectionBootstrap.isStarted())
             {
                 // Followers send the load statistic to the leader
                 if(liveSeeds.size() > 1)
@@ -108,16 +137,10 @@ public class Scheduler {
                 }
                 logger.debug("rymDebug: Node {} is NOT the leader. Exit the scheduler.", FBUtilities.getBroadcastAddressAndPort());
             }
+            else
+            {
+                logger.debug("rymDebug: Node {} is neither the leader node, nor the follower nodes, we do not need to gathering states from it.", FBUtilities.getBroadcastAddressAndPort());
+            }
         }
-    }
-
-    public static Boolean getIsPriorityElection()
-    {
-        return isPriorityElection;
-    }
-
-    public static void setIsPriorityElection(Boolean isPriorityElection)
-    {
-        Scheduler.isPriorityElection = isPriorityElection;
     }
 }

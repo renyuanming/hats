@@ -62,7 +62,7 @@ public enum ApplicationState
     DISK_USAGE,
     INDEX_STATUS,
 
-    // [AdaptiveKV] Add new states for placement policy calculation
+    // [Horse] Add new states for placement policy calculation
     FOREGROUND_LOAD,
 
 
