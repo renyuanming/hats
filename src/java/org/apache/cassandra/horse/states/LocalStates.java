@@ -98,11 +98,11 @@ public class LocalStates {
             workerThread = new Thread(() -> {
                 while (running.get()) {
                     processMetrics();
-                    try {
-                        Thread.sleep(10); // Calculate every 10 ms
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+                    // try {
+                    //     Thread.sleep(10); // Calculate every 10 ms
+                    // } catch (InterruptedException e) {
+                    //     Thread.currentThread().interrupt();
+                    // }
                 }
             });
             workerThread.start();

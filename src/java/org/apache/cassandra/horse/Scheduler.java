@@ -20,7 +20,6 @@ package org.apache.cassandra.horse;
 
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
