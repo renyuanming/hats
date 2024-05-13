@@ -20,11 +20,9 @@ package org.apache.cassandra.horse.states;
 
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -40,10 +38,10 @@ public class LocalStates {
     public final ReplicaRequestCounter readCounter;
     public double latency = 0.0; // micro second
 
-    public LocalStates(ReplicaRequestCounter readCounter)
+    public LocalStates(ReplicaRequestCounter readCounter, double readLatency, double writeLatency)
     {
         this.readCounter = readCounter;
-        this.latency = DatabaseDescriptor.getReadSensitiveFactor() * localEWMAReadLatency + (1 - DatabaseDescriptor.getReadSensitiveFactor()) * localEWMAWriteLatency;
+        this.latency = DatabaseDescriptor.getReadSensitiveFactor() * readLatency + (1 - DatabaseDescriptor.getReadSensitiveFactor()) * writeLatency;
     }
 
     public static synchronized void recordEWMALocalReadLatency(long localReadLatency) {
@@ -86,8 +84,9 @@ public class LocalStates {
     public static class LatencyCalculator {
         private final ConcurrentLinkedQueue<Double> dataQueue = new ConcurrentLinkedQueue<>();
         private final AtomicReference<Double> ewmaValue = new AtomicReference<>(0.0);
-        private final AtomicReference<Double> sampledMeanValue = new AtomicReference<>(0.0);
-        private final int sampleSize = 100; // Sampling size
+        private final ConcurrentLinkedQueue<Double> windowData = new ConcurrentLinkedQueue<>();
+        private AtomicLong windowSum = new AtomicLong(0);
+        private static final int windowSize = 1000;
         private final AtomicBoolean running = new AtomicBoolean(true);
         private Thread workerThread;
 
@@ -100,7 +99,7 @@ public class LocalStates {
                 while (running.get()) {
                     processMetrics();
                     try {
-                        Thread.sleep(1000); // Calculate every second
+                        Thread.sleep(10); // Calculate every 10 ms
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -110,37 +109,40 @@ public class LocalStates {
         }
 
         private void processMetrics() {
-            List<Double> samples = new ArrayList<>(sampleSize);
-            Double currentValue;
-            while ((currentValue = dataQueue.poll()) != null) {
-                double prevEwma = ewmaValue.get();
-                double newEwma = prevEwma == 0.0 ? currentValue : ALPHA * currentValue + (1 - ALPHA) * prevEwma;
-                ewmaValue.set(newEwma);
-
-                // Radom sample
-                if (samples.size() < sampleSize) {
-                    samples.add(currentValue);
-                } else if (ThreadLocalRandom.current().nextInt(dataQueue.size() + 1) < sampleSize) {
-                    samples.set(ThreadLocalRandom.current().nextInt(sampleSize), currentValue);
+            Double currentValueForEWMA ;
+            double currentValueForWindow;
+            while ((currentValueForEWMA = this.dataQueue.poll()) != null || this.windowData.size() > windowSize) {
+                // Sliding window mean value
+                if (this.windowData.size() > windowSize) {
+                    currentValueForWindow = this.windowData.poll();
+                    this.windowSum.addAndGet(- (long)currentValueForWindow);
                 }
-            }
 
-            if (!samples.isEmpty()) {
-                double mean = samples.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-                sampledMeanValue.set(mean);
+                // EWMA
+                if (currentValueForEWMA == null) {
+                    continue;
+                }
+                else
+                {
+                    double prevEwma = this.ewmaValue.get();
+                    double newEwma = prevEwma == 0.0 ? currentValueForEWMA  : ALPHA * currentValueForEWMA    + (1 - ALPHA) * prevEwma;
+                    this.ewmaValue.set(newEwma);
+                }
             }
         }
 
         public void record(double latency) {
-            dataQueue.add(latency);
+            this.dataQueue.add(latency);
+            this.windowData.add(latency);
+            this.windowSum.addAndGet((long)latency);
         }
 
         public double getEWMA() {
             return ewmaValue.get();
         }
 
-        public double getSampledMean() {
-            return sampledMeanValue.get();
+        public double getWindowMean() {
+            return this.windowSum.get() * 1.0 / this.windowData.size();
         }
 
         public void stop() {

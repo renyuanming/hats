@@ -88,8 +88,8 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                     return;
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
-                LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica);
-                logger.debug("rymDebug: foreground load {}, local read latency: {},{},{}, local write latency: {},{},{}, Local states: {}", StorageService.instance.totalReadCntOfEachReplica, states.getEWMALocalReadLatency(), StorageService.instance.readLatencyCalculator.getEWMA(), StorageService.instance.readLatencyCalculator.getSampledMean(), states.getEWMALocalWriteLatency(), StorageService.instance.writeLatencyCalculator.getEWMA(), StorageService.instance.writeLatencyCalculator.getSampledMean(), states.toString());
+                LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica, StorageService.instance.readLatencyCalculator.getWindowMean(), StorageService.instance.writeLatencyCalculator.getWindowMean());
+                logger.debug("rymDebug: foreground load {}, local read latency: {},{},{}, local write latency: {},{},{}, Local states: {}", StorageService.instance.totalReadCntOfEachReplica, states.getEWMALocalReadLatency(), StorageService.instance.readLatencyCalculator.getEWMA(), StorageService.instance.readLatencyCalculator.getWindowMean(), states.getEWMALocalWriteLatency(), StorageService.instance.writeLatencyCalculator.getEWMA(), StorageService.instance.writeLatencyCalculator.getWindowMean(), states.toString());
                 
                 // Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
                 //                                            StorageService.instance.valueFactory.foregroundLoad(String.valueOf(StorageService.instance.totalReadCcount.get())));

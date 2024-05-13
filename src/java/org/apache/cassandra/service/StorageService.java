@@ -198,7 +198,6 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
-import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -307,6 +306,12 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator();
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator();
+    public List<Double> scoreVector;
+    public List<Double> latencyVector;
+    public Double[][][] loadMatrix;
+
+
+
 
     public String getRequestDistribution() {
         String result = "";
@@ -5100,7 +5105,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     */
     public List<InetAddressAndPort> getReplicaNodesWithPortFromTokenForDegradeRead(String keyspaceName, Token token) {
 
-        List<InetAddressAndPort> allHosts = new ArrayList<InetAddressAndPort>(Gossiper.getAllHosts());
+        List<InetAddressAndPort> allHosts = Gossiper.getAllHosts();
         List<InetAddressAndPort> replicaNodes = new ArrayList<>();
 
         long targetToken = (long) token.getTokenValue();

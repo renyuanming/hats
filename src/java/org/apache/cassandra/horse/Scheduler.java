@@ -19,10 +19,14 @@
 package org.apache.cassandra.horse;
 
 
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.gms.ApplicationState;
+import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
@@ -49,6 +53,8 @@ public class Scheduler {
         @Override
         public void run() {
             Set<InetAddressAndPort> liveSeeds = Gossiper.getAllSeeds().stream().filter(Gossiper.instance::isAlive).collect(Collectors.toSet());
+            
+            // Step1. Start a new leader election scheme if needed
             if (!getIsPriorityElection() && liveSeeds.size() <= 1)
             {
                 logger.debug("rymDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
@@ -66,13 +72,69 @@ public class Scheduler {
                                         "ElectDataNodes", 
                                         DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort()+"::"+priority, 
                                         HorseUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), liveSeeds));
+                // [TODO] Wait for the new leader election to finish
             }
             else
             {
                 logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
             }
+
+            // Step2. Gather the load statistic
+            gatheringLoadStatistic();
         }
         
+    }
+
+    public static void gatheringLoadStatistic()
+    {
+        // Check if this node is the leader
+        if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
+        {
+            logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+            // If this node is the leader, gathering the load statistic and  check load change happens
+            /*
+                * Gather the load statistic has three cases:
+                * 1. If we have multiple live seed nodes, we gathering the load statistic from these seed nodes
+                * 2. If we have only one live seed node, we gathering the load statistic locally
+                * 3. If we have no live seed node, we gathering the load statistic from all live members
+                */
+
+            if(liveSeeds.size() == 1)
+            {
+                for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
+                {
+                    String foregroundLoad = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
+                    logger.debug("rymDebug: Node {} has load statistic: {}", 
+                                 entry.getKey(), 
+                                 foregroundLoad);
+
+                    int index = Gossiper.getAllHosts().indexOf(entry.getKey());
+                }
+            }
+        }
+        else if (ElectionBootstrap.isStarted() || PriorityElectionBootstrap.isStarted())
+        {
+            // Followers send the load statistic to the leader
+            if(liveSeeds.size() > 1)
+            {
+                // If we have multiple live seed nodes, seed nodes send the load statistic to the leader
+            }
+            else if (liveSeeds.size() == 0)
+            {
+                // If we have no live seed nodes, all the node send the load statistic to the leader
+
+            }
+            else
+            {
+                // If we only have one seed nodes, we do nothing
+                logger.debug("As we only has one seed node, followers do nothing.");
+            }
+            logger.debug("rymDebug: Node {} is NOT the leader. Exit the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+        }
+        else
+        {
+            logger.debug("rymDebug: Node {} is neither the leader node, nor the follower nodes, we do not need to gathering states from it.", FBUtilities.getBroadcastAddressAndPort());
+        }
     }
 
     public static Boolean getIsPriorityElection()
@@ -101,45 +163,10 @@ public class Scheduler {
             if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
             {
                 logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
-                // If this node is the leader, gathering the load statistic and  check load change happens
-                /*
-                 * Gather the load statistic has three cases:
-                 * 1. If we have multiple live seed nodes, we gathering the load statistic from these seed nodes
-                 * 2. If we have only one live seed node, we gathering the load statistic locally
-                 * 3. If we have no live seed node, we gathering the load statistic from all live members
-                 */
 
-                 if(liveSeeds.size() == 1)
-                 {
-
-                 }
-
-                // If load change happens, trigger the placement algorithm
+                // Recalculate the placement policy if needed.
 
                 // Distribute the placement policy to all nodes and clients
-            }
-            else if (ElectionBootstrap.isStarted() || PriorityElectionBootstrap.isStarted())
-            {
-                // Followers send the load statistic to the leader
-                if(liveSeeds.size() > 1)
-                {
-                    // If we have multiple live seed nodes, seed nodes send the load statistic to the leader
-                }
-                else if (liveSeeds.size() == 0)
-                {
-                    // If we have no live seed nodes, all the node send the load statistic to the leader
-
-                }
-                else
-                {
-                    // If we only have one seed nodes, we do nothing
-                    logger.debug("As we only has one seed node, followers do nothing.");
-                }
-                logger.debug("rymDebug: Node {} is NOT the leader. Exit the scheduler.", FBUtilities.getBroadcastAddressAndPort());
-            }
-            else
-            {
-                logger.debug("rymDebug: Node {} is neither the leader node, nor the follower nodes, we do not need to gathering states from it.", FBUtilities.getBroadcastAddressAndPort());
             }
         }
     }
