@@ -91,10 +91,10 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
                     logger.error("[rym-ERROR] Not support replication factor larger than 3");
                     break;
             }
-            logger.debug("[rym] For token = {}, read {} from target table = {}, replication group = {}",
-                    tokenForRead,
-                    command.isDigestQuery() == true ? "digest" : "data",
-                    command.metadata().name, sendRequestAddresses);
+            // logger.debug("[rym] For token = {}, read {} from target table = {}, replication group = {}",
+            //         tokenForRead,
+            //         command.isDigestQuery() == true ? "digest" : "data",
+            //         command.metadata().name, sendRequestAddresses);
         }
         else{
             StorageService.instance.localReadCountOfSystemTables.incrementAndGet();

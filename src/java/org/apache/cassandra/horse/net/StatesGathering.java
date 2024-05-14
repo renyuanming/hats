@@ -74,8 +74,8 @@ public class StatesGathering
         @Override
         public void serialize(StatesGathering t, DataOutputPlus out, int version) throws IOException 
         {
-            out.write(t.gatheredStatesInBytes);
             out.writeInt(t.gatheredStatesInBytesSize);
+            out.write(t.gatheredStatesInBytes);
         }
 
         @Override
