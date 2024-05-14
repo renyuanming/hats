@@ -113,14 +113,20 @@ public class Scheduler {
 
                 // Step1. Gather the load statistic
                 gatheringLoadStatistic();
+                int retryCount = 0;
                 while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
                 {
                     try {
                         Thread.sleep(10);
-                        logger.debug("rymDebug: wait until the states are gathered, there are still {} left.", 
-                                     StorageService.instance.stateGatheringSignalInFlight.get());
+                        retryCount++;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
+                    }
+                    if(retryCount > 10)
+                    {
+                        logger.debug("rymWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
+                                        StorageService.instance.stateGatheringSignalInFlight.get());
+                        return;
                     }
                 }
                 logger.debug("rymDebug: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
