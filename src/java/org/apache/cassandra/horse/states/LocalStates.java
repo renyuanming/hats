@@ -130,7 +130,7 @@ public class LocalStates implements Serializable {
             this.completedRequestsOfEachReplica = new HashMap<>();
             for (InetAddress ip : this.requestsPerReplica.keySet())
             {
-                this.completedRequestsOfEachReplica.put(ip, this.requestsPerReplica.get(ip).size());
+                this.completedRequestsOfEachReplica.put(ip, this.getCount(ip));
             }
             return this.completedRequestsOfEachReplica;
         }
