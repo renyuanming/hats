@@ -90,7 +90,7 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                                        StorageService.instance.writeLatencyCalculator.getWindowMean() * 
                                        (1 - DatabaseDescriptor.getReadSensitiveFactor());
                 int version = 0;
-                if(Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()) != null)
+                if(Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()).getApplicationState(ApplicationState.FOREGROUND_LOAD) != null)
                 {
                     version = Gossiper.instance.endpointStateMap
                                       .get(FBUtilities.getBroadcastAddressAndPort())
@@ -100,7 +100,7 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                 else
                 {
                     logger.error("rymDebug: the local endpoint state is null, all the states are: {}", 
-                                 Gossiper.instance.endpointStateMap.keySet());
+                                 Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()));
                 }
                 LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica(), 
                                                      linearLatency, version);
