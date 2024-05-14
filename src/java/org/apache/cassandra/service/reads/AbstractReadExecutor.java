@@ -230,6 +230,10 @@ public abstract class AbstractReadExecutor
             long tStart = nanoTime();
             Tracing.trace("[rym] Executed local data read time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart) / 1000);
             Stage.READ.maybeExecuteImmediately(new LocalReadRunnable(readCommand, handler));
+
+            // record the local serve count
+            InetAddress replicaGroup = replicasInTheRing.get(0).getAddress();
+            StorageService.instance.readCounterOfEachReplica.mark(replicaGroup);
         } 
         // else 
         // {
@@ -278,8 +282,6 @@ public abstract class AbstractReadExecutor
         
         if (keyspace.getName().equals("ycsb")) {
             InetAddress replicaGroup = StorageService.instance.getNaturalEndpointsForToken(keyspace.getName(), token).get(0);
-            
-            StorageService.instance.readCounterOfEachReplica.mark(replicaGroup);
 
             if(!StorageService.instance.totalReadCntOfEachReplica.containsKey(replicaGroup)) {
                 StorageService.instance.totalReadCntOfEachReplica.put(replicaGroup, new AtomicLong(0));

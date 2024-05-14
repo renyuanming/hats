@@ -116,7 +116,7 @@ public class LocalStates implements Serializable {
             // cleanupOldRequests(ip);
         }
     
-        public int getCount(InetAddress ip) {
+        private int getCount(InetAddress ip) {
             cleanupOldRequests(ip);
             ConcurrentLinkedQueue<Long> timestamps = this.requestsPerReplica.get(ip);
             return timestamps != null ? timestamps.size() : 0;
