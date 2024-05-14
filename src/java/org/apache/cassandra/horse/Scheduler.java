@@ -77,10 +77,10 @@ public class Scheduler {
                                         HorseUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), liveSeeds));
                 // [TODO] Wait for the new leader election to finish
             }
-            else
-            {
-                logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
-            }
+            // else
+            // {
+            //     logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
+            // }
 
         }
         
@@ -138,10 +138,16 @@ public class Scheduler {
                              GlobalStates.globalStates.loadMatrix);
                 
                 // Step2. Recalculate the placement policy if needed.
-
+                calculatePlacementPolicy();
+                
                 // Step3. Distribute the placement policy to all nodes and clients
             }
         }
+    }
+
+    private static void calculatePlacementPolicy()
+    {
+        // [TODO] Calculate the placement policy
     }
 
     /**
