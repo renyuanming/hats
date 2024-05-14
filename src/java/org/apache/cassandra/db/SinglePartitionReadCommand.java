@@ -64,7 +64,6 @@ import org.apache.cassandra.db.transform.Transformation;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.exceptions.RequestExecutionException;
-import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.io.sstable.SSTableReadsListener;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
@@ -477,7 +476,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         metric.readLatency.addNano(latencyNanos);
         if (metadata().keyspace.equals("ycsb"))
         {
-            LocalStates.recordEWMALocalReadLatency(latencyNanos);
+            // LocalStates.recordEWMALocalReadLatency(latencyNanos);
             StorageService.instance.readLatencyCalculator.record(latencyNanos / 1000);
         }
         

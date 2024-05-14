@@ -19,6 +19,7 @@
 package org.apache.cassandra.horse;
 
 
+import java.net.InetAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,10 +30,15 @@ import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
+import org.apache.cassandra.horse.net.StatesGatheringSignal;
+import org.apache.cassandra.horse.states.GlobalStates;
+import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class Scheduler {
 
@@ -57,11 +63,9 @@ public class Scheduler {
             if (!getIsPriorityElection() && liveSeeds.size() <= 1)
             {
                 logger.debug("rymDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
-                setIsPriorityElection(true);
 
-                // Shutdown the current election scheme
+                setIsPriorityElection(true);
                 ElectionBootstrap.shutdownElection(liveSeeds);
-                // Start a new priority election scheme
                 if(liveSeeds.contains(FBUtilities.getBroadcastAddressAndPort()))
                 {
                     priority = 1000000000;
@@ -78,62 +82,8 @@ public class Scheduler {
                 logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
             }
 
-            // Step2. Gather the load statistic
-            gatheringLoadStatistic();
         }
         
-    }
-
-    public static void gatheringLoadStatistic()
-    {
-        // Check if this node is the leader
-        if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
-        {
-            logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
-            // If this node is the leader, gathering the load statistic and  check load change happens
-            /*
-                * Gather the load statistic has three cases:
-                * 1. If we have multiple live seed nodes, we gathering the load statistic from these seed nodes
-                * 2. If we have only one live seed node, we gathering the load statistic locally
-                * 3. If we have no live seed node, we gathering the load statistic from all live members
-                */
-
-            if(liveSeeds.size() == 1)
-            {
-                for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
-                {
-                    String foregroundLoad = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
-                    logger.debug("rymDebug: Node {} has load statistic: {}", 
-                                 entry.getKey(), 
-                                 foregroundLoad);
-
-                    int index = Gossiper.getAllHosts().indexOf(entry.getKey());
-                }
-            }
-        }
-        else if (ElectionBootstrap.isStarted() || PriorityElectionBootstrap.isStarted())
-        {
-            // Followers send the load statistic to the leader
-            if(liveSeeds.size() > 1)
-            {
-                // If we have multiple live seed nodes, seed nodes send the load statistic to the leader
-            }
-            else if (liveSeeds.size() == 0)
-            {
-                // If we have no live seed nodes, all the node send the load statistic to the leader
-
-            }
-            else
-            {
-                // If we only have one seed nodes, we do nothing
-                logger.debug("As we only has one seed node, followers do nothing.");
-            }
-            logger.debug("rymDebug: Node {} is NOT the leader. Exit the scheduler.", FBUtilities.getBroadcastAddressAndPort());
-        }
-        else
-        {
-            logger.debug("rymDebug: Node {} is neither the leader node, nor the follower nodes, we do not need to gathering states from it.", FBUtilities.getBroadcastAddressAndPort());
-        }
     }
 
     public static Boolean getIsPriorityElection()
@@ -157,16 +107,105 @@ public class Scheduler {
         @Override
         public void run()
         {
-
-            // Check if this node is the leader
             if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
             {
                 logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
-                // Recalculate the placement policy if needed.
+                // Step1. Gather the load statistic
+                gatheringLoadStatistic();
+                while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
+                {
+                    try {
+                        Thread.sleep(1);
+                        logger.debug("rymDebug: wait until the states are gathered, there are still {} left.", 
+                                     StorageService.instance.stateGatheringSignalInFlight.get());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                logger.debug("rymDebug: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
+                             GlobalStates.globalStates.versionVector, 
+                             GlobalStates.globalStates.latencyVector, 
+                             GlobalStates.globalStates.readCountVector, 
+                             GlobalStates.globalStates.scoreVector, 
+                             GlobalStates.globalStates.loadMatrix);
+                
+                // Step2. Recalculate the placement policy if needed.
 
-                // Distribute the placement policy to all nodes and clients
+                // Step3. Distribute the placement policy to all nodes and clients
             }
         }
     }
+
+    /**
+    * Gather the load statistic has three cases:
+    * 1. If we have multiple live seed nodes, we gathering the load statistic from these seed nodes
+    * 2. If we have only one live seed node, we gathering the load statistic locally
+    * 3. If we have no live seed node, we gathering the load statistic from all live members
+    */
+    public static void gatheringLoadStatistic()
+    {
+        // Check if this node is the leader
+        if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
+        {
+            throw new IllegalStateException("This method should not be called by the leader node.");
+        }
+        logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+
+        // If this node is the leader, gathering the load statistic
+        GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size(), 3);
+        if(liveSeeds.size() == 1)
+        {
+            for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
+            {
+                String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
+                int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
+
+                LocalStates localStates = LocalStates.fromString(localStatesStr, version);
+
+                int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
+                if (nodeIndex == -1)
+                {
+                    throw new IllegalStateException("Host not found in Gossiper");
+                }
+
+                GlobalStates.globalStates.latencyVector[nodeIndex] = localStates.latency;
+                GlobalStates.globalStates.versionVector[nodeIndex] = localStates.version;
+                GlobalStates.globalStates.readCountVector[nodeIndex] = 0;
+                for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
+                {
+                    int replicaIndex = HorseUtils.getReplicaIndex(nodeIndex, entry1.getKey());
+                    GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
+                    GlobalStates.globalStates.readCountVector[nodeIndex] += entry1.getValue();
+                }
+            }
+        }
+        else if (liveSeeds.size() > 1)
+        {
+            StatesGatheringSignal signal = new StatesGatheringSignal(true);
+            for(InetAddressAndPort seed : liveSeeds)
+            {
+                StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
+                if(seed.equals(FBUtilities.getBroadcastAddressAndPort()))
+                {
+                    continue;
+                }
+                signal.sendStatesGatheringSignal(seed);
+            }
+        }
+        else
+        {
+            StatesGatheringSignal signal = new StatesGatheringSignal(false);
+            for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
+            {
+                StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
+                if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
+                {
+                    continue;
+                }
+                signal.sendStatesGatheringSignal(follower);
+            }
+        }
+    }
+
 }

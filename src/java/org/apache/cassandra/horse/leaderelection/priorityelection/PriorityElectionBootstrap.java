@@ -99,6 +99,12 @@ public class PriorityElectionBootstrap {
         return false;
     }
 
+    public static String getLeader()
+    {
+        PeerId serverId = node.getNode().getLeaderId();
+        String ip = serverId.getIp();
+        return ip;
+    }
 
     public static void shutdownElection(Set<InetAddressAndPort> liveSeeds)
     {

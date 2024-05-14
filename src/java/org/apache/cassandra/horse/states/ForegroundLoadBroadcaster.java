@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
+import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,11 +72,6 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
         foregroundLoadInfo.remove(endpoint);
     }
 
-    // public Map<InetAddressAndPort, Double> getLoadInfo()
-    // {
-    //     return Collections.unmodifiableMap(loadInfo);
-    // }
-
     public void startBroadcasting()
     {
         // send the first broadcast "right away" (i.e., in 2 gossip heartbeats, when we should have someone to talk to);
@@ -88,11 +84,24 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                     return;
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
-                LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica, StorageService.instance.readLatencyCalculator.getWindowMean(), StorageService.instance.writeLatencyCalculator.getWindowMean());
-                logger.debug("rymDebug: foreground load {}, local read latency: {},{},{}, local write latency: {},{},{}, Local states: {}", StorageService.instance.totalReadCntOfEachReplica, states.getEWMALocalReadLatency(), StorageService.instance.readLatencyCalculator.getEWMA(), StorageService.instance.readLatencyCalculator.getWindowMean(), states.getEWMALocalWriteLatency(), StorageService.instance.writeLatencyCalculator.getEWMA(), StorageService.instance.writeLatencyCalculator.getWindowMean(), states.toString());
                 
-                // Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
-                //                                            StorageService.instance.valueFactory.foregroundLoad(String.valueOf(StorageService.instance.totalReadCcount.get())));
+                double linearLatency = StorageService.instance.readLatencyCalculator.getWindowMean() * 
+                                       DatabaseDescriptor.getReadSensitiveFactor() +
+                                       StorageService.instance.writeLatencyCalculator.getWindowMean() * 
+                                       (1 - DatabaseDescriptor.getReadSensitiveFactor());
+                int version = Gossiper.instance.endpointStateMap
+                                               .get(FBUtilities.getBroadcastAddressAndPort())
+                                               .getApplicationState(ApplicationState.FOREGROUND_LOAD)
+                                               .version;
+                LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica(), 
+                                                     linearLatency, version);
+                
+                logger.debug("rymDebug: foreground load {}, local read latency: {}, local write latency: {}, Local states: {}", 
+                             StorageService.instance.totalReadCntOfEachReplica, 
+                             StorageService.instance.readLatencyCalculator.getWindowMean(), 
+                             StorageService.instance.writeLatencyCalculator.getWindowMean(), 
+                             states.toString());
+                
                 Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,
                                                            StorageService.instance.valueFactory.foregroundLoad(states));
             }

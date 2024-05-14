@@ -5073,4 +5073,18 @@ public class DatabaseDescriptor
     {
         return conf.all_hosts;
     }
+
+    public static int getConcurrentSchedulers()
+    {
+        return conf.concurrent_schedulers;
+    }
+
+    public static void setConcurrentSchedulers(int concurrent_schedulers)
+    {
+        if (concurrent_schedulers < 0)
+        {
+            throw new IllegalArgumentException("Concurrent schedulers must be non-negative");
+        }
+        conf.concurrent_writes = concurrent_schedulers;
+    }
 }

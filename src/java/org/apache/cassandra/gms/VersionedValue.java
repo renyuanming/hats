@@ -192,11 +192,6 @@ public class VersionedValue implements Comparable<VersionedValue>
             return new VersionedValue(foregroundLoad.toString());
         }
 
-        // public VersionedValue foregroundLoad(String foregroundLoad)
-        // {
-        //     return new VersionedValue(foregroundLoad);
-        // }
-
         public VersionedValue diskUsage(String state)
         {
             return new VersionedValue(state);

@@ -150,9 +150,9 @@ import org.apache.cassandra.gms.IFailureDetector;
 import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
-import org.apache.cassandra.horse.HorseUtils.ReplicaRequestCounter;
 import org.apache.cassandra.horse.states.ForegroundLoadBroadcaster;
 import org.apache.cassandra.horse.states.LocalStates.LatencyCalculator;
+import org.apache.cassandra.horse.states.LocalStates.ReplicaRequestCounter;
 import org.apache.cassandra.index.IndexStatusManager;
 import org.apache.cassandra.io.sstable.IScrubber;
 import org.apache.cassandra.io.sstable.IVerifier;
@@ -301,14 +301,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
     public long[][] foregroundReadCountOfEachReplicationGroup;
-
-    
-
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator();
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator();
-    public List<Double> scoreVector;
-    public List<Double> latencyVector;
-    public Double[][][] loadMatrix;
+    public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
 
 
 

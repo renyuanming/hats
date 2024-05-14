@@ -55,6 +55,10 @@ import org.apache.cassandra.gms.GossipShutdown;
 import org.apache.cassandra.gms.GossipShutdownVerbHandler;
 import org.apache.cassandra.hints.HintMessage;
 import org.apache.cassandra.hints.HintVerbHandler;
+import org.apache.cassandra.horse.net.StatesGathering;
+import org.apache.cassandra.horse.net.StatesGatheringSignal;
+import org.apache.cassandra.horse.net.StatesGatheringSignalVerbHandler;
+import org.apache.cassandra.horse.net.StatesGatheringVerbHandler;
 import org.apache.cassandra.io.IVersionedAsymmetricSerializer;
 import org.apache.cassandra.repair.RepairMessageVerbHandler;
 import org.apache.cassandra.repair.messages.CleanupMessage;
@@ -122,6 +126,12 @@ public enum Verb
     BATCH_STORE_REQ        (5,   P3, writeTimeout,    MUTATION,          () -> Batch.serializer,                     () -> BatchStoreVerbHandler.instance,      BATCH_STORE_RSP     ),
     BATCH_REMOVE_RSP       (66,  P1, writeTimeout,    REQUEST_RESPONSE,  () -> NoPayload.serializer,                 () -> ResponseVerbHandler.instance                             ),
     BATCH_REMOVE_REQ       (6,   P3, writeTimeout,    MUTATION,          () -> TimeUUID.Serializer.instance,         () -> BatchRemoveVerbHandler.instance,     BATCH_REMOVE_RSP    ),
+
+    
+    STATE_GATHERING_RSP        (200,  P1, writeTimeout,    REQUEST_RESPONSE,  () -> NoPayload.serializer,                 () -> ResponseVerbHandler.instance                             ),
+    STATE_GATHERING_REQ        (201,   P1, writeTimeout,    HORSE,          () -> StatesGathering.serializer,                  () -> StatesGatheringVerbHandler.instance,      STATE_GATHERING_RSP     ),
+    STATE_GATHERING_SIGNAL_RSP        (202,  P1, writeTimeout,    REQUEST_RESPONSE,  () -> NoPayload.serializer,                 () -> ResponseVerbHandler.instance                             ),
+    STATE_GATHERING_SIGNAL_REQ        (203,   P1, writeTimeout,    HORSE,          () -> StatesGatheringSignal.serializer,                  () -> StatesGatheringSignalVerbHandler.instance,      STATE_GATHERING_SIGNAL_RSP     ),
 
     PAXOS_PREPARE_RSP      (93,  P2, writeTimeout,    REQUEST_RESPONSE,  () -> PrepareResponse.serializer,           () -> ResponseVerbHandler.instance                             ),
     PAXOS_PREPARE_REQ      (33,  P2, writeTimeout,    MUTATION,          () -> Commit.serializer,                    () -> PrepareVerbHandler.instance,         PAXOS_PREPARE_RSP   ),

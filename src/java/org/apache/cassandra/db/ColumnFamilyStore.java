@@ -112,7 +112,6 @@ import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.StartupException;
-import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.index.SecondaryIndexManager;
 import org.apache.cassandra.index.internal.CassandraIndex;
 import org.apache.cassandra.index.transactions.UpdateTransaction;
@@ -1481,7 +1480,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             metric.writeLatency.addNano(nanoTime() - start);
             if(this.getKeyspaceName().equals("ycsb"))
             {
-                LocalStates.recordEWMALocalWriteLatency(nanoTime() - start);
+                // LocalStates.recordEWMALocalWriteLatency(nanoTime() - start);
                 StorageService.instance.writeLatencyCalculator.record((nanoTime() - start) / 1000);
             }
             // CASSANDRA-11117 - certain resolution paths on memtable put can result in very

@@ -19,66 +19,119 @@
 package org.apache.cassandra.horse.states;
 
 
+import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.horse.HorseUtils.ReplicaRequestCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LocalStates {
+public class LocalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
-    private static double localEWMAReadLatency = 0.0; // micro second
-    private static double localEWMAWriteLatency = 0.0; // micro second
     private static final double ALPHA = 0.9;
-    public final ReplicaRequestCounter readCounter;
-    public double latency = 0.0; // micro second
+    public final double latency; // micro second
+    public final Map<InetAddress, Integer> completedReadRequestCount;
+    public final int version;
 
-    public LocalStates(ReplicaRequestCounter readCounter, double readLatency, double writeLatency)
+    public LocalStates(Map<InetAddress, Integer> completedReadRequestCount, double latency, int version)
     {
-        this.readCounter = readCounter;
-        this.latency = DatabaseDescriptor.getReadSensitiveFactor() * readLatency + (1 - DatabaseDescriptor.getReadSensitiveFactor()) * writeLatency;
-    }
-
-    public static synchronized void recordEWMALocalReadLatency(long localReadLatency) {
-        long latencyInMicros = localReadLatency / 1000;
-        // logger.debug("rymDebug: record the read latency: {} ns, {} us, EWMA latency is {}", localReadLatency, latencyInMicros, localEWMAReadLatency);
-        localEWMAReadLatency = getEWMA(latencyInMicros, localEWMAReadLatency);
-    }
-
-    public static synchronized void recordEWMALocalWriteLatency(long localWriteLatency) {
-        long latencyInMicros = localWriteLatency / 1000;
-        // logger.debug("rymDebug: record the write latency: {} ns, {} us, EWMA latency is {}", localWriteLatency, latencyInMicros, localEWMAWriteLatency);
-        localEWMAWriteLatency = getEWMA(latencyInMicros, localEWMAWriteLatency);
-    }
-
-    public static double getEWMA(double newValue, double ewmaValue)
-    {
-        return ALPHA * newValue + (1 - ALPHA) * ewmaValue;
-    }
-
-    public double getEWMALocalReadLatency() {
-        return localEWMAReadLatency;
-    }
-
-    public double getEWMALocalWriteLatency() {
-        return localEWMAWriteLatency;
+        this.completedReadRequestCount = completedReadRequestCount;
+        this.latency = latency;
+        this.version = version;
     }
 
     public String toString()
     {
         String requests = "";
 
-        for (InetAddress ip : readCounter.getCounter().keySet())
+        for (InetAddress ip : this.completedReadRequestCount.keySet())
         {
-            requests += ip.getHostName() + ": " + readCounter.getCount(ip) + ",";
+            requests += ip.getHostName() + ":" + this.completedReadRequestCount.get(ip) + ",";
             // requests += ip.getHostName() + ": " + readCounter.getCounter().get(ip).size() + ",";
         }
-        return String.format("LocalStates{Latency=%f, Requests=%s}", latency, requests);
+        return String.format("LocalStates{Latency=%f, Requests=%s}", this.latency, requests);
+    }
+
+    public static LocalStates fromString(String str, int version)
+    {
+        String[] metrics = str.split(",");
+        if (metrics.length != 3)
+        {
+            throw new IllegalArgumentException(String.format("rymERROR: wrong parsing for the string %s", str));
+        }
+
+        double latency = Double.parseDouble(metrics[0].split("=")[1]);
+        // int version = Integer.parseInt(metrics[2].split("=")[1]);
+
+        Map<InetAddress, Integer> completedReadRequestCount = new HashMap<>();
+        String requests = metrics[1].split("=")[1];
+        String[] requestsParts = requests.split(",");
+        for (String request : requestsParts)
+        {
+            String[] kv = request.split(":");
+            try {
+                completedReadRequestCount.put(InetAddress.getByName(kv[0]), Integer.parseInt(kv[1]));
+            } catch (NumberFormatException | UnknownHostException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        logger.debug("rymDebug: the load str is {}, the parsed latency is {}, the requests are {}, the version is {}", str, latency, completedReadRequestCount, version);
+
+        return new LocalStates(completedReadRequestCount, latency, version);
+    }    
+
+    public static class ReplicaRequestCounter
+    {
+        private final long intervalMillis;
+        private final ConcurrentHashMap<InetAddress, ConcurrentLinkedQueue<Long>> requestsPerReplica;
+        private Map<InetAddress, Integer> completedRequestsOfEachReplica;
+    
+        public ReplicaRequestCounter(long intervalMillis) {
+            this.intervalMillis = intervalMillis;
+            this.requestsPerReplica = new ConcurrentHashMap<>();
+        }
+    
+        public void mark(InetAddress ip) {
+            long currentTime = System.currentTimeMillis();
+            ConcurrentLinkedQueue<Long> timestamps = this.requestsPerReplica.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
+            timestamps.add(currentTime);
+            // cleanupOldRequests(ip);
+        }
+    
+        public int getCount(InetAddress ip) {
+            cleanupOldRequests(ip);
+            ConcurrentLinkedQueue<Long> timestamps = this.requestsPerReplica.get(ip);
+            return timestamps != null ? timestamps.size() : 0;
+        }
+    
+        private void cleanupOldRequests(InetAddress ip) {
+            Queue<Long> timestamps = this.requestsPerReplica.get(ip);
+            if (timestamps != null) {
+                long cutoffTime = System.currentTimeMillis() - this.intervalMillis;
+                while (!timestamps.isEmpty() && timestamps.peek() < cutoffTime) {
+                    timestamps.poll();
+                }
+            }
+        }
+
+        public Map<InetAddress, Integer> getCompletedRequestsOfEachReplica() {
+            this.completedRequestsOfEachReplica = new HashMap<>();
+            for (InetAddress ip : this.requestsPerReplica.keySet())
+            {
+                this.completedRequestsOfEachReplica.put(ip, this.requestsPerReplica.get(ip).size());
+            }
+            return this.completedRequestsOfEachReplica;
+        }
     }
 
     public static class LatencyCalculator {

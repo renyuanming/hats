@@ -140,6 +140,7 @@ public class Config
     public double read_sensitive_factor = 0.9;
     public int state_update_interval = 10; // seconds
     public String all_hosts = "127.0.0.1";
+    public int concurrent_schedulers = 32;
 
 
 
