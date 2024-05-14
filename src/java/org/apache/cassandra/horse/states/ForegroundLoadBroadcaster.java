@@ -89,10 +89,19 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                                        DatabaseDescriptor.getReadSensitiveFactor() +
                                        StorageService.instance.writeLatencyCalculator.getWindowMean() * 
                                        (1 - DatabaseDescriptor.getReadSensitiveFactor());
-                int version = Gossiper.instance.endpointStateMap
-                                               .get(FBUtilities.getBroadcastAddressAndPort())
-                                               .getApplicationState(ApplicationState.FOREGROUND_LOAD)
-                                               .version;
+                int version = 0;
+                if(Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()) != null)
+                {
+                    version = Gossiper.instance.endpointStateMap
+                                      .get(FBUtilities.getBroadcastAddressAndPort())
+                                      .getApplicationState(ApplicationState.FOREGROUND_LOAD)
+                                      .version;
+                }
+                else
+                {
+                    logger.error("rymDebug: the local endpoint state is null, all the states are: {}", 
+                                 Gossiper.instance.endpointStateMap.keySet());
+                }
                 LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica(), 
                                                      linearLatency, version);
                 
@@ -106,7 +115,7 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                                                            StorageService.instance.valueFactory.foregroundLoad(states));
             }
         };
-        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 5, DatabaseDescriptor.getStateUpdateInterval(), TimeUnit.SECONDS);
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 2, DatabaseDescriptor.getStateUpdateInterval(), TimeUnit.SECONDS);
     }
 }
 
