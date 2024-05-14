@@ -106,7 +106,7 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                                                            StorageService.instance.valueFactory.foregroundLoad(states));
             }
         };
-        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 60, DatabaseDescriptor.getStateUpdateInterval(), TimeUnit.SECONDS);
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(runnable, 5, DatabaseDescriptor.getStateUpdateInterval(), TimeUnit.SECONDS);
     }
 }
 

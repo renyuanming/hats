@@ -146,13 +146,12 @@ public class Scheduler {
     public static void gatheringLoadStatistic()
     {
         // Check if this node is the leader
-        if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
+        if (!ElectionBootstrap.isLeader() && !PriorityElectionBootstrap.isLeader())
         {
-            throw new IllegalStateException("This method should not be called by the leader node.");
+            throw new IllegalStateException("This method should be called by the leader node.");
         }
         logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
-        // If this node is the leader, gathering the load statistic
         GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size(), 3);
         if(liveSeeds.size() == 1)
         {
