@@ -62,13 +62,13 @@ public class LocalStates implements Serializable {
 
     public static LocalStates fromString(String str, int version)
     {
-        String[] metrics = str.split(" | ");
+        String[] metrics = str.split(" \\| ");
         if (metrics.length != 3)
         {
             throw new IllegalArgumentException(String.format("rymERROR: wrong parsing for the string %s", str));
         }
 
-        double latency = Double.parseDouble(metrics[0].split("=")[1]);
+        double latency = Double.parseDouble(metrics[0].split("=")[1].trim());
         // int version = Integer.parseInt(metrics[2].split("=")[1]);
 
         Map<InetAddress, Integer> completedReadRequestCount = new HashMap<>();
