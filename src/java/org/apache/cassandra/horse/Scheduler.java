@@ -169,6 +169,11 @@ public class Scheduler {
 
                 LocalStates localStates = LocalStates.fromString(localStatesStr, version);
 
+                if(localStates == null)
+                {
+                    continue;
+                }
+
                 int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
                 if (nodeIndex == -1)
                 {

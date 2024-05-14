@@ -58,6 +58,9 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
                 String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
                 int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
                 LocalStates localStates = LocalStates.fromString(localStatesStr, version);
+                if (localStates == null) {
+                    continue;
+                }
                 gatheredStates.put(entry.getKey().getAddress(), localStates);
             }
         }

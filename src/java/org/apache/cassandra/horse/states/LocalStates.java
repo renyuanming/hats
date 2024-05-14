@@ -71,6 +71,8 @@ public class LocalStates implements Serializable {
         double latency = Double.parseDouble(metrics[0].split("=")[1].trim());
         // int version = Integer.parseInt(metrics[2].split("=")[1]);
 
+        if(latency == 0)
+            return null;
         Map<InetAddress, Integer> completedReadRequestCount = new HashMap<>();
         String requests = metrics[1].split("=")[1];
         String[] requestsParts = requests.split(",");
