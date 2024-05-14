@@ -57,7 +57,7 @@ public class Scheduler {
         // Check the seed node status, if there is less than one seed node, change the election scheme
         @Override
         public void run() {
-            Set<InetAddressAndPort> liveSeeds = Gossiper.getAllSeeds().stream().filter(Gossiper.instance::isAlive).collect(Collectors.toSet());
+            liveSeeds = Gossiper.getAllSeeds().stream().filter(Gossiper.instance::isAlive).collect(Collectors.toSet());
             
             // Step1. Start a new leader election scheme if needed
             if (!getIsPriorityElection() && liveSeeds.size() <= 1)

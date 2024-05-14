@@ -99,7 +99,7 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                 }
                 else
                 {
-                    logger.error("rymDebug: the local endpoint state is null, all the states are: {}", 
+                    logger.debug("rymDebug: the local endpoint state is null, all the states are: {}", 
                                  Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()));
                 }
                 LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica(), 
