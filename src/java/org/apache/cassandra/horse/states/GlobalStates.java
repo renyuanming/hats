@@ -83,8 +83,8 @@ public class GlobalStates implements Serializable {
                 for (Map.Entry<InetAddress, Integer> entry1 : entry.getValue().completedReadRequestCount.entrySet())
                 {
                     int replicaIndex = HorseUtils.getReplicaIndex(nodeIndex, entry1.getKey());
-                    GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
-                    GlobalStates.globalStates.readCountVector[nodeIndex] += entry1.getValue();
+                    globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
+                    globalStates.readCountVector[nodeIndex] += entry1.getValue();
                 }
 
                 globalStates.scoreVector[nodeIndex] = getScore(globalStates.latencyVector[nodeIndex], globalStates.readCountVector[nodeIndex]);
@@ -99,7 +99,7 @@ public class GlobalStates implements Serializable {
         StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
     }
 
-    private static double getScore(double latency, int requestCount)
+    public static double getScore(double latency, int requestCount)
     {
         double score = latency;
 

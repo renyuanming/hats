@@ -157,7 +157,7 @@ public class Scheduler {
         {
             throw new IllegalStateException("This method should be called by the leader node.");
         }
-        logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+        // logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
         GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size(), 3);
         if(liveSeeds.size() == 1)
@@ -189,6 +189,7 @@ public class Scheduler {
                     GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
                     GlobalStates.globalStates.readCountVector[nodeIndex] += entry1.getValue();
                 }
+                GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], GlobalStates.globalStates.readCountVector[nodeIndex]);
             }
         }
         else if (liveSeeds.size() > 1)
@@ -209,11 +210,11 @@ public class Scheduler {
             StatesGatheringSignal signal = new StatesGatheringSignal(false);
             for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
             {
-                StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
                 {
                     continue;
                 }
+                StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 signal.sendStatesGatheringSignal(follower);
             }
         }
