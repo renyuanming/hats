@@ -301,8 +301,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
     public long[][] foregroundReadCountOfEachReplicationGroup;
-    public LatencyCalculator readLatencyCalculator = new LatencyCalculator();
-    public LatencyCalculator writeLatencyCalculator = new LatencyCalculator();
+    public LatencyCalculator readLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
+    public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("LocalWriteLatency", DatabaseDescriptor.getSchedulingInterval());
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
 
 

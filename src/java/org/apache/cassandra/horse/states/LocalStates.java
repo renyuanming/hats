@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,12 +35,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
+
 public class LocalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
     private static final double ALPHA = 0.9;
     public final double latency; // micro second
     public final Map<InetAddress, Integer> completedReadRequestCount;
     public final int version;
+    private final static MetricRegistry registry = new MetricRegistry();
 
     public LocalStates(Map<InetAddress, Integer> completedReadRequestCount, double latency, int version)
     {
@@ -144,9 +150,12 @@ public class LocalStates implements Serializable {
         private static final int windowSize = 1000;
         private final AtomicBoolean running = new AtomicBoolean(true);
         private Thread workerThread;
+        private final Histogram histogram;
 
-        public LatencyCalculator() {
+        public LatencyCalculator(String metricName, int windowInterval) {
             startWorker();
+            this.histogram = new Histogram(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
+            registry.register(metricName, this.histogram);
         }
 
         private void startWorker() {
@@ -190,6 +199,7 @@ public class LocalStates implements Serializable {
             this.dataQueue.add(latency);
             this.windowData.add(latency);
             this.windowSum.addAndGet((long)latency);
+            this.histogram.update((int)latency);
         }
 
         public double getEWMA() {
@@ -197,7 +207,8 @@ public class LocalStates implements Serializable {
         }
 
         public double getWindowMean() {
-            return this.windowSum.get() * 1.0 / this.windowData.size();
+            // return this.windowSum.get() * 1.0 / this.windowData.size();
+            return this.histogram.getSnapshot().getMean();
         }
 
         public void stop() {
