@@ -126,6 +126,7 @@ public class Scheduler {
                     {
                         logger.debug("rymWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
                                         StorageService.instance.stateGatheringSignalInFlight.get());
+                        StorageService.instance.stateGatheringSignalInFlight.set(0);
                         return;
                     }
                 }
