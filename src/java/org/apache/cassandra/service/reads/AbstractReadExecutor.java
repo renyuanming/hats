@@ -189,7 +189,7 @@ public abstract class AbstractReadExecutor
         // TODO: We need to check whether the size of replicas equals to the read consistency level?
         if(DatabaseDescriptor.isMotivationExperiment()) 
         {
-            logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
+            // logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
             Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
             if(replicasInTheRing.get(0).equals(FBUtilities.getBroadcastAddressAndPort())){
                 hasLocalEndpoint = true;
@@ -231,10 +231,10 @@ public abstract class AbstractReadExecutor
             Tracing.trace("[rym] Executed local data read time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart) / 1000);
             Stage.READ.maybeExecuteImmediately(new LocalReadRunnable(readCommand, handler));
         } 
-        else 
-        {
-            logger.debug("[rym] No local endpoint, skip local read");
-        }
+        // else 
+        // {
+        //     logger.debug("[rym] No local endpoint, skip local read");
+        // }
         return usedAddressNumber;
     }
 
