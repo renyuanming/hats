@@ -116,7 +116,7 @@ public class Scheduler {
                 while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
                 {
                     try {
-                        Thread.sleep(1);
+                        Thread.sleep(10);
                         logger.debug("rymDebug: wait until the states are gathered, there are still {} left.", 
                                      StorageService.instance.stateGatheringSignalInFlight.get());
                     } catch (InterruptedException e) {
@@ -184,11 +184,11 @@ public class Scheduler {
             StatesGatheringSignal signal = new StatesGatheringSignal(true);
             for(InetAddressAndPort seed : liveSeeds)
             {
-                StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 if(seed.equals(FBUtilities.getBroadcastAddressAndPort()))
                 {
                     continue;
                 }
+                StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 signal.sendStatesGatheringSignal(seed);
             }
         }
