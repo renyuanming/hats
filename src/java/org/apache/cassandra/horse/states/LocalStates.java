@@ -57,12 +57,12 @@ public class LocalStates implements Serializable {
             requests += ip.getHostName() + ":" + this.completedReadRequestCount.get(ip) + ",";
             // requests += ip.getHostName() + ": " + readCounter.getCounter().get(ip).size() + ",";
         }
-        return String.format("LocalStates{Latency=%f, Requests=%s, Version=%d}", this.latency, requests, this.version);
+        return String.format("LocalStates{Latency=%f | Requests=%s | Version=%d}", this.latency, requests, this.version);
     }
 
     public static LocalStates fromString(String str, int version)
     {
-        String[] metrics = str.split(",");
+        String[] metrics = str.split(" | ");
         if (metrics.length != 3)
         {
             throw new IllegalArgumentException(String.format("rymERROR: wrong parsing for the string %s", str));
