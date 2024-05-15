@@ -212,9 +212,9 @@ public class LocalStates implements Serializable {
             return this.histogram.getSnapshot().getMean();
         }
 
-        public long getCount()
+        public int getCount()
         {
-            return this.histogram.getCount();
+            return this.histogram.getSnapshot().size();
         }
 
         public void stop() {
