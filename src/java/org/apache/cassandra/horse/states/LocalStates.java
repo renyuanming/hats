@@ -206,9 +206,15 @@ public class LocalStates implements Serializable {
             return ewmaValue.get();
         }
 
-        public double getWindowMean() {
+        public double getWindowMean() 
+        {
             // return this.windowSum.get() * 1.0 / this.windowData.size();
             return this.histogram.getSnapshot().getMean();
+        }
+
+        public long getCount()
+        {
+            return this.histogram.getCount();
         }
 
         public void stop() {

@@ -73,8 +73,10 @@ public class Scheduler {
 
                 PriorityElectionBootstrap.initElection(HorseUtils.getRaftLogPath(), 
                                         "ElectDataNodes", 
-                                        DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort()+"::"+priority, 
-                                        HorseUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), DatabaseDescriptor.getRaftPort(), liveSeeds));
+                                        DatabaseDescriptor.getListenAddress().getHostAddress() + ":"+DatabaseDescriptor.getRaftPort()+"::"+priority, 
+                                        HorseUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), 
+                                                                                 DatabaseDescriptor.getRaftPort(), 
+                                                                                 liveSeeds));
                 // [TODO] Wait for the new leader election to finish
             }
             // else

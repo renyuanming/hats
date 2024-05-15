@@ -105,10 +105,12 @@ public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
                 LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica(), 
                                                      linearLatency, version);
                 
-                logger.debug("rymDebug: foreground load {}, local read latency: {}, local write latency: {}, Local states: {}", 
+                logger.debug("rymDebug: foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}, Local states: {}", 
                              StorageService.instance.totalReadCntOfEachReplica, 
-                             StorageService.instance.readLatencyCalculator.getWindowMean(), 
+                             StorageService.instance.readLatencyCalculator.getWindowMean(),
+                             StorageService.instance.readLatencyCalculator.getCount(), 
                              StorageService.instance.writeLatencyCalculator.getWindowMean(), 
+                             StorageService.instance.writeLatencyCalculator.getCount(),
                              states.toString());
                 
                 Gossiper.instance.addLocalApplicationState(ApplicationState.FOREGROUND_LOAD,

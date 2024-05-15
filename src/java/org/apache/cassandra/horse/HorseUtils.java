@@ -74,7 +74,7 @@ public class HorseUtils {
         {
             InetAddressAndPort ip = (InetAddressAndPort) from.toArray()[i];
             if(liveSeeds.contains(ip))
-                to += ip.getHostName() + ":" + port + "::" + 200;
+                to += ip.getHostName() + ":" + port + "::" + 1000000000;
             else
                 to += ip.getHostName() + ":" + port + "::" + 100;
             if (i < from.size() - 1)
