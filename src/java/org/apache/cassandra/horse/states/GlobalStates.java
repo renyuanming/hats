@@ -64,6 +64,18 @@ public class GlobalStates implements Serializable {
         this.loadMatrix = new int[this.nodeCount][this.rf][1];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
+        for(int i = 0; i < this.nodeCount; i++)
+        {
+            this.scoreVector[i] = 0.0;
+            this.latencyVector[i] = 0.0;
+            this.readCountVector[i] = 0;
+            this.versionVector[i] = 0;
+            this.deltaVector[i] = 0.0;
+            for(int j = 0; j < this.rf; j++)
+            {
+                this.loadMatrix[i][j][0] = 0;
+            }
+        }
     }
 
     public synchronized void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates)
