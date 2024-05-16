@@ -168,7 +168,7 @@ public class Scheduler {
      */
     private static void calculatePlacementPolicy()
     {
-        logger.debug("rymDebug: Calculating placement policy, the old value is {}", (Object[]) GlobalStates.placementPolicy);
+        logger.debug("rymDebug: Calculating placement policy, the old value is {}", GlobalStates.placementPolicy);
 
         for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
         {
@@ -205,7 +205,7 @@ public class Scheduler {
                 logger.debug("rymDebug");
             }
         }
-        logger.debug("rymDebug: The new placement policy is {}", (Object[]) GlobalStates.placementPolicy);
+        logger.debug("rymDebug: The new placement policy is {}", GlobalStates.placementPolicy);
     }
 
     /**
