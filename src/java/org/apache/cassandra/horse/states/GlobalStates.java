@@ -29,6 +29,7 @@ import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,7 +138,10 @@ public class GlobalStates implements Serializable {
                 placementPolicy[i][j][0] = 0.0;
             }
         }
-        logger.debug("rymDebug: Initialize the placement policy as {}",  Arrays.deepToString(placementPolicy));
+        logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
+                     Arrays.deepToString(placementPolicy), 
+                     Gossiper.getAllHosts().size(), 
+                     StringUtils.split(DatabaseDescriptor.getAllHosts(), ','));
     }
 
 }
