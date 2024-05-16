@@ -261,11 +261,22 @@ public class Scheduler {
                 int replicaIndex = i - nodeIndex;
                 if(replicaIndex < 0)
                     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
+                if(GlobalStates.placementPolicy[targetIndex][replicaIndex][0] <= 0)
+                {
+                    continue;
+                }
+                else
+                {
+                    double stepSize = GlobalStates.placementPolicy[targetIndex][replicaIndex][0] > GlobalStates.STEP_SIZE 
+                                      ? GlobalStates.STEP_SIZE 
+                                      : GlobalStates.placementPolicy[targetIndex][replicaIndex][0];
 
-                GlobalStates.placementPolicy[nodeIndex][0][0] += GlobalStates.STEP_SIZE;
-                GlobalStates.placementPolicy[targetIndex][replicaIndex][0] -= GlobalStates.STEP_SIZE;
-                GlobalStates.globalStates.deltaVector[nodeIndex] += GlobalStates.STEP_SIZE;
-                GlobalStates.globalStates.deltaVector[targetIndex] -= GlobalStates.STEP_SIZE;
+                    GlobalStates.placementPolicy[nodeIndex][0][0] += stepSize;
+                    GlobalStates.placementPolicy[targetIndex][replicaIndex][0] -= stepSize;
+                    GlobalStates.globalStates.deltaVector[nodeIndex] += stepSize;
+                    GlobalStates.globalStates.deltaVector[targetIndex] -= stepSize;
+                }
+
             }
         }
         
