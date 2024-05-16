@@ -20,6 +20,7 @@ package org.apache.cassandra.horse;
 
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -126,13 +127,13 @@ public class Scheduler {
                     }
                     if(retryCount > 10)
                     {
-                        logger.debug("rymWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
+                        logger.warn("rymWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
                                         StorageService.instance.stateGatheringSignalInFlight.get());
                         StorageService.instance.stateGatheringSignalInFlight.set(0);
                         return;
                     }
                 }
-                logger.debug("rymDebug: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
+                logger.info("rymInfo: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
                              GlobalStates.globalStates.versionVector, 
                              GlobalStates.globalStates.latencyVector, 
                              GlobalStates.globalStates.readCountVector, 
@@ -168,7 +169,7 @@ public class Scheduler {
      */
     private static void calculatePlacementPolicy()
     {
-        logger.debug("rymDebug: Calculating placement policy, the old value is {}", GlobalStates.placementPolicy);
+        logger.info("rymInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.placementPolicy));
 
         for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
         {
@@ -205,7 +206,7 @@ public class Scheduler {
                 logger.debug("rymDebug");
             }
         }
-        logger.debug("rymDebug: The new placement policy is {}", GlobalStates.placementPolicy);
+        logger.info("rymInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.placementPolicy));
     }
 
     /**
