@@ -21,6 +21,7 @@ package org.apache.cassandra.horse.states;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -35,7 +36,7 @@ public class GlobalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(GlobalStates.class);
 
     public static GlobalStates globalStates;    
-    public static Double[][][] placementPolicy = new Double[Gossiper.getAllHosts().size()][3][1]; // N X M X 1
+    public static Double[][][] placementPolicy; // N X M X 1
     public static final double OFFLOAD_THRESHOLD = DatabaseDescriptor.getOffloadThreshold();
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
@@ -127,6 +128,7 @@ public class GlobalStates implements Serializable {
 
     public static void initializePlacementPolicy()
     {
+        placementPolicy = new Double[Gossiper.getAllHosts().size()][3][1];
         for(int i = 0; i < Gossiper.getAllHosts().size(); i++)
         {
             placementPolicy[i][0][0] = 1.0;
@@ -135,6 +137,7 @@ public class GlobalStates implements Serializable {
                 placementPolicy[i][j][0] = 0.0;
             }
         }
+        logger.debug("rymDebug: Initialize the placement policy as {}",  Arrays.deepToString(placementPolicy));
     }
 
 }
