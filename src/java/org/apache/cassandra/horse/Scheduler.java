@@ -217,7 +217,7 @@ public class Scheduler {
     private static void offloadRequests(int nodeIndex, int minIndex, int maxIndex)
     {
         if(maxIndex != nodeIndex)
-            throw new IllegalArgumentException("The maxIndex should be 0");
+            throw new IllegalArgumentException(String.format("The maxIndex %s should be %s", maxIndex, nodeIndex));
 
         // Traverse every secondary replica node, and offload the request to the node with the lower score
         for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
@@ -247,8 +247,8 @@ public class Scheduler {
     // Recover the request load
     private static void recoverRequests(int nodeIndex, int minIndex, int maxIndex)
     {
-        if(minIndex != 0)
-            throw new IllegalArgumentException("The minIndex should be 0");
+        if(minIndex != nodeIndex)
+            throw new IllegalArgumentException(String.format("The minIndex %s should be %s", minIndex, nodeIndex));
 
         // Traverse every secondary replica node, and recover the request from the node with the higher score
         for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
