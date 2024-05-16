@@ -5087,4 +5087,24 @@ public class DatabaseDescriptor
         }
         conf.concurrent_writes = concurrent_schedulers;
     }
+
+    public static double getStepSize()
+    {
+        return conf.step_size;
+    }
+
+    public static double getOffloadThreshold()
+    {
+        return conf.offload_threshold;
+    }
+
+    public static double getRecoverThreshold()
+    {
+        return conf.recover_threshold;
+    }
+
+    public static boolean getEnableHorse()
+    {
+        return conf.enable_horse;
+    }
 }

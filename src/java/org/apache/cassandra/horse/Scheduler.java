@@ -147,9 +147,154 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Calculate the placement policy.
+     * 
+     * Basic idea: To minimize the resource contention within a node, we initially place all the read 
+     * requests of each replication group to the first $RCL$ replicas. Then we greedily adjust the placement 
+     * policy of each replication group along the ring. For each node, we will compute a score based on the 
+     * number of read requests and the mean value of the read latency within a period of time. Note that the
+     * larger latency and the request count, the higher the score. We consider the following cases:
+     * 
+     * 1. If $node_i$ has a larger latency than $node_{i+1,...,i+M-1}$, we consider gently moving the load of 
+     *    $RP_i$ to $node_{i+1,...,i+M-1}$. Here we just use a very simple algorithm to adjust the placement 
+     *    policy, for example AIMD or fixed step size.
+     * 2. If $node_i$ has a smaller latency than $node_{i+1,...,i+M-1}$, we consider recovering the load of 
+     *    $RP_i$ from $node_{i+1,...,i+M-1}$.
+     * 
+     * Input: scoreVector, loadMatrix
+     * Output: placementPolicy
+     * 
+     */
     private static void calculatePlacementPolicy()
     {
-        // [TODO] Calculate the placement policy
+        logger.debug("rymDebug: Calculating placement policy, the old value is {}", (Object[]) GlobalStates.placementPolicy);
+
+        for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
+        {
+
+            double min = Double.MAX_VALUE;
+            double max = Double.MIN_VALUE;
+            int minIndex = 0;
+            int maxIndex = 0;
+            for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
+            {
+                if(min > GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount])
+                {
+                    min = GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
+                    minIndex = k % GlobalStates.globalStates.nodeCount;
+                }
+                if(max < GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount])
+                {
+                    max = GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
+                    maxIndex = k % GlobalStates.globalStates.nodeCount;
+                }
+            }
+
+            int action = getAction(i, min, max);
+            if(action == 1) // offload the request to the secondary replicas
+            {
+                offloadRequests(i, minIndex, maxIndex);
+            }
+            else if(action == 2) // recover the request from the secondary replicas
+            {
+                recoverRequests(i, minIndex, maxIndex);
+            }
+            else // do nothing
+            {
+                logger.debug("rymDebug");
+            }
+        }
+        logger.debug("rymDebug: The new placement policy is {}", (Object[]) GlobalStates.placementPolicy);
+    }
+
+    /**
+     * Offload the read requests for node[i], we consider which secondary replica node to be 
+     * the target node and how many requests should be offloaded.
+     * 
+     */
+    private static void offloadRequests(int nodeIndex, int minIndex, int maxIndex)
+    {
+        if(maxIndex != nodeIndex)
+            throw new IllegalArgumentException("The maxIndex should be 0");
+
+        // Traverse every secondary replica node, and offload the request to the node with the lower score
+        for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
+        {
+            int targetIndex = i % GlobalStates.globalStates.nodeCount;
+            double variance = getVariance(GlobalStates.globalStates.scoreVector[nodeIndex], 
+                                          GlobalStates.globalStates.scoreVector[targetIndex]);
+            if(variance >= GlobalStates.OFFLOAD_THRESHOLD)
+            {
+                if(GlobalStates.globalStates.deltaVector[targetIndex] >= GlobalStates.STEP_SIZE * (GlobalStates.globalStates.rf - 1))
+                {
+                    continue;
+                }
+
+                int replicaIndex = i - nodeIndex;
+                if(replicaIndex < 0)
+                    replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
+
+                GlobalStates.globalStates.loadMatrix[nodeIndex][0][0] -= GlobalStates.STEP_SIZE;
+                GlobalStates.globalStates.loadMatrix[targetIndex][replicaIndex][0] += GlobalStates.STEP_SIZE;
+                GlobalStates.globalStates.deltaVector[nodeIndex] -= GlobalStates.STEP_SIZE;
+                GlobalStates.globalStates.deltaVector[targetIndex] += GlobalStates.STEP_SIZE;
+            }
+        }
+    }
+
+    // Recover the request load
+    private static void recoverRequests(int nodeIndex, int minIndex, int maxIndex)
+    {
+        if(minIndex != 0)
+            throw new IllegalArgumentException("The minIndex should be 0");
+
+        // Traverse every secondary replica node, and recover the request from the node with the higher score
+        for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
+        {
+            int targetIndex = i % GlobalStates.globalStates.nodeCount;
+            double variance = getVariance(GlobalStates.globalStates.scoreVector[targetIndex],
+                                          GlobalStates.globalStates.scoreVector[nodeIndex]);
+            if(variance >= GlobalStates.RECOVER_THRESHOLD)
+            {
+                int replicaIndex = i - nodeIndex;
+                if(replicaIndex < 0)
+                    replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
+
+                GlobalStates.globalStates.loadMatrix[nodeIndex][0][0] += GlobalStates.STEP_SIZE;
+                GlobalStates.globalStates.loadMatrix[targetIndex][replicaIndex][0] -= GlobalStates.STEP_SIZE;
+                GlobalStates.globalStates.deltaVector[nodeIndex] += GlobalStates.STEP_SIZE;
+                GlobalStates.globalStates.deltaVector[targetIndex] -= GlobalStates.STEP_SIZE;
+            }
+        }
+        
+    }
+
+    /**
+     * 
+     * @return 0 means do nothing for this RP, 
+     *         1 means offload the request to the secondary replicas,
+     *         2 means recover the request from the secondary replicas.
+     */
+    private static int getAction(int nodeIndex, double min, double max)
+    {
+        double variance = getVariance(max, min);
+
+        if(min == GlobalStates.globalStates.scoreVector[nodeIndex] && variance >= GlobalStates.RECOVER_THRESHOLD)
+        {
+            return 2;
+        }
+        else if (max == GlobalStates.globalStates.scoreVector[nodeIndex] && variance >= GlobalStates.OFFLOAD_THRESHOLD)
+        {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private static double getVariance(double larger, double smaller)
+    {
+        return (larger - smaller) / smaller;
     }
 
     /**

@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Map;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
@@ -33,15 +34,20 @@ import org.slf4j.LoggerFactory;
 public class GlobalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(GlobalStates.class);
 
-    public static GlobalStates globalStates;
+    public static GlobalStates globalStates;    
+    public static Double[][][] placementPolicy = new Double[Gossiper.getAllHosts().size()][3][1]; // N X M X 1
+    public static final double OFFLOAD_THRESHOLD = DatabaseDescriptor.getOffloadThreshold();
+    public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
+    public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
     
     public Double[] scoreVector; // N
     public Double[] latencyVector; // N
     public int[] readCountVector; // N
+    public int[][][] loadMatrix; // N X M X 1
     public int[] versionVector; // N
-    public int[][][] loadMatrix; // N X M X 2
-    private final int nodeCount;
-    private final int rf;
+    public Double[] deltaVector; // N
+    public final int nodeCount;
+    public final int rf;
 
     public GlobalStates(int nodeCount, int rf)
     {
@@ -55,8 +61,9 @@ public class GlobalStates implements Serializable {
         this.scoreVector = new Double[this.nodeCount];
         this.latencyVector = new Double[this.nodeCount];
         this.readCountVector = new int[this.nodeCount];
-        this.loadMatrix = new int[this.nodeCount][this.rf][2];
+        this.loadMatrix = new int[this.nodeCount][this.rf][1];
         this.versionVector = new int[this.nodeCount];
+        this.deltaVector = new Double[this.nodeCount];
     }
 
     public synchronized void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates)
@@ -104,6 +111,14 @@ public class GlobalStates implements Serializable {
         double score = latency;
 
         return score;
+    }
+
+    public static void initializePlacementPolicy()
+    {
+        for(int i = 0; i < Gossiper.getAllHosts().size(); i++)
+        {
+            placementPolicy[i][0][0] = 1.0;
+        }
     }
 
 }

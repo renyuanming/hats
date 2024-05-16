@@ -150,7 +150,7 @@ import org.apache.cassandra.gms.IFailureDetector;
 import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
-import org.apache.cassandra.horse.states.ForegroundLoadBroadcaster;
+import org.apache.cassandra.horse.states.LocalStatesBroadcaster;
 import org.apache.cassandra.horse.states.LocalStates.LatencyCalculator;
 import org.apache.cassandra.horse.states.LocalStates.ReplicaRequestCounter;
 import org.apache.cassandra.index.IndexStatusManager;
@@ -198,6 +198,7 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -305,7 +306,6 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("LocalWriteLatency", DatabaseDescriptor.getSchedulingInterval());
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
-
 
 
 
@@ -1236,7 +1236,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             Schema.instance.startSync();
             LoadBroadcaster.instance.startBroadcasting();
             DiskUsageBroadcaster.instance.startBroadcasting();
-            ForegroundLoadBroadcaster.instance.startBroadcasting();
+            LocalStatesBroadcaster.instance.startBroadcasting();
             HintsService.instance.startDispatch();
             BatchlogManager.instance.start();
             startSnapshotManager();

@@ -36,17 +36,17 @@ import org.apache.cassandra.gms.*;
 
 // import static org.apache.cassandra.config.CassandraRelevantProperties.BROADCAST_INTERVAL_MS;
 
-public class ForegroundLoadBroadcaster implements IEndpointStateChangeSubscriber
+public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
 {
     static final int BROADCAST_INTERVAL_MS = 10000;
 
-    public static final ForegroundLoadBroadcaster instance = new ForegroundLoadBroadcaster();
+    public static final LocalStatesBroadcaster instance = new LocalStatesBroadcaster();
 
-    private static final Logger logger = LoggerFactory.getLogger(ForegroundLoadBroadcaster.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalStatesBroadcaster.class);
 
     private ConcurrentMap<InetAddressAndPort, String> foregroundLoadInfo = new ConcurrentHashMap<>();
 
-    private ForegroundLoadBroadcaster()
+    private LocalStatesBroadcaster()
     {
         Gossiper.instance.register(this);
     }

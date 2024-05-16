@@ -141,6 +141,10 @@ public class Config
     public int state_update_interval = 10; // seconds
     public String all_hosts = "127.0.0.1";
     public int concurrent_schedulers = 32;
+    public double step_size = 0.05;
+    public double offload_threshold = 0.1;
+    public double recover_threshold = 0.1;
+    public boolean enable_horse = true;
 
 
 

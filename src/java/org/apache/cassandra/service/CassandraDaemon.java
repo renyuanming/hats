@@ -61,6 +61,7 @@ import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.horse.Scheduler;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
@@ -450,13 +451,18 @@ public class CassandraDaemon
             }
         }
 
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
-                                                                10, 1, TimeUnit.SECONDS);
+        if(DatabaseDescriptor.getEnableHorse())
+        {
+            GlobalStates.initializePlacementPolicy();
 
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 
-                                                                DatabaseDescriptor.getSchedulingInitialDelay(), 
-                                                                DatabaseDescriptor.getSchedulingInterval(),
-                                                                TimeUnit.SECONDS);
+            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
+                                                                    10, 1, TimeUnit.SECONDS);
+
+            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 
+                                                                    DatabaseDescriptor.getSchedulingInitialDelay(), 
+                                                                    DatabaseDescriptor.getSchedulingInterval(),
+                                                                    TimeUnit.SECONDS);
+        }
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
