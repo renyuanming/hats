@@ -19,6 +19,8 @@
 package org.apache.cassandra.horse;
 
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Map;
@@ -236,10 +238,14 @@ public class Scheduler {
                 if(replicaIndex < 0)
                     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
 
-                GlobalStates.placementPolicy[nodeIndex][0][0] -= GlobalStates.STEP_SIZE;
-                GlobalStates.placementPolicy[targetIndex][replicaIndex][0] += GlobalStates.STEP_SIZE;
-                GlobalStates.globalStates.deltaVector[nodeIndex] -= GlobalStates.STEP_SIZE;
-                GlobalStates.globalStates.deltaVector[targetIndex] += GlobalStates.STEP_SIZE;
+                GlobalStates.placementPolicy[nodeIndex][0][0] = 
+                            rounding(GlobalStates.placementPolicy[nodeIndex][0][0] - GlobalStates.STEP_SIZE);
+                GlobalStates.placementPolicy[targetIndex][replicaIndex][0] = 
+                            rounding(GlobalStates.placementPolicy[targetIndex][replicaIndex][0] + GlobalStates.STEP_SIZE);
+                GlobalStates.globalStates.deltaVector[replicaIndex] = 
+                            rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - GlobalStates.STEP_SIZE);
+                GlobalStates.globalStates.deltaVector[targetIndex] = 
+                            rounding(GlobalStates.globalStates.deltaVector[targetIndex] + GlobalStates.STEP_SIZE);
             }
         }
     }
@@ -271,15 +277,26 @@ public class Scheduler {
                                       ? GlobalStates.STEP_SIZE 
                                       : GlobalStates.placementPolicy[targetIndex][replicaIndex][0];
 
-                    GlobalStates.placementPolicy[nodeIndex][0][0] += stepSize;
-                    GlobalStates.placementPolicy[targetIndex][replicaIndex][0] -= stepSize;
-                    GlobalStates.globalStates.deltaVector[nodeIndex] += stepSize;
-                    GlobalStates.globalStates.deltaVector[targetIndex] -= stepSize;
+                    GlobalStates.placementPolicy[nodeIndex][0][0] = 
+                                rounding(GlobalStates.placementPolicy[nodeIndex][0][0] + stepSize);
+                    GlobalStates.placementPolicy[targetIndex][replicaIndex][0] = 
+                                rounding(GlobalStates.placementPolicy[targetIndex][replicaIndex][0] - stepSize);
+                    GlobalStates.globalStates.deltaVector[nodeIndex] = 
+                                rounding(GlobalStates.globalStates.deltaVector[nodeIndex] + stepSize);
+                    GlobalStates.globalStates.deltaVector[targetIndex] = 
+                                rounding(GlobalStates.globalStates.deltaVector[targetIndex] - stepSize);
                 }
 
             }
         }
         
+    }
+
+    private static double rounding(double value)
+    {
+        BigDecimal bd = new BigDecimal(Double.toString(value));
+        bd = bd.setScale(3, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 
     /**
