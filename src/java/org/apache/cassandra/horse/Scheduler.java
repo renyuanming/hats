@@ -236,8 +236,8 @@ public class Scheduler {
                 if(replicaIndex < 0)
                     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
 
-                GlobalStates.globalStates.loadMatrix[nodeIndex][0][0] -= GlobalStates.STEP_SIZE;
-                GlobalStates.globalStates.loadMatrix[targetIndex][replicaIndex][0] += GlobalStates.STEP_SIZE;
+                GlobalStates.placementPolicy[nodeIndex][0][0] -= GlobalStates.STEP_SIZE;
+                GlobalStates.placementPolicy[targetIndex][replicaIndex][0] += GlobalStates.STEP_SIZE;
                 GlobalStates.globalStates.deltaVector[nodeIndex] -= GlobalStates.STEP_SIZE;
                 GlobalStates.globalStates.deltaVector[targetIndex] += GlobalStates.STEP_SIZE;
             }
@@ -262,8 +262,8 @@ public class Scheduler {
                 if(replicaIndex < 0)
                     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
 
-                GlobalStates.globalStates.loadMatrix[nodeIndex][0][0] += GlobalStates.STEP_SIZE;
-                GlobalStates.globalStates.loadMatrix[targetIndex][replicaIndex][0] -= GlobalStates.STEP_SIZE;
+                GlobalStates.placementPolicy[nodeIndex][0][0] += GlobalStates.STEP_SIZE;
+                GlobalStates.placementPolicy[targetIndex][replicaIndex][0] -= GlobalStates.STEP_SIZE;
                 GlobalStates.globalStates.deltaVector[nodeIndex] += GlobalStates.STEP_SIZE;
                 GlobalStates.globalStates.deltaVector[targetIndex] -= GlobalStates.STEP_SIZE;
             }

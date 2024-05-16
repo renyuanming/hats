@@ -130,6 +130,10 @@ public class GlobalStates implements Serializable {
         for(int i = 0; i < Gossiper.getAllHosts().size(); i++)
         {
             placementPolicy[i][0][0] = 1.0;
+            for(int j = 1; j < 3; j++)
+            {
+                placementPolicy[i][j][0] = 0.0;
+            }
         }
     }
 
