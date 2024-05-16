@@ -129,8 +129,9 @@ public class GlobalStates implements Serializable {
 
     public static void initializePlacementPolicy()
     {
-        placementPolicy = new Double[Gossiper.getAllHosts().size()][3][1];
-        for(int i = 0; i < Gossiper.getAllHosts().size(); i++)
+        int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
+        placementPolicy = new Double[nodeCount][3][1];
+        for(int i = 0; i < nodeCount; i++)
         {
             placementPolicy[i][0][0] = 1.0;
             for(int j = 1; j < 3; j++)
