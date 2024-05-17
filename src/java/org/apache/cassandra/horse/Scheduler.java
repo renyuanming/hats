@@ -33,6 +33,8 @@ import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
+import org.apache.cassandra.horse.net.PolicyDistribute;
+import org.apache.cassandra.horse.net.PolicyReplicate;
 import org.apache.cassandra.horse.net.StatesGatheringSignal;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
@@ -141,13 +143,68 @@ public class Scheduler {
                              GlobalStates.globalStates.readCountVector, 
                              GlobalStates.globalStates.scoreVector, 
                              GlobalStates.globalStates.loadMatrix);
-                
+                    
                 // Step2. Recalculate the placement policy if needed.
                 calculatePlacementPolicy();
                 
-                // Step3. Distribute the placement policy to all nodes and clients
+                // Step3. Replicate the placement policy to the followers
+                replicatePlacementPolicy();
+                
+                // Step4. Distribute the placement policy to all nodes and clients
+                distributePlacementPolicy();
             }
         }
+    }
+
+    private static void replicatePlacementPolicy()
+    {
+
+        // Get the followers
+        if(liveSeeds.size() > 1)
+        {
+            for(InetAddressAndPort follower : liveSeeds)
+            {
+                if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
+                {
+                    continue;
+                }
+
+                // Replicate the placement policy
+                PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.placementPolicy);
+            }
+        }
+        else
+        {
+            for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
+            {
+                if (follower.equals(FBUtilities.getBroadcastAddressAndPort())) 
+                {
+                    continue;
+                }
+
+                // Replicate the placement policy
+                PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.placementPolicy);
+            }
+        }
+
+    }
+
+    private static void distributePlacementPolicy()
+    {
+        if (liveSeeds.size() > 1)
+        {
+            for (InetAddressAndPort dataNode : Gossiper.instance.getLiveMembers())
+            {
+                if(liveSeeds.contains(dataNode))
+                {
+                    continue;
+                }
+
+                // [TODO] Distribute the placement policy, we don't need to send the whole placement policy
+                PolicyDistribute.sendPlacementPolicy(dataNode, GlobalStates.placementPolicy);
+            }
+        }
+        // else do nothing
     }
 
     /**
