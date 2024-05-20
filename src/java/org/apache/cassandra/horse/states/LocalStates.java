@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,7 @@ import com.codahale.metrics.SlidingTimeWindowReservoir;
 public class LocalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
     private static final double ALPHA = 0.9;
+    public static ConcurrentHashMap<InetAddressAndPort, List<Double>> localPolicy = new ConcurrentHashMap<>();
     public final double latency; // micro second
     public final Map<InetAddress, Integer> completedReadRequestCount;
     public final int version;

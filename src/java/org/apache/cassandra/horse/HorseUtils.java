@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.util.Set;
 
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -110,7 +111,8 @@ public class HorseUtils {
         }
     }
 
-    public static int getReplicaIndex(int nodeIndex, InetAddress replicationGroup)
+
+    public static int getReplicaIndexFromGossipInfo(int nodeIndex, InetAddress replicationGroup)
     {
         int replicaIndex = Gossiper.getAllHosts().indexOf(InetAddressAndPort.getByAddress(replicationGroup));
         if (replicaIndex == -1)
@@ -128,6 +130,14 @@ public class HorseUtils {
         {
             return distance;
         }
+    }
+
+    public static int getReplicaIndexForRGInEachNode(int rgIndex, int curNodeIndex)
+    {
+        int replicaIndex = curNodeIndex - rgIndex;
+        if(replicaIndex < 0)
+            replicaIndex = GlobalStates.globalStates.nodeCount + curNodeIndex - rgIndex;
+        return replicaIndex;
     }
 
 }

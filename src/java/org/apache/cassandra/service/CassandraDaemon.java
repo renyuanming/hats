@@ -453,8 +453,6 @@ public class CassandraDaemon
 
         if(DatabaseDescriptor.getEnableHorse())
         {
-            GlobalStates.initializePlacementPolicy();
-
             ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
                                                                     10, 1, TimeUnit.SECONDS);
 

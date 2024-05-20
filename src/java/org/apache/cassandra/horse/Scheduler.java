@@ -82,7 +82,6 @@ public class Scheduler {
                                         HorseUtils.InetAddressAndPortSetToString(Gossiper.instance.getLiveMembers(), 
                                                                                  DatabaseDescriptor.getRaftPort(), 
                                                                                  liveSeeds));
-                // [TODO] Wait for the new leader election to finish
             }
             // else
             // {
@@ -114,6 +113,19 @@ public class Scheduler {
         @Override
         public void run()
         {
+
+            if(ElectionBootstrap.isStarted() || PriorityElectionBootstrap.isStarted())
+            {
+                if(GlobalStates.globalPolicy == null)
+                {
+                    GlobalStates.initializeGlobalPolicy();                
+                }
+            }
+            else
+            {
+                return;
+            }
+
             if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
             {
                 logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
@@ -140,56 +152,71 @@ public class Scheduler {
                 logger.info("rymInfo: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
                              GlobalStates.globalStates.versionVector, 
                              GlobalStates.globalStates.latencyVector, 
-                             GlobalStates.globalStates.readCountVector, 
+                             GlobalStates.globalStates.readCountOfEachNode, 
                              GlobalStates.globalStates.scoreVector, 
                              GlobalStates.globalStates.loadMatrix);
                     
-                // Step2. Recalculate the placement policy if needed.
+                // Step2. Calculate the placement policy if needed.
                 calculatePlacementPolicy();
                 
                 // Step3. Replicate the placement policy to the followers
                 replicatePlacementPolicy();
                 
-                // Step4. Distribute the placement policy to all nodes and clients
-                distributePlacementPolicy();
+                // // Step4. Distribute the placement policy to the data nodes to control the background tasks
+                // distributeCompactionRate();
+
+                // // Step5. Acknowledge the client driver
+                // acknowledgeClientDriver();
             }
         }
     }
 
+    // We send the placement policy to all the live nodes
     private static void replicatePlacementPolicy()
     {
 
         // Get the followers
-        if(liveSeeds.size() > 1)
+        // if(liveSeeds.size() > 1)
+        // {
+        //     for(InetAddressAndPort follower : liveSeeds)
+        //     {
+        //         if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
+        //         {
+        //             continue;
+        //         }
+
+        //         // Replicate the placement policy
+        //         PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
+        //     }
+        // }
+        // else
+        // {
+        //     for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
+        //     {
+        //         if (follower.equals(FBUtilities.getBroadcastAddressAndPort())) 
+        //         {
+        //             continue;
+        //         }
+
+        //         // Replicate the placement policy
+        //         PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
+        //     }
+        // }
+
+        for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
         {
-            for(InetAddressAndPort follower : liveSeeds)
+            if (follower.equals(FBUtilities.getBroadcastAddressAndPort())) 
             {
-                if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
-                {
-                    continue;
-                }
-
-                // Replicate the placement policy
-                PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.placementPolicy);
+                continue;
             }
-        }
-        else
-        {
-            for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
-            {
-                if (follower.equals(FBUtilities.getBroadcastAddressAndPort())) 
-                {
-                    continue;
-                }
 
-                // Replicate the placement policy
-                PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.placementPolicy);
-            }
+            // Replicate the placement policy
+            PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
         }
-
     }
 
-    private static void distributePlacementPolicy()
+    // Note that we only send the partial placement policy to all the data nodes.
+    private static void distributeCompactionRate()
     {
         if (liveSeeds.size() > 1)
         {
@@ -199,13 +226,26 @@ public class Scheduler {
                 {
                     continue;
                 }
+                
+                Double[] backgroundCompactionRate = new Double[GlobalStates.globalStates.rf];
+                int nodeIndex = Gossiper.getAllHosts().indexOf(dataNode);
+                for(int j = 0; j < GlobalStates.globalStates.rf; j++)
+                {
 
-                // [TODO] Distribute the placement policy, we don't need to send the whole placement policy
-                PolicyDistribute.sendPlacementPolicy(dataNode, GlobalStates.placementPolicy);
+                    // Calculate the rate limit for each replica
+                    backgroundCompactionRate[j] = GlobalStates.globalPolicy[nodeIndex][j][0];
+                }
+                
+                PolicyDistribute.sendPlacementPolicy(dataNode, backgroundCompactionRate);
             }
         }
-        // else do nothing
     }
+
+    private static void acknowledgeClientDriver()
+    {
+        // [TODO] Acknowledge the client driver
+    }
+
 
     /**
      * Calculate the placement policy.
@@ -228,7 +268,7 @@ public class Scheduler {
      */
     private static void calculatePlacementPolicy()
     {
-        logger.info("rymInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.placementPolicy));
+        logger.info("rymInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.globalPolicy));
 
         for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
         {
@@ -265,7 +305,7 @@ public class Scheduler {
                 logger.debug("rymDebug");
             }
         }
-        logger.info("rymInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.placementPolicy));
+        logger.info("rymInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.globalPolicy));
     }
 
     /**
@@ -291,14 +331,15 @@ public class Scheduler {
                     continue;
                 }
 
-                int replicaIndex = i - nodeIndex;
-                if(replicaIndex < 0)
-                    replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
+                // int replicaIndex = i - nodeIndex;
+                // if(replicaIndex < 0)
+                //     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
+                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
 
-                GlobalStates.placementPolicy[nodeIndex][0][0] = 
-                            rounding(GlobalStates.placementPolicy[nodeIndex][0][0] - GlobalStates.STEP_SIZE);
-                GlobalStates.placementPolicy[targetIndex][replicaIndex][0] = 
-                            rounding(GlobalStates.placementPolicy[targetIndex][replicaIndex][0] + GlobalStates.STEP_SIZE);
+                GlobalStates.globalPolicy[nodeIndex][0][0] = 
+                            rounding(GlobalStates.globalPolicy[nodeIndex][0][0] - GlobalStates.STEP_SIZE);
+                GlobalStates.globalPolicy[targetIndex][replicaIndex][0] = 
+                            rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] + GlobalStates.STEP_SIZE);
                 GlobalStates.globalStates.deltaVector[replicaIndex] = 
                             rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - GlobalStates.STEP_SIZE);
                 GlobalStates.globalStates.deltaVector[targetIndex] = 
@@ -324,20 +365,20 @@ public class Scheduler {
                 int replicaIndex = i - nodeIndex;
                 if(replicaIndex < 0)
                     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
-                if(GlobalStates.placementPolicy[targetIndex][replicaIndex][0] <= 0)
+                if(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] <= 0)
                 {
                     continue;
                 }
                 else
                 {
-                    double stepSize = GlobalStates.placementPolicy[targetIndex][replicaIndex][0] > GlobalStates.STEP_SIZE 
+                    double stepSize = GlobalStates.globalPolicy[targetIndex][replicaIndex][0] > GlobalStates.STEP_SIZE 
                                       ? GlobalStates.STEP_SIZE 
-                                      : GlobalStates.placementPolicy[targetIndex][replicaIndex][0];
+                                      : GlobalStates.globalPolicy[targetIndex][replicaIndex][0];
 
-                    GlobalStates.placementPolicy[nodeIndex][0][0] = 
-                                rounding(GlobalStates.placementPolicy[nodeIndex][0][0] + stepSize);
-                    GlobalStates.placementPolicy[targetIndex][replicaIndex][0] = 
-                                rounding(GlobalStates.placementPolicy[targetIndex][replicaIndex][0] - stepSize);
+                    GlobalStates.globalPolicy[nodeIndex][0][0] = 
+                                rounding(GlobalStates.globalPolicy[nodeIndex][0][0] + stepSize);
+                    GlobalStates.globalPolicy[targetIndex][replicaIndex][0] = 
+                                rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] - stepSize);
                     GlobalStates.globalStates.deltaVector[nodeIndex] = 
                                 rounding(GlobalStates.globalStates.deltaVector[nodeIndex] + stepSize);
                     GlobalStates.globalStates.deltaVector[targetIndex] = 
@@ -421,14 +462,15 @@ public class Scheduler {
 
                 GlobalStates.globalStates.latencyVector[nodeIndex] = localStates.latency;
                 GlobalStates.globalStates.versionVector[nodeIndex] = localStates.version;
-                GlobalStates.globalStates.readCountVector[nodeIndex] = 0;
+                GlobalStates.globalStates.readCountOfEachNode[nodeIndex] = 0;
                 for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
                 {
-                    int replicaIndex = HorseUtils.getReplicaIndex(nodeIndex, entry1.getKey());
+                    int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
                     GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
-                    GlobalStates.globalStates.readCountVector[nodeIndex] += entry1.getValue();
+                    GlobalStates.globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
                 }
-                GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], GlobalStates.globalStates.readCountVector[nodeIndex]);
+                GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], 
+                                                                                         GlobalStates.globalStates.readCountOfEachNode[nodeIndex]);
             }
         }
         else if (liveSeeds.size() > 1)

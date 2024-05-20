@@ -50,7 +50,7 @@ public class PolicyDistribute
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
     }
 
-    public static void sendPlacementPolicy(InetAddressAndPort dataNode, Double[][][] placementPolicy)
+    public static void sendPlacementPolicy(InetAddressAndPort dataNode, Double[] placementPolicy)
     {
         byte[] placementPolicyInBytes = null;
                 

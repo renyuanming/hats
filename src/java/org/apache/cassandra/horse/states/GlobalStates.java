@@ -37,14 +37,14 @@ public class GlobalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(GlobalStates.class);
 
     public static GlobalStates globalStates;    
-    public static Double[][][] placementPolicy; // N X M X 1
+    public static volatile Double[][][] globalPolicy; // N X M X 1
     public static final double OFFLOAD_THRESHOLD = DatabaseDescriptor.getOffloadThreshold();
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
     
     public Double[] scoreVector; // N
     public Double[] latencyVector; // N
-    public int[] readCountVector; // N
+    public int[] readCountOfEachNode; // N
     public int[][][] loadMatrix; // N X M X 1
     public int[] versionVector; // N
     public Double[] deltaVector; // N
@@ -62,7 +62,7 @@ public class GlobalStates implements Serializable {
     {
         this.scoreVector = new Double[this.nodeCount];
         this.latencyVector = new Double[this.nodeCount];
-        this.readCountVector = new int[this.nodeCount];
+        this.readCountOfEachNode = new int[this.nodeCount];
         this.loadMatrix = new int[this.nodeCount][this.rf][1];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
@@ -70,7 +70,7 @@ public class GlobalStates implements Serializable {
         {
             this.scoreVector[i] = 0.0;
             this.latencyVector[i] = 0.0;
-            this.readCountVector[i] = 0;
+            this.readCountOfEachNode[i] = 0;
             this.versionVector[i] = 0;
             this.deltaVector[i] = 0.0;
             for(int j = 0; j < this.rf; j++)
@@ -99,16 +99,16 @@ public class GlobalStates implements Serializable {
             {
                 globalStates.versionVector[nodeIndex] = entry.getValue().version;
                 globalStates.latencyVector[nodeIndex] = entry.getValue().latency;
-                globalStates.readCountVector[nodeIndex] = 0;
+                globalStates.readCountOfEachNode[nodeIndex] = 0;
 
                 for (Map.Entry<InetAddress, Integer> entry1 : entry.getValue().completedReadRequestCount.entrySet())
                 {
-                    int replicaIndex = HorseUtils.getReplicaIndex(nodeIndex, entry1.getKey());
+                    int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
                     globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
-                    globalStates.readCountVector[nodeIndex] += entry1.getValue();
+                    globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
                 }
 
-                globalStates.scoreVector[nodeIndex] = getScore(globalStates.latencyVector[nodeIndex], globalStates.readCountVector[nodeIndex]);
+                globalStates.scoreVector[nodeIndex] = getScore(globalStates.latencyVector[nodeIndex], globalStates.readCountOfEachNode[nodeIndex]);
 
             }
             else
@@ -127,20 +127,20 @@ public class GlobalStates implements Serializable {
         return score;
     }
 
-    public static void initializePlacementPolicy()
+    public static void initializeGlobalPolicy()
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
-        placementPolicy = new Double[nodeCount][3][1];
+        globalPolicy = new Double[nodeCount][3][1];
         for(int i = 0; i < nodeCount; i++)
         {
-            placementPolicy[i][0][0] = 1.0;
+            globalPolicy[i][0][0] = 1.0;
             for(int j = 1; j < 3; j++)
             {
-                placementPolicy[i][j][0] = 0.0;
+                globalPolicy[i][j][0] = 0.0;
             }
         }
         logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
-                     Arrays.deepToString(placementPolicy), 
+                     Arrays.deepToString(globalPolicy), 
                      Gossiper.getAllHosts().size(), 
                      StringUtils.split(DatabaseDescriptor.getAllHosts(), ','));
     }
