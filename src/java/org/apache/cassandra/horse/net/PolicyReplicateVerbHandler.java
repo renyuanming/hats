@@ -60,7 +60,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
             for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + 3; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
-                policy.add(GlobalStates.globalPolicy[curNodeIndex][replicaIndex][0]);
+                policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
             }
             LocalStates.localPolicy.put(rg, policy);
         }
