@@ -157,22 +157,25 @@ public class Scheduler {
                              GlobalStates.globalStates.loadMatrix);
                     
                 // Step2. Calculate the placement policy if needed.
-                calculatePlacementPolicy();
+                calculateGlobalPolicy();
+
+                // Step3. Update local Policy
+                LocalStates.updateLocalPolicy();
+
+                // Step4. Replicate the placement policy to the followers
+                replicateGlobalPolicy();
                 
-                // Step3. Replicate the placement policy to the followers
-                replicatePlacementPolicy();
-                
-                // // Step4. Distribute the placement policy to the data nodes to control the background tasks
+                // // Step5. Distribute the placement policy to the data nodes to control the background tasks
                 // distributeCompactionRate();
 
-                // // Step5. Acknowledge the client driver
+                // // Step6. Acknowledge the client driver
                 // acknowledgeClientDriver();
             }
         }
     }
 
     // We send the placement policy to all the live nodes
-    private static void replicatePlacementPolicy()
+    private static void replicateGlobalPolicy()
     {
 
         // Get the followers
@@ -266,7 +269,7 @@ public class Scheduler {
      * Output: placementPolicy
      * 
      */
-    private static void calculatePlacementPolicy()
+    private static void calculateGlobalPolicy()
     {
         logger.info("rymInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.globalPolicy));
 

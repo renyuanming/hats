@@ -22,6 +22,7 @@ package org.apache.cassandra.horse.states;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +59,25 @@ public class LocalStates implements Serializable {
         this.completedReadRequestCount = completedReadRequestCount;
         this.latency = latency;
         this.version = version;
+    }
+
+    public static void updateLocalPolicy()
+    {
+        int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
+        int nodeCount = Gossiper.getAllHosts().size();
+        for(int i = nodeIndex; i > nodeIndex - 3; i--)
+        {
+            int rgIndex = (i + nodeCount) % nodeCount;
+            List<Double> policy = new ArrayList<>();
+            InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
+            for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + 3; curNodeIndex++)
+            {
+                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
+                policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
+            }
+            LocalStates.localPolicy.put(rg, policy);
+        }
+
     }
 
     public String toString()
@@ -99,7 +122,7 @@ public class LocalStates implements Serializable {
         logger.debug("rymDebug: the load str is {}, the parsed latency is {}, the requests are {}, the version is {}", str, latency, completedReadRequestCount, version);
 
         return new LocalStates(completedReadRequestCount, latency, version);
-    }    
+    }
 
     public static class ReplicaRequestCounter
     {

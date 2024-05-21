@@ -18,18 +18,12 @@
 package org.apache.cassandra.horse.net;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.apache.cassandra.gms.Gossiper;
-import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
-import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
-import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,21 +44,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         }
 
         // Get the local placement policy
-        int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
-        int nodeCount = Gossiper.getAllHosts().size();
-        for(int i = nodeIndex; i > nodeIndex - 3; i--)
-        {
-            int rgIndex = (i + nodeCount) % nodeCount;
-            List<Double> policy = new ArrayList<>();
-            InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
-            for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + 3; curNodeIndex++)
-            {
-                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
-                policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
-            }
-            LocalStates.localPolicy.put(rg, policy);
-        }
-
+        LocalStates.updateLocalPolicy();
         logger.info("rymInfo: We get the global placement policy {}, the local placement policy {}", GlobalStates.globalPolicy, LocalStates.localPolicy);
     }
     
