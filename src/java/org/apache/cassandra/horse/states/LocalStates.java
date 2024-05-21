@@ -68,7 +68,8 @@ public class LocalStates implements Serializable {
 
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
-        for(int i = nodeIndex; i > nodeIndex - 3; i--)
+
+        for(int i = nodeIndex - 2; i <= nodeIndex + 2; i++)
         {
             int rgIndex = (i + nodeCount) % nodeCount;
             List<Double> policy = new ArrayList<>();
