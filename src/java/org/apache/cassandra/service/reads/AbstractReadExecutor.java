@@ -199,7 +199,12 @@ public abstract class AbstractReadExecutor
                 logger.error("[rym-ERROR] The first node in the replica plan is not the first node in the ring.");
             }
 
-            int replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
+            int replicaIndex = 0;
+            if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
+            {
+                replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
+            }
+            
             if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort())){
                 hasLocalEndpoint = true;
             } else {
