@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +64,8 @@ public class LocalStates implements Serializable {
 
     public static void updateLocalPolicy()
     {
+        logger.info("rymInfo: the old local policy is {}, the local served request count is {}", localPolicy, StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica());
+
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
         for(int i = nodeIndex; i > nodeIndex - 3; i--)
