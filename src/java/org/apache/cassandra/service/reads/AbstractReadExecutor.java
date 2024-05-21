@@ -36,6 +36,8 @@ import org.apache.cassandra.db.transform.DuplicateRowChecker;
 import org.apache.cassandra.exceptions.ReadFailureException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.exceptions.UnavailableException;
+import org.apache.cassandra.horse.controller.ReplicaSelector;
+import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.EndpointsForToken;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.Replica;
@@ -191,10 +193,17 @@ public abstract class AbstractReadExecutor
         {
             // logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
             Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
-            if(replicasInTheRing.get(0).equals(FBUtilities.getBroadcastAddressAndPort())){
+
+            if(!replicasInTheRing.get(0).equals(replicas.iterator().next().endpoint()))
+            {
+                logger.error("[rym-ERROR] The first node in the replica plan is not the first node in the ring.");
+            }
+
+            int replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
+            if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort())){
                 hasLocalEndpoint = true;
             } else {
-                MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(0), handler);
+                MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(replicaIndex), handler);
             }
         }
         else

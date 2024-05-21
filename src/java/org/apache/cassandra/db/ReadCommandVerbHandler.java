@@ -58,9 +58,6 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 
         
         // [Horse] TEST
-        StorageService.instance.totalReadCcount.incrementAndGet();
-
-
         long tStart = nanoTime();
         if (command.metadata().keyspace.contains("ycsb")) {
 
