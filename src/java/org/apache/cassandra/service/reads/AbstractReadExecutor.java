@@ -200,10 +200,11 @@ public abstract class AbstractReadExecutor
             }
 
             int replicaIndex = 0;
-            if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
-            {
-                replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
-            }
+            // if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
+            // {
+            //     replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
+            // }
+            replicaIndex = ReplicaSelector.randomSelector.selectReplica();
             
             if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort())){
                 hasLocalEndpoint = true;

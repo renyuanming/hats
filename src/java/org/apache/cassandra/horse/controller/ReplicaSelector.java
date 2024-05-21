@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.horse.controller;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -30,7 +32,7 @@ public class ReplicaSelector
     public static class RandomSelector
     {
         private final Random random;
-
+        private static final List<Double> testPolicy = new ArrayList<Double>(Arrays.asList(0.5, 0.25, 0.25));
         public RandomSelector() 
         {
             this.random = new Random();
@@ -51,6 +53,11 @@ public class ReplicaSelector
             {
                 return 2;
             }
+        }
+
+        public int selectReplica() 
+        {
+            return selectReplica(testPolicy);
         }
     }
 }

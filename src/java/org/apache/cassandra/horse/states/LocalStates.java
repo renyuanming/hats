@@ -78,7 +78,7 @@ public class LocalStates implements Serializable {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
                 policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
             }
-            LocalStates.localPolicy.put(rg, policy);
+            localPolicy.put(rg, policy);
         }
 
     }
