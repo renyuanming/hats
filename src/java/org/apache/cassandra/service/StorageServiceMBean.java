@@ -44,6 +44,7 @@ public interface StorageServiceMBean extends NotificationEmitter
      * [Horse] Gat request distribution.
      */
     public String getRequestDistribution();
+    public void setHorse(String enableHorse, String step_size, String offload_threshold, String recovery_threshold);
 
     /**
      * Retrieve the list of live nodes in the cluster, where "liveness" is

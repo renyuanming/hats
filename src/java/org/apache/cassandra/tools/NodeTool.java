@@ -94,6 +94,7 @@ public class NodeTool
     public int execute(String... args)
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
+                SetHorse.class,
                 RequestDistribution.class,
                 GetBreakdown.class,
                 Assassinate.class,

@@ -354,6 +354,10 @@ public class NodeProbe implements AutoCloseable
         return ssProxy.getRequestDistribution();
     }
 
+    public void setHorse(String enableHorse, String step_size, String offload_threshold, String recovery_threshold) {
+        ssProxy.setHorse(enableHorse, step_size, offload_threshold, recovery_threshold);
+    }
+
     public int forceKeyspaceCleanup(int jobs, String keyspaceName, String... tables) throws IOException, ExecutionException, InterruptedException
     {
         return ssProxy.forceKeyspaceCleanup(jobs, keyspaceName, tables);

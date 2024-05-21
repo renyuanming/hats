@@ -5045,14 +5045,41 @@ public class DatabaseDescriptor
         return conf.scheduling_initial_delay;
     }
 
+    public static void setSchedulingInitialDelay(int delay)
+    {
+        if (delay < 0)
+        {
+            throw new IllegalArgumentException("Scheduling initial delay must be non-negative");
+        }
+        conf.scheduling_initial_delay = delay;
+    }
+
     public static int getSchedulingInterval()
     {
         return conf.scheduling_interval;
     }
 
+    public static void setSchedulingInterval(int interval)
+    {
+        if (interval <= 0)
+        {
+            throw new IllegalArgumentException("Scheduling interval must be positive");
+        }
+        conf.scheduling_interval = interval;
+    }
+
     public static double getReadSensitiveFactor()
     {
         return conf.read_sensitive_factor;
+    }
+
+    public static void setReadSensitiveFactor(double readSensitiveFactor)
+    {
+        if (readSensitiveFactor < 0)
+        {
+            throw new IllegalArgumentException("Read sensitive factor must be non-negative");
+        }
+        conf.read_sensitive_factor = readSensitiveFactor;
     }
 
     public static int getStateUpdateInterval()
@@ -5093,9 +5120,27 @@ public class DatabaseDescriptor
         return conf.step_size;
     }
 
+    public static void setStepSize(double step_size)
+    {
+        if (step_size < 0)
+        {
+            throw new IllegalArgumentException("Step size must be non-negative");
+        }
+        conf.step_size = step_size;
+    }
+
     public static double getOffloadThreshold()
     {
         return conf.offload_threshold;
+    }
+
+    public static void setOffloadThreshold(double offload_threshold)
+    {
+        if (offload_threshold < 0)
+        {
+            throw new IllegalArgumentException("Offload threshold must be non-negative");
+        }
+        conf.offload_threshold = offload_threshold;
     }
 
     public static double getRecoverThreshold()
@@ -5103,8 +5148,22 @@ public class DatabaseDescriptor
         return conf.recover_threshold;
     }
 
+    public static void setRecoverThreshold(double recover_threshold)
+    {
+        if (recover_threshold < 0)
+        {
+            throw new IllegalArgumentException("Recover threshold must be non-negative");
+        }
+        conf.recover_threshold = recover_threshold;
+    }
+
     public static boolean getEnableHorse()
     {
         return conf.enable_horse;
+    }
+
+    public static void setEnableHorse(boolean enable_horse)
+    {
+        conf.enable_horse = enable_horse;
     }
 }

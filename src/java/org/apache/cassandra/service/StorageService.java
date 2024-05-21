@@ -307,6 +307,30 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
 
 
+    public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
+    {
+        if(!enableHorse.isEmpty())
+        {
+            DatabaseDescriptor.setEnableHorse(Boolean.parseBoolean(enableHorse));
+        }
+
+        if(!stepSize.isEmpty())
+        {
+            DatabaseDescriptor.setStepSize(Double.parseDouble(stepSize));
+        }
+
+        if(!offloadThreshold.isEmpty())
+        {
+            DatabaseDescriptor.setOffloadThreshold(Double.parseDouble(offloadThreshold));
+        }
+
+        if(!recoveryThreshold.isEmpty())
+        {
+            DatabaseDescriptor.setRecoverThreshold(Double.parseDouble(recoveryThreshold));
+        }
+
+        logger.info("rymInfo: Horse parameters have been set as follows: enableHorse: {}, stepSize: {}, offloadThreshold: {}, recoveryThreshold: {}", DatabaseDescriptor.getEnableHorse(), DatabaseDescriptor.getStepSize(), DatabaseDescriptor.getOffloadThreshold(), DatabaseDescriptor.getRecoverThreshold());
+    }
 
     public String getRequestDistribution() {
         String result = "";
