@@ -309,6 +309,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
     {
+        logger.info("rymInfo: Setting Horse parameters");
         if(!enableHorse.isEmpty())
         {
             DatabaseDescriptor.setEnableHorse(Boolean.parseBoolean(enableHorse));
