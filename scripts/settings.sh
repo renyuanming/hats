@@ -2,8 +2,8 @@
 
 # CLUSTER_NAME=""
 # BACKUP_MODE="" # local remote
-# SCHEME="" # depart or horse
-PROJECT_NAME="horse"
+# SCHEME="" # depart or Horse
+PROJECT_NAME="Horse"
 HOME_PATH=""
 echo "Load the settings.sh, CLUSTER_NAME is ${CLUSTER_NAME}, BACKUP_MODE is ${BACKUP_MODE}, SCHEME is ${SCHEME}"
 if [[ "$CLUSTER_NAME" == "" ]]; then
@@ -61,13 +61,13 @@ AllNodes+=("${Client}")
 echo "All nodes list is ${AllNodes}"
 
 NumTokens=1
-PathToClient="${HOME_PATH}/${PROJECT_NAME}/client/"
-ClientLogDir="${PathToClient}/logs/"
+PathToServer="${HOME_PATH}/$SCHEME"
 PathToScripts="${HOME_PATH}/${PROJECT_NAME}/scripts"
-NetworkInterface="enp1s0f0"
-PathToCodeBase="${HOME_PATH}/$SCHEME"
-PathToResultDir="$PathToCodeBase/metrics"
+PathToClient="${HOME_PATH}/${PROJECT_NAME}/client/"
 PathToBackup="${HOME_PATH}/backups"
+ClientLogDir="${PathToClient}/logs/"
+NetworkInterface="enp1s0f0"
+PathToResultDir="$PathToServer/metrics"
 
 if [[ "$SCHEME" == "" || "$BACKUP_MODE" == "" ]]; then
     echo "Please specify the SCHEME and BACKUP_MODE"

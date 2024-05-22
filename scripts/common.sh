@@ -47,7 +47,7 @@ function initConf {
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/seeds:.*$/seeds: \"${SEEDS}\"/" ${conf_dir}/cassandra.yaml
-        elif [[ $SCHEME == "horse" ]]; then
+        elif [[ $SCHEME == "Horse" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/initial_token:.*$/initial_token: ${token}/" ${conf_dir}/cassandra.yaml
@@ -57,7 +57,7 @@ function initConf {
             sed -i "s/all_hosts:.*$/all_hosts: \"${Coordinators}\"/" ${conf_dir}/cassandra.yaml
         fi
         
-        scp ${conf_dir}/cassandra.yaml ${node}:${PathToCodeBase}/conf/cassandra.yaml
+        scp ${conf_dir}/cassandra.yaml ${node}:${PathToServer}/conf/cassandra.yaml
     done
 
     # modify the hosts.ini
@@ -140,7 +140,7 @@ function flush {
     resetPlaybook "flush"
 
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-flush.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-flush.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-flush.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-flush.yaml
     sed -i "s/\(seconds: \)".*"/seconds: ${waitTime}/" playbook-flush.yaml
@@ -167,7 +167,7 @@ function backup {
     # Copy playbook
     resetPlaybook "backup"
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-backup.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-backup.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-backup.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-backup.yaml
     sed -i "s/Scheme/${targetScheme}/g" playbook-backup.yaml
@@ -229,7 +229,7 @@ function copyDatasetToNodes {
             ssh ${UserName}@${node} 'pkill -f CassandraDaemon'
             ssh ${UserName}@${node} "rm -rf ${targetDir}/data"
             ssh ${UserName}@${node} "rm -rf ${targetDir}/*.tar.gz"
-            ssh ${UserName}@${node} "rm -rf ${PathToCodeBase}/data"
+            ssh ${UserName}@${node} "rm -rf ${PathToServer}/data"
             scp -r ${PathToBackup}/${targetScheme}/${dataset} ${UserName}@${node}:${targetDir}
         done
         sed -i "s|DECOMPRESS_DIR|${targetDir}|g" playbook-decompress.yaml
@@ -240,10 +240,10 @@ function copyDatasetToNodes {
             ssh ${UserName}@${node} 'pkill -f CassandraDaemon'
             ssh ${UserName}@${node} "rm -rf ${targetDir}/data"
             ssh ${UserName}@${node} "rm -rf ${targetDir}/*.tar.gz"
-            ssh ${UserName}@${node} "rm -rf ${PathToCodeBase}/data"
+            ssh ${UserName}@${node} "rm -rf ${PathToServer}/data"
             scp -r ${PathToBackup}/${targetScheme}/${dataset} ${UserName}@${node}:${targetDir}
         done
-        sed -i "s|DECOMPRESS_DIR|${PathToCodeBase}|g" playbook-decompress.yaml
+        sed -i "s|DECOMPRESS_DIR|${PathToServer}|g" playbook-decompress.yaml
     fi
 
     sleep 60
@@ -257,7 +257,7 @@ function copyDatasetToNodes {
 
 function rebuildServer {
     branch=$1
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-rebuildServer.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
 }
 
@@ -293,7 +293,7 @@ function startFromBackup {
 
     echo "Startup the system from backup, motivation is ${motivation}"
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-startup.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-startup.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-startup.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-startup.yaml
     sed -i "s/Scheme/${targetScheme}/g" playbook-startup.yaml
@@ -340,7 +340,7 @@ function restartCassandra {
     resetPlaybook "restartCassandra"
 
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-restartCassandra.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-restartCassandra.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-restartCassandra.yaml
     sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" playbook-restartCassandra.yaml
     sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" playbook-restartCassandra.yaml
@@ -410,7 +410,7 @@ function load {
 
     sed -i "s/memtable_heap_space=.*$/memtable_heap_space=\"${memtable_heap_space}MiB\" \&\&/" playbook-load.yaml
     sed -i "s/rebuild=.*$/rebuild=\"${rebuild}\" \&\&/" playbook-load.yaml
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-load.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-load.yaml
     sed -i "s|PATH_TO_YCSB|${PathToClient}|g" playbook-load.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-load.yaml
     sed -i "s|COORDINATORS|${Coordinators}|g" playbook-load.yaml
@@ -474,7 +474,7 @@ function run {
     sed -i "s/\(scheme: \)".*"/scheme: ${targetScheme}/" playbook-run.yaml
     sed -i "s|ENABLE_AUTO_COMPACTION|${enableAutoCompaction}|g" playbook-run.yaml
     sed -i "s/ENABL_COMPACTION_CFS/${enableAutoCompactionCFs}/g" playbook-run.yaml
-    sed -i "s|PATH_TO_CODE_BASE|${PathToCodeBase}|g" playbook-run.yaml
+    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-run.yaml
     sed -i "s|PATH_TO_YCSB|${PathToClient}|g" playbook-run.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-run.yaml
     sed -i "s|COORDINATORS|${Coordinators}|g" playbook-run.yaml
