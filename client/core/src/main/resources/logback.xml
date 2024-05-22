@@ -29,6 +29,9 @@ LICENSE file.
 	<logger name="site.yscb" level="INFO">
 		<appender-ref ref="STDOUT"/>
 	</logger>
+	<logger name="site.yscb.db" level="INFO">
+		<appender-ref ref="STDOUT"/>
+	</logger>
 	<logger name="com.datastax.driver.core" level="INFO">
 		<appender-ref ref="STDOUT"/>
 	</logger>
