@@ -1,0 +1,16 @@
+---
+- name: Rebuild the client
+  hosts: cassandra_client
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Rebuild the client
+      shell: . /etc/profile && cd PATH_TO_CLIENT && git pull && mvn -pl cassandra -am clean package -U -Dcheckstyle.skip
+      register: command_result
+      ignore_errors: true
+    - name: Fail the play if the previous command did not succeed
+      fail: msg="the command failed"
+      when: "'FAILED' in command_result.stderr"
+    - name: Wait until copy is done
+      pause:
+        seconds: 10

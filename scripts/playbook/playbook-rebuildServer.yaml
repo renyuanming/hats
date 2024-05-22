@@ -1,0 +1,16 @@
+---
+- name: Rebuild the cluster
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Rebuild the cluster
+      shell: . /etc/profile && cd PATH_TO_CODE_BASE && git checkout BRANCH_NAME && git pull origin BRANCH_NAME && ant clean && ant -Duse.jdk11=true
+      register: command_result
+      ignore_errors: true
+    - name: Fail the play if the previous command did not succeed
+      fail: msg="the command failed"
+      when: "'FAILED' in command_result.stderr"
+    - name: Wait until copy is done
+      pause:
+        seconds: 10

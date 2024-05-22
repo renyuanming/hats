@@ -1,0 +1,98 @@
+# ---
+# - name: Startup with backup data
+#   hosts: cassandra_servers
+#   become: yes
+#   become_user: ymren
+#   tasks:
+#     - name: Startup with backup data
+#       shell: |
+#             . /etc/profile &&
+#             export passWd="SUDO_PASSWD"
+#             bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }}
+#       vars:
+#         configurationFile: "PATH_TO_CODE_BASE/conf/cassandra.yaml"
+#         sourceFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH/data"
+#         projectBaseDir: "PATH_TO_CODE_BASE"
+#         memtableSize: "128MiB"
+#         motivation: "false"
+#         fromBackup: "true"
+#         rebuild: "false"
+#         useDirectIO: "false"
+#         branch: "main"
+#       register: command_result
+#       ignore_errors: true
+#     - name: Fail the play if the previous command did not succeed
+#       fail: msg="the command failed"
+#       when: "'FAILED' in command_result.stderr"
+#     - name: Wait until cold startup is done
+#       pause:
+#         seconds: 180
+
+---
+- name: Initialize the cluster
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Initialize the cluster
+      shell: |
+            . /etc/profile &&
+            export passWd="SUDO_PASSWD"
+            bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }}
+      vars:
+        configurationFile: "PATH_TO_CODE_BASE/conf/cassandra.yaml"
+        sourceFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH/data"
+        projectBaseDir: "PATH_TO_CODE_BASE"
+        memtableSize: "128MiB"
+        motivation: "false"
+        fromBackup: "true"
+        rebuild: "false"
+        useDirectIO: "false"
+        branch: "main"
+        schedulingInitialDelay: 60
+        schedulingInterval: 10
+        statesUpdateInterval: 10
+        readSensitivity: 0.9
+      register: command_result
+      ignore_errors: true
+    - name: Fail the play if the previous command did not succeed
+      fail: msg="the command failed"
+      when: "'FAILED' in command_result.stderr"
+- name: Startup seeds with backup data
+  hosts: cassandra_seeds
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Startup with backup data
+      shell: . /etc/profile && cd PATH_TO_CODE_BASE && nohup bin/cassandra >logs/debug.log 2>&1 &
+      register: command_result
+      ignore_errors: true
+    - name: Fail the play if the previous command did not succeed
+      fail: msg="the command failed"
+      when: "'FAILED' in command_result.stderr"
+    - name: Wait until cold startup is done
+      pause:
+        seconds: 30
+
+- name: Startup data nodes with backup data
+  hosts: cassandra_data_nodes
+  become: yes
+  serial: 1
+  become_user: ymren
+  tasks:
+    - name: Startup with backup data
+      shell: . /etc/profile && cd PATH_TO_CODE_BASE && nohup bin/cassandra >logs/debug.log 2>&1 &
+      register: command_result
+      ignore_errors: true
+    - name: Fail the play if the previous command did not succeed
+      fail: msg="the command failed"
+      when: "'FAILED' in command_result.stderr"
+    - name: Wait until cold startup is done
+      pause:
+        seconds: 50
+
+
+
+
+
+
