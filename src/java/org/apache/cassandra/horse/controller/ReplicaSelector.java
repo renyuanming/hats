@@ -22,12 +22,40 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.cassandra.horse.states.LocalStates;
+import org.apache.cassandra.locator.InetAddressAndPort;
 
 
 public class ReplicaSelector 
 {
 
     public final static RandomSelector randomSelector = new RandomSelector();
+    /**
+     * 1. It can periodically update the score based on the placement policy and the sampling latency
+     */
+
+    public static ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
+    public static volatile double minLatency = 0.0;
+
+    public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr)
+    {
+        double greedyScore = 0.0;
+        double latencyScore = 0.0;
+
+        if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
+        {
+            greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+        }
+
+        if(sampleLatency.containsKey(targetAddr))
+        {
+            latencyScore = minLatency / sampleLatency.get(targetAddr);
+        }
+        return greedyScore + latencyScore;
+    }
+
     
     public static class RandomSelector
     {

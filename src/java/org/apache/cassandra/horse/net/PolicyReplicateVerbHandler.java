@@ -45,7 +45,6 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
 
         // Get the local placement policy
         LocalStates.updateLocalPolicy();
-        logger.info("rymInfo: We get the global placement policy {}, the local placement policy {}", GlobalStates.globalPolicy, LocalStates.localPolicy);
     }
     
 }

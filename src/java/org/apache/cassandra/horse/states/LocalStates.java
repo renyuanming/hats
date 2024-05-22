@@ -49,6 +49,7 @@ import com.codahale.metrics.SlidingTimeWindowReservoir;
 public class LocalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
     private static final double ALPHA = 0.9;
+    public static ConcurrentHashMap<InetAddressAndPort, Map<InetAddressAndPort, Double>> localPolicyWithAddress = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<InetAddressAndPort, List<Double>> localPolicy = new ConcurrentHashMap<>();
     public final double latency; // micro second
     public final Map<InetAddress, Integer> completedReadRequestCount;
@@ -72,16 +73,21 @@ public class LocalStates implements Serializable {
         for(int i = nodeIndex - 2; i <= nodeIndex + 2; i++)
         {
             int rgIndex = (i + nodeCount) % nodeCount;
+            Map<InetAddressAndPort, Double> policyWithPort = new HashMap<>();
             List<Double> policy = new ArrayList<>();
             InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
             for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + 3; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
                 policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
+                policyWithPort.put(Gossiper.getAllHosts().get(curNodeIndex % nodeCount), 
+                           GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
             }
+            localPolicyWithAddress.put(rg, policyWithPort);
             localPolicy.put(rg, policy);
         }
 
+        logger.info("rymInfo: We get the global placement policy {}, the local placement policy {}, with address {}", GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
     }
 
     public String toString()

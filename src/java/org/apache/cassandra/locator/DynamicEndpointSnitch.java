@@ -37,6 +37,7 @@ import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.gms.VersionedValue;
+import org.apache.cassandra.horse.controller.ReplicaSelector;
 import org.apache.cassandra.net.LatencySubscribers;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageService;
@@ -186,12 +187,12 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         // its comparator to be "stable", that is 2 endpoint should compare the same way for the duration
         // of the sort() call. As we copy the scores map on write, it is thus enough to alias the current
         // version of it during this call.
-        final HashMap<InetAddressAndPort, Double> scores = this.scores;
         if(DatabaseDescriptor.getEnableHorse())
         {
             InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
-            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores, replicationGroup));
+            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
         }
+        final HashMap<InetAddressAndPort, Double> scores = this.scores;
         return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
     }
 
@@ -263,10 +264,17 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     }
     
     // [Horse]
-    private int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2, Map<InetAddressAndPort, Double> scores, InetAddressAndPort replicationGroup)
+    private int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2, InetAddressAndPort replicationGroup)
     {
-        // TODO:  We need to implement a new score function here
-        return 0;
+        Double scored1 = ReplicaSelector.getScore(replicationGroup, a1.endpoint());
+        Double scored2 = ReplicaSelector.getScore(replicationGroup, a2.endpoint());
+
+        if(scored1.equals(scored2))
+            return subsnitch.compareEndpoints(target, a1, a2);
+        if(scored1 < scored2)
+            return 1;
+        else
+            return -1;
     }
 
     public int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2)
@@ -305,6 +313,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
         }
         double maxLatency = 1;
+        double minLatency = Double.MAX_VALUE;
 
         Map<InetAddressAndPort, Snapshot> snapshots = new HashMap<>(samples.size());
         for (Map.Entry<InetAddressAndPort, ExponentiallyDecayingReservoir> entry : samples.entrySet())
@@ -320,7 +329,15 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             double mean = entry.getValue().getMedian();
             if (mean > maxLatency)
                 maxLatency = mean;
+
+        // HORSE
+            ReplicaSelector.sampleLatency.put(entry.getKey(), mean);
+            if (mean < minLatency)
+                minLatency = mean;
         }
+        ReplicaSelector.minLatency = minLatency;
+        ////////////////////////////////////////////////////////
+
         // now make another pass to do the weighting based on the maximums we found before
         for (Map.Entry<InetAddressAndPort, Snapshot> entry : snapshots.entrySet())
         {
