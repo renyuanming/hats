@@ -25,4 +25,4 @@ output*
 /differentbin/
 
 logs/*
-workloads/*
+# workloads/*
