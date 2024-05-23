@@ -18,7 +18,8 @@ LICENSE file.
 <configuration>
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+			<pattern>%-5level [%thread] %date{ISO8601} %F:%L - %msg%n</pattern>
+			<!-- <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern> -->
 		</encoder>
 	</appender>
 
