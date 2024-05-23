@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.HorseUtils.HorseLogLevels;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -84,6 +85,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             logger.info("Using provided data-center name '{}' for DCAwareRoundRobinPolicy", localDc);
 
         this.configuration = cluster.getConfiguration();
+        HorseUtils.printStackTace(HorseLogLevels.INFO, String.format("rymInfo: DCAwareRoundRobinPolicy.init() called with hosts %s", hosts));
 
         ArrayList<String> notInLocalDC = new ArrayList<String>();
 
