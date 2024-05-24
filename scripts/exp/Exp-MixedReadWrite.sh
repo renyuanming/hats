@@ -107,7 +107,7 @@ function main {
 
 
                                                             # Collect load results
-                                                            resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${scheme}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-motivation_${motivation}-schedulingInterval_${schedulingInterval}-stepSize_${stepSize}-offloadThreshold_${offloadThreshold}-recoverThreshold_${recoverThreshold}/round_${round}"
+                                                            resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${scheme}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval_${schedulingInterval}-stepSize_${stepSize}-offloadThreshold_${offloadThreshold}-recoverThreshold_${recoverThreshold}/round_${round}"
                                                             # echo "Collect results to ${resultsDir}"
                                                             collectResults ${resultsDir}
                                                         done
