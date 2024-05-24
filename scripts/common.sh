@@ -262,6 +262,7 @@ function rebuildServer {
     resetPlaybook "rebuildServer"
     sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
+    ansible-playbook -v -i hosts.ini playbook-rebuildServer.yaml
 }
 
 function rebuildClient {
