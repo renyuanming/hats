@@ -258,7 +258,7 @@ function copyDatasetToNodes {
 function rebuildServer {
     
     branch=$1
-    
+    echo "Building the server with branch ${branch}"
     resetPlaybook "rebuildServer"
     sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
