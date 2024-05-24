@@ -3023,6 +3023,12 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             subscriber.onDown(endpoint);
     }
 
+    public void notifyPolicy(Map<String, List<Double>> policy)
+    {
+        for (IEndpointLifecycleSubscriber subscriber : lifecycleSubscribers)
+            subscriber.onUpdatePolicy(policy);
+    }
+
     private void notifyJoined(InetAddressAndPort endpoint)
     {
         if (!isStatus(endpoint, VersionedValue.STATUS_NORMAL))

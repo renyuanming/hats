@@ -17,6 +17,10 @@
  */
 package org.apache.cassandra.service;
 
+import java.util.List;
+import java.util.Map;
+
+import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.locator.InetAddressAndPort;
 
 /**
@@ -64,4 +68,10 @@ public interface IEndpointLifecycleSubscriber
      * @param endpoint the endpoint that has moved.
      */
     public void onMove(InetAddressAndPort endpoint);
+
+    /**
+     * Called when a new policy is generated.
+     * @param policy the new policy.
+     */
+    public void onUpdatePolicy(Map<String, List<Double>> policy);
 }

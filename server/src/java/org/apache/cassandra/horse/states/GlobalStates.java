@@ -21,7 +21,10 @@ package org.apache.cassandra.horse.states;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -143,6 +146,33 @@ public class GlobalStates implements Serializable {
                      Arrays.deepToString(globalPolicy), 
                      Gossiper.getAllHosts().size(), 
                      StringUtils.split(DatabaseDescriptor.getAllHosts(), ','));
+    }
+
+    public static Map<String, List<Double>> transformPolicyForClient()
+    {
+        final Double[][][] policy = globalPolicy;
+        Map<String, List<Double>> policyForClient = new HashMap<String, List<Double>>();
+
+        if(policy.length != Gossiper.getAllHosts().size())
+        {
+            throw new IllegalStateException("The policy length is not equal to the host count");
+        }
+
+        List<Long> tokenList = new ArrayList<Long>(Gossiper.getTokenRanges());
+        int nodeCount = tokenList.size();
+
+        for(int i = 0; i < policy.length; i++)
+        {
+            List<Double> rgPolicy = new ArrayList<Double>();
+            for(int curNodeIndex = i; curNodeIndex < i + 3; curNodeIndex++)
+            {
+                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(i, curNodeIndex);
+                rgPolicy.add(policy[curNodeIndex % nodeCount][replicaIndex][0]);
+            }
+            policyForClient.put(tokenList.get(i).toString(), rgPolicy);
+        }
+
+        return policyForClient;
     }
 
 }

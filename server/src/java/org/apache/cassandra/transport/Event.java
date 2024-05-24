@@ -17,15 +17,20 @@
  */
 package org.apache.cassandra.transport;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Objects;
 
 import io.netty.buffer.ByteBuf;
 import org.apache.cassandra.cql3.functions.UDAggregate;
 import org.apache.cassandra.cql3.functions.UDFunction;
+import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
 import org.apache.cassandra.locator.InetAddressAndPort;
 
 public abstract class Event
@@ -35,6 +40,7 @@ public abstract class Event
         TOPOLOGY_CHANGE(ProtocolVersion.V3),
         STATUS_CHANGE(ProtocolVersion.V3),
         SCHEMA_CHANGE(ProtocolVersion.V3),
+        POLICY_CHANGE(ProtocolVersion.V3),
         TRACE_COMPLETE(ProtocolVersion.V4);
 
         public final ProtocolVersion minimumVersion;
@@ -65,6 +71,8 @@ public abstract class Event
                 return StatusChange.deserializeEvent(cb, version);
             case SCHEMA_CHANGE:
                 return SchemaChange.deserializeEvent(cb, version);
+            case POLICY_CHANGE:
+                return PolicyChange.deserializeEvent(cb, version);
         }
         throw new AssertionError();
     }
@@ -235,6 +243,47 @@ public abstract class Event
             return Objects.equal(status, stc.status)
                 && Objects.equal(node, stc.node);
         }
+    }
+
+    /** 
+     * [Horse] This class is used to notify clients of changes to the placement policy.
+    */
+    public static class PolicyChange extends Event
+    {
+        public final byte[] policyInBytes;
+        private PolicyChange(byte[] policyInBytes)
+        {
+            super(Type.POLICY_CHANGE);
+            this.policyInBytes = policyInBytes;
+        }
+
+        public static PolicyChange updatePolicy(Map<String, List<Double>> policy)
+        { 
+            try {
+                byte[] policyInBytes = ByteObjectConversion.objectToByteArray((Serializable) policy);
+                return new PolicyChange(policyInBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        private static PolicyChange deserializeEvent(ByteBuf cb, ProtocolVersion version)
+        {
+            byte[] policyInBytes = CBUtil.readBytes(cb);
+            return new PolicyChange(policyInBytes);
+        }
+
+        @Override
+        protected void serializeEvent(ByteBuf dest, ProtocolVersion version) {
+            CBUtil.writeBytes(policyInBytes, dest);
+        }
+
+        @Override
+        protected int eventSerializedSize(ProtocolVersion version) {
+            return CBUtil.sizeOfBytes(policyInBytes);
+        }
+        
     }
 
     public static class SchemaChange extends Event

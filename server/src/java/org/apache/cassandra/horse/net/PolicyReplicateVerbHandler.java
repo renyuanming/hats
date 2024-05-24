@@ -24,6 +24,7 @@ import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
+import org.apache.cassandra.service.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,9 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
 
         // Get the local placement policy
         LocalStates.updateLocalPolicy();
+
+        // Acknowledge to the client driver
+        StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient());
     }
     
 }
