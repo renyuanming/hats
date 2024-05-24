@@ -256,12 +256,15 @@ function copyDatasetToNodes {
 }
 
 function rebuildServer {
+    
+    resetPlaybook "rebuildServer"
     branch=$1
     sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
 }
 
 function rebuildClient {
+    resetPlaybook "rebuildClient"
     sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" playbook-rebuildClient.yaml
     ansible-playbook -v -i hosts.ini playbook-rebuildClient.yaml
 }
