@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 
@@ -48,6 +49,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
     private final boolean shuffleReplicas;
+    private volatile boolean enableHorse;
     private volatile Metadata clusterMetadata;
     private volatile ProtocolVersion protocolVersion;
     private volatile CodecRegistry codecRegistry;
@@ -90,6 +92,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         clusterMetadata = cluster.getMetadata();
         protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        enableHorse = cluster.getConfiguration().getHorseOptions().isHorseEnabled();
         childPolicy.init(cluster, hosts);
     }
 
@@ -131,12 +134,40 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
             return childPolicy.newQueryPlan(loggedKeyspace, statement);
 
         final Iterator<Host> iter;
-        if (shuffleReplicas) {
-            List<Host> l = Lists.newArrayList(replicas);
-            Collections.shuffle(l);
-            iter = l.iterator();
-        } else {
-            iter = replicas.iterator();
+
+        if(enableHorse)
+        {
+            final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
+            if(policy == null)
+            {
+                iter = replicas.iterator();
+            }
+            else
+            {
+                List<Host> l = Lists.newArrayList(replicas);
+                HorseReplicaSelector selector = clusterMetadata.getSelector(partitionKey);
+                Host target = selector.selectTarget();
+                if(l.indexOf(target) > 0)
+                {
+                    l.remove(target);
+                    l.add(0, target);
+                }
+                else if(l.indexOf(target) == -1)
+                {
+                    throw new IllegalStateException("Target not found in replicas");
+                }
+                iter = l.iterator();
+            }
+        }
+        else
+        {
+            if (shuffleReplicas) {
+                List<Host> l = Lists.newArrayList(replicas);
+                Collections.shuffle(l);
+                iter = l.iterator();
+            } else {
+                iter = replicas.iterator();
+            }
         }
 
         return new AbstractIterator<Host>() {

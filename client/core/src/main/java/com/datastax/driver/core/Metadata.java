@@ -15,12 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -42,6 +44,10 @@ public class Metadata {
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
     final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     volatile TokenMap tokenMap;
+
+    // Horse
+    volatile Map<String, List<Double>>  policy = null;
+    volatile ConcurrentHashMap<Token, HorseReplicaSelector> tokenToReplicaSelector = new ConcurrentHashMap<Token, HorseReplicaSelector>();
 
     final ReentrantLock lock = new ReentrantLock();
 
@@ -259,6 +265,45 @@ public class Metadata {
         } else {
             Set<Host> hosts = current.getReplicas(keyspace, current.factory.hash(partitionKey));
             return hosts == null ? Collections.<Host>emptySet() : hosts;
+        }
+    }
+
+    public HorseReplicaSelector getSelector(ByteBuffer partitionKey)
+    {
+        TokenMap current = tokenMap;
+        if (current == null) 
+        {
+            return null;
+        } else {
+            Token keyToken = current.factory.hash(partitionKey);
+            int primaryTokenIndex = Collections.binarySearch(current.ring, keyToken);
+            if (primaryTokenIndex < 0) {
+                primaryTokenIndex = -primaryTokenIndex - 1;
+                if (primaryTokenIndex >= current.ring.size())
+                    primaryTokenIndex = 0;
+            }
+            return tokenToReplicaSelector.get(current.ring.get(primaryTokenIndex));
+        }
+    }
+
+    /**
+     * Returns the placement policy of the cluster.
+     * @return double values.
+     */
+    public Map<String, List<Double>>  getPolicy() 
+    {
+        return policy;
+    }
+
+    public void updateHorsePolicy(Map<String, List<Double>> newPolicy)
+    {
+        policy = newPolicy;
+        TokenMap current = tokenMap;
+        for(Map.Entry<String,  List<Double>> entry : newPolicy.entrySet())
+        {
+            Token token = current.factory.fromString(entry.getKey());
+            List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(token));
+            tokenToReplicaSelector.put(token, new HorseReplicaSelector(replicas, entry.getValue()));
         }
     }
 

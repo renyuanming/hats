@@ -53,6 +53,7 @@ public class Configuration {
     private final QueryOptions queryOptions;
     private final NettyOptions nettyOptions;
     private final CodecRegistry codecRegistry;
+    private final HorseOptions horseOptions;
 
     private Configuration(Policies policies,
                           ProtocolOptions protocolOptions,
@@ -61,7 +62,8 @@ public class Configuration {
                           MetricsOptions metricsOptions,
                           QueryOptions queryOptions,
                           NettyOptions nettyOptions,
-                          CodecRegistry codecRegistry) {
+                          CodecRegistry codecRegistry,
+                          HorseOptions horseOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
@@ -70,6 +72,7 @@ public class Configuration {
         this.queryOptions = queryOptions;
         this.nettyOptions = nettyOptions;
         this.codecRegistry = codecRegistry;
+        this.horseOptions = horseOptions;
     }
 
     /**
@@ -86,7 +89,8 @@ public class Configuration {
                 toCopy.getMetricsOptions(),
                 toCopy.getQueryOptions(),
                 toCopy.getNettyOptions(),
-                toCopy.getCodecRegistry()
+                toCopy.getCodecRegistry(),
+                toCopy.getHorseOptions()
         );
     }
 
@@ -177,6 +181,15 @@ public class Configuration {
     }
 
     /**
+     * Returns the {@link HorseOptions} instance for this configuration.
+     *
+     * @return the {@link HorseOptions} instance for this configuration.
+     */
+    public HorseOptions getHorseOptions() {
+        return horseOptions;
+    }
+
+    /**
      * A builder to create a new {@code Configuration} object.
      */
     public static class Builder {
@@ -188,6 +201,7 @@ public class Configuration {
         private QueryOptions queryOptions;
         private NettyOptions nettyOptions;
         private CodecRegistry codecRegistry;
+        private HorseOptions horseOptions;
 
         /**
          * Sets the policies for this cluster.
@@ -298,7 +312,8 @@ public class Configuration {
                     metricsOptions != null ? metricsOptions : new MetricsOptions(),
                     queryOptions != null ? queryOptions : new QueryOptions(),
                     nettyOptions != null ? nettyOptions : NettyOptions.DEFAULT_INSTANCE,
-                    codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE);
+                    codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE,
+                    horseOptions != null ? horseOptions : new HorseOptions());
         }
     }
 }

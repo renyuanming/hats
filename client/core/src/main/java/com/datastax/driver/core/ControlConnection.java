@@ -259,7 +259,8 @@ class ControlConnection implements Connection.Owner {
             List<ProtocolEvent.Type> evs = Arrays.asList(
                     ProtocolEvent.Type.TOPOLOGY_CHANGE,
                     ProtocolEvent.Type.STATUS_CHANGE,
-                    ProtocolEvent.Type.SCHEMA_CHANGE
+                    ProtocolEvent.Type.SCHEMA_CHANGE,
+                    ProtocolEvent.Type.POLICY_CHANGE
             );
             connection.write(new Requests.Register(evs));
 

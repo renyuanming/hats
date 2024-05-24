@@ -25,7 +25,7 @@ import static com.datastax.driver.core.SchemaElement.*;
 
 class ProtocolEvent {
 
-    enum Type {TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE}
+    enum Type {TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE, POLICY_CHANGE}
 
     final Type type;
 
@@ -41,6 +41,8 @@ class ProtocolEvent {
                 return StatusChange.deserializeEvent(bb);
             case SCHEMA_CHANGE:
                 return SchemaChange.deserializeEvent(bb, version);
+            case POLICY_CHANGE:
+                return PolicyChange.deserializeEvent(bb);
         }
         throw new AssertionError();
     }
@@ -93,6 +95,28 @@ class ProtocolEvent {
         @Override
         public String toString() {
             return status + " " + node;
+        }
+    }
+
+    static class PolicyChange extends ProtocolEvent 
+    {
+        public final byte[] policyInBytes;
+        private PolicyChange(byte[] policyInBytes)
+        {
+            super(Type.POLICY_CHANGE);
+            this.policyInBytes = policyInBytes;
+        }
+
+
+        // Assumes the type has already been deserialized
+        private static PolicyChange deserializeEvent(ByteBuf bb) {
+            byte[] policyInBytes = CBUtil.readBytes(bb);
+            return new PolicyChange(policyInBytes);
+        }
+
+        @Override
+        public String toString() {
+            return "Policy Change";
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.ByteObjectConversion;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
@@ -2322,6 +2323,19 @@ public class Cluster implements Closeable {
                         case DOWN:
                             submitNodeRefresh(stAddr, HostEvent.DOWN);
                             break;
+                    }
+                    break;
+                case POLICY_CHANGE:
+                    ProtocolEvent.PolicyChange plc = (ProtocolEvent.PolicyChange) event;
+                    byte[] newPolicyInBytes = plc.policyInBytes;
+                    try {
+                        logger.info("rymInfo: The old policy is {}", manager.metadata.policy);
+                        @SuppressWarnings("unchecked")
+                        Map<String, List<Double>> newPolicy = (Map<String, List<Double>>) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
+                        manager.metadata.updateHorsePolicy(newPolicy);
+                        logger.info("rymInfo: The new policy is {}", manager.metadata.policy);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                     break;
                 case SCHEMA_CHANGE:

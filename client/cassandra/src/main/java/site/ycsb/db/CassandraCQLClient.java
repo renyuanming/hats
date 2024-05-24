@@ -95,6 +95,8 @@ public class CassandraCQLClient extends DB {
   public static final String PORT_PROPERTY = "port";
   public static final String PORT_PROPERTY_DEFAULT = "9042";
 
+  public static final String ENABLE_HORSE = "enable.horse";
+
   public static final String READ_CONSISTENCY_LEVEL_PROPERTY =
       "cassandra.readconsistencylevel";
   public static final String READ_CONSISTENCY_LEVEL_PROPERTY_DEFAULT = "ONE";
@@ -217,6 +219,11 @@ public class CassandraCQLClient extends DB {
         if (readTimoutMillis != null) {
           cluster.getConfiguration().getSocketOptions()
               .setReadTimeoutMillis(Integer.valueOf(readTimoutMillis));
+        }
+
+        String enableHorse = getProperties().getProperty(ENABLE_HORSE);
+        if (enableHorse != null) {
+          cluster.getConfiguration().getHorseOptions().setHorse(Boolean.valueOf(enableHorse));
         }
 
         Metadata metadata = cluster.getMetadata();
