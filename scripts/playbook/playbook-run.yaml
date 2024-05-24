@@ -87,7 +87,7 @@
   become_user: ymren
   tasks:
     - name: Execute runDB.sh
-      command: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }}
+      command: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }}
       vars:
         coordinator: "COORDINATORS"
         recordNumber: 10000000
@@ -99,6 +99,7 @@
         requestDistribution: "uniform"
         PathToClient: "PATH_TO_YCSB"
         scheme: "normal"
+        enableHorse: "ENABLE_HORSE"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

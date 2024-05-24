@@ -12,6 +12,7 @@ PathToClient=$8
 coordinator=$9
 shift 9
 scheme=$1
+enableHorse=$2
 
 cd ${PathToClient} || exit
 
@@ -39,4 +40,4 @@ sed -i "s/fieldlength=.*$/fieldlength=${field_length}/" ${workload}
 mkdir -p logs/insert-log/
 file_name="Run-$(date +%s)-${operationcount}-${field_length}-${threads}-${requestDistribution}"
 
-bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -threads $threads -s -P ${workload} > logs/insert-log/${file_name}.log 2>&1
+bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/insert-log/${file_name}.log 2>&1

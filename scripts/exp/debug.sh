@@ -3,7 +3,7 @@
 
 . /etc/profile
 export BACKUP_MODE="remote"
-export SCHEME="adaptiveKV" # adaptiveKV or depart, used for initializing the configuration file
+export SCHEME="Horse" # Horse or depart, used for initializing the configuration file
 export CLUSTER_NAME="4x"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 source "${SCRIPT_DIR}/../common.sh"
@@ -38,12 +38,12 @@ BRANCH="main"
 PURPOSE="ReadAmplification" # To prove ReadAmplification, CompactionOverhead, we select different dataset
 STARTUP_FROM_BACKUP="true"
 SETTING=""
-SCHEDULING_INITIAL_DELAY=300 # seconds
-SCHEDULING_INTERVAL=(30 60 120 180) # seconds
+SCHEDULING_INITIAL_DELAY=90 # seconds
+SCHEDULING_INTERVAL=(10) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 READ_SENSISTIVITY=0.9
-STEP_SIZE=(0.05 0.02 0.01)
-OFFLOAD_THRESHOLD=(0.1 0.2 0.3)
+STEP_SIZE=(0.05)
+OFFLOAD_THRESHOLD=(0.1)
 RECOVER_THRESHOLD=(0.1)
 ENABLE_HORSE="true"
 
@@ -107,9 +107,9 @@ function main {
 
 
                                                             # Collect load results
-                                                            resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${scheme}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-motivation_${motivation}-schedulingInterval_${schedulingInterval}-stepSize_${stepSize}-offloadThreshold_${offloadThreshold}-recoverThreshold_${recoverThreshold}/round_${round}"
+                                                            # resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${scheme}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-motivation_${motivation}-schedulingInterval_${schedulingInterval}-stepSize_${stepSize}-offloadThreshold_${offloadThreshold}-recoverThreshold_${recoverThreshold}/round_${round}"
                                                             # echo "Collect results to ${resultsDir}"
-                                                            collectResults ${resultsDir}
+                                                            # collectResults ${resultsDir}
                                                         done
                                                     done
                                                 done
