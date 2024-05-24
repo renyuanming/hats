@@ -5,7 +5,7 @@
   become_user: ymren
   tasks:
     - name: Rebuild the cluster
-      shell: . /etc/profile && cd PATH_TO_CODE_BASE && ant clean && ant -Duse.jdk11=true
+      shell: . /etc/profile && cd PATH_TO_CODE_BASE && git checkout BRANCH_NAME && git pull origin BRANCH_NAME && ant clean && ant -Duse.jdk11=true
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

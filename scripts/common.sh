@@ -257,8 +257,9 @@ function copyDatasetToNodes {
 
 function rebuildServer {
     
-    resetPlaybook "rebuildServer"
     branch=$1
+    
+    resetPlaybook "rebuildServer"
     sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
 }
