@@ -140,7 +140,7 @@ function flush {
     resetPlaybook "flush"
 
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-flush.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-flush.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-flush.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-flush.yaml
     sed -i "s/\(seconds: \)".*"/seconds: ${waitTime}/" playbook-flush.yaml
@@ -167,7 +167,7 @@ function backup {
     # Copy playbook
     resetPlaybook "backup"
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-backup.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-backup.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-backup.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-backup.yaml
     sed -i "s/Scheme/${targetScheme}/g" playbook-backup.yaml
@@ -260,7 +260,7 @@ function rebuildServer {
     branch=$1
     echo "Building the server with branch ${branch}"
     resetPlaybook "rebuildServer"
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-rebuildServer.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
     ansible-playbook -v -i hosts.ini playbook-rebuildServer.yaml
 }
@@ -298,7 +298,7 @@ function startFromBackup {
 
     echo "Startup the system from backup, motivation is ${motivation}"
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-startup.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-startup.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-startup.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-startup.yaml
     sed -i "s/Scheme/${targetScheme}/g" playbook-startup.yaml
@@ -345,7 +345,7 @@ function restartCassandra {
     resetPlaybook "restartCassandra"
 
     # Modify playbook
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-restartCassandra.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-restartCassandra.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-restartCassandra.yaml
     sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" playbook-restartCassandra.yaml
     sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" playbook-restartCassandra.yaml
@@ -415,8 +415,8 @@ function load {
 
     sed -i "s/memtable_heap_space=.*$/memtable_heap_space=\"${memtable_heap_space}MiB\" \&\&/" playbook-load.yaml
     sed -i "s/rebuild=.*$/rebuild=\"${rebuild}\" \&\&/" playbook-load.yaml
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-load.yaml
-    sed -i "s|PATH_TO_YCSB|${PathToClient}|g" playbook-load.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-load.yaml
+    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" playbook-load.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-load.yaml
     sed -i "s|COORDINATORS|${Coordinators}|g" playbook-load.yaml
     sed -i "s|NODE_IP|${NodeIP}|g" playbook-load.yaml
@@ -479,8 +479,8 @@ function run {
     sed -i "s/\(scheme: \)".*"/scheme: ${targetScheme}/" playbook-run.yaml
     sed -i "s|ENABLE_AUTO_COMPACTION|${enableAutoCompaction}|g" playbook-run.yaml
     sed -i "s/ENABL_COMPACTION_CFS/${enableAutoCompactionCFs}/g" playbook-run.yaml
-    sed -i "s|PATH_TO_CODE_BASE|${PathToServer}|g" playbook-run.yaml
-    sed -i "s|PATH_TO_YCSB|${PathToClient}|g" playbook-run.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-run.yaml
+    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" playbook-run.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-run.yaml
     sed -i "s|COORDINATORS|${Coordinators}|g" playbook-run.yaml
     sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" playbook-run.yaml

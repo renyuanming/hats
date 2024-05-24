@@ -10,9 +10,9 @@
 #             export passWd="SUDO_PASSWD"
 #             bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }}
 #       vars:
-#         configurationFile: "PATH_TO_CODE_BASE/conf/cassandra.yaml"
+#         configurationFile: "PATH_TO_SERVER/conf/cassandra.yaml"
 #         sourceFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH/data"
-#         projectBaseDir: "PATH_TO_CODE_BASE"
+#         projectBaseDir: "PATH_TO_SERVER"
 #         memtableSize: "128MiB"
 #         motivation: "false"
 #         fromBackup: "true"
@@ -40,9 +40,9 @@
             export passWd="SUDO_PASSWD"
             bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }}
       vars:
-        configurationFile: "PATH_TO_CODE_BASE/conf/cassandra.yaml"
+        configurationFile: "PATH_TO_SERVER/conf/cassandra.yaml"
         sourceFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH/data"
-        projectBaseDir: "PATH_TO_CODE_BASE"
+        projectBaseDir: "PATH_TO_SERVER"
         memtableSize: "128MiB"
         motivation: "false"
         fromBackup: "true"
@@ -64,7 +64,7 @@
   become_user: ymren
   tasks:
     - name: Startup with backup data
-      shell: . /etc/profile && cd PATH_TO_CODE_BASE && nohup bin/cassandra >logs/debug.log 2>&1 &
+      shell: . /etc/profile && cd PATH_TO_SERVER && nohup bin/cassandra >logs/debug.log 2>&1 &
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed
@@ -81,7 +81,7 @@
   become_user: ymren
   tasks:
     - name: Startup with backup data
-      shell: . /etc/profile && cd PATH_TO_CODE_BASE && nohup bin/cassandra >logs/debug.log 2>&1 &
+      shell: . /etc/profile && cd PATH_TO_SERVER && nohup bin/cassandra >logs/debug.log 2>&1 &
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

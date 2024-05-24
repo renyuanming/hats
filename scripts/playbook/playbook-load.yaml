@@ -22,7 +22,7 @@
 #   - name: Execute script start-server.sh
 #     shell: |
 #       . /etc/profile &&
-#       export path_to_code_base="PATH_TO_CODE_BASE" &&
+#       export PATH_TO_SERVER="PATH_TO_SERVER" &&
 #       export branch_name="yuanming" &&
 #       export rebuild="true" &&
 #       export memtable_heap_space="128MiB" &&
@@ -55,7 +55,7 @@
   - name: Execute script start-server.sh
     shell: |
       . /etc/profile &&
-      export path_to_code_base="PATH_TO_CODE_BASE" &&
+      export PATH_TO_SERVER="PATH_TO_SERVER" &&
       export branch_name="yuanming" &&
       export rebuild="true" &&
       export memtable_heap_space="128MiB" &&
@@ -88,7 +88,7 @@
   - name: Execute script start-server.sh
     shell: |
       . /etc/profile &&
-      export path_to_code_base="PATH_TO_CODE_BASE" &&
+      export PATH_TO_SERVER="PATH_TO_SERVER" &&
       export branch_name="yuanming" &&
       export rebuild="true" &&
       export memtable_heap_space="128MiB" &&
@@ -118,7 +118,7 @@
   tasks:
   - name: Setup log levels
     shell: |
-      . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION setlogginglevel org.apache.cassandra error && bin/nodetool NODETOOL_OPTION setlogginglevel ROOT error
+      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION setlogginglevel org.apache.cassandra error && bin/nodetool NODETOOL_OPTION setlogginglevel ROOT error
     register: command_result
     ignore_errors: true
 
@@ -134,7 +134,7 @@
       coordinator: "NODE_IP"
       sstable_size_in_mb: 4
       fanout_size: 10
-      file_dir: "PATH_TO_CODE_BASE"
+      file_dir: "PATH_TO_SERVER"
       replication_factor: 3
       mode: "mlsm"
     register: command_result
@@ -162,7 +162,7 @@
       key_length: 24
       filed_length: 1000
       threads: 16
-      file_dir: "PATH_TO_YCSB"
+      file_dir: "PATH_TO_CLIENT"
       workload: "workloads/workload_template"
       expName: "Exp#1"
       replication_factor: 3
@@ -186,7 +186,7 @@
   tasks:
   - name: Get write stall metrics
     shell: |
-      . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION writestall
+      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION writestall
     register: command_result
     ignore_errors: true
 

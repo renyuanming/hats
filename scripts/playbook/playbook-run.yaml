@@ -12,7 +12,7 @@
         workload: "workload_template"
         stage: "Before-run"
         resultDir: "PATH_TO_RESULT_DIR"
-        codeBase: "PATH_TO_CODE_BASE"
+        codeBase: "PATH_TO_SERVER"
         diskDevice: "DISK_DEVICE"
         networkDevice: "NETWORK_DEVICE"
         mode: "normal"
@@ -30,7 +30,7 @@
   tasks:
     - name: Enable auto compaction
       shell: |
-        . /etc/profile && [ "ENABLE_AUTO_COMPACTION" = "true" ] && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION enableautocompaction  ycsb ENABL_COMPACTION_CFS
+        . /etc/profile && [ "ENABLE_AUTO_COMPACTION" = "true" ] && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION enableautocompaction  ycsb ENABL_COMPACTION_CFS
       register: command_result
       ignore_errors: true
 
@@ -42,7 +42,7 @@
   tasks:
     - name: Setup log levels
       shell: |
-        . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION setlogginglevel org.apache.cassandra LOG_LEVEL && bin/nodetool NODETOOL_OPTION setlogginglevel ROOT error
+        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION setlogginglevel org.apache.cassandra LOG_LEVEL && bin/nodetool NODETOOL_OPTION setlogginglevel ROOT error
       register: command_result
       ignore_errors: true
 
@@ -53,7 +53,7 @@
   tasks:
     - name: Setup horse
       shell: |
-        . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool sethorse -e ENABLE_HORSE -ss STEP_SIZE -ot OFFLOAD_THRESHOLD -rt RECOVER_THRESHOLD
+        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool sethorse -e ENABLE_HORSE -ss STEP_SIZE -ot OFFLOAD_THRESHOLD -rt RECOVER_THRESHOLD
       register: command_result
       ignore_errors: true
 
@@ -97,7 +97,7 @@
         threads: 64
         workload: "workload_template"
         requestDistribution: "uniform"
-        PathToClient: "PATH_TO_YCSB"
+        PathToClient: "PATH_TO_CLIENT"
         scheme: "normal"
         enableHorse: "ENABLE_HORSE"
       register: command_result
@@ -116,7 +116,7 @@
 #   tasks:
 #   - name: Get write stall metrics
 #     shell: |
-#       . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION writestall
+#       . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION writestall
 #     register: command_result
 #     ignore_errors: true
 
@@ -127,7 +127,7 @@
   tasks:
   - name: Get request distribution
     shell: |
-      . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION requestDist && bin/nodetool NODETOOL_OPTION getbreakdown KEYSPACE > PATH_TO_RESULT_DIR/breakdown.txt
+      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION requestDist && bin/nodetool NODETOOL_OPTION getbreakdown KEYSPACE > PATH_TO_RESULT_DIR/breakdown.txt
     register: command_result
     ignore_errors: true
 
@@ -144,7 +144,7 @@
         workload: "workload_template"
         stage: "After-normal-run"
         resultDir: "PATH_TO_RESULT_DIR"
-        codeBase: "PATH_TO_CODE_BASE"
+        codeBase: "PATH_TO_SERVER"
         diskDevice: "DISK_DEVICE"
         networkDevice: "NETWORK_DEVICE"
         mode: "normal"

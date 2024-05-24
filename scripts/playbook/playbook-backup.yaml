@@ -7,10 +7,10 @@
     - name: Copy files
       command: bash PATH_TO_SCRIPTS/run/copyDB.sh {{ projectBaseDir }} {{ sourceFileDir }} {{ targetFileDir }} {{ configureFileDir }}
       vars:
-        projectBaseDir: "PATH_TO_CODE_BASE"
-        sourceFileDir: "PATH_TO_CODE_BASE/data"
+        projectBaseDir: "PATH_TO_SERVER"
+        sourceFileDir: "PATH_TO_SERVER/data"
         targetFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH"
-        configureFileDir: "PATH_TO_CODE_BASE/conf/cassandra.yaml"
+        configureFileDir: "PATH_TO_SERVER/conf/cassandra.yaml"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

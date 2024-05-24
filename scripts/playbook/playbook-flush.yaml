@@ -6,7 +6,7 @@
   tasks:
     - name: Force flush
       shell: |
-        . /etc/profile && cd PATH_TO_CODE_BASE && bin/nodetool NODETOOL_OPTION flush
+        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION flush
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed
