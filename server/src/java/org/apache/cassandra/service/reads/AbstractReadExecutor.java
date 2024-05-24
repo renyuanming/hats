@@ -189,56 +189,56 @@ public abstract class AbstractReadExecutor
         int usedAddressNumber = 0;
 
         // TODO: We need to check whether the size of replicas equals to the read consistency level?
-        if(DatabaseDescriptor.isMotivationExperiment()) 
-        {
-            // logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
-            Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
+        // if(DatabaseDescriptor.isMotivationExperiment()) 
+        // {
+        //     // logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
+        //     Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
 
-            if(!replicasInTheRing.get(0).equals(replicas.iterator().next().endpoint()))
-            {
-                logger.error("[rym-ERROR] The first node in the replica plan is not the first node in the ring.");
-            }
+        //     if(!replicasInTheRing.get(0).equals(replicas.iterator().next().endpoint()))
+        //     {
+        //         logger.error("[rym-ERROR] The first node in the replica plan is not the first node in the ring.");
+        //     }
 
-            int replicaIndex = 0;
-            if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
-            {
-                replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
-            }
-            // replicaIndex = ReplicaSelector.randomSelector.selectReplica();
+        //     int replicaIndex = 0;
+        //     if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
+        //     {
+        //         replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
+        //     }
+        //     // replicaIndex = ReplicaSelector.randomSelector.selectReplica();
             
-            if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort()))
+        //     if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort()))
+        //     {
+        //         hasLocalEndpoint = true;
+        //     } 
+        //     else 
+        //     {
+        //         MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(replicaIndex), handler);
+        //     }
+        // }
+        // else
+        // {
+        // The size of replicas equals to the read consistency level
+        for(Replica replica : replicas) 
+        {
+            assert replica.isFull() || readCommand.acceptsTransient();
+
+            InetAddressAndPort endpoint = replica.endpoint();
+            if (replica.isSelf())
             {
                 hasLocalEndpoint = true;
-            } 
-            else 
-            {
-                MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(replicaIndex), handler);
+                usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
+                continue; // This is for the read consistency requirements
             }
+
+            if (traceState != null)
+                traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
+
+            if (null == message)
+                message = readCommand.createMessage(false);
+
+            MessagingService.instance().sendWithCallback(message, endpoint, handler);
         }
-        else
-        {
-            // The size of replicas equals to the read consistency level
-            for(Replica replica : replicas) 
-            {
-                assert replica.isFull() || readCommand.acceptsTransient();
-
-                InetAddressAndPort endpoint = replica.endpoint();
-                if (replica.isSelf())
-                {
-                    hasLocalEndpoint = true;
-                    usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
-                    continue; // This is for the read consistency requirements
-                }
-
-                if (traceState != null)
-                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
-
-                if (null == message)
-                    message = readCommand.createMessage(false);
-
-                MessagingService.instance().sendWithCallback(message, endpoint, handler);
-            }
-        }
+        // }
 
         Tracing.trace("[rym] Executed data send request time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart1) / 1000);
         
