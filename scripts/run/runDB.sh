@@ -37,7 +37,7 @@ sed -i "s/keylength=.*$/keylength=${key_length}/" ${workload}
 sed -i "s/fieldlength=.*$/fieldlength=${field_length}/" ${workload}
 # sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" ${workload}
 
-mkdir -p logs/insert-log/
+mkdir -p logs
 file_name="Run-$(date +%s)-${operationcount}-${field_length}-${threads}-${requestDistribution}"
 
-bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/insert-log/${file_name}.log 2>&1
+bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1

@@ -46,15 +46,15 @@ func() {
     
 
 
-    mkdir -p logs/insert-log/
+    mkdir -p logs/
     mkdir -p results/load-results/
     sed -i "s/recordcount=.*$/recordcount=${record_count}/" $workload
     sed -i "s/fieldlength=.*$/fieldlength=${field_length}/" $workload
     # sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" $workload
     file_name="Load-$(date +%s)-${record_count}-${field_length}-${threads}-${replication_factor}"
-    # nohup bin/ycsb load cassandra-cql -p hosts=$coordinator -threads $threads -s -P workloads/workload_template > logs/insert-log/${file_name}.log 2>&1 &
+    # nohup bin/ycsb load cassandra-cql -p hosts=$coordinator -threads $threads -s -P workloads/workload_template > logs/${file_name}.log 2>&1 &
 
-    bin/ycsb load cassandra-cql -p hosts=$coordinator -p cassandra.keyspace=${keyspace} -threads $threads -s -P $workload > logs/insert-log/${file_name}.log 2>&1
+    bin/ycsb load cassandra-cql -p hosts=$coordinator -p cassandra.keyspace=${keyspace} -threads $threads -s -P $workload > logs/${file_name}.log 2>&1
     # histogram -i results/load-results/${file_name}
 }
 

@@ -377,6 +377,7 @@ function collectResults {
         ssh ${UserName}@${node} "rm -rf /home/${UserName}/Results && mkdir -p /home/${UserName}/Results"
     done
     latest_file=$(ssh "$Client" "ls -t $ClientLogDir | head -n 1")
+    echo "Copy the latest log file ${latest_file} from ${Client}"
     scp ${Client}:${ClientLogDir}${latest_file} ${resultsDir}/
 }
 
