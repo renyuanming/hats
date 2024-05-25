@@ -63,7 +63,7 @@ echo "All nodes list is ${AllNodes}"
 NumTokens=1
 PathToServer="${HOME_PATH}/$SCHEME/server"
 PathToScripts="${HOME_PATH}/${PROJECT_NAME}/scripts"
-PathToClient="${HOME_PATH}/${PROJECT_NAME}/client/"
+PathToClient="${HOME_PATH}/${PROJECT_NAME}/client"
 PathToBackup="${HOME_PATH}/backups"
 ClientLogDir="${PathToClient}/logs/"
 NetworkInterface="enp1s0f0"
