@@ -334,9 +334,11 @@ public class Scheduler {
                     continue;
                 }
 
-                // int replicaIndex = i - nodeIndex;
-                // if(replicaIndex < 0)
-                //     replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
+                if(GlobalStates.globalPolicy[nodeIndex][0][0] < GlobalStates.STEP_SIZE)
+                {
+                    continue;
+                }
+
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
 
                 GlobalStates.globalPolicy[nodeIndex][0][0] = 
@@ -365,10 +367,9 @@ public class Scheduler {
                                           GlobalStates.globalStates.scoreVector[nodeIndex]);
             if(variance >= GlobalStates.RECOVER_THRESHOLD)
             {
-                int replicaIndex = i - nodeIndex;
-                if(replicaIndex < 0)
-                    replicaIndex = GlobalStates.globalStates.nodeCount + i - nodeIndex;
-                if(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] <= 0)
+                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
+                
+                if(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] < GlobalStates.STEP_SIZE)
                 {
                     continue;
                 }
