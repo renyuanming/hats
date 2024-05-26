@@ -96,6 +96,7 @@ public class CassandraCQLClient extends DB {
   public static final String PORT_PROPERTY_DEFAULT = "9042";
 
   public static final String ENABLE_HORSE = "enable.horse";
+  public static final String SHUFFLE_REPLICAS = "shuffle.replicas";
 
   public static final String READ_CONSISTENCY_LEVEL_PROPERTY =
       "cassandra.readconsistencylevel";
@@ -224,6 +225,11 @@ public class CassandraCQLClient extends DB {
         String enableHorse = getProperties().getProperty(ENABLE_HORSE);
         if (enableHorse != null) {
           cluster.getConfiguration().getHorseOptions().setHorse(Boolean.valueOf(enableHorse));
+        }
+
+        String shuffleReplicas = getProperties().getProperty(SHUFFLE_REPLICAS);
+        if (shuffleReplicas != null) {
+          cluster.getConfiguration().getHorseOptions().setShuffleReplicas(Boolean.valueOf(shuffleReplicas));
         }
 
         Metadata metadata = cluster.getMetadata();

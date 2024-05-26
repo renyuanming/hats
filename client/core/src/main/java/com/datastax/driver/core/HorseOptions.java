@@ -25,6 +25,9 @@ public class HorseOptions {
     public static final boolean ENABLE_HORSE = false;
     private volatile boolean enableHorse = ENABLE_HORSE;
 
+    public static final boolean SHUFFLE_REPLICAS = true;
+    private volatile boolean shuffleReplicas = SHUFFLE_REPLICAS;
+
 
     /**
      * Creates a new {@code ProtocolOptions} instance using the {@code DEFAULT_PORT}
@@ -52,6 +55,23 @@ public class HorseOptions {
         return this;
     }
 
-    
+    /**
+     * Returns whether the replicas are shuffled.
+     *
+     * @return whether the replicas are shuffled.
+     */
+    public boolean isShuffleReplicas() {
+        return shuffleReplicas;
+    }
 
+    /**
+     * Setup the shuffle replicas.
+     *
+     * @param shuffleReplicas whether to shuffle the replicas.
+     */
+
+    public HorseOptions setShuffleReplicas(boolean shuffleReplicas) {
+        this.shuffleReplicas = shuffleReplicas;
+        return this;
+    }
 }

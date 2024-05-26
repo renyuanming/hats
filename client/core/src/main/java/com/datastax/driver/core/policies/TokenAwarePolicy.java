@@ -48,7 +48,7 @@ import java.util.*;
 public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
-    private final boolean shuffleReplicas;
+    private boolean shuffleReplicas;
     private volatile boolean enableHorse;
     private volatile Metadata clusterMetadata;
     private volatile ProtocolVersion protocolVersion;
@@ -93,6 +93,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         codecRegistry = cluster.getConfiguration().getCodecRegistry();
         enableHorse = cluster.getConfiguration().getHorseOptions().isHorseEnabled();
+        shuffleReplicas = cluster.getConfiguration().getHorseOptions().isShuffleReplicas();
         childPolicy.init(cluster, hosts);
     }
 
