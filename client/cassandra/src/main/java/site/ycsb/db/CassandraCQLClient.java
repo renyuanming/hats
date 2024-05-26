@@ -230,6 +230,7 @@ public class CassandraCQLClient extends DB {
         String shuffleReplicas = getProperties().getProperty(SHUFFLE_REPLICAS);
         if (shuffleReplicas != null) {
           cluster.getConfiguration().getHorseOptions().setShuffleReplicas(Boolean.valueOf(shuffleReplicas));
+          logger.info("rymInfo: Shuffle replicas is set to {}", shuffleReplicas);
         }
 
         Metadata metadata = cluster.getMetadata();
