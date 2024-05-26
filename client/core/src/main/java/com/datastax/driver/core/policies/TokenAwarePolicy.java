@@ -138,14 +138,15 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         if(enableHorse)
         {
             final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
-            if(policy == null)
+            HorseReplicaSelector selector = clusterMetadata.getSelector(partitionKey);
+            if(policy == null || selector == null)
             {
                 iter = replicas.iterator();
             }
             else
             {
                 List<Host> l = Lists.newArrayList(replicas);
-                HorseReplicaSelector selector = clusterMetadata.getSelector(partitionKey);
+
                 Host target = selector.selectTarget();
                 if(l.indexOf(target) > 0)
                 {
