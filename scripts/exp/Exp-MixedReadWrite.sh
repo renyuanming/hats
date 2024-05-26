@@ -46,7 +46,7 @@ STEP_SIZE=(0.05)
 OFFLOAD_THRESHOLD=(0.1)
 RECOVER_THRESHOLD=(0.1)
 ENABLE_HORSE="false"
-SHUFFLE_REPLICAS=("false", "true")
+SHUFFLE_REPLICAS=("false")
 
 function main {
 
@@ -81,7 +81,7 @@ function main {
                                                 for stepSize in "${STEP_SIZE[@]}"; do
                                                     for offloadThreshold in "${OFFLOAD_THRESHOLD[@]}"; do
                                                         for recoverThreshold in "${RECOVER_THRESHOLD[@]}"; do
-                                                            for shuffleReplicas in "${SHUFFLE_REPLICAS[@]}"; done
+                                                            for shuffleReplicas in "${SHUFFLE_REPLICAS[@]}"; do
 
                                                                 echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist}"
                                                                 
@@ -110,7 +110,7 @@ function main {
 
 
                                                                 # Collect load results
-                                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${scheme} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${stepSize} ${offloadThreshold} ${recoverThreshold} ${round} $ENABLE_HORSE $shuffleReplicas)
+                                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${scheme} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${stepSize} ${offloadThreshold} ${recoverThreshold} ${round} ${ENABLE_HORSE} ${shuffleReplicas})
 
                                                                 # echo "Collect results to ${resultsDir}"
                                                                 collectResults ${resultsDir}
