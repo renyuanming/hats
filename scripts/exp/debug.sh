@@ -9,9 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 source "${SCRIPT_DIR}/../common.sh"
 
 initConf
-EXP_NAME="Exp-MixedReadWrite"
+EXP_NAME="Exp-PureRead"
 SCHEMES=("mlsm")
-WORKLOADS=("workloada")
+WORKLOADS=("workloadc")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
 REPLICAS=(3)
 THREAD_NUMBER=(32)
@@ -32,20 +32,21 @@ MOTIVATION=("false") # true is only forward the read request to the primary lsm-
 MEMORY_LIMIT="12G"
 USE_DIRECTIO=("false") # enable direct io for read path or not
 REBUILD_SERVER="true"
-REBUILD_CLIENT="false"
+REBUILD_CLIENT="true"
 LOG_LEVEL="info"
 BRANCH="main"
 PURPOSE="ReadAmplification" # To prove ReadAmplification, CompactionOverhead, we select different dataset
 STARTUP_FROM_BACKUP="true"
 SETTING=""
-SCHEDULING_INITIAL_DELAY=90 # seconds
+SCHEDULING_INITIAL_DELAY=3600 # seconds
 SCHEDULING_INTERVAL=(10) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 READ_SENSISTIVITY=0.9
 STEP_SIZE=(0.05)
 OFFLOAD_THRESHOLD=(0.1)
 RECOVER_THRESHOLD=(0.1)
-ENABLE_HORSE="true"
+ENABLE_HORSE="false"
+SHUFFLE_REPLICAS=("false", "true")
 
 function main {
 
@@ -80,36 +81,40 @@ function main {
                                                 for stepSize in "${STEP_SIZE[@]}"; do
                                                     for offloadThreshold in "${OFFLOAD_THRESHOLD[@]}"; do
                                                         for recoverThreshold in "${RECOVER_THRESHOLD[@]}"; do
-                                                            echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist}"
-                                                            
-                                                            if [ "${compactionLevel}" == "zero" ]; then
-                                                                ENABLE_AUTO_COMPACTION="false"
-                                                                ENABLE_COMPACTION_CFS=""
-                                                            elif [ "${compactionLevel}" == "one" ]; then
-                                                                ENABLE_AUTO_COMPACTION="true"
-                                                                ENABLE_COMPACTION_CFS="usertable0"
-                                                            elif ["${compactionLevel}" == "all" ]; then
-                                                                ENABLE_AUTO_COMPACTION="true"
-                                                                ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
-                                                            fi
+                                                            for shuffleReplicas in "${SHUFFLE_REPLICAS[@]}"; done
 
-                                                            SETTING=$(getSettingName ${motivation} ${compactionLevel})
+                                                                echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist}"
+                                                                
+                                                                if [ "${compactionLevel}" == "zero" ]; then
+                                                                    ENABLE_AUTO_COMPACTION="false"
+                                                                    ENABLE_COMPACTION_CFS=""
+                                                                elif [ "${compactionLevel}" == "one" ]; then
+                                                                    ENABLE_AUTO_COMPACTION="true"
+                                                                    ENABLE_COMPACTION_CFS="usertable0"
+                                                                elif ["${compactionLevel}" == "all" ]; then
+                                                                    ENABLE_AUTO_COMPACTION="true"
+                                                                    ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
+                                                                fi
 
-                                                            # startup from preload dataset
-                                                            if [ "${STARTUP_FROM_BACKUP}" == "true" ]; then
-                                                                echo "Start from backup"
-                                                                startFromBackup "LoadDB" $scheme ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${STARTUP_FROM_BACKUP} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}"
-                                                            else
-                                                                echo "Start from current data"
-                                                                restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}"
-                                                            fi
-                                                            run ${scheme} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} ${MODE} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${stepSize}" "${offloadThreshold}" "${recoverThreshold}" "${ENABLE_HORSE}"
+                                                                SETTING=$(getSettingName ${motivation} ${compactionLevel})
+
+                                                                # startup from preload dataset
+                                                                if [ "${STARTUP_FROM_BACKUP}" == "true" ]; then
+                                                                    echo "Start from backup"
+                                                                    startFromBackup "LoadDB" $scheme ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${STARTUP_FROM_BACKUP} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}"
+                                                                else
+                                                                    echo "Start from current data"
+                                                                    restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}"
+                                                                fi
+                                                                run ${scheme} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} ${MODE} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${stepSize}" "${offloadThreshold}" "${recoverThreshold}" "${ENABLE_HORSE}" "${shuffleReplicas}"
 
 
-                                                            # Collect load results
-                                                            # resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${scheme}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-motivation_${motivation}-schedulingInterval_${schedulingInterval}-stepSize_${stepSize}-offloadThreshold_${offloadThreshold}-recoverThreshold_${recoverThreshold}/round_${round}"
-                                                            # echo "Collect results to ${resultsDir}"
-                                                            # collectResults ${resultsDir}
+                                                                # Collect load results
+                                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${scheme} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${stepSize} ${offloadThreshold} ${recoverThreshold} ${round} $ENABLE_HORSE $shuffleReplicas)
+
+                                                                # echo "Collect results to ${resultsDir}"
+                                                                collectResults ${resultsDir}
+                                                            done
                                                         done
                                                     done
                                                 done

@@ -381,6 +381,35 @@ function collectResults {
     scp ${Client}:${ClientLogDir}${latest_file} ${resultsDir}/
 }
 
+function getResultsDir
+{   
+    CLUSTER_NAME=$1
+    scheme=$2
+    EXP_NAME=$3
+    SETTING=$4
+    workload=$5
+    dist=$6
+    compactionLevel=$7
+    threadsNum=$8
+    schedulingInterval=$9
+    shift 9
+    stepSize=$1
+    offloadThreshold=$2
+    recoverThreshold=$3
+    round=$4
+    enableHorse=$5
+    shuffleReplicas=$6
+
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${scheme}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-enableHorse_${enableHorse}"
+
+    if [ "${enableHorse}" == "true" ]; then
+        resultsDir="${resultsDir}/schedulingInterval_${schedulingInterval}-stepSize_${stepSize}-offloadThreshold_${offloadThreshold}-recoverThreshold_${recoverThreshold}/round_${round}"
+    else
+        resultsDir="${resultsDir}/shuffleReplicas_${shuffleReplicas}/round_${round}"
+    fi
+
+    echo ${resultsDir}
+}
 
 function load {
     targetScheme=$1
@@ -433,7 +462,7 @@ function load {
     ansible-playbook -v -i hosts.ini playbook-load.yaml
 
     ## Collect load results
-    resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}--workload_${workload}"
+    resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}"
     collectResults ${resultsDir}
     
 }
@@ -458,6 +487,7 @@ function run {
     offloadThreshold=$6
     recoverThreshold=$7
     enableHorse=$8
+    shuffleReplicas=$9
 
     echo "Run ${targetScheme} with ${dist} ${workload} ${threads} ${kvNumber}, enableAutoCompaction is ${enableAutoCompaction}, mode is ${mode}, enableAutoCompactionCFs is ${enableAutoCompactionCFs}"
 
@@ -494,6 +524,7 @@ function run {
     sed -i "s|OFFLOAD_THRESHOLD|${offloadThreshold}|g" playbook-run.yaml
     sed -i "s|RECOVER_THRESHOLD|${recoverThreshold}|g" playbook-run.yaml
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-run.yaml
+    sed -i "s|SHUFFLE_REPLICAS|${shuffleReplicas}|g" playbook-run.yaml
 
     if [ $targetScheme == "depart" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-run.yaml
