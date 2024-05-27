@@ -28,7 +28,7 @@
     when: "'FAILED' in command_result.stderr"
   - name: Wait until all nodes are ready
     pause:
-      seconds: 30
+      seconds: 60
 
 
 - name: Rebuild and start Cassandra servers
@@ -61,7 +61,7 @@
     when: "'FAILED' in command_result.stderr"
   - name: Wait until all nodes are ready
     pause:
-      seconds: 50
+      seconds: 70
 
 - name: Setup log levels
   hosts:  cassandra_servers

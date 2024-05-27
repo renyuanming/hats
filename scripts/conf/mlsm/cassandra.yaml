@@ -53,13 +53,13 @@ state_update_interval: 10
 all_hosts: "192.168.10.51,192.168.10.52,192.168.10.53,192.168.10.55"
 initial_token: 4611686018427387904
 token_ranges: -9223372036854775808,-4611686018427387904,0,4611686018427387904
-motivation: true
+motivation: false
 enable_direct_io_for_read_path: false
 concurrent_schedulers: 32
 step_size: 0.05
 offload_threshold: 0.5
 recover_threshold: 0.1
-enable_horse: true
+enable_horse: false
 
 
 # Triggers automatic allocation of num_tokens tokens for this node. The allocation
