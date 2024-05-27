@@ -3,7 +3,7 @@
 
 . /etc/profile
 export BACKUP_MODE="remote"
-export SCHEME="Horse" # Horse or depart
+export SCHEME="horse" # horse or depart
 export CLUSTER_NAME="4x"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 source "${SCRIPT_DIR}/../common.sh"

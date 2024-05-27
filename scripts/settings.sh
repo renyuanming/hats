@@ -2,7 +2,7 @@
 
 # CLUSTER_NAME=""
 # BACKUP_MODE="" # local remote
-# SCHEME="" # depart or Horse
+# SCHEME="" # depart or horse
 PROJECT_NAME="Horse"
 HOME_PATH=""
 echo "Load the settings.sh, CLUSTER_NAME is ${CLUSTER_NAME}, BACKUP_MODE is ${BACKUP_MODE}, SCHEME is ${SCHEME}"
@@ -61,7 +61,7 @@ AllNodes+=("${Client}")
 echo "All nodes list is ${AllNodes}"
 
 NumTokens=1
-PathToServer="${HOME_PATH}/$SCHEME/server"
+PathToServer="${HOME_PATH}/${PROJECT_NAME}/servers/$SCHEME"
 PathToScripts="${HOME_PATH}/${PROJECT_NAME}/scripts"
 PathToClient="${HOME_PATH}/${PROJECT_NAME}/client"
 PathToBackup="${HOME_PATH}/backups"
