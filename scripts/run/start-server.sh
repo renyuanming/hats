@@ -20,7 +20,7 @@ func() {
 
 
     cd $PATH_TO_SERVER
-    git pull
+    # git pull
     # git checkout ${branch_name}
     # git pull origin ${branch_name}
 
@@ -30,9 +30,9 @@ func() {
     mkdir -p logs
     mkdir -p metrics
 
-    if [ "$rebuild" == "true" ]; then
-        ant clean && ant -Duse.jdk11=true
-    fi
+    # if [ "$rebuild" == "true" ]; then
+    #     ant clean && ant -Duse.jdk11=true
+    # fi
     
     
     # sed -i "s/seeds:.*$/seeds: \"${seeds}\"/" conf/cassandra.yaml

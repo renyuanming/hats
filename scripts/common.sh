@@ -258,10 +258,19 @@ function copyDatasetToNodes {
 function rebuildServer {
     
     branch=$1
+    scheme=$2
     echo "Building the server with branch ${branch}"
     resetPlaybook "rebuildServer"
+
+    antOption="-Duse.jdk11=true"
+
+    if [ "${scheme}" == "depart" ]; then
+        antOption=""
+    fi
+
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-rebuildServer.yaml
     sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
+    sed -i "s|ANT_OPTION|${antOption}|g" playbook-rebuildServer.yaml
     ansible-playbook -v -i hosts.ini playbook-rebuildServer.yaml
 }
 

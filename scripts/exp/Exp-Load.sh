@@ -32,6 +32,12 @@ function main {
         echo "Load data for ${scheme}"
         exportEnv $scheme
         perpareJavaEnvironment "${scheme}"
+        
+        if [ "${REBUILD_SERVER}" == "true" ]; then
+            echo "Rebuild the server"
+            rebuildServer "${BRANCH}" "${scheme}"
+        fi
+
         for rf in "${REPLICAS[@]}"; do
             # Load data
             load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${REBUILD} ${FIELD_LENGTH} ${KEY_LENGTH} ${MODE}
