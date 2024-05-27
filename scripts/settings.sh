@@ -10,12 +10,12 @@ if [[ "$CLUSTER_NAME" == "" ]]; then
     echo "Please specify the CLUSTER_NAME"
     exit 1
 elif [[ "$CLUSTER_NAME" == "1x" ]]; then
-    Nodes=("node11" "node13" "node15" "node16" "node18" "node19")
-    NodesIP=("192.168.10.21" "192.168.10.23" "192.168.10.25" "192.168.10.26" "192.168.10.28" "192.168.10.29")
+    Nodes=("node11" "node12" "node13" "node14" "node15" "node16" "node18" "node19")
+    NodesIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.26" "192.168.10.28" "192.168.10.29")
     Client="node20"
-    ClientIP="192.168.10.29"
-    Seeds=("node11")
-    SeedsIP=("192.168.10.21")
+    ClientIP="192.168.10.30"
+    Seeds=("node11" "node12" "node13")
+    SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.23")
     NodeIP="192.168.10.21" # Only used for start-client.sh
     UserName="ymren"
     SudoPassword="ymren"

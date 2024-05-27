@@ -17,16 +17,13 @@ shuffleReplicas=$3
 
 cd ${PathToClient} || exit
 
-keyspace=""
 echo "Running YCSB with scheme: $scheme"
-if [ "$scheme" == "mlsm" ]; then
-    keyspace="ycsb"
+
+
+keyspace="ycsb"
+if [ "$scheme" == "horse" ] || [ "$scheme" == "mlsm" ]; then
     sed -i "s/table=.*$/table=usertable0/" ${workload}
-elif [ "$scheme" == "cassandra" ]; then
-    keyspace="ycsbraw"
-    sed -i "s/table=.*$/table=usertable/" ${workload}
-elif [ "$scheme" == "depart" ]; then
-    keyspace="ycsb"
+elif [ "$scheme" == "c3" ] || [ "$scheme" == "cassandra" ] || [ "$scheme" == "depart" ]; then
     sed -i "s/table=.*$/table=usertable/" ${workload}
 else
     echo "Unknow scheme $scheme"

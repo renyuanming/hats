@@ -2,42 +2,41 @@
 
 
 . /etc/profile
-export BACKUP_MODE="remote"
-export SCHEME="horse" # horse, depart, mlsm, cassandra, or c3
-export CLUSTER_NAME="4x"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-source "${SCRIPT_DIR}/../common.sh"
 
-initConf
+# Workload Settings
 EXP_NAME="Exp-PureRead"
-SCHEMES=("mlsm")
 WORKLOADS=("workloadc")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-REPLICAS=(3)
-THREAD_NUMBER=(32)
-MEMTABLE_SIZE=(2048)
-SSTABLE_SIZE_IN_MB=16
 OPERATION_NUMBER=30000000
 KV_NUMBER=30000000
 FIELD_LENGTH=1000
 KEY_LENGTH=24
 KEY_LENGTHMin=24
 KEY_LENGTHMax=24
+
+# Debug Settings
+REBUILD_SERVER="true"
+REBUILD_CLIENT="true"
+LOG_LEVEL="info"
+
+# Server settings
+REPLICAS=(3)
+THREAD_NUMBER=(32)
+MEMTABLE_SIZE=(2048)
+SSTABLE_SIZE_IN_MB=16
 ROUND_NUMBER=5
-MODE="mlsm" # mlsm or cassandra
 COMPACTION_LEVEL=("zero") # zero one all
 ENABLE_AUTO_COMPACTION="false"
 ENABLE_COMPACTION_CFS=""
 MOTIVATION=("false") # true is only forward the read request to the primary lsm-tree
 MEMORY_LIMIT="12G"
 USE_DIRECTIO=("false") # enable direct io for read path or not
-REBUILD_SERVER="true"
-REBUILD_CLIENT="true"
-LOG_LEVEL="info"
 BRANCH="main"
 PURPOSE="ReadAmplification" # To prove ReadAmplification, CompactionOverhead, we select different dataset
 STARTUP_FROM_BACKUP="true"
 SETTING=""
+
+# Horse
 SCHEDULING_INITIAL_DELAY=3600 # seconds
 SCHEDULING_INTERVAL=(10) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
@@ -48,9 +47,22 @@ RECOVER_THRESHOLD=(0.1)
 ENABLE_HORSE="false"
 SHUFFLE_REPLICAS=("false" "true")
 
+SCHEMES=("horse" "depart" "mlsm")
 
 
-runExp "${EXP_NAME}" SCHEMES[@] WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${SSTABLE_SIZE_IN_MB}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" "${MODE}" COMPACTION_LEVEL[@] "${ENABLE_AUTO_COMPACTION}" "${ENABLE_COMPACTION_CFS}" MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${STARTUP_FROM_BACKUP}" "${SETTING}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" STEP_SIZE[@] OFFLOAD_THRESHOLD[@] RECOVER_THRESHOLD[@] "${ENABLE_HORSE}" SHUFFLE_REPLICAS[@]
+function exportEnv {
+    
+    scheme=$1
+    
+    export BACKUP_MODE="remote"
+    export SCHEME=$scheme # horse or depart
+    export CLUSTER_NAME="4x"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+    source "${SCRIPT_DIR}/../common.sh"
+    initConf
+}
 
-
-
+for scheme in "${SCHEMES[@]}"; do
+    exportEnv $scheme
+    runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${SSTABLE_SIZE_IN_MB}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@] "${ENABLE_AUTO_COMPACTION}" "${ENABLE_COMPACTION_CFS}" MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${STARTUP_FROM_BACKUP}" "${SETTING}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" STEP_SIZE[@] OFFLOAD_THRESHOLD[@] RECOVER_THRESHOLD[@] "${ENABLE_HORSE}" SHUFFLE_REPLICAS[@]
+done
