@@ -19,7 +19,7 @@ kill -9 $(ps aux | grep CassandraDaemon| grep -v grep | awk 'NR == 1'  | awk {'p
 func() {
 
 
-    cd $PATH_TO_SERVER
+    cd $code_base
     # git pull
     # git checkout ${branch_name}
     # git pull origin ${branch_name}

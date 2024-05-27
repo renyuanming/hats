@@ -7,7 +7,7 @@
   - name: Execute script start-server.sh
     shell: |
       . /etc/profile &&
-      export PATH_TO_SERVER="PATH_TO_SERVER" &&
+      export code_base="PATH_TO_SERVER" &&
       export branch_name="yuanming" &&
       export rebuild="true" &&
       export memtable_heap_space="128MiB" &&
@@ -40,7 +40,7 @@
   - name: Execute script start-server.sh
     shell: |
       . /etc/profile &&
-      export PATH_TO_SERVER="PATH_TO_SERVER" &&
+      export code_base="PATH_TO_SERVER" &&
       export branch_name="yuanming" &&
       export rebuild="true" &&
       export memtable_heap_space="128MiB" &&
