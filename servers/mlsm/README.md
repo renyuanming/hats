@@ -1,0 +1,1 @@
+Cassandra with replica decoupling
