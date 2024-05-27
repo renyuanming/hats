@@ -10,7 +10,7 @@ KV_NUMBER=1000000
 FIELD_LENGTH=1000
 KEY_LENGTH=24
 MODE="mlsm" # mlsm or cassandra
-REBUILD="false"
+REBUILD_SERVER="false"
 WAIT_TIME=600
 
 function exportEnv {
