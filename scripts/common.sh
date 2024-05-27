@@ -455,7 +455,7 @@ function load {
     sed -i "s/\(sstable_size_in_mb: \)".*"/sstable_size_in_mb: ${sstableSize}/" playbook-load.yaml
     sed -i "s/\(replication_factor: \)".*"/replication_factor: ${rf}/" playbook-load.yaml
     sed -i "s/\(workload: \)".*"/workload: workloads\/${workload}/" playbook-load.yaml
-    sed -i "s/\(mode: \)".*"/mode: ${mode}/" playbook-load.yaml
+    sed -i "s/\(mode: \)".*"/mode: ${targetScheme}/" playbook-load.yaml
 
     sed -i "s/memtable_heap_space=.*$/memtable_heap_space=\"${memtable_heap_space}MiB\" \&\&/" playbook-load.yaml
     sed -i "s/rebuild=.*$/rebuild=\"${rebuild}\" \&\&/" playbook-load.yaml

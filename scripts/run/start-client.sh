@@ -27,7 +27,7 @@ func() {
 
     cd $file_dir
 
-    if [ $mode == "mlsm" ]; then
+    if [ "$mode" == "mlsm" ]; then
         echo "Enable multiple LSM tree"
         bin/cqlsh "$coordinator" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': $replication_factor };
         USE ycsb;
