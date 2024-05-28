@@ -1,4 +1,4 @@
-// $ANTLR 3.5.2 ${homedir}/projects/WriteStall/depart/src/antlr/Cql.g 2024-04-08 21:18:57
+// $ANTLR 3.5.2 /home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g 2024-05-28 10:53:27
 
     package org.apache.cassandra.cql3;
 
@@ -286,7 +286,7 @@ public class CqlParser extends Parser {
 	}
 
 	@Override public String[] getTokenNames() { return CqlParser.tokenNames; }
-	@Override public String getGrammarFileName() { return "${homedir}/projects/WriteStall/depart/src/antlr/Cql.g"; }
+	@Override public String getGrammarFileName() { return "/home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g"; }
 
 
 	    public void addErrorListener(ErrorListener listener)
@@ -329,7 +329,7 @@ public class CqlParser extends Parser {
 
 
 	// $ANTLR start "query"
-	// ${homedir}/projects/WriteStall/depart/src/antlr/Cql.g:137:1: query returns [ParsedStatement stmnt] : st= cqlStatement ( ';' )* EOF ;
+	// /home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g:137:1: query returns [ParsedStatement stmnt] : st= cqlStatement ( ';' )* EOF ;
 	public final ParsedStatement query() throws RecognitionException {
 		ParsedStatement stmnt = null;
 
@@ -337,14 +337,14 @@ public class CqlParser extends Parser {
 		ParsedStatement st =null;
 
 		try {
-			// ${homedir}/projects/WriteStall/depart/src/antlr/Cql.g:138:5: (st= cqlStatement ( ';' )* EOF )
-			// ${homedir}/projects/WriteStall/depart/src/antlr/Cql.g:138:7: st= cqlStatement ( ';' )* EOF
+			// /home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g:138:5: (st= cqlStatement ( ';' )* EOF )
+			// /home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g:138:7: st= cqlStatement ( ';' )* EOF
 			{
 			pushFollow(FOLLOW_cqlStatement_in_query77);
 			st=cqlStatement();
 			state._fsp--;
 
-			// ${homedir}/projects/WriteStall/depart/src/antlr/Cql.g:138:23: ( ';' )*
+			// /home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g:138:23: ( ';' )*
 			loop1:
 			while (true) {
 				int alt1=2;
@@ -355,7 +355,7 @@ public class CqlParser extends Parser {
 
 				switch (alt1) {
 				case 1 :
-					// ${homedir}/projects/WriteStall/depart/src/antlr/Cql.g:138:24: ';'
+					// /home/rym/projects/year1/Horse/servers/depart/src/antlr/Cql.g:138:24: ';'
 					{
 					match(input,193,FOLLOW_193_in_query80); 
 					}
