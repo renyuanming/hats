@@ -40,7 +40,7 @@ function main {
 
         for rf in "${REPLICAS[@]}"; do
             # Load data
-            load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${REBUILD} ${FIELD_LENGTH} ${KEY_LENGTH} ${MODE}
+            load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${MODE}
             # Wait for flush or compaction ready
             flush "LoadDB" $scheme $WAIT_TIME
             # Backup the DB and the logs

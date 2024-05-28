@@ -433,16 +433,12 @@ function load {
     rf=$5
     workload=$6
     kvNumber=$7
-    rebuild=$8
-    fieldlength=$9
-    shift 9 
-    keyLength=$1
-    mode=$2
-    ExpName=$3
+    fieldlength=$8
+    keyLength=$9
     
 
 
-    echo "Start loading data into ${targetScheme}, the mode is ${mode}"
+    echo "Start loading data into ${targetScheme}"
 
     # Copy playbook
     resetPlaybook "load"
