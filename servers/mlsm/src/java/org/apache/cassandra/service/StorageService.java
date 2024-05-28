@@ -1260,7 +1260,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             Schema.instance.startSync();
             LoadBroadcaster.instance.startBroadcasting();
             DiskUsageBroadcaster.instance.startBroadcasting();
-            LocalStatesBroadcaster.instance.startBroadcasting();
+            // LocalStatesBroadcaster.instance.startBroadcasting();
             HintsService.instance.startDispatch();
             BatchlogManager.instance.start();
             startSnapshotManager();

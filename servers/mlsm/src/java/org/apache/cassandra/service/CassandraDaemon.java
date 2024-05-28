@@ -431,37 +431,37 @@ public class CassandraDaemon
         AuditLogManager.instance.initialize();
 
 
-        if(DatabaseDescriptor.getEnableHorse())
-        {
-            // Horse
-            if(Gossiper.getSeedsStr().split(",").length <= 1)
-            {
-                // priority election
-                Scheduler.setIsPriorityElection(true);
-            }
-            else
-            {
-                if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddress().getHostAddress()))
-                {
-                    ElectionBootstrap.initElection(HorseUtils.getRaftLogPath(), 
-                                                "ElectSeeds", 
-                                                DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
-                                                Gossiper.getSeedsStr());
-                }
-                else
-                {
-                    logger.debug("rymDebug: This node is not a seed node, no need to start election");
-                }
-            }
+        // if(DatabaseDescriptor.getEnableHorse())
+        // {
+        //     // Horse
+        //     if(Gossiper.getSeedsStr().split(",").length <= 1)
+        //     {
+        //         // priority election
+        //         Scheduler.setIsPriorityElection(true);
+        //     }
+        //     else
+        //     {
+        //         if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddress().getHostAddress()))
+        //         {
+        //             ElectionBootstrap.initElection(HorseUtils.getRaftLogPath(), 
+        //                                         "ElectSeeds", 
+        //                                         DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
+        //                                         Gossiper.getSeedsStr());
+        //         }
+        //         else
+        //         {
+        //             logger.debug("rymDebug: This node is not a seed node, no need to start election");
+        //         }
+        //     }
             
-            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
-                                                                    10, 1, TimeUnit.SECONDS);
+        //     ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
+        //                                                             10, 1, TimeUnit.SECONDS);
 
-            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 
-                                                                    DatabaseDescriptor.getSchedulingInitialDelay(), 
-                                                                    DatabaseDescriptor.getSchedulingInterval(),
-                                                                    TimeUnit.SECONDS);
-        }
+        //     ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getSchedulerRunnable(), 
+        //                                                             DatabaseDescriptor.getSchedulingInitialDelay(), 
+        //                                                             DatabaseDescriptor.getSchedulingInterval(),
+        //                                                             TimeUnit.SECONDS);
+        // }
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions

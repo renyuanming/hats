@@ -187,11 +187,11 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         // its comparator to be "stable", that is 2 endpoint should compare the same way for the duration
         // of the sort() call. As we copy the scores map on write, it is thus enough to alias the current
         // version of it during this call.
-        if(DatabaseDescriptor.getEnableHorse())
-        {
-            InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
-            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
-        }
+        // if(DatabaseDescriptor.getEnableHorse())
+        // {
+        //     InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
+        //     return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
+        // }
         final HashMap<InetAddressAndPort, Double> scores = this.scores;
         return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
     }
