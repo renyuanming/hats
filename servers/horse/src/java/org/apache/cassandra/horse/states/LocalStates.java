@@ -179,72 +179,26 @@ public class LocalStates implements Serializable {
     }
 
     public static class LatencyCalculator {
-        private final ConcurrentLinkedQueue<Double> dataQueue = new ConcurrentLinkedQueue<>();
-        private final AtomicReference<Double> ewmaValue = new AtomicReference<>(0.0);
-        private final ConcurrentLinkedQueue<Double> windowData = new ConcurrentLinkedQueue<>();
-        private AtomicLong windowSum = new AtomicLong(0);
-        private static final int windowSize = 1000;
         private final AtomicBoolean running = new AtomicBoolean(true);
         private Thread workerThread;
         private final Histogram histogram;
 
+        // TODO: limit the number of the data in the queue
         public LatencyCalculator(String metricName, int windowInterval) {
-            startWorker();
             this.histogram = new Histogram(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
             registry.register(metricName, this.histogram);
         }
 
-        private void startWorker() {
-            workerThread = new Thread(() -> {
-                while (running.get()) {
-                    processMetrics();
-                    // try {
-                    //     Thread.sleep(10); // Calculate every 10 ms
-                    // } catch (InterruptedException e) {
-                    //     Thread.currentThread().interrupt();
-                    // }
-                }
-            });
-            workerThread.start();
-        }
-
-        private void processMetrics() {
-            Double currentValueForEWMA ;
-            double currentValueForWindow;
-            while ((currentValueForEWMA = this.dataQueue.poll()) != null || this.windowData.size() > windowSize) {
-                // Sliding window mean value
-                if (this.windowData.size() > windowSize) {
-                    currentValueForWindow = this.windowData.poll();
-                    this.windowSum.addAndGet(- (long)currentValueForWindow);
-                }
-
-                // EWMA
-                if (currentValueForEWMA == null) {
-                    continue;
-                }
-                else
-                {
-                    double prevEwma = this.ewmaValue.get();
-                    double newEwma = prevEwma == 0.0 ? currentValueForEWMA  : ALPHA * currentValueForEWMA    + (1 - ALPHA) * prevEwma;
-                    this.ewmaValue.set(newEwma);
-                }
-            }
-        }
-
         public void record(double latency) {
-            this.dataQueue.add(latency);
-            this.windowData.add(latency);
-            this.windowSum.addAndGet((long)latency);
             this.histogram.update((int)latency);
         }
 
-        public double getEWMA() {
-            return ewmaValue.get();
+        public double getStdDev() {
+            return this.histogram.getSnapshot().getStdDev();
         }
 
         public double getWindowMean() 
         {
-            // return this.windowSum.get() * 1.0 / this.windowData.size();
             return this.histogram.getSnapshot().getMean();
         }
 
