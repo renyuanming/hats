@@ -43,10 +43,12 @@ function initConf {
         conf_dir="${SCRIPT_DIR}/conf/$SCHEME"
         
 
-        if [[ $SCHEME == "depart" ]]; then
+        if [[ $SCHEME == "depart" ]] || [[ $SCHEME == "cassandra" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/seeds:.*$/seeds: \"${SEEDS}\"/" ${conf_dir}/cassandra.yaml
+            sed -i "s/initial_token:.*$/initial_token: ${token}/" ${conf_dir}/cassandra.yaml
+            sed -i "s/num_tokens:.*$/num_tokens: ${NumTokens}/" ${conf_dir}/cassandra.yaml
         elif [[ $SCHEME == "horse" ]] || [[ $SCHEME == "mlsm" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
