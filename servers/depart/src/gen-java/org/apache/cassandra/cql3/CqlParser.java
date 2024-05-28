@@ -1,4 +1,4 @@
-// $ANTLR 3.5.2 /home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g 2024-04-08 14:15:33
+// $ANTLR 3.5.2 ${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g 2024-04-08 14:15:33
 
     package org.apache.cassandra.cql3;
 
@@ -286,7 +286,7 @@ public class CqlParser extends Parser {
 	}
 
 	@Override public String[] getTokenNames() { return CqlParser.tokenNames; }
-	@Override public String getGrammarFileName() { return "/home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g"; }
+	@Override public String getGrammarFileName() { return "${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g"; }
 
 
 	    public void addErrorListener(ErrorListener listener)
@@ -329,7 +329,7 @@ public class CqlParser extends Parser {
 
 
 	// $ANTLR start "query"
-	// /home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:137:1: query returns [ParsedStatement stmnt] : st= cqlStatement ( ';' )* EOF ;
+	// ${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:137:1: query returns [ParsedStatement stmnt] : st= cqlStatement ( ';' )* EOF ;
 	public final ParsedStatement query() throws RecognitionException {
 		ParsedStatement stmnt = null;
 
@@ -337,14 +337,14 @@ public class CqlParser extends Parser {
 		ParsedStatement st =null;
 
 		try {
-			// /home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:5: (st= cqlStatement ( ';' )* EOF )
-			// /home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:7: st= cqlStatement ( ';' )* EOF
+			// ${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:5: (st= cqlStatement ( ';' )* EOF )
+			// ${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:7: st= cqlStatement ( ';' )* EOF
 			{
 			pushFollow(FOLLOW_cqlStatement_in_query77);
 			st=cqlStatement();
 			state._fsp--;
 
-			// /home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:23: ( ';' )*
+			// ${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:23: ( ';' )*
 			loop1:
 			while (true) {
 				int alt1=2;
@@ -355,7 +355,7 @@ public class CqlParser extends Parser {
 
 				switch (alt1) {
 				case 1 :
-					// /home/rym/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:24: ';'
+					// ${basedir}/project/adaptiveKV/baselines/depart/src/antlr/Cql.g:138:24: ';'
 					{
 					match(input,193,FOLLOW_193_in_query80); 
 					}
