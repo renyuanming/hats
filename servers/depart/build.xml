@@ -31,6 +31,7 @@
     <property name="scm.url" value="https://git-wip-us.apache.org/repos/asf?p=cassandra.git;a=tree"/>
 
     <!-- directory details -->
+    <property name="homedir" value="/home/ymren">
     <property name="basedir" value="."/>
     <property name="build.src" value="${basedir}/src"/>
     <property name="build.src.java" value="${basedir}/src/java"/>

@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.10.12
+Created-By: 1.8.0_402-8u402-ga-2ubuntu1~22.04-b06 (Private Build)
+Built-By: Pavel Yaskevich
+Main-Class: org.apache.cassandra.stress.Stress
+

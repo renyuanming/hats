@@ -1,6 +1,6 @@
-build/classes/*
-build/lib/*
-build/test/*
-build/**/*.jar
-build/**/*.pom
-lib/*
+# build/classes/*
+# build/lib/*
+# build/test/*
+# build/**/*.jar
+# build/**/*.pom
+# lib/*
