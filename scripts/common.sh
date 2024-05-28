@@ -557,6 +557,8 @@ function perpareJavaEnvironment {
     sed -i "s|SUDO_PASSWD|${SudoPassword}|g" playbook-prepareJavaEnv.yaml
     sed -i "s|JAVA_VERSION|${javaVersion}|g" playbook-prepareJavaEnv.yaml
 
+    ansible-playbook -v -i hosts.ini playbook-prepareJavaEnv.yaml
+
 }
 
 
