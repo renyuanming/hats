@@ -39,7 +39,7 @@ num_tokens: 256
 # vnodes (num_tokens > 1, above) -- in which case you should provide a 
 # comma-separated list -- it's primarily used when adding nodes to legacy clusters 
 # that do not have vnodes enabled.
-# initial_token:
+initial_token:
 
 # See http://wiki.apache.org/cassandra/HintedHandoff
 # May either be "true" or "false" to enable globally
@@ -842,11 +842,11 @@ sstable_preemptive_open_interval_in_mb: 50
 # inter_dc_stream_throughput_outbound_megabits_per_sec: 200
 
 # How long the coordinator should wait for read operations to complete
-read_request_timeout_in_ms: 5000
+read_request_timeout_in_ms: 100000
 # How long the coordinator should wait for seq or index scans to complete
 range_request_timeout_in_ms: 1000000 #10000
 # How long the coordinator should wait for writes to complete
-write_request_timeout_in_ms: 2000
+write_request_timeout_in_ms: 100000
 # How long the coordinator should wait for counter writes to complete
 counter_write_request_timeout_in_ms: 5000
 # How long a coordinator should continue to retry a CAS operation
