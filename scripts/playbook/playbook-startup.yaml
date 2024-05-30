@@ -59,7 +59,7 @@
       when: "'FAILED' in command_result.stderr"
     - name: Wait until cold startup is done
       pause:
-        seconds: 50
+        seconds: 60
 
 
 
