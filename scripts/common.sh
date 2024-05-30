@@ -319,13 +319,13 @@ function startFromBackup {
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-startup.yaml
     sed -i "s/Scheme/${targetScheme}/g" playbook-startup.yaml
 
-    if [ "$BACKUP_MODE" == "local" ]; then
-        sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-CompactionLevel-${compactionLevel}|g" playbook-startup.yaml
-    elif [ "$BACKUP_MODE" == "remote" ]; then
-        sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}|g" playbook-startup.yaml
-    fi
+    # if [ "$BACKUP_MODE" == "local" ]; then
+    #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-CompactionLevel-${compactionLevel}|g" playbook-startup.yaml
+    # elif [ "$BACKUP_MODE" == "remote" ]; then
+    #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}|g" playbook-startup.yaml
+    # fi
 
-    # sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" playbook-startup.yaml
+    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" playbook-startup.yaml
     sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" playbook-startup.yaml
     sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" playbook-startup.yaml
     sed -i "s/\(fromBackup: \)".*"/fromBackup: \"${fromBackup}\"/" playbook-startup.yaml
