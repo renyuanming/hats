@@ -128,7 +128,7 @@
   tasks:
   - name: Get request distribution
     shell: |
-      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION requestDist && bin/nodetool NODETOOL_OPTION getbreakdown KEYSPACE > PATH_TO_RESULT_DIR/breakdown.txt
+      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION getbreakdown KEYSPACE > PATH_TO_RESULT_DIR/breakdown.txt && bin/nodetool NODETOOL_OPTION requestDist
     register: command_result
     ignore_errors: true
 

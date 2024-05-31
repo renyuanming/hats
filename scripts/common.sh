@@ -621,6 +621,10 @@ function runExp {
     fi
 
 
+    # Run experiments
+    echo "Start experiment to ${TARGET_SCHEME}"
+    perpareJavaEnvironment "${TARGET_SCHEME}"
+
 
 
     if [ "${REBUILD_SERVER}" == "true" ]; then
@@ -633,10 +637,6 @@ function runExp {
         rebuildClient
     fi
 
-
-    # Run experiments
-    echo "Start experiment to ${TARGET_SCHEME}"
-    perpareJavaEnvironment "${TARGET_SCHEME}"
 
 
 
