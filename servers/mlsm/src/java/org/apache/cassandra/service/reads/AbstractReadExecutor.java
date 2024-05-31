@@ -215,8 +215,8 @@ public abstract class AbstractReadExecutor
                 MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(replicaIndex), handler);
             }
         }
-            else
-            {
+        else
+        {
             // The size of replicas equals to the read consistency level
             for(Replica replica : replicas) 
             {
@@ -323,26 +323,21 @@ public abstract class AbstractReadExecutor
         {
             replicasInTheRing = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(keyspace.getName(), command.partitionKey().getToken());
 
-            switch (replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
-                case 1:
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
-                    ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-                    command.updateColumnFilter(newColumnFilter1);                    
-                    break;
-                case 2:
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
-                    ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-                    command.updateColumnFilter(newColumnFilter2);
-                    break;
+            // switch (replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
+            //     case 1:
+            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
+            //         ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
+            //         command.updateColumnFilter(newColumnFilter1);                    
+            //         break;
+            //     case 2:
+            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
+            //         ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
+            //         command.updateColumnFilter(newColumnFilter2);
+            //         break;
             
-                default:
-                    break;
-            }
-
-            // String tableName = "usertable" + replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort());
-            // command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore(tableName).metadata());
-            // ColumnFilter newColumnFilter = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-            // command.updateColumnFilter(newColumnFilter);
+            //     default:
+            //         break;
+            // }
         }
 
 
