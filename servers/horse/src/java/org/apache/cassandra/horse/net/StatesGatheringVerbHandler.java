@@ -29,6 +29,11 @@ import org.apache.cassandra.net.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class StatesGatheringVerbHandler implements IVerbHandler<StatesGathering>{
 
     public static final StatesGatheringVerbHandler instance = new StatesGatheringVerbHandler();

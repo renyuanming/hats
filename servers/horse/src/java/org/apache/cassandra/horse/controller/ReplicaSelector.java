@@ -37,6 +37,10 @@ import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
 
 
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class ReplicaSelector 
 {
 

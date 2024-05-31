@@ -449,7 +449,7 @@ public class CassandraDaemon
                 }
                 else
                 {
-                    logger.debug("rymDebug: This node is not a seed node, no need to start election");
+                    logger.debug("rymDebug: This node {} is not a seed node, no need to start election, seed nodes are {}", DatabaseDescriptor.getListenAddress().getHostAddress(), Gossiper.getSeedsStr());
                 }
             }
 

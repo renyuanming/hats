@@ -25,6 +25,11 @@ import org.apache.cassandra.net.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class PolicyDistributeVerbHandler implements IVerbHandler<PolicyDistribute>{
 
     public static final PolicyDistributeVerbHandler instance = new PolicyDistributeVerbHandler();

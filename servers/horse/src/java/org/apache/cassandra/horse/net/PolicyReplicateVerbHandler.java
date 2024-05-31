@@ -28,6 +28,11 @@ import org.apache.cassandra.service.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>{
 
     public static final PolicyReplicateVerbHandler instance = new PolicyReplicateVerbHandler();

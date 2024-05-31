@@ -38,6 +38,12 @@ import static org.apache.cassandra.db.TypeSizes.sizeof;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class StatesGathering 
 {
 

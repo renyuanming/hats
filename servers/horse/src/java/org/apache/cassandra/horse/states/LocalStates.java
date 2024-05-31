@@ -30,9 +30,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
@@ -45,6 +42,11 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
+
+
+/**
+ * @author renyuanming1@gmail.com
+ */
 
 public class LocalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
@@ -178,9 +180,8 @@ public class LocalStates implements Serializable {
         }
     }
 
-    public static class LatencyCalculator {
-        private final AtomicBoolean running = new AtomicBoolean(true);
-        private Thread workerThread;
+    public static class LatencyCalculator 
+    {
         private final Histogram histogram;
 
         // TODO: limit the number of the data in the queue
@@ -205,17 +206,6 @@ public class LocalStates implements Serializable {
         public int getCount()
         {
             return this.histogram.getSnapshot().size();
-        }
-
-        public void stop() {
-            running.set(false);
-            workerThread.interrupt();
-        }
-
-        @Override
-        protected void finalize() throws Throwable {
-            stop();
-            super.finalize();
         }
     }
 

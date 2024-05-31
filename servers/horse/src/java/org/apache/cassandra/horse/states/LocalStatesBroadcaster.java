@@ -34,6 +34,11 @@ import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.*;
 
 
+/**
+ * @author renyuanming1@gmail.com
+ */
+
+
 // import static org.apache.cassandra.config.CassandraRelevantProperties.BROADCAST_INTERVAL_MS;
 
 public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber

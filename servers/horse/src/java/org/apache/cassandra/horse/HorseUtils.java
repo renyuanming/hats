@@ -34,6 +34,11 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class HorseUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(HorseUtils.class);

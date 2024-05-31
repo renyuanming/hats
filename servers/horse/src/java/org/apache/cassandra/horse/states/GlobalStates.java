@@ -36,6 +36,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * @author renyuanming1@gmail.com
+ */
+
 public class GlobalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(GlobalStates.class);
 
