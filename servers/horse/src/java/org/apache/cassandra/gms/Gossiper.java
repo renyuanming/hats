@@ -2064,7 +2064,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
     public static String getSeedsStr()
     {
         // return DatabaseDescriptor.getSeeds().stream().map(InetAddressAndPort::getHostName).collect(Collectors.joining(","));
-        return DatabaseDescriptor.getSeeds().stream().map(ip -> ip.getHostName() + ":" + DatabaseDescriptor.getRaftPort()).collect(Collectors.joining(","));
+        return DatabaseDescriptor.getSeeds().stream().map(ip -> ip.getHostAddress(false) + ":" + DatabaseDescriptor.getRaftPort()).collect(Collectors.joining(","));
     }
 
     public static void buildNodeAndTokenList() 
