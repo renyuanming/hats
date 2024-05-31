@@ -18,7 +18,7 @@
         schedulingInterval: 10
         statesUpdateInterval: 10
         readSensitivity: 0.9
-        enableHorse: "false"
+        enableHorse: "ENABLE_HORSE"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

@@ -339,7 +339,7 @@ function startFromBackup {
     sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" playbook-startup.yaml
     sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" playbook-startup.yaml
     sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" playbook-startup.yaml
-    sed -i "s/\(enableHorse: \)".*"/enableHorse: \"${enableHorse}\"/" playbook-startup.yaml
+    sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-startup.yaml
 
     
     ansible-playbook -v -i hosts.ini playbook-startup.yaml
@@ -378,7 +378,7 @@ function restartCassandra {
     sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" playbook-restartCassandra.yaml
     sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" playbook-restartCassandra.yaml
     sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" playbook-restartCassandra.yaml
-    sed -i "s/\(enableHorse: \)".*"/enableHorse: \"${enableHorse}\"/" playbook-restartCassandra.yaml
+    sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-restartCassandra.yaml
 
     ansible-playbook -v -i hosts.ini playbook-restartCassandra.yaml
 }
