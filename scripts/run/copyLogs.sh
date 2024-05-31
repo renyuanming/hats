@@ -9,14 +9,12 @@ func() {
     expName=$5
     keyspace=$6
     resultDir=$7
+    logDir=$8
     
 
-    dirName="${expName}-${workload}-${keyspace}-${recordcount}-${operationcount}-${threads}-$(date +%s)"
 
-    cp -r /home/ymren/cassandraWS/logs /home/ymren/logs/$dirName
-    cp -r ${resultDir} /home/ymren/logs/$dirName
-    
     cp -r ${resultDir} ~/Results
+    cp -r ${logDir} ~/Results   
 }
 
-func "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+func "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8"

@@ -172,7 +172,7 @@
   become_user: ymren
   tasks:
     - name: copy logs
-      shell: bash PATH_TO_SCRIPTS/run/copyLogs.sh {{ record_count }} {{ operation_count }} {{ threads }} {{ workload }} {{ expName }} {{ keyspace }} {{ resultDir }}
+      shell: bash PATH_TO_SCRIPTS/run/copyLogs.sh {{ record_count }} {{ operation_count }} {{ threads }} {{ workload }} {{ expName }} {{ keyspace }} {{ resultDir }} {{ logDir }}
       vars:
         record_count: 10000000
         operation_count: 10000000
@@ -181,6 +181,7 @@
         expName: "Exp#1-Normal-Run-Cassandra-DATAPATH"
         keyspace: "ycsb"
         resultDir: "PATH_TO_RESULT_DIR"
+        logDir: "PATH_TO_LOG_DIR"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

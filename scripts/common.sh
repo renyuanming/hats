@@ -539,6 +539,7 @@ function run {
     sed -i "s|RECOVER_THRESHOLD|${recoverThreshold}|g" playbook-run.yaml
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-run.yaml
     sed -i "s|SHUFFLE_REPLICAS|${shuffleReplicas}|g" playbook-run.yaml
+    sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" playbook-run.yaml
 
     if [ $targetScheme == "depart" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-run.yaml

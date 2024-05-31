@@ -68,6 +68,7 @@ PathToBackup="${HOME_PATH}/backups"
 ClientLogDir="${PathToClient}/logs/"
 NetworkInterface="enp1s0f0"
 PathToResultDir="$PathToServer/metrics"
+PathToLogDir="$PathToServer/logs"
 
 if [[ "$SCHEME" == "" || "$BACKUP_MODE" == "" ]]; then
     echo "Please specify the SCHEME and BACKUP_MODE"
