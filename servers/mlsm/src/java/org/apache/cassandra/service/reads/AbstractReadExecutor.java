@@ -323,21 +323,21 @@ public abstract class AbstractReadExecutor
         {
             replicasInTheRing = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(keyspace.getName(), command.partitionKey().getToken());
 
-            // switch (replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
-            //     case 1:
-            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
-            //         ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-            //         command.updateColumnFilter(newColumnFilter1);                    
-            //         break;
-            //     case 2:
-            //         command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
-            //         ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-            //         command.updateColumnFilter(newColumnFilter2);
-            //         break;
+            switch (replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
+                case 1:
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
+                    ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
+                    command.updateColumnFilter(newColumnFilter1);                    
+                    break;
+                case 2:
+                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
+                    ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
+                    command.updateColumnFilter(newColumnFilter2);
+                    break;
             
-            //     default:
-            //         break;
-            // }
+                default:
+                    break;
+            }
         }
 
 
