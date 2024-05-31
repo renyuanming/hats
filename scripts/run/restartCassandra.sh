@@ -16,7 +16,7 @@ function restartCassandra {
     statesUpdateInterval=$1
     readSensitivity=$2
     enableHorse=$3
-    echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}"
+    echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, enable horse ${enableHorse}"
 
     kill -9 $(ps aux | grep CassandraDaemon | grep -v grep | awk 'NR == 1' | awk {'print $2'})
 

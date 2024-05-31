@@ -363,6 +363,8 @@ function restartCassandra {
     # Copy playbook
     resetPlaybook "restartCassandra"
 
+    echo "Restart the server with enableHorse ${enableHorse}"
+
     # Modify playbook
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-restartCassandra.yaml
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-restartCassandra.yaml
