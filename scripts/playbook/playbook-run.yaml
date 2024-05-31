@@ -53,7 +53,7 @@
   tasks:
     - name: Setup horse
       shell: |
-        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool sethorse -e ENABLE_HORSE -ss STEP_SIZE -ot OFFLOAD_THRESHOLD -rt RECOVER_THRESHOLD
+        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool sethorse -ss STEP_SIZE -ot OFFLOAD_THRESHOLD -rt RECOVER_THRESHOLD
       register: command_result
       ignore_errors: true
 

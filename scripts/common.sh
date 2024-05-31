@@ -301,6 +301,7 @@ function startFromBackup {
     schedulingInterval=$6
     statesUpdateInterval=$7
     readSensitivity=$8
+    enableHorse=$9
 
 
 
@@ -338,6 +339,7 @@ function startFromBackup {
     sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" playbook-startup.yaml
     sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" playbook-startup.yaml
     sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" playbook-startup.yaml
+    sed -i "s/\(enableHorse: \)".*"/enableHorse: \"${enableHorse}\"/" playbook-startup.yaml
 
     
     ansible-playbook -v -i hosts.ini playbook-startup.yaml
@@ -356,6 +358,7 @@ function restartCassandra {
     statesUpdateInterval=$9
     shift 9
     readSensitivity=$1
+    enableHorse=$2
     
     # Copy playbook
     resetPlaybook "restartCassandra"
@@ -373,6 +376,7 @@ function restartCassandra {
     sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" playbook-restartCassandra.yaml
     sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" playbook-restartCassandra.yaml
     sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" playbook-restartCassandra.yaml
+    sed -i "s/\(enableHorse: \)".*"/enableHorse: \"${enableHorse}\"/" playbook-restartCassandra.yaml
 
     ansible-playbook -v -i hosts.ini playbook-restartCassandra.yaml
 }
@@ -671,10 +675,10 @@ function runExp {
                                                             # startup from preload dataset
                                                             if [ "${STARTUP_FROM_BACKUP}" == "true" ]; then
                                                                 echo "Start from backup"
-                                                                startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${STARTUP_FROM_BACKUP} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}"
+                                                                startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${STARTUP_FROM_BACKUP} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE}
                                                             else
                                                                 echo "Start from current data"
-                                                                restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}"
+                                                                restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE}
                                                             fi
                                                             run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${stepSize}" "${offloadThreshold}" "${recoverThreshold}" "${ENABLE_HORSE}" "${shuffleReplicas}"
 

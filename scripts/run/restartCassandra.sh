@@ -15,6 +15,7 @@ function restartCassandra {
     shift 9
     statesUpdateInterval=$1
     readSensitivity=$2
+    enableHorse=$3
     echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}"
 
     kill -9 $(ps aux | grep CassandraDaemon | grep -v grep | awk 'NR == 1' | awk {'print $2'})
@@ -35,6 +36,8 @@ function restartCassandra {
     sed -i "s/scheduling_interval:.*$/scheduling_interval: "${schedulingInterval}"/" conf/cassandra.yaml
     sed -i "s/state_update_interval:.*$/state_update_interval: "${statesUpdateInterval}"/" conf/cassandra.yaml
     sed -i "s/read_sensitive_factor:.*$/read_sensitive_factor: "${readSensitivity}"/" conf/cassandra.yaml
+    sed -i "s/enable_horse:.*$/enable_horse: "${enableHorse}"/" conf/cassandra.yaml
+
 
 
     

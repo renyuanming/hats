@@ -8,7 +8,7 @@
       shell: |
             . /etc/profile &&
             export passWd="SUDO_PASSWD"
-            bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }}
+            bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHorse }}
       vars:
         configurationFile: "PATH_TO_SERVER/conf/cassandra.yaml"
         sourceFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH/data"
@@ -23,6 +23,7 @@
         schedulingInterval: 10
         statesUpdateInterval: 10
         readSensitivity: 0.9
+        enableHorse: "false"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

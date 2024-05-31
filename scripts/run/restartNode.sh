@@ -17,6 +17,7 @@ function restartNode {
     schedulingInterval=$2
     statesUpdateInterval=$3
     readSensitivity=$4
+    enableHorse=$5
 
     echo "Restart the node with configure file ${configureFilePath}, source data dir ${sourceDataDir}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation} and from backup ${fromBackup}, the pass word is ${passWd}, rebuild is ${rebuild}, use direct io is ${useDirectIO}, branch is ${branch}, scheduling initial delay is ${schedulingInitialDelay}, scheduling interval is ${schedulingInterval}, states update interval is ${statesUpdateInterval}, read sensitivity is ${readSensitivity}"
 
@@ -38,6 +39,7 @@ function restartNode {
     sed -i "s/scheduling_interval:.*$/scheduling_interval: "${schedulingInterval}"/" conf/cassandra.yaml
     sed -i "s/state_update_interval:.*$/state_update_interval: "${statesUpdateInterval}"/" conf/cassandra.yaml
     sed -i "s/read_sensitive_factor:.*$/read_sensitive_factor: "${readSensitivity}"/" conf/cassandra.yaml
+    sed -i "s/enable_horse:.*$/enable_horse: "${enableHorse}"/" conf/cassandra.yaml
 
     rm -rf data
     if [ "${fromBackup}" == "true" ]; then
