@@ -5166,4 +5166,9 @@ public class DatabaseDescriptor
     {
         conf.enable_horse = enable_horse;
     }
+
+    public static String getListenAddressStr()
+    {
+        return conf.listen_address;
+    }
 }

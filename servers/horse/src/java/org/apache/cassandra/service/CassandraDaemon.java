@@ -440,16 +440,16 @@ public class CassandraDaemon
             }
             else
             {
-                if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddress().getHostAddress()))
+                if (Gossiper.getSeedsStr().contains(DatabaseDescriptor.getListenAddressStr()))
                 {
                     ElectionBootstrap.initElection(HorseUtils.getRaftLogPath(), 
                                                 "ElectSeeds", 
-                                                DatabaseDescriptor.getListenAddress().getHostAddress()+":"+DatabaseDescriptor.getRaftPort(), 
+                                                DatabaseDescriptor.getListenAddressStr()+":"+DatabaseDescriptor.getRaftPort(), 
                                                 Gossiper.getSeedsStr());
                 }
                 else
                 {
-                    logger.debug("rymDebug: This node {} is not a seed node, no need to start election, seed nodes are {}", DatabaseDescriptor.getListenAddress().getHostAddress(), Gossiper.getSeedsStr());
+                    logger.debug("rymDebug: This node {} is not a seed node, no need to start election, seed nodes are {}", DatabaseDescriptor.getListenAddressStr(), Gossiper.getSeedsStr());
                 }
             }
 
