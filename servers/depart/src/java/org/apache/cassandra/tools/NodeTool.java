@@ -49,6 +49,7 @@ public class NodeTool
     public static void main(String... args)
     {
         List<Class<? extends Runnable>> commands = newArrayList(
+                GetBreakdown.class,
                 Help.class,
                 Info.class,
                 Ring.class,
