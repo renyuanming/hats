@@ -280,36 +280,35 @@ public class Scheduler {
         for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
         {
 
-            double min = Double.MAX_VALUE;
-            double max = Double.MIN_VALUE;
-            int minIndex = 0;
-            int maxIndex = 0;
+            double mean = 0.0;
+            double stdDev = 0.0;
+
             for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
             {
-                if(min > GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount])
-                {
-                    min = GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
-                    minIndex = k % GlobalStates.globalStates.nodeCount;
-                }
-                if(max < GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount])
-                {
-                    max = GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
-                    maxIndex = k % GlobalStates.globalStates.nodeCount;
-                }
+                mean += GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
             }
+            mean = mean / GlobalStates.globalStates.rf;
+            
+            for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
+            {
+                stdDev += Math.pow(GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount] - mean, 2);
+            }
+            stdDev = Math.sqrt(stdDev / GlobalStates.globalStates.rf);
 
-            int action = getAction(i, min, max);
-            if(action == 1) // offload the request to the secondary replicas
+            final double offloadThreshold = mean + stdDev;
+            final double recoverThreshold = mean;
+
+            if (GlobalStates.globalStates.scoreVector[i] >= offloadThreshold)
             {
-                offloadRequests(i, minIndex, maxIndex);
+                offloadRequests(i, recoverThreshold);
             }
-            else if(action == 2) // recover the request from the secondary replicas
+            else if (GlobalStates.globalStates.scoreVector[i] < recoverThreshold)
             {
-                recoverRequests(i, minIndex, maxIndex);
+                recoverRequests(i, offloadThreshold);
             }
-            else // do nothing
+            else
             {
-                logger.debug("rymDebug");
+                logger.debug("rymDebug: do nothing for node {}.", i);
             }
         }
         logger.info("rymInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.globalPolicy));
@@ -320,18 +319,14 @@ public class Scheduler {
      * the target node and how many requests should be offloaded.
      * 
      */
-    private static void offloadRequests(int nodeIndex, int minIndex, int maxIndex)
+    private static void offloadRequests(int nodeIndex, double recoverThreshold)
     {
-        if(maxIndex != nodeIndex)
-            throw new IllegalArgumentException(String.format("The maxIndex %s should be %s", maxIndex, nodeIndex));
 
         // Traverse every secondary replica node, and offload the request to the node with the lower score
         for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
         {
             int targetIndex = i % GlobalStates.globalStates.nodeCount;
-            double variance = getVariance(GlobalStates.globalStates.scoreVector[nodeIndex], 
-                                          GlobalStates.globalStates.scoreVector[targetIndex]);
-            if(variance >= GlobalStates.OFFLOAD_THRESHOLD)
+            if(GlobalStates.globalStates.scoreVector[targetIndex] < recoverThreshold)
             {
                 if(GlobalStates.globalStates.deltaVector[targetIndex] >= GlobalStates.STEP_SIZE * (GlobalStates.globalStates.rf - 1))
                 {
@@ -358,18 +353,13 @@ public class Scheduler {
     }
 
     // Recover the request load
-    private static void recoverRequests(int nodeIndex, int minIndex, int maxIndex)
+    private static void recoverRequests(int nodeIndex, double offloadThreshold)
     {
-        if(minIndex != nodeIndex)
-            throw new IllegalArgumentException(String.format("The minIndex %s should be %s", minIndex, nodeIndex));
-
         // Traverse every secondary replica node, and recover the request from the node with the higher score
         for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
         {
             int targetIndex = i % GlobalStates.globalStates.nodeCount;
-            double variance = getVariance(GlobalStates.globalStates.scoreVector[targetIndex],
-                                          GlobalStates.globalStates.scoreVector[nodeIndex]);
-            if(variance >= GlobalStates.RECOVER_THRESHOLD)
+            if(GlobalStates.globalStates.scoreVector[targetIndex] >= offloadThreshold)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
                 
@@ -403,33 +393,6 @@ public class Scheduler {
         BigDecimal bd = new BigDecimal(Double.toString(value));
         bd = bd.setScale(3, RoundingMode.HALF_UP);
         return bd.doubleValue();
-    }
-
-    /**
-     * 
-     * @return 0 means do nothing for this RP, 
-     *         1 means offload the request to the secondary replicas,
-     *         2 means recover the request from the secondary replicas.
-     */
-    private static int getAction(int nodeIndex, double min, double max)
-    {
-        double variance = getVariance(max, min);
-
-        if(min == GlobalStates.globalStates.scoreVector[nodeIndex] && variance >= GlobalStates.RECOVER_THRESHOLD)
-        {
-            return 2;
-        }
-        else if (max == GlobalStates.globalStates.scoreVector[nodeIndex] && variance >= GlobalStates.OFFLOAD_THRESHOLD)
-        {
-            return 1;
-        }
-
-        return 0;
-    }
-
-    private static double getVariance(double larger, double smaller)
-    {
-        return (larger - smaller) / smaller;
     }
 
     /**
