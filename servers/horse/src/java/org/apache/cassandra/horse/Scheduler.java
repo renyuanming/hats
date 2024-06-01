@@ -410,6 +410,9 @@ public class Scheduler {
         }
         // logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
+        
+        StorageService.instance.stateGatheringSignalInFlight.set(0);
+
         GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size(), 3);
         if(liveSeeds.size() == 1)
         {
