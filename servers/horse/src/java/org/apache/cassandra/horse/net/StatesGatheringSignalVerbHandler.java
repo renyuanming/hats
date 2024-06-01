@@ -53,6 +53,8 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
 
         Map<InetAddress, LocalStates> gatheredStates = new HashMap<>();
 
+        logger.info("rymINFO: Received states gathering signal from {}.", message.from());
+
         String leaderHost = "";
         // Followers send the load statistic to the leader
         if(signal.leaderIsSeed)

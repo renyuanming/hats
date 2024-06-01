@@ -118,9 +118,14 @@ public class LocalStates implements Serializable {
         if(Double.isNaN(latency))
             return null;
         Map<InetAddress, Integer> completedReadRequestCount = new HashMap<>();
-        String requests = metrics[1].split("=")[1];
-        String[] requestsParts = requests.split(",");
-        for (String request : requestsParts)
+        String[] requestParts = metrics[1].split("=");
+        if (requestParts.length < 2) 
+        {
+            return null;
+        }
+        String requests = requestParts[1];
+        String[] replicationGroupRequests = requests.split(",");
+        for (String request : replicationGroupRequests)
         {
             String[] kv = request.split(":");
             try {

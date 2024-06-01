@@ -48,7 +48,7 @@ public class StatesGatheringVerbHandler implements IVerbHandler<StatesGathering>
             gatheredStates = (Map<InetAddress, LocalStates>) ByteObjectConversion.byteArrayToObject(states.gatheredStatesInBytes);
             GlobalStates.globalStates.mergeGlobalStates(gatheredStates);
             StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
-            logger.info( "rymInfo: Received states from {}.", message.from());
+            logger.info( "rymInfo: Received states from follower: {}.", message.from());
         } catch (Exception e) {
             e.printStackTrace();
         }

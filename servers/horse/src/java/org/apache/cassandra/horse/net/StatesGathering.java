@@ -68,6 +68,7 @@ public class StatesGathering
             StatesGathering states = new StatesGathering(gatheredStatesInBytes);
             Message<StatesGathering> message = Message.outWithFlag(Verb.STATE_GATHERING_REQ, states, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, leader);
+            logger.info("rymINFO: Sent states to leader {}.", leader);
         } catch (Exception e) {
             e.printStackTrace();
         }
