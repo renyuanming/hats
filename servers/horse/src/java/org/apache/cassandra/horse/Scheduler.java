@@ -319,7 +319,7 @@ public class Scheduler {
      * the target node and how many requests should be offloaded.
      * 
      */
-    private static void offloadRequests(int nodeIndex, double recoverThreshold)
+    private static void offloadRequests(int nodeIndex, final double recoverThreshold)
     {
 
         // Traverse every secondary replica node, and offload the request to the node with the lower score
@@ -353,7 +353,7 @@ public class Scheduler {
     }
 
     // Recover the request load
-    private static void recoverRequests(int nodeIndex, double offloadThreshold)
+    private static void recoverRequests(int nodeIndex, final double offloadThreshold)
     {
         // Traverse every secondary replica node, and recover the request from the node with the higher score
         for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
@@ -446,6 +446,7 @@ public class Scheduler {
         }
         else if (liveSeeds.size() > 1)
         {
+            logger.info("rymInfo: Gathering the load statistic from the seed nodes {}", liveSeeds);
             StatesGatheringSignal signal = new StatesGatheringSignal(true);
             for(InetAddressAndPort seed : liveSeeds)
             {
@@ -455,6 +456,7 @@ public class Scheduler {
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 signal.sendStatesGatheringSignal(seed);
+                logger.info("rymInfo: send the signal to the seed node {}", seed);
             }
         }
         else
@@ -470,6 +472,11 @@ public class Scheduler {
                 signal.sendStatesGatheringSignal(follower);
             }
         }
+    }
+
+    public static void main(String[] args) {
+        double value = 0.123456789;
+        System.out.println(rounding(value));
     }
 
 }
