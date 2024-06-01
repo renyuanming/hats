@@ -88,7 +88,7 @@ public class GlobalStates implements Serializable {
         }
     }
 
-    public void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates, InetAddressAndPort from)
+    public synchronized void mergeGlobalStates(final Map<InetAddress, LocalStates> gatheredStates, InetAddressAndPort from)
     {
         if(gatheredStates.size() != this.nodeCount)
         {
