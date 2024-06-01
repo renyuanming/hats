@@ -98,7 +98,7 @@ public class LocalStates implements Serializable {
 
         for (InetAddress ip : this.completedReadRequestCount.keySet())
         {
-            requests += ip.getHostName() + ":" + this.completedReadRequestCount.get(ip) + ",";
+            requests += ip.getHostAddress() + ":" + this.completedReadRequestCount.get(ip) + ",";
             // requests += ip.getHostName() + ": " + readCounter.getCounter().get(ip).size() + ",";
         }
         return String.format("LocalStates{Latency=%f | Requests=%s | Version=%d}", this.latency, requests, this.version);
