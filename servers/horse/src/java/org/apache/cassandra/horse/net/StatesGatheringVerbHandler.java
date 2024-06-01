@@ -26,6 +26,7 @@ import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
+import org.apache.cassandra.service.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,8 @@ public class StatesGatheringVerbHandler implements IVerbHandler<StatesGathering>
         try {
             gatheredStates = (Map<InetAddress, LocalStates>) ByteObjectConversion.byteArrayToObject(states.gatheredStatesInBytes);
             GlobalStates.globalStates.mergeGlobalStates(gatheredStates);
+            StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
+            logger.info( "rymInfo: Received states from {}.", message.from());
         } catch (Exception e) {
             e.printStackTrace();
         }

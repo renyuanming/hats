@@ -124,8 +124,6 @@ public class GlobalStates implements Serializable {
                 continue;
             }
         }
-
-        StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
     }
 
     public static double getScore(double latency, int requestCount)
