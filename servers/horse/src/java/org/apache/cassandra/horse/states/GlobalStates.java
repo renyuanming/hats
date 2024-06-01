@@ -88,7 +88,7 @@ public class GlobalStates implements Serializable {
         }
     }
 
-    public synchronized void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates)
+    public synchronized void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates, InetAddressAndPort from)
     {
         if(gatheredStates.size() != this.nodeCount)
         {
@@ -124,6 +124,8 @@ public class GlobalStates implements Serializable {
                 continue;
             }
         }
+        StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
+        logger.info("rymInfo: Received new states from {}, we merge it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
     public static double getScore(double latency, int requestCount)
