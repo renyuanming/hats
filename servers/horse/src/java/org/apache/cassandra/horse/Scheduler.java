@@ -334,21 +334,25 @@ public class Scheduler {
                     continue;
                 }
 
-                if(GlobalStates.globalPolicy[nodeIndex][0] < GlobalStates.STEP_SIZE)
+                if(GlobalStates.globalPolicy[nodeIndex][0] <= 0)
                 {
                     continue;
                 }
 
+                double stepSize = (GlobalStates.globalStates.scoreVector[nodeIndex] / GlobalStates.globalStates.scoreVector[targetIndex] - 1.0) * 0.1;
+                stepSize = stepSize > GlobalStates.globalPolicy[nodeIndex][0] ? GlobalStates.globalPolicy[nodeIndex][0] : stepSize;
+                stepSize = rounding(stepSize);
+
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
 
                 GlobalStates.globalPolicy[nodeIndex][0] = 
-                            rounding(GlobalStates.globalPolicy[nodeIndex][0] - GlobalStates.STEP_SIZE);
+                            rounding(GlobalStates.globalPolicy[nodeIndex][0] - stepSize);
                 GlobalStates.globalPolicy[targetIndex][replicaIndex] = 
-                            rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex] + GlobalStates.STEP_SIZE);
+                            rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex] + stepSize);
                 GlobalStates.globalStates.deltaVector[replicaIndex] = 
-                            rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - GlobalStates.STEP_SIZE);
+                            rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - stepSize);
                 GlobalStates.globalStates.deltaVector[targetIndex] = 
-                            rounding(GlobalStates.globalStates.deltaVector[targetIndex] + GlobalStates.STEP_SIZE);
+                            rounding(GlobalStates.globalStates.deltaVector[targetIndex] + stepSize);
             }
         }
     }
@@ -364,15 +368,15 @@ public class Scheduler {
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
                 
-                if(GlobalStates.globalPolicy[targetIndex][replicaIndex] < GlobalStates.STEP_SIZE)
+                if(GlobalStates.globalPolicy[targetIndex][replicaIndex] <= 0)
                 {
                     continue;
                 }
                 else
                 {
-                    double stepSize = GlobalStates.globalPolicy[targetIndex][replicaIndex] > GlobalStates.STEP_SIZE 
-                                      ? GlobalStates.STEP_SIZE 
-                                      : GlobalStates.globalPolicy[targetIndex][replicaIndex];
+                    double stepSize = (GlobalStates.globalStates.scoreVector[targetIndex] / GlobalStates.globalStates.scoreVector[nodeIndex] - 1.0) * 0.1;
+                    stepSize = stepSize > GlobalStates.globalPolicy[targetIndex][replicaIndex] ? GlobalStates.globalPolicy[targetIndex][replicaIndex] : stepSize;
+                    stepSize = rounding(stepSize);
 
                     GlobalStates.globalPolicy[nodeIndex][0] = 
                                 rounding(GlobalStates.globalPolicy[nodeIndex][0] + stepSize);
@@ -383,7 +387,6 @@ public class Scheduler {
                     GlobalStates.globalStates.deltaVector[targetIndex] = 
                                 rounding(GlobalStates.globalStates.deltaVector[targetIndex] - stepSize);
                 }
-
             }
         }
         

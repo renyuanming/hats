@@ -95,14 +95,14 @@ public class GlobalStates implements Serializable {
             logger.debug("rymDebug: the gathered states number is not equal to the node count.");
         }
 
-        logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
+        logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
 
         for (Map.Entry<InetAddress, LocalStates> entry : gatheredStates.entrySet())
         {
             int nodeIndex = Gossiper.getAllHosts().indexOf(InetAddressAndPort.getByAddress(entry.getKey()));
             if(nodeIndex == -1)
             {
-                throw new IllegalStateException("Host not found in Gossiper");
+                logger.error("rymError: The node index is -1, the node is not in the host list.");
             }
 
             if(entry.getValue().version >= this.versionVector[nodeIndex])
