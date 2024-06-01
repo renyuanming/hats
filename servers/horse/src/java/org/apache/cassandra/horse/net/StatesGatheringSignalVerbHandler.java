@@ -63,6 +63,11 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
 
             for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
             {
+                if(entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD) == null)
+                {
+                    logger.info("rymInfo: No foreground load state for {}.", entry.getKey().getAddress());
+                    continue;
+                }
                 String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
                 int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
                 LocalStates localStates = LocalStates.fromString(localStatesStr, version);

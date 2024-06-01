@@ -44,6 +44,8 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alipay.sofa.jraft.storage.Storage;
+
 
 /**
  * @author renyuanming1@gmail.com
@@ -140,14 +142,14 @@ public class Scheduler {
                 while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
                 {
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(100);
                         retryCount++;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     if(retryCount > 10)
                     {
-                        logger.warn("rymWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
+                        logger.warn("rymWARN: we have waited for 1s, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
                                         StorageService.instance.stateGatheringSignalInFlight.get());
                         StorageService.instance.stateGatheringSignalInFlight.set(0);
                         return;
@@ -459,7 +461,7 @@ public class Scheduler {
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 signal.sendStatesGatheringSignal(seed);
-                logger.info("rymInfo: send the signal to the seed node {}", seed);
+                logger.info("rymInfo: send the signal to the seed node {}, the stateGatheringSignalInFlight is {}", seed, StorageService.instance.stateGatheringSignalInFlight.get());
             }
         }
         else
