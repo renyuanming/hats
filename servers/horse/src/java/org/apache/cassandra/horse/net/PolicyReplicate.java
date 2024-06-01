@@ -56,7 +56,7 @@ public class PolicyReplicate
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
     }
 
-    public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][][] placementPolicy)
+    public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][] placementPolicy)
     {
         byte[] placementPolicyInBytes = null;
                 

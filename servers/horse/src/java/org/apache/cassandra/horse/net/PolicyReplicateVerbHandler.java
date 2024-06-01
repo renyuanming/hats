@@ -42,7 +42,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         PolicyReplicate payload = message.payload;
 
         try {
-            GlobalStates.globalPolicy = (Double[][][]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
+            GlobalStates.globalPolicy = (Double[][]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
             // Get the placement policy for local replicas
         } catch (Exception e) {
             // TODO Auto-generated catch block

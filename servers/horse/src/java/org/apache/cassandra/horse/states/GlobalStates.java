@@ -44,8 +44,8 @@ import org.slf4j.LoggerFactory;
 public class GlobalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(GlobalStates.class);
 
-    public static GlobalStates globalStates;    
-    public static volatile Double[][][] globalPolicy; // N X M X 1
+    public volatile static GlobalStates globalStates;    
+    public static volatile Double[][] globalPolicy; // N X M
     public static final double OFFLOAD_THRESHOLD = DatabaseDescriptor.getOffloadThreshold();
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
@@ -53,7 +53,7 @@ public class GlobalStates implements Serializable {
     public Double[] scoreVector; // N
     public Double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
-    public int[][][] loadMatrix; // N X M X 1
+    public int[][] loadMatrix; // N X M
     public int[] versionVector; // N
     public Double[] deltaVector; // N
     public final int nodeCount;
@@ -71,7 +71,7 @@ public class GlobalStates implements Serializable {
         this.scoreVector = new Double[this.nodeCount];
         this.latencyVector = new Double[this.nodeCount];
         this.readCountOfEachNode = new int[this.nodeCount];
-        this.loadMatrix = new int[this.nodeCount][this.rf][1];
+        this.loadMatrix = new int[this.nodeCount][this.rf];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
         for(int i = 0; i < this.nodeCount; i++)
@@ -83,17 +83,19 @@ public class GlobalStates implements Serializable {
             this.deltaVector[i] = 0.0;
             for(int j = 0; j < this.rf; j++)
             {
-                this.loadMatrix[i][j][0] = 0;
+                this.loadMatrix[i][j] = 0;
             }
         }
     }
 
-    public synchronized void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates, InetAddressAndPort from)
+    public void mergeGlobalStates(Map<InetAddress, LocalStates> gatheredStates, InetAddressAndPort from)
     {
         if(gatheredStates.size() != this.nodeCount)
         {
             logger.debug("rymDebug: the gathered states number is not equal to the node count.");
         }
+
+        logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
 
         for (Map.Entry<InetAddress, LocalStates> entry : gatheredStates.entrySet())
         {
@@ -103,20 +105,20 @@ public class GlobalStates implements Serializable {
                 throw new IllegalStateException("Host not found in Gossiper");
             }
 
-            if(entry.getValue().version >= globalStates.versionVector[nodeIndex])
+            if(entry.getValue().version >= this.versionVector[nodeIndex])
             {
-                globalStates.versionVector[nodeIndex] = entry.getValue().version;
-                globalStates.latencyVector[nodeIndex] = entry.getValue().latency;
-                globalStates.readCountOfEachNode[nodeIndex] = 0;
+                this.versionVector[nodeIndex] = entry.getValue().version;
+                this.latencyVector[nodeIndex] = entry.getValue().latency;
+                this.readCountOfEachNode[nodeIndex] = 0;
 
                 for (Map.Entry<InetAddress, Integer> entry1 : entry.getValue().completedReadRequestCount.entrySet())
                 {
                     int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
-                    globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
-                    globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
+                    this.loadMatrix[nodeIndex][replicaIndex] = entry1.getValue();
+                    this.readCountOfEachNode[nodeIndex] += entry1.getValue();
                 }
 
-                globalStates.scoreVector[nodeIndex] = getScore(globalStates.latencyVector[nodeIndex], globalStates.readCountOfEachNode[nodeIndex]);
+                this.scoreVector[nodeIndex] = getScore(this.latencyVector[nodeIndex], this.readCountOfEachNode[nodeIndex]);
 
             }
             else
@@ -125,7 +127,7 @@ public class GlobalStates implements Serializable {
             }
         }
         StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
-        logger.info("rymInfo: Received new states from {}, we merge it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
+        logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
     public static double getScore(double latency, int requestCount)
@@ -138,13 +140,13 @@ public class GlobalStates implements Serializable {
     public static void initializeGlobalPolicy()
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
-        globalPolicy = new Double[nodeCount][3][1];
+        globalPolicy = new Double[nodeCount][3];
         for(int i = 0; i < nodeCount; i++)
         {
-            globalPolicy[i][0][0] = 1.0;
+            globalPolicy[i][0] = 1.0;
             for(int j = 1; j < 3; j++)
             {
-                globalPolicy[i][j][0] = 0.0;
+                globalPolicy[i][j] = 0.0;
             }
         }
         logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
@@ -155,7 +157,7 @@ public class GlobalStates implements Serializable {
 
     public static Map<String, List<Double>> transformPolicyForClient()
     {
-        final Double[][][] policy = globalPolicy;
+        final Double[][] policy = globalPolicy;
         Map<String, List<Double>> policyForClient = new HashMap<String, List<Double>>();
 
         if(policy.length != Gossiper.getAllHosts().size())
@@ -172,7 +174,7 @@ public class GlobalStates implements Serializable {
             for(int curNodeIndex = i; curNodeIndex < i + 3; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(i, curNodeIndex);
-                rgPolicy.add(policy[curNodeIndex % nodeCount][replicaIndex][0]);
+                rgPolicy.add(policy[curNodeIndex % nodeCount][replicaIndex]);
             }
             policyForClient.put(tokenList.get(i).toString(), rgPolicy);
         }

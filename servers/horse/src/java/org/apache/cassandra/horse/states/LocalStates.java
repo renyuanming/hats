@@ -81,9 +81,9 @@ public class LocalStates implements Serializable {
             for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + 3; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
-                policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
+                policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex]);
                 policyWithPort.put(Gossiper.getAllHosts().get(curNodeIndex % nodeCount), 
-                           GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex][0]);
+                           GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex]);
             }
             localPolicyWithAddress.put(rg, policyWithPort);
             localPolicy.put(rg, policy);

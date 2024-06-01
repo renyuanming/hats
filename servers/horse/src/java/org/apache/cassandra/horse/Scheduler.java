@@ -141,14 +141,14 @@ public class Scheduler {
                 while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
                 {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(1000);
                         retryCount++;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    if(retryCount > 10)
+                    if(retryCount >= 5)
                     {
-                        logger.warn("rymWARN: we have waited for 1s, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
+                        logger.warn("rymWARN: we have waited for 5s, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
                                         StorageService.instance.stateGatheringSignalInFlight.get());
                         StorageService.instance.stateGatheringSignalInFlight.set(0);
                         return;
@@ -241,7 +241,7 @@ public class Scheduler {
                 {
 
                     // Calculate the rate limit for each replica
-                    backgroundCompactionRate[j] = GlobalStates.globalPolicy[nodeIndex][j][0];
+                    backgroundCompactionRate[j] = GlobalStates.globalPolicy[nodeIndex][j];
                 }
                 
                 PolicyDistribute.sendPlacementPolicy(dataNode, backgroundCompactionRate);
@@ -334,17 +334,17 @@ public class Scheduler {
                     continue;
                 }
 
-                if(GlobalStates.globalPolicy[nodeIndex][0][0] < GlobalStates.STEP_SIZE)
+                if(GlobalStates.globalPolicy[nodeIndex][0] < GlobalStates.STEP_SIZE)
                 {
                     continue;
                 }
 
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
 
-                GlobalStates.globalPolicy[nodeIndex][0][0] = 
-                            rounding(GlobalStates.globalPolicy[nodeIndex][0][0] - GlobalStates.STEP_SIZE);
-                GlobalStates.globalPolicy[targetIndex][replicaIndex][0] = 
-                            rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] + GlobalStates.STEP_SIZE);
+                GlobalStates.globalPolicy[nodeIndex][0] = 
+                            rounding(GlobalStates.globalPolicy[nodeIndex][0] - GlobalStates.STEP_SIZE);
+                GlobalStates.globalPolicy[targetIndex][replicaIndex] = 
+                            rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex] + GlobalStates.STEP_SIZE);
                 GlobalStates.globalStates.deltaVector[replicaIndex] = 
                             rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - GlobalStates.STEP_SIZE);
                 GlobalStates.globalStates.deltaVector[targetIndex] = 
@@ -364,20 +364,20 @@ public class Scheduler {
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
                 
-                if(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] < GlobalStates.STEP_SIZE)
+                if(GlobalStates.globalPolicy[targetIndex][replicaIndex] < GlobalStates.STEP_SIZE)
                 {
                     continue;
                 }
                 else
                 {
-                    double stepSize = GlobalStates.globalPolicy[targetIndex][replicaIndex][0] > GlobalStates.STEP_SIZE 
+                    double stepSize = GlobalStates.globalPolicy[targetIndex][replicaIndex] > GlobalStates.STEP_SIZE 
                                       ? GlobalStates.STEP_SIZE 
-                                      : GlobalStates.globalPolicy[targetIndex][replicaIndex][0];
+                                      : GlobalStates.globalPolicy[targetIndex][replicaIndex];
 
-                    GlobalStates.globalPolicy[nodeIndex][0][0] = 
-                                rounding(GlobalStates.globalPolicy[nodeIndex][0][0] + stepSize);
-                    GlobalStates.globalPolicy[targetIndex][replicaIndex][0] = 
-                                rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex][0] - stepSize);
+                    GlobalStates.globalPolicy[nodeIndex][0] = 
+                                rounding(GlobalStates.globalPolicy[nodeIndex][0] + stepSize);
+                    GlobalStates.globalPolicy[targetIndex][replicaIndex] = 
+                                rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex] - stepSize);
                     GlobalStates.globalStates.deltaVector[nodeIndex] = 
                                 rounding(GlobalStates.globalStates.deltaVector[nodeIndex] + stepSize);
                     GlobalStates.globalStates.deltaVector[targetIndex] = 
@@ -441,7 +441,7 @@ public class Scheduler {
                 for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
                 {
                     int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
-                    GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex][0] = entry1.getValue();
+                    GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex] = entry1.getValue();
                     GlobalStates.globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
                 }
                 GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], 
