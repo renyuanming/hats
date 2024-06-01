@@ -42,13 +42,13 @@ public class StatesGatheringVerbHandler implements IVerbHandler<StatesGathering>
     @SuppressWarnings("unchecked")
     @Override
     public void doVerb(Message<StatesGathering> message) throws IOException {
+        logger.info( "rymInfo: Received states from follower: {}.", message.from());
         StatesGathering states = message.payload;
         Map<InetAddress, LocalStates> gatheredStates;
         try {
             gatheredStates = (Map<InetAddress, LocalStates>) ByteObjectConversion.byteArrayToObject(states.gatheredStatesInBytes);
             GlobalStates.globalStates.mergeGlobalStates(gatheredStates);
             StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
-            logger.info( "rymInfo: Received states from follower: {}.", message.from());
         } catch (Exception e) {
             e.printStackTrace();
         }
