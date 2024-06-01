@@ -95,7 +95,7 @@ public class GlobalStates implements Serializable {
             logger.debug("rymDebug: the gathered states number is not equal to the node count.");
         }
 
-        logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
+        // logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
 
         for (Map.Entry<InetAddress, LocalStates> entry : gatheredStates.entrySet())
         {
@@ -127,7 +127,7 @@ public class GlobalStates implements Serializable {
             }
         }
         StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
-        logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
+        // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
     public static double getScore(double latency, int requestCount)
