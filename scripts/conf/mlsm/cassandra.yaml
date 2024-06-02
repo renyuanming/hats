@@ -34,8 +34,8 @@ seed_provider:
       # based on the configured name service on the system. Defaults to "false".
       #  resolve_multiple_ip_addresses_per_dns_record: "false"
 
-concurrent_reads: 32
-concurrent_writes: 32
+concurrent_reads: 64
+concurrent_writes: 64
 concurrent_counter_writes: 32
 concurrent_materialized_view_writes: 32
 memtable_heap_space: 2048MiB
