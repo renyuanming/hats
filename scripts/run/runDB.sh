@@ -23,7 +23,7 @@ echo "Running YCSB with scheme: $scheme"
 keyspace="ycsb"
 if [ "$scheme" == "horse" ] || [ "$scheme" == "mlsm" ]; then
     sed -i "s/table=.*$/table=usertable0/" ${workload}
-elif [ "$scheme" == "c3" ] || [ "$scheme" == "cassandra" ] || [ "$scheme" == "depart" ]; then
+elif [ "$scheme" == "c3" ] || [ "$scheme" == "cassandra-5.0" ] || [ "$scheme" == "depart" ] || [ "$scheme" == "cassandra-3.11.4" ]; then
     sed -i "s/table=.*$/table=usertable/" ${workload}
 else
     echo "Unknow scheme $scheme"

@@ -43,7 +43,7 @@ function initConf {
         conf_dir="${SCRIPT_DIR}/conf/$SCHEME"
         
 
-        if [[ $SCHEME == "depart" ]] || [[ $SCHEME == "cassandra" ]]; then
+        if [[ $SCHEME == "depart" ]] || [[ $SCHEME == "cassandra-3.11.4" ]] || [[ $SCHEME == "cassandra-5.0" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/seeds:.*$/seeds: \"${SEEDS}\"/" ${conf_dir}/cassandra.yaml
@@ -146,7 +146,7 @@ function flush {
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-flush.yaml
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-flush.yaml
     sed -i "s/\(seconds: \)".*"/seconds: ${waitTime}/" playbook-flush.yaml
-    if [ $targetScheme == "depart" ]; then
+    if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-flush.yaml
     else
         sed -i "s|NODETOOL_OPTION||g" playbook-flush.yaml
@@ -266,7 +266,7 @@ function rebuildServer {
 
     antOption="-Duse.jdk11=true"
 
-    if [ "${scheme}" == "depart" ]; then
+    if [ "${scheme}" == "depart" ]|| [ $scheme == "cassandra-3.11.4" ]; then
         antOption=""
     fi
 
@@ -470,7 +470,7 @@ function load {
     sed -i "s|NODE_IP|${NodeIP}|g" playbook-load.yaml
     sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" playbook-load.yaml
     
-    if [ $targetScheme == "depart" ]; then
+    if [ $targetScheme == "depart" ] || [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-load.yaml
     else
         sed -i "s|NODETOOL_OPTION||g" playbook-load.yaml
@@ -541,7 +541,7 @@ function run {
     sed -i "s|SHUFFLE_REPLICAS|${shuffleReplicas}|g" playbook-run.yaml
     sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" playbook-run.yaml
 
-    if [ $targetScheme == "depart" ]; then
+    if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-run.yaml
     else
         sed -i "s|NODETOOL_OPTION||g" playbook-run.yaml
@@ -559,7 +559,7 @@ function perpareJavaEnvironment {
 
     javaVersion="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"
 
-    if [ "${TARGET_SCHEME}" == "depart" ]; then
+    if [ "${TARGET_SCHEME}" == "depart" ] || [ "${TARGET_SCHEME}" == "cassandra-3.11.4" ]; then
         javaVersion="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
     fi
 
