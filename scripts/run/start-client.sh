@@ -36,7 +36,7 @@ func() {
         ALTER TABLE usertable1 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
         ALTER TABLE usertable2 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
         consistency all;"
-    elif [ "$mode" == "cassandra" ] || [ "$mode" == "depart" ]; then
+    elif [ "$mode" == "cassandra-5.0" ] || [ "$mode" == "depart" ] || [ "$mode" == "cassandra-3.11.4" ]; then
         bin/cqlsh "$coordinator" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': $replication_factor };
         USE ycsb;
         create table usertable (y_id varchar primary key, field0 varchar);
