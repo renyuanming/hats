@@ -1203,15 +1203,15 @@ uuid_sstable_identifiers_enabled: false
 # How long the coordinator should wait for read operations to complete.
 # Lowest acceptable value is 10 ms.
 # Min unit: ms
-read_request_timeout: 5000ms
+read_request_timeout: 500000ms
 # How long the coordinator should wait for seq or index scans to complete.
 # Lowest acceptable value is 10 ms.
 # Min unit: ms
-range_request_timeout: 10000ms
+range_request_timeout: 1000000ms
 # How long the coordinator should wait for writes to complete.
 # Lowest acceptable value is 10 ms.
 # Min unit: ms
-write_request_timeout: 2000ms
+write_request_timeout: 200000ms
 # How long the coordinator should wait for counter writes to complete.
 # Lowest acceptable value is 10 ms.
 # Min unit: ms
