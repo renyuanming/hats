@@ -9,7 +9,6 @@ SSTABLE_SIZE_IN_MB=16
 KV_NUMBER=1000000
 FIELD_LENGTH=1000
 KEY_LENGTH=24
-MODE="mlsm" # mlsm or cassandra
 REBUILD_SERVER="false"
 WAIT_TIME=600
 
@@ -40,7 +39,7 @@ function main {
 
         for rf in "${REPLICAS[@]}"; do
             # Load data
-            load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${MODE}
+            load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH}
             # Wait for flush or compaction ready
             flush "LoadDB" $scheme $WAIT_TIME
             # Backup the DB and the logs
