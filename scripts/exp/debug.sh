@@ -7,8 +7,8 @@
 EXP_NAME="Exp-PureRead"
 WORKLOADS=("workloadc")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=30000000
-KV_NUMBER=30000000
+OPERATION_NUMBER=50000000
+KV_NUMBER=100000000
 FIELD_LENGTH=1000
 KEY_LENGTH=24
 KEY_LENGTHMin=24
@@ -45,7 +45,7 @@ STEP_SIZE=(0.05)
 OFFLOAD_THRESHOLD=(0.1)
 RECOVER_THRESHOLD=(0.1)
 ENABLE_HORSE="false"
-SHUFFLE_REPLICAS=("false" "true")
+SHUFFLE_REPLICAS=("false")
 
 SCHEMES=("horse" "depart" "mlsm")
 
@@ -54,9 +54,9 @@ function exportEnv {
     
     scheme=$1
     
-    export BACKUP_MODE="remote"
+    export BACKUP_MODE="local"
     export SCHEME=$scheme # horse or depart
-    export CLUSTER_NAME="4x"
+    export CLUSTER_NAME="1x"
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
     source "${SCRIPT_DIR}/../common.sh"
     initConf

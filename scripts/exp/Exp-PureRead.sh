@@ -54,9 +54,9 @@ function exportEnv {
     
     scheme=$1
     
-    export BACKUP_MODE="remote"
+    export BACKUP_MODE="local"
     export SCHEME=$scheme # horse or depart
-    export CLUSTER_NAME="4x"
+    export CLUSTER_NAME="1x"
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
     source "${SCRIPT_DIR}/../common.sh"
     initConf
