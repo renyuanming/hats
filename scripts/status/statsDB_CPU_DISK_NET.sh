@@ -11,7 +11,7 @@ function statsCPU_Disk_Network_DB {
     pathToCodeBase=$5
     diskDevice=$6
     networkInterface=$7
-    mode=$8
+    scheme=$8
 
     CASSANDRA_PID=$(ps aux | grep CassandraDaemon | grep -v grep | awk '{print $2}')
     echo "Cassandra PID: $CASSANDRA_PID"
@@ -81,17 +81,21 @@ function statsCPU_Disk_Network_DB {
     echo "Record DB status at stage ${stage}" >"$DB_OUTPUT_FILE"
     # Write the results to the file
     cd ${pathToCodeBase} || exit
-    bin/nodetool tablestats ycsb.usertable0 | grep "Local" | grep "count" >>"$DB_OUTPUT_FILE"
-    bin/nodetool tpstats >>"$DB_OUTPUT_FILE"
-    bin/nodetool tablehistograms ycsb.usertable0 >>"${resultDir}/${stage}_db_latency_breakdown_usertable0.txt"
 
-    if [ "$mode" == "mlsm" ]; then
+    if [ "$scheme" == "mlsm" ] || [ "$scheme" == "horse" ]; then
+        bin/nodetool tablestats ycsb.usertable0 | grep "Local" | grep "count" >>"$DB_OUTPUT_FILE"
+        bin/nodetool tpstats >>"$DB_OUTPUT_FILE"
+        bin/nodetool tablehistograms ycsb.usertable0 >>"${resultDir}/${stage}_db_latency_breakdown_usertable0.txt"
         bin/nodetool tablestats ycsb.usertable1 | grep "Local" | grep "count" >>"$DB_OUTPUT_FILE"
         bin/nodetool tpstats >>"$DB_OUTPUT_FILE"
         bin/nodetool tablehistograms ycsb.usertable1 >>"${resultDir}/${stage}_db_latency_breakdown_usertable1.txt"
         bin/nodetool tablestats ycsb.usertable2 | grep "Local" | grep "count" >>"$DB_OUTPUT_FILE"
         bin/nodetool tpstats >>"$DB_OUTPUT_FILE"
         bin/nodetool tablehistograms ycsb.usertable2 >>"${resultDir}/${stage}_db_latency_breakdown_usertable2.txt"
+    else
+        bin/nodetool tablestats ycsb.usertable | grep "Local" | grep "count" >>"$DB_OUTPUT_FILE"
+        bin/nodetool tpstats >>"$DB_OUTPUT_FILE"
+        bin/nodetool tablehistograms ycsb.usertable >>"${resultDir}/${stage}_db_latency_breakdown_usertable.txt"
     fi
 
 

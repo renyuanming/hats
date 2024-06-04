@@ -6,7 +6,7 @@
   tasks:
     - name: Monitor
       shell: |
-        . /etc/profile && bash PATH_TO_SCRIPTS/status/statsDB_CPU_DISK_NET.sh {{ expName }} {{workload}} {{ stage }} {{ resultDir }} {{ codeBase }} {{ diskDevice }} {{ networkDevice }} {{ mode }}
+        . /etc/profile && bash PATH_TO_SCRIPTS/status/statsDB_CPU_DISK_NET.sh {{ expName }} {{workload}} {{ stage }} {{ resultDir }} {{ codeBase }} {{ diskDevice }} {{ networkDevice }} {{ scheme }}
       vars:
         expName: "SampleExpName"
         workload: "workload_template"
@@ -15,7 +15,7 @@
         codeBase: "PATH_TO_SERVER"
         diskDevice: "DISK_DEVICE"
         networkDevice: "NETWORK_DEVICE"
-        mode: "normal"
+        scheme: "normal"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed
@@ -139,7 +139,7 @@
   tasks:
     - name: Monitor
       shell: |
-        . /etc/profile && bash PATH_TO_SCRIPTS/status/statsDB_CPU_DISK_NET.sh {{ expName }} {{ workload }} {{ stage }} {{ resultDir }} {{ codeBase }} {{ diskDevice }} {{ networkDevice }} {{ mode }}
+        . /etc/profile && bash PATH_TO_SCRIPTS/status/statsDB_CPU_DISK_NET.sh {{ expName }} {{ workload }} {{ stage }} {{ resultDir }} {{ codeBase }} {{ diskDevice }} {{ networkDevice }} {{ scheme }}
       vars:
         expName: "Exp#1-Degraded-Run-Cassandra-DATAPATH"
         workload: "workload_template"
@@ -148,7 +148,7 @@
         codeBase: "PATH_TO_SERVER"
         diskDevice: "DISK_DEVICE"
         networkDevice: "NETWORK_DEVICE"
-        mode: "normal"
+        scheme: "normal"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed
