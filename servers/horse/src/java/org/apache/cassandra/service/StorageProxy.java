@@ -1269,7 +1269,6 @@ public class StorageProxy implements StorageProxyMBean
                         if(store.name.contains("usertable"))
                         {
                             StorageService.instance.writeLatencyCalculator.record(latency/1000);
-                            logger.info("rymInfo: CoordinatorWriteLatency for table {} is {} us, {} ns", store.name, latency/1000, latency);
                         }
                     });
         }
@@ -2046,7 +2045,6 @@ public class StorageProxy implements StorageProxyMBean
                 if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
                 {
                     StorageService.instance.readLatencyCalculator.record(latency/1000);
-                    logger.info("rymInfo: record coordinator read latency: {} us, {}ns", latency/1000, latency);
                 }
             }
         }
