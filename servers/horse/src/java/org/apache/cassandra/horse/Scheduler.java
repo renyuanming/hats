@@ -249,12 +249,6 @@ public class Scheduler {
         }
     }
 
-    private static void acknowledgeClientDriver()
-    {
-        // [TODO] Acknowledge the client driver
-    }
-
-
     /**
      * Calculate the placement policy.
      * 
@@ -320,72 +314,71 @@ public class Scheduler {
      * the target node and how many requests should be offloaded.
      * 
      */
-    private static void offloadRequests(int nodeIndex, final double recoverThreshold)
+    private static void offloadRequests(int primaryIndex, final double recoverThreshold)
     {
+        // If the current node already has some requests to be offloaded, we do nothing
+        if(GlobalStates.globalStates.deltaVector[primaryIndex] > 0)
+        {
+            return;
+        }
 
         // Traverse every secondary replica node, and offload the request to the node with the lower score
-        for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
+        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.globalStates.rf; i++)
         {
-            int targetIndex = i % GlobalStates.globalStates.nodeCount;
-            if(GlobalStates.globalStates.scoreVector[targetIndex] < recoverThreshold)
+            int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
+            if(GlobalStates.globalStates.scoreVector[secondaryIndex] < recoverThreshold)
             {
-                if(GlobalStates.globalStates.deltaVector[targetIndex] >= GlobalStates.STEP_SIZE * (GlobalStates.globalStates.rf - 1))
+                
+                if(GlobalStates.globalPolicy[primaryIndex][0] <= 0)
                 {
                     continue;
                 }
 
-                if(GlobalStates.globalPolicy[nodeIndex][0] <= 0)
-                {
-                    continue;
-                }
+                double stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
+                stepSize = stepSize > GlobalStates.globalPolicy[primaryIndex][0] ? GlobalStates.globalPolicy[primaryIndex][0] : stepSize;
 
-                double stepSize = (GlobalStates.globalStates.scoreVector[nodeIndex] / GlobalStates.globalStates.scoreVector[targetIndex] - 1.0) * 0.1;
-                stepSize = stepSize > GlobalStates.globalPolicy[nodeIndex][0] ? GlobalStates.globalPolicy[nodeIndex][0] : stepSize;
-                stepSize = rounding(stepSize);
+                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(primaryIndex, i);
 
-                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
-
-                GlobalStates.globalPolicy[nodeIndex][0] = 
-                            rounding(GlobalStates.globalPolicy[nodeIndex][0] - stepSize);
-                GlobalStates.globalPolicy[targetIndex][replicaIndex] = 
-                            rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex] + stepSize);
+                GlobalStates.globalPolicy[primaryIndex][0] = 
+                            rounding(GlobalStates.globalPolicy[primaryIndex][0] - stepSize);
+                GlobalStates.globalPolicy[secondaryIndex][replicaIndex] = 
+                            rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] + stepSize);
                 GlobalStates.globalStates.deltaVector[replicaIndex] = 
                             rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - stepSize);
-                GlobalStates.globalStates.deltaVector[targetIndex] = 
-                            rounding(GlobalStates.globalStates.deltaVector[targetIndex] + stepSize);
+                GlobalStates.globalStates.deltaVector[secondaryIndex] = 
+                            rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] + stepSize);
             }
         }
     }
 
     // Recover the request load
-    private static void recoverRequests(int nodeIndex, final double offloadThreshold)
+    private static void recoverRequests(int primaryIndex, final double offloadThreshold)
     {
         // Traverse every secondary replica node, and recover the request from the node with the higher score
-        for(int i = nodeIndex + 1; i < nodeIndex + GlobalStates.globalStates.rf; i++)
+        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.globalStates.rf; i++)
         {
-            int targetIndex = i % GlobalStates.globalStates.nodeCount;
-            if(GlobalStates.globalStates.scoreVector[targetIndex] >= offloadThreshold)
+            int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
+            if(GlobalStates.globalStates.scoreVector[secondaryIndex] >= offloadThreshold)
             {
-                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(nodeIndex, i);
+                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(primaryIndex, i);
                 
-                if(GlobalStates.globalPolicy[targetIndex][replicaIndex] <= 0)
+                if(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] <= 0)
                 {
                     continue;
                 }
                 else
                 {
-                    double stepSize = (GlobalStates.globalStates.scoreVector[targetIndex] / GlobalStates.globalStates.scoreVector[nodeIndex] - 1.0) * 0.1;
-                    stepSize = stepSize > GlobalStates.globalPolicy[targetIndex][replicaIndex] ? GlobalStates.globalPolicy[targetIndex][replicaIndex] : stepSize;
-                    stepSize = rounding(stepSize);
+                    double stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
+                    stepSize = stepSize > GlobalStates.globalPolicy[secondaryIndex][replicaIndex] ? GlobalStates.globalPolicy[secondaryIndex][replicaIndex] : stepSize;
 
-                    GlobalStates.globalPolicy[nodeIndex][0] = 
-                                rounding(GlobalStates.globalPolicy[nodeIndex][0] + stepSize);
-                    GlobalStates.globalPolicy[targetIndex][replicaIndex] = 
-                                rounding(GlobalStates.globalPolicy[targetIndex][replicaIndex] - stepSize);
-                    GlobalStates.globalStates.deltaVector[nodeIndex] = 
-                                rounding(GlobalStates.globalStates.deltaVector[nodeIndex] + stepSize);
-                    GlobalStates.globalStates.deltaVector[targetIndex] = 
-                                rounding(GlobalStates.globalStates.deltaVector[targetIndex] - stepSize);
+                    GlobalStates.globalPolicy[primaryIndex][0] = 
+                                rounding(GlobalStates.globalPolicy[primaryIndex][0] + stepSize);
+                    GlobalStates.globalPolicy[secondaryIndex][replicaIndex] = 
+                                rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] - stepSize);
+                    GlobalStates.globalStates.deltaVector[primaryIndex] = 
+                                rounding(GlobalStates.globalStates.deltaVector[primaryIndex] + stepSize);
+                    GlobalStates.globalStates.deltaVector[secondaryIndex] = 
+                                rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] - stepSize);
                 }
             }
         }
@@ -397,6 +390,11 @@ public class Scheduler {
         BigDecimal bd = new BigDecimal(Double.toString(value));
         bd = bd.setScale(3, RoundingMode.HALF_UP);
         return bd.doubleValue();
+    }
+
+    private static double getStepSize(double primaryScore, double secondaryScore)
+    {
+        return rounding(Math.abs(Math.pow((1 - secondaryScore / primaryScore), 3)));
     }
 
     /**

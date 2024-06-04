@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
+import com.codahale.metrics.Timer;
 
 
 /**
@@ -187,30 +188,34 @@ public class LocalStates implements Serializable {
 
     public static class LatencyCalculator 
     {
-        private final Histogram histogram;
+        private final Timer timer;
 
-        // TODO: limit the number of the data in the queue
         public LatencyCalculator(String metricName, int windowInterval) {
-            this.histogram = new Histogram(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
-            registry.register(metricName, this.histogram);
+            this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
+            registry.register(metricName, this.timer);
         }
 
-        public void record(double latency) {
-            this.histogram.update((int)latency);
+        public void record(long latency) {
+            this.timer.update(latency, TimeUnit.MICROSECONDS);
         }
 
         public double getStdDev() {
-            return this.histogram.getSnapshot().getStdDev();
+            return this.timer.getSnapshot().getStdDev();
         }
 
         public double getWindowMean() 
         {
-            return this.histogram.getSnapshot().getMean();
+            return this.timer.getSnapshot().getMean();
+        }
+
+        public double getMedian()
+        {
+            return this.timer.getSnapshot().getMedian();
         }
 
         public int getCount()
         {
-            return this.histogram.getSnapshot().size();
+            return this.timer.getSnapshot().size();
         }
     }
 

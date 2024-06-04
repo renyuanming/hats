@@ -124,6 +124,7 @@ import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.BatchlogResponseHandler.BatchlogCleanup;
 import org.apache.cassandra.service.paxos.Ballot;
 import org.apache.cassandra.service.paxos.Commit;
 import org.apache.cassandra.service.paxos.ContentionStrategy;
@@ -1263,7 +1264,13 @@ public class StorageProxy implements StorageProxyMBean
             mutations.stream()
                      .flatMap(m -> m.getTableIds().stream().map(tableId -> Keyspace.open(m.getKeyspaceName()).getColumnFamilyStore(tableId)))
                      .distinct()
-                     .forEach(store -> store.metric.coordinatorWriteLatency.update(latency, TimeUnit.NANOSECONDS));
+                     .forEach(store -> {
+                        store.metric.coordinatorWriteLatency.update(latency, TimeUnit.NANOSECONDS);
+                        if(store.name.contains("usertable"))
+                        {
+                            StorageService.instance.writeLatencyCalculator.record(latency/1000);
+                        }
+                    });
         }
         catch (Exception ex)
         {
@@ -2033,7 +2040,13 @@ public class StorageProxy implements StorageProxyMBean
             readMetricsForLevel(consistencyLevel).addNano(latency);
             // TODO avoid giving every command the same latency number.  Can fix this in CASSADRA-5329
             for (ReadCommand command : group.queries)
+            {
                 Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().equals("ycsb"))
+                {
+                    StorageService.instance.readLatencyCalculator.record(latency/1000);
+                }
+            }
         }
     }
 
