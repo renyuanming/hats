@@ -25,8 +25,8 @@ elif [[ "$CLUSTER_NAME" == "4x" ]]; then
     NodesIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
     Client="node49"
     ClientIP="192.168.10.59"
-    Seeds=("node41" "node42")
-    SeedsIP=("192.168.10.51" "192.168.10.52")
+    Seeds=("node41" "node42" "node43" "node45")
+    SeedsIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
     NodeIP="192.168.10.51" # Only used for start-client.sh
     UserName="ymren"
     SudoPassword="898915"
