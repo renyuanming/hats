@@ -371,8 +371,17 @@ public class Scheduler {
                 }
                 else
                 {
-                    double stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
+                    double stepSize;
+                    if(GlobalStates.globalStates.scoreVector[primaryIndex] <= 0)
+                    {
+                        stepSize = 0.2;
+                    }
+                    else
+                    {                        
+                        stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
+                    }
                     stepSize = stepSize > GlobalStates.globalPolicy[secondaryIndex][replicaIndex] ? GlobalStates.globalPolicy[secondaryIndex][replicaIndex] : stepSize;
+
 
                     GlobalStates.globalPolicy[primaryIndex][0] = 
                                 rounding(GlobalStates.globalPolicy[primaryIndex][0] + stepSize);
