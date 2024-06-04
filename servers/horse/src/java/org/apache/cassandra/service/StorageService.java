@@ -5133,37 +5133,30 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
      * When the node failure happens, we can still get all replica nodes based on the token.
     */
     public List<InetAddressAndPort> getReplicaNodesWithPortFromTokenForDegradeRead(String keyspaceName, Token token) {
-
+        List<Long> tokenRanges =  new ArrayList<>(Gossiper.getTokenRanges());
         List<InetAddressAndPort> allHosts = Gossiper.getAllHosts();
         List<InetAddressAndPort> replicaNodes = new ArrayList<>();
 
         long targetToken = (long) token.getTokenValue();
-        int index = 0;
-        for (long currentToken : Gossiper.getTokenRanges()) {
-            if (currentToken >= targetToken) {
-                break;
-            }
-            index++;
+        int index = Collections.binarySearch(tokenRanges, targetToken);
+        if (index < 0) {
+            index = -index - 1;
         }
-
-        if (index == Gossiper.getTokenRanges().size())
+        if (index == tokenRanges.size()) {
             index = 0;
+        }
 
         int rf = Keyspace.open(keyspaceName).getAllReplicationFactor();
         int endIndex = index + rf;
 
-        if (endIndex > allHosts.size()) {
-            replicaNodes.addAll(allHosts.subList(index, allHosts.size()));
-            replicaNodes.addAll(allHosts.subList(0, endIndex % allHosts.size()));
-        } else {
-            replicaNodes.addAll(allHosts.subList(index, endIndex));
+        for (int i = index; i < endIndex; i++) {
+            replicaNodes.add(allHosts.get(i % allHosts.size()));
         }
 
         // logger.debug("rym-Debug: token is ({}), replica nodes are ({}), all hosts are ({}), token ranges are ({})", 
         //              token, replicaNodes, allHosts, Gossiper.getTokenRanges());
 
         return replicaNodes;
-
     }
 
     /**
