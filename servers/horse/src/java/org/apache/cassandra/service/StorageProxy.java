@@ -2043,7 +2043,7 @@ public class StorageProxy implements StorageProxyMBean
             for (ReadCommand command : group.queries)
             {
                 Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().equals("ycsb"))
+                if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
                 {
                     StorageService.instance.readLatencyCalculator.record(latency/1000);
                     logger.info("rymInfo: record coordinator read latency: {} us, {}ns", latency/1000, latency);
