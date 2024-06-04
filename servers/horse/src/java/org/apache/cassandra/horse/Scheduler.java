@@ -281,8 +281,11 @@ public class Scheduler {
             for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
             {
                 mean += GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
+
             }
             mean = mean / GlobalStates.globalStates.rf;
+
+
             
             for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
             {
@@ -291,7 +294,7 @@ public class Scheduler {
             stdDev = Math.sqrt(stdDev / GlobalStates.globalStates.rf);
 
             final double offloadThreshold = mean + stdDev;
-            final double recoverThreshold = mean;
+            final double recoverThreshold = mean + stdDev / 2;
 
             if (GlobalStates.globalStates.scoreVector[i] >= offloadThreshold)
             {
@@ -387,9 +390,17 @@ public class Scheduler {
 
     private static double rounding(double value)
     {
-        BigDecimal bd = new BigDecimal(Double.toString(value));
-        bd = bd.setScale(3, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+        try
+        {
+            BigDecimal bd = new BigDecimal(Double.toString(value));
+            bd = bd.setScale(2, RoundingMode.HALF_UP);
+            return bd.doubleValue();
+        }
+        catch (Exception e)
+        {
+            logger.error("rymError: rounding error for value {}", value);
+            return value;
+        }
     }
 
     private static double getStepSize(double primaryScore, double secondaryScore)
