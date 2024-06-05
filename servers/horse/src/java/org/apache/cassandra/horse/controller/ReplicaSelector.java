@@ -67,10 +67,10 @@ public class ReplicaSelector
             greedyScore += LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
         }
 
-        if(sampleLatency.containsKey(targetAddr))
-        {
-            latencyScore = minLatency / sampleLatency.get(targetAddr);
-        }
+        // if(sampleLatency.containsKey(targetAddr))
+        // {
+        //     latencyScore = minLatency / sampleLatency.get(targetAddr);
+        // }
         
         return greedyScore + Math.pow(latencyScore, 3);
     }
