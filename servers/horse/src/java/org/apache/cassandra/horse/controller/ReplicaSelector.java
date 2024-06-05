@@ -49,35 +49,45 @@ public class ReplicaSelector
      * 1. It can periodically update the score based on the placement policy and the sampling latency
      */
 
-    public static ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
-    public static volatile double minLatency = 0.0;
+    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 0.0);
+
+    public static class SnitchMetrics 
+    {
+        public final ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency;
+        public final double minLatency;
+
+        public SnitchMetrics(ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency, double minLatency) 
+        {
+            this.sampleLatency = sampleLatency;
+            this.minLatency = minLatency;
+        }
+        
+    }
 
     public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr)
     {
         double greedyScore = 0.0;
         double latencyScore = 0.0;
 
-        if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-        {
-            greedyScore = 1.0;
-        }
-
         if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
         {
-            greedyScore += LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
+            {
+                greedyScore = 1.0;
+            }
+            else
+            {
+                greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            }
         }
 
-        // if(sampleLatency.containsKey(targetAddr))
-        // {
-        //     latencyScore = minLatency / sampleLatency.get(targetAddr);
-        // }
+        if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+        {
+            latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+        }
         
         return greedyScore + Math.pow(latencyScore, 3);
     }
-
-
-
-
 
     public static class HighPerformanceWeightedSelector {
         private final List<InetAddress> targets;

@@ -154,8 +154,7 @@ public class Scheduler {
                         return;
                     }
                 }
-                logger.info("rymInfo: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
-                             GlobalStates.globalStates.versionVector, 
+                logger.info("rymInfo: we now have the global states, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}",
                              GlobalStates.globalStates.latencyVector, 
                              GlobalStates.globalStates.readCountOfEachNode, 
                              GlobalStates.globalStates.scoreVector, 
@@ -362,7 +361,7 @@ public class Scheduler {
         for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.globalStates.rf; i++)
         {
             int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
-            if(GlobalStates.globalStates.scoreVector[secondaryIndex] >= offloadThreshold)
+            if(GlobalStates.globalStates.scoreVector[secondaryIndex] > GlobalStates.globalStates.scoreVector[primaryIndex])
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(primaryIndex, i);
                 
@@ -372,15 +371,7 @@ public class Scheduler {
                 }
                 else
                 {
-                    double stepSize;
-                    if(GlobalStates.globalStates.scoreVector[primaryIndex] <= 0)
-                    {
-                        stepSize = 0.2;
-                    }
-                    else
-                    {                        
-                        stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
-                    }
+                    double stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
                     stepSize = stepSize > GlobalStates.globalPolicy[secondaryIndex][replicaIndex] ? GlobalStates.globalPolicy[secondaryIndex][replicaIndex] : stepSize;
 
 

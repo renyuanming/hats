@@ -324,18 +324,19 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         // We're going to weight the latency for each host against the worst one we see, to
         // arrive at sort of a 'badness percentage' for them. First, find the worst for each:
         HashMap<InetAddressAndPort, Double> newScores = new HashMap<>();
+        ConcurrentHashMap<InetAddressAndPort, Double> newSampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
         for (Map.Entry<InetAddressAndPort, Snapshot> entry : snapshots.entrySet())
         {
             double mean = entry.getValue().getMedian();
             if (mean > maxLatency)
                 maxLatency = mean;
 
-        // HORSE
-            ReplicaSelector.sampleLatency.put(entry.getKey(), mean);
+        // HORSE: update the sample latency
+            newSampleLatency.put(entry.getKey(), mean);
             if (mean < minLatency)
                 minLatency = mean;
         }
-        ReplicaSelector.minLatency = minLatency;
+        ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency);
         ////////////////////////////////////////////////////////
 
         // now make another pass to do the weighting based on the maximums we found before
