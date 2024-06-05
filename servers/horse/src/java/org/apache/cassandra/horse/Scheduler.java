@@ -294,7 +294,7 @@ public class Scheduler {
             stdDev = Math.sqrt(stdDev / GlobalStates.globalStates.rf);
 
             final double offloadThreshold = mean + stdDev;
-            final double recoverThreshold = mean + stdDev / 2;
+            final double recoverThreshold = mean;
 
             if (GlobalStates.globalStates.scoreVector[i] >= offloadThreshold)
             {
@@ -414,7 +414,7 @@ public class Scheduler {
 
     private static double getStepSize(double primaryScore, double secondaryScore)
     {
-        return rounding(Math.abs(Math.pow((1 - secondaryScore / primaryScore), 3)));
+        return Math.min(0.1, rounding(Math.abs(Math.pow((1 - secondaryScore / primaryScore), 3))));
     }
 
     /**
