@@ -72,7 +72,7 @@ public class ReplicaSelector
             latencyScore = minLatency / sampleLatency.get(targetAddr);
         }
         
-        return greedyScore + latencyScore * 0.5;
+        return greedyScore + Math.pow(latencyScore, 3);
     }
 
 

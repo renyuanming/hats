@@ -167,14 +167,15 @@ public class Scheduler {
                 // Step3. Update local Policy
                 LocalStates.updateLocalPolicy();
 
-                // Step4. Replicate the placement policy to the followers
+                // Step4. Acknowledge to the client driver
+                StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient());
+
+                // Step5. Replicate the placement policy to the followers
                 replicateGlobalPolicy();
                 
                 // // Step5. Distribute the placement policy to the data nodes to control the background tasks
                 // distributeCompactionRate();
 
-                // // Step6. Acknowledge the client driver
-                // acknowledgeClientDriver();
             }
         }
     }
