@@ -86,7 +86,7 @@ public class ReplicaSelector
             latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
         }
         
-        return greedyScore + Math.pow(latencyScore, 3);
+        return greedyScore;//+ Math.pow(latencyScore, 3);
     }
 
     public static class HighPerformanceWeightedSelector {
