@@ -266,7 +266,7 @@ function rebuildServer {
 
     antOption="-Duse.jdk11=true"
 
-    if [ "${scheme}" == "depart" ]|| [ $scheme == "cassandra-3.11.4" ]; then
+    if [ "${scheme}" == "depart" ] || [ $scheme == "cassandra-3.11.4" ]; then
         antOption=""
     fi
 
