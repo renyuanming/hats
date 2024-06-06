@@ -1491,6 +1491,7 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
     static void compactionRateLimiterAcquire(RateLimiter limiter, long bytesScanned, long lastBytesScanned, double compressionRatio)
     {
         long lengthRead = (long) ((bytesScanned - lastBytesScanned) * compressionRatio) + 1;
+        StorageService.instance.compactionRateMonitor.record(lengthRead);
         while (lengthRead >= Integer.MAX_VALUE)
         {
             limiter.acquire(Integer.MAX_VALUE);

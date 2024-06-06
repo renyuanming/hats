@@ -44,6 +44,7 @@ import org.apache.cassandra.io.sstable.SSTableMultiWriter;
 import org.apache.cassandra.io.sstable.format.SSTableFormat;
 import org.apache.cassandra.metrics.TableMetrics;
 import org.apache.cassandra.service.ActiveRepairService;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 
 public class Flushing
@@ -105,6 +106,8 @@ public class Flushing
         Memtable.FlushablePartitionSet<?> flushSet = memtable.getFlushSet(from, to);
         SSTableFormat<?, ?> format = DatabaseDescriptor.getSelectedSSTableFormat();
         long estimatedSize = format.getWriterFactory().estimateSize(flushSet);
+
+        StorageService.instance.flushRateMonitor.record(estimatedSize);
 
         Descriptor descriptor = flushLocation == null
                                 ? cfs.newSSTableDescriptor(cfs.getDirectories().getWriteableLocationAsFile(estimatedSize), format)

@@ -150,6 +150,7 @@ import org.apache.cassandra.gms.IFailureDetector;
 import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
+import org.apache.cassandra.horse.controller.RateLimiter.RateMonitor;
 import org.apache.cassandra.horse.states.LocalStatesBroadcaster;
 import org.apache.cassandra.horse.states.LocalStates.LatencyCalculator;
 import org.apache.cassandra.horse.states.LocalStates.ReplicaRequestCounter;
@@ -305,6 +306,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", DatabaseDescriptor.getSchedulingInterval());
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("CoordinatorWriteLatency", DatabaseDescriptor.getSchedulingInterval());
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
+    public RateMonitor flushRateMonitor = new RateMonitor("FlushRate");
+    public RateMonitor compactionRateMonitor = new RateMonitor("CompactionRate");
+    public RateMonitor readRateMonitor = new RateMonitor("ReadRate");
 
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 

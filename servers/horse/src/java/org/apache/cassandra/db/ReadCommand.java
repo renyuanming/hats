@@ -67,6 +67,7 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.SchemaProvider;
 import org.apache.cassandra.service.ActiveRepairService;
 import org.apache.cassandra.service.ClientWarn;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.CassandraUInt;
 import org.apache.cassandra.utils.FBUtilities;
@@ -684,6 +685,8 @@ public abstract class ReadCommand extends AbstractReadQuery
 
             private void addSize(long size)
             {
+                StorageService.instance.readRateMonitor.record(size);
+                
                 this.sizeInBytes += size;
                 if (failBytes != -1 && this.sizeInBytes >= failBytes)
                 {

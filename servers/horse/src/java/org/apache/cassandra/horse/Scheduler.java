@@ -491,6 +491,27 @@ public class Scheduler {
         }
     }
 
+
+
+    
+    public static Runnable getPrintStatisticRunnable()
+    {
+        return new PrintStatisticRunnable();
+    }
+
+    private static class PrintStatisticRunnable implements Runnable
+    {
+
+        @Override
+        public void run() {
+            logger.info("rymInfo: The Flush rate is {} mb/s, the read rate is {} mb/s, the compaction rate is {} mb/s", 
+                        StorageService.instance.flushRateMonitor.getRateInMB(),
+                        StorageService.instance.readRateMonitor.getRateInMB(),
+                        StorageService.instance.compactionRateMonitor.getRateInMB());        
+        }
+        
+    }
+
     public static void main(String[] args) {
         double value = 0.123456789;
         System.out.println(rounding(value));

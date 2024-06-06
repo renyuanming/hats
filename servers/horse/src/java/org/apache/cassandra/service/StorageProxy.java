@@ -1987,6 +1987,10 @@ public class StorageProxy implements StorageProxyMBean
             casReadMetrics.addNano(latency);
             readMetricsForLevel(consistencyLevel).addNano(latency);
             Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
+            {
+                StorageService.instance.readLatencyCalculator.record(latency/1000);
+            }
         }
 
         return result;
