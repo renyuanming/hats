@@ -660,7 +660,6 @@ function runExp {
                                                     for recoverThreshold in "${RECOVER_THRESHOLD[@]}"; do
                                                         for shuffleReplicas in "${SHUFFLE_REPLICAS[@]}"; do
 
-                                                            echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist}"
                                                             
                                                             if [ "${compactionLevel}" == "zero" ]; then
                                                                 ENABLE_AUTO_COMPACTION="false"
@@ -672,6 +671,7 @@ function runExp {
                                                                 ENABLE_AUTO_COMPACTION="true"
                                                                 ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
                                                             fi
+                                                            echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}"
 
                                                             SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
