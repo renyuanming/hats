@@ -504,9 +504,9 @@ public class Scheduler {
 
         @Override
         public void run() {
-            logger.info("rymInfo: The Flush rate is {} mb/s, the read rate is {} mb/s, the compaction rate is {} mb/s", 
+            logger.info("rymInfo: The Flush rate is {} mb/s, the read rate is {} b/s, the compaction rate is {} mb/s", 
                         StorageService.instance.flushRateMonitor.getRateInMB(),
-                        StorageService.instance.readRateMonitor.getRateInMB(),
+                        StorageService.instance.readRateMonitor.getRate(),
                         StorageService.instance.compactionRateMonitor.getRateInMB());        
         }
         
