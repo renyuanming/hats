@@ -30,6 +30,7 @@ import org.apache.cassandra.db.lifecycle.ILifecycleTransaction;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.format.SSTableWriter;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.concurrent.Transactional;
 
 /**
@@ -331,6 +332,7 @@ public class SSTableRewriter extends Transactional.AbstractTransactional impleme
             writer.setOpenResult(true);
             writer.prepareToCommit();
             SSTableReader reader = writer.finished();
+            StorageService.instance.compactionRateMonitor.record(reader.bytesOnDisk());
             transaction.update(reader, false);
             preparedForCommit.add(reader);
         }
