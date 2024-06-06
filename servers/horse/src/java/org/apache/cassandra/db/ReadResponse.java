@@ -240,7 +240,6 @@ public abstract class ReadResponse
         {
             super();
             this.data = data;
-            StorageService.instance.readRateMonitor.record(data.position());
             this.repairedDataDigest = repairedDataDigest;
             this.isRepairedDigestConclusive = isRepairedDigestConclusive;
             this.dataSerializationVersion = dataSerializationVersion;

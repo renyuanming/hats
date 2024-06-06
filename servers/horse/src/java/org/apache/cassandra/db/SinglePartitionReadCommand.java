@@ -710,9 +710,10 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                 // Memtable data is always considered unrepaired
                 controller.updateMinOldestUnrepairedTombstone(memtable.getMinLocalDeletionTime());
                 inputCollector.addMemtableIterator(RTBoundValidator.validate(iter, RTBoundValidator.Stage.MEMTABLE, false));
-
+                
                 mostRecentPartitionTombstone = Math.max(mostRecentPartitionTombstone,
                                                         iter.partitionLevelDeletion().markedForDeleteAt());
+                StorageService.instance.readRateMonitor.record(iter.partitionKey().getKeyLength() + iter.staticRow().dataSize() + iter.columns().size() + iter.stats().unsharedHeapSize());
             }
 
             /*
@@ -769,6 +770,8 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                     inputCollector.addSSTableIterator(sstable, iter);
                     mostRecentPartitionTombstone = Math.max(mostRecentPartitionTombstone,
                                                             iter.partitionLevelDeletion().markedForDeleteAt());
+                    
+                    StorageService.instance.readRateMonitor.record(iter.partitionKey().getKeyLength() + iter.staticRow().dataSize() + iter.columns().size() + iter.stats().unsharedHeapSize());
                 }
                 else
                 {
@@ -781,6 +784,8 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
 
                     // 'iter' is added to iterators which is closed on exception, or through the closing of the final merged iterator
                     UnfilteredRowIterator iter = makeRowIteratorWithSkippedNonStaticContent(cfs, sstable, metricsCollector);
+                    
+                    StorageService.instance.readRateMonitor.record(iter.partitionKey().getKeyLength() + iter.staticRow().dataSize() + iter.columns().size() + iter.stats().unsharedHeapSize());
 
                     // if the sstable contains a partition delete, then we must include it regardless of whether it
                     // shadows any other data seen locally as we can't guarantee that other replicas have seen it
