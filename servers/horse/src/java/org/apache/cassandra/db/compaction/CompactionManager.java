@@ -369,8 +369,6 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
                 }
                 else
                 {
-                    logger.info("rymInfo: Start a background task for {}.{} with compaction strategy {}, task is {}",
-                                cfs.getKeyspaceName(), cfs.name, strategy.getName(), task.toString());
                     task.execute(active);
                     ranCompaction = true;
                 }

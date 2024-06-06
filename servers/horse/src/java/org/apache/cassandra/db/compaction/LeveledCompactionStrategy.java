@@ -39,6 +39,7 @@ import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.ConfigurationException;
+import org.apache.cassandra.horse.controller.RateLimiter;
 import org.apache.cassandra.io.sstable.ISSTableScanner;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 
@@ -160,6 +161,21 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
                             "unless it happens frequently, in which case it must be reported. Will retry later.",
                             candidate.sstables);
                 return null;
+            }
+
+            // HORSE: We decide whether perform compaction here
+            if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
+            {
+                int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+                if(!RateLimiter.compactionRateLimiter.receiveTask(lsmIndex))
+                {
+                    logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+                    return null;
+                }
+                else
+                {
+                    logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                }
             }
 
             LifecycleTransaction txn = cfs.getTracker().tryModify(candidate.sstables, OperationType.COMPACTION);

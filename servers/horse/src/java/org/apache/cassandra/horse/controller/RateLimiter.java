@@ -22,6 +22,10 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.service.StorageService;
+
+import com.alipay.sofa.jraft.storage.Storage;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 /**
@@ -83,6 +87,16 @@ public class RateLimiter
         if (totalServed.get() == 0) 
         {
             return true;
+        }
+
+        final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
+                                      StorageService.instance.flushRateMonitor.getRateInMB() * 4;
+        final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
+        final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
+        
+        if(backgroundRate >= throttleBackgroundRate)
+        {
+            return false;
         }
 
         // TODO: check if the rate is below the target rate
@@ -253,15 +267,15 @@ public class RateLimiter
 
     public static void main(String[] args) 
     {
-        int[] targetRatios = {80, 10, 10};
-        RateLimiter rateLimiter = new RateLimiter(targetRatios);
+        // int[] targetRatios = {80, 10, 10};
+        // RateLimiter rateLimiter = new RateLimiter(targetRatios);
 
         System.out.println("Test case 1: Random task selection");
-        runRandomTaskSelectionTest(rateLimiter);
+        runRandomTaskSelectionTest(compactionRateLimiter);
 
-        rateLimiter.reset();
+        compactionRateLimiter.reset();
 
         System.out.println("Test case 2: Simulate task type 0 exhaustion");
-        runSimulatedTaskDistributionTest(rateLimiter);
+        runSimulatedTaskDistributionTest(compactionRateLimiter);
     }
 }
