@@ -506,8 +506,8 @@ public class Scheduler {
         public void run() {
             logger.info("rymInfo: The Flush rate is {} mb/s, the local read rate is {} mb/s, the coordinator read rate is {} mb/s, the compaction rate is {} mb/s", 
                         StorageService.instance.flushRateMonitor.getRateInMB(),
-                        StorageService.instance.localReadRateMonitor.getRate(),
-                        StorageService.instance.coordinatorReadRateMonitor.getRate(),
+                        StorageService.instance.localReadRateMonitor.getRateInMB(),
+                        StorageService.instance.coordinatorReadRateMonitor.getRateInMB(),
                         StorageService.instance.compactionRateMonitor.getRateInMB());        
         }
         
