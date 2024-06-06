@@ -1987,6 +1987,7 @@ public class StorageProxy implements StorageProxyMBean
             casReadMetrics.addNano(latency);
             readMetricsForLevel(consistencyLevel).addNano(latency);
             Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            StorageService.instance.readRequestInFlight.decrementAndGet();
             if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
             {
                 StorageService.instance.readLatencyCalculator.record(latency/1000);
@@ -2045,6 +2046,7 @@ public class StorageProxy implements StorageProxyMBean
             // TODO avoid giving every command the same latency number.  Can fix this in CASSADRA-5329
             for (ReadCommand command : group.queries)
             {
+                StorageService.instance.readRequestInFlight.decrementAndGet();
                 Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
                 {
@@ -2110,6 +2112,7 @@ public class StorageProxy implements StorageProxyMBean
         // for type of speculation we'll use in this read
         for (int i=0; i<cmdCount; i++)
         {
+            StorageService.instance.readRequestInFlight.incrementAndGet();
             reads[i] = AbstractReadExecutor.getReadExecutor(commands.get(i), consistencyLevel, queryStartNanoTime);
 
             if (reads[i].hasLocalRead())

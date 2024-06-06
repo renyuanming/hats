@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import com.alipay.sofa.jraft.storage.Storage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -705,6 +706,7 @@ public abstract class ReadCommand extends AbstractReadQuery
             protected void onClose()
             {
                 StorageService.instance.localReadRateMonitor.record(sizeInBytes);
+                StorageService.instance.coordinatorReadRateMonitor.record(sizeInBytes);
                 ColumnFamilyStore cfs = Schema.instance.getColumnFamilyStoreInstance(metadata().id);
                 if (cfs != null)
                     cfs.metric.localReadSize.update(sizeInBytes);

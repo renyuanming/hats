@@ -310,6 +310,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public RateMonitor compactionRateMonitor = new RateMonitor("CompactionRate");
     public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
     public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
+    public AtomicLong readRequestInFlight = new AtomicLong(0);
 
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 

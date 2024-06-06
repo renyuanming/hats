@@ -504,11 +504,12 @@ public class Scheduler {
 
         @Override
         public void run() {
-            logger.info("rymInfo: The Flush rate is {} mb/s, the local read rate is {} mb/s, the coordinator read rate is {} mb/s, the compaction rate is {} mb/s", 
+            logger.info("rymInfo: The Flush rate is {} mb/s, the local read rate is {} mb/s, the coordinator read rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}", 
                         StorageService.instance.flushRateMonitor.getRateInMB(),
                         StorageService.instance.localReadRateMonitor.getRateInMB(),
                         StorageService.instance.coordinatorReadRateMonitor.getRateInMB(),
-                        StorageService.instance.compactionRateMonitor.getRateInMB());        
+                        StorageService.instance.compactionRateMonitor.getRateInMB(),
+                        StorageService.instance.readRequestInFlight.get());        
         }
         
     }
