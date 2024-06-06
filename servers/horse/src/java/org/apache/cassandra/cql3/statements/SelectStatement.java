@@ -1029,12 +1029,12 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
 
     private void maybeWarn(ResultSetBuilder result, QueryOptions options)
     {
+        StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
         if (!options.isReadThresholdsEnabled())
             return;
         ColumnFamilyStore store = cfs();
         if (store != null)
             store.metric.coordinatorReadSize.update(result.getSize());
-        StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
         if (result.shouldWarn(options.getCoordinatorReadSizeWarnThresholdBytes()))
         {
             String msg = String.format("Read on table %s has exceeded the size warning threshold of %,d bytes", table, options.getCoordinatorReadSizeWarnThresholdBytes());
@@ -1048,6 +1048,7 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
 
     private void maybeFail(ResultSetBuilder result, QueryOptions options)
     {
+        StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
         if (!options.isReadThresholdsEnabled())
             return;
         if (result.shouldReject(options.getCoordinatorReadSizeAbortThresholdBytes()))
@@ -1062,7 +1063,6 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
             {
                 store.metric.coordinatorReadSizeAborts.mark();
                 store.metric.coordinatorReadSize.update(result.getSize());
-                StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
             }
             // read errors require blockFor and recieved (its in the protocol message), but this isn't known;
             // to work around this, treat the coordinator as the only response we care about and mark it failed
