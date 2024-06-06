@@ -32,6 +32,7 @@ import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 public abstract class ReadResponse
@@ -239,6 +240,7 @@ public abstract class ReadResponse
         {
             super();
             this.data = data;
+            StorageService.instance.readRateMonitor.record(data.position());
             this.repairedDataDigest = repairedDataDigest;
             this.isRepairedDigestConclusive = isRepairedDigestConclusive;
             this.dataSerializationVersion = dataSerializationVersion;

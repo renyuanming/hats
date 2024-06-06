@@ -685,8 +685,6 @@ public abstract class ReadCommand extends AbstractReadQuery
 
             private void addSize(long size)
             {
-                StorageService.instance.readRateMonitor.record(size);
-                
                 this.sizeInBytes += size;
                 if (failBytes != -1 && this.sizeInBytes >= failBytes)
                 {
