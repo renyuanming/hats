@@ -308,7 +308,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
     public RateMonitor flushRateMonitor = new RateMonitor("FlushRate");
     public RateMonitor compactionRateMonitor = new RateMonitor("CompactionRate");
-    public RateMonitor readRateMonitor = new RateMonitor("ReadRate");
+    public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
+    public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
 
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 

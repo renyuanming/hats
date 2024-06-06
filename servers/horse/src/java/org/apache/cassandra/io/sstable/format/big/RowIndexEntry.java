@@ -47,6 +47,7 @@ import org.apache.cassandra.metrics.MetricNameFactory;
 import org.apache.cassandra.metrics.TableMetrics;
 import org.apache.cassandra.net.ParamType;
 import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.ObjectSizes;
 import org.apache.cassandra.utils.vint.VIntCoding;
 import org.github.jamm.Unmetered;

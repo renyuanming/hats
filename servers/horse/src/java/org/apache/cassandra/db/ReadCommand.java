@@ -704,6 +704,7 @@ public abstract class ReadCommand extends AbstractReadQuery
             @Override
             protected void onClose()
             {
+                StorageService.instance.localReadRateMonitor.record(sizeInBytes);
                 ColumnFamilyStore cfs = Schema.instance.getColumnFamilyStoreInstance(metadata().id);
                 if (cfs != null)
                     cfs.metric.localReadSize.update(sizeInBytes);

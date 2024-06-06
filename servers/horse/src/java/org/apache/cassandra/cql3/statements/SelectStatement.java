@@ -73,6 +73,7 @@ import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.ClientWarn;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.service.StorageProxy;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.pager.AggregationQueryPager;
 import org.apache.cassandra.service.pager.PagingState;
 import org.apache.cassandra.service.pager.QueryPager;
@@ -1033,6 +1034,7 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
         ColumnFamilyStore store = cfs();
         if (store != null)
             store.metric.coordinatorReadSize.update(result.getSize());
+        StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
         if (result.shouldWarn(options.getCoordinatorReadSizeWarnThresholdBytes()))
         {
             String msg = String.format("Read on table %s has exceeded the size warning threshold of %,d bytes", table, options.getCoordinatorReadSizeWarnThresholdBytes());
@@ -1060,6 +1062,7 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
             {
                 store.metric.coordinatorReadSizeAborts.mark();
                 store.metric.coordinatorReadSize.update(result.getSize());
+                StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
             }
             // read errors require blockFor and recieved (its in the protocol message), but this isn't known;
             // to work around this, treat the coordinator as the only response we care about and mark it failed
