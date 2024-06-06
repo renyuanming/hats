@@ -668,6 +668,7 @@ function runExp {
                                                                 ENABLE_AUTO_COMPACTION="true"
                                                                 ENABLE_COMPACTION_CFS="usertable0"
                                                             elif ["${compactionLevel}" == "all" ]; then
+                                                                echo "Enable auto compaction for all cfs"
                                                                 ENABLE_AUTO_COMPACTION="true"
                                                                 ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
                                                             fi

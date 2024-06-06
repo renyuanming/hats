@@ -43,7 +43,7 @@
       when: "'FAILED' in command_result.stderr"
     - name: Wait until cold startup is done
       pause:
-        seconds: 30
+        seconds: 60
 
 - name: Startup data nodes with backup data
   hosts: cassandra_data_nodes

@@ -38,7 +38,7 @@
       when: "'FAILED' in command_result.stderr"
     - name: Wait until cold startup is done
       pause:
-        seconds: 30
+        seconds: 60
 
 - name: Restart seed nodes
   hosts: cassandra_data_nodes
