@@ -5171,4 +5171,9 @@ public class DatabaseDescriptor
     {
         return conf.listen_address;
     }
+
+    public static Double getThrottleDataRate()
+    {
+        return conf.throttle_data_rate;
+    }
 }

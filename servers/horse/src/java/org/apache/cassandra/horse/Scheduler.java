@@ -31,6 +31,7 @@ import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.horse.controller.RateLimiter;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
 import org.apache.cassandra.horse.net.PolicyDistribute;
@@ -172,8 +173,8 @@ public class Scheduler {
                 // Step5. Replicate the placement policy to the followers
                 replicateGlobalPolicy();
                 
-                // // Step5. Distribute the placement policy to the data nodes to control the background tasks
-                // distributeCompactionRate();
+                // Step6. Update the policy for background task control.
+                RateLimiter.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
 
             }
         }
@@ -505,7 +506,7 @@ public class Scheduler {
         @Override
         public void run() {
             logger.info("rymInfo: The Flush rate is {} mb/s, the local read rate is {} mb/s, the coordinator read rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}", 
-                        StorageService.instance.flushRateMonitor.getRateInMB(),
+                        StorageService.instance.flushRateMonitor.getRateInMB() * 4,
                         StorageService.instance.localReadRateMonitor.getRateInMB(),
                         StorageService.instance.coordinatorReadRateMonitor.getRateInMB(),
                         StorageService.instance.compactionRateMonitor.getRateInMB(),

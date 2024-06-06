@@ -33,6 +33,8 @@ public class RateLimiter
 
     private static final MetricRegistry registry = new MetricRegistry();
 
+    public volatile static RateLimiter compactionRateLimiter = new RateLimiter(new int[] { 100, 0, 0 });
+
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
     private final ConcurrentHashMap<Integer, AtomicInteger> receivedCounts;
@@ -61,15 +63,19 @@ public class RateLimiter
         }
     }
 
-    public void receiveTask(int taskType) 
+    public Boolean receiveTask(int taskType) 
     {
         receivedCounts.get(taskType).incrementAndGet();
         totalReceived.incrementAndGet();
 
-        if (shouldServeTask(taskType)) 
+        boolean shouldServe = shouldServeTask(taskType);
+
+        if (shouldServe) 
         {
             serveTask(taskType);
+            return true;
         }
+        return false;
     }
 
     private boolean shouldServeTask(int taskType) 
@@ -78,7 +84,6 @@ public class RateLimiter
         {
             return true;
         }
-
 
         // TODO: check if the rate is below the target rate
         if(totalServed.get() *1.0 / totalReceived.get() < targetTotalRatio)
@@ -99,7 +104,8 @@ public class RateLimiter
         totalServed.incrementAndGet();
         // System.out.println("Served task type: " + taskType);
     }
-    public void reset() 
+
+    private void reset() 
     {
         this.totalServed.set(0);
         this.totalReceived.set(0);
@@ -108,6 +114,17 @@ public class RateLimiter
             this.servedCounts.get(i).set(0);
             this.receivedCounts.get(i).set(0);
         }
+    }
+
+
+    public static void updateLimiter(Double[] targetRatiosArray) 
+    {
+        int[] targetRatiosArrayInteger = new int[targetRatiosArray.length];
+        for (int i = 0; i < targetRatiosArray.length; i++) 
+        {
+            targetRatiosArrayInteger[i] = (int) (targetRatiosArray[i] * 100);
+        }
+        compactionRateLimiter = new RateLimiter(targetRatiosArrayInteger);
     }
 
 
@@ -230,34 +247,21 @@ public class RateLimiter
 
         public double getRateInMB() 
         {
-            return this.dataRate.getOneMinuteRate() / (1024 * 1024);
+            return this.dataRate.getOneMinuteRate() / (1024L * 1024L);
         }
     }
 
     public static void main(String[] args) 
     {
-        // int[] targetRatios = {80, 10, 10};
-        // RateLimiter rateLimiter = new RateLimiter(targetRatios);
+        int[] targetRatios = {80, 10, 10};
+        RateLimiter rateLimiter = new RateLimiter(targetRatios);
 
-        // System.out.println("Test case 1: Random task selection");
-        // runRandomTaskSelectionTest(rateLimiter);
+        System.out.println("Test case 1: Random task selection");
+        runRandomTaskSelectionTest(rateLimiter);
 
-        // rateLimiter.reset();
+        rateLimiter.reset();
 
-        // System.out.println("Test case 2: Simulate task type 0 exhaustion");
-        // runSimulatedTaskDistributionTest(rateLimiter);
-        RateMonitor rateMonitor = new RateMonitor("dataRate");
-        for (int i = 0; i < 10; i++) 
-        {
-            rateMonitor.record(2000);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-        System.out.println("Data rate: " + rateMonitor.getRate() + " bytes/s");
+        System.out.println("Test case 2: Simulate task type 0 exhaustion");
+        runSimulatedTaskDistributionTest(rateLimiter);
     }
 }

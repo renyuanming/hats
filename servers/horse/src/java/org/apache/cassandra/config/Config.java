@@ -145,6 +145,7 @@ public class Config
     public double offload_threshold = 0.5;
     public double recover_threshold = 0.1;
     public boolean enable_horse = true;
+    public double throttle_data_rate = 60; //  MB/s
 
 
 
