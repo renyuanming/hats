@@ -5,7 +5,7 @@
   become_user: ymren
   tasks:
     - name: Initialize the cluster
-      command: bash PATH_TO_SCRIPTS/run/restartCassandra.sh {{ configurationFile }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHorse }}
+      command: bash PATH_TO_SCRIPTS/run/restartCassandra.sh {{ configurationFile }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHorse }} {{ throttleDataRate }}
       vars:
         configurationFile: "PATH_TO_SERVER/conf/cassandra.yaml"
         projectBaseDir: "PATH_TO_SERVER"
@@ -19,6 +19,7 @@
         statesUpdateInterval: 10
         readSensitivity: 0.9
         enableHorse: "ENABLE_HORSE"
+        throttleDataRate: THROTTLE_DATA_RATE
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

@@ -46,16 +46,16 @@
       register: command_result
       ignore_errors: true
 
-- name: Setup horse
-  hosts: cassandra_servers
-  become: yes
-  become_user: ymren
-  tasks:
-    - name: Setup horse
-      shell: |
-        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool sethorse -ss STEP_SIZE -ot OFFLOAD_THRESHOLD -rt RECOVER_THRESHOLD
-      register: command_result
-      ignore_errors: true
+# - name: Setup horse
+#   hosts: cassandra_servers
+#   become: yes
+#   become_user: ymren
+#   tasks:
+#     - name: Setup horse
+#       shell: |
+#         . /etc/profile && cd PATH_TO_SERVER && bin/nodetool sethorse -ss STEP_SIZE -ot OFFLOAD_THRESHOLD -rt RECOVER_THRESHOLD
+#       register: command_result
+#       ignore_errors: true
 
 - name: Page cache management
   hosts: cassandra_servers
