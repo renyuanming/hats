@@ -82,7 +82,7 @@ function statsCPU_Disk_Network_DB {
     # Write the results to the file
     cd ${pathToCodeBase} || exit
 
-    if [ "$scheme" == "mlsm" ] || [ "$scheme" == "horse" ]; then
+    if [ "$scheme" == "mlsm" ] || [ "$scheme" == "horse" ] || [ "$scheme" == "c3" ]; then
         bin/nodetool tablestats ycsb.usertable0 | grep "Local" | grep "count" >>"$DB_OUTPUT_FILE"
         bin/nodetool tpstats >>"$DB_OUTPUT_FILE"
         bin/nodetool tablehistograms ycsb.usertable0 >>"${resultDir}/${stage}_db_latency_breakdown_usertable0.txt"

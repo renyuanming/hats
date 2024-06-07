@@ -49,7 +49,7 @@ function initConf {
             sed -i "s/seeds:.*$/seeds: \"${SEEDS}\"/" ${conf_dir}/cassandra.yaml
             sed -i "s/initial_token:.*$/initial_token: ${token}/" ${conf_dir}/cassandra.yaml
             sed -i "s/num_tokens:.*$/num_tokens: ${NumTokens}/" ${conf_dir}/cassandra.yaml
-        elif [[ $SCHEME == "horse" ]] || [[ $SCHEME == "mlsm" ]]; then
+        elif [[ $SCHEME == "horse" ]] || [[ $SCHEME == "mlsm" ]] || [[ $SCHEME == "c3" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/initial_token:.*$/initial_token: ${token}/" ${conf_dir}/cassandra.yaml
@@ -316,7 +316,7 @@ function startFromBackup {
     playbook="playbook-startup.yaml"
 
     # We use the same dataset for horse and mlsm
-    if [ "${targetScheme}" == "horse" ]; then
+    if [ "${targetScheme}" == "horse" ] || [ "${targetScheme}" == "c3" ]; then
         targetScheme="mlsm"
     fi
 
