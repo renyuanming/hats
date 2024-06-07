@@ -166,7 +166,15 @@ public class HostTracker
         final RateController rateController = getRateController(message.from().getAddress());
         assert (rateController != null);
         rateController.updateCubicSendingRate();
-        int count = pendingRequests.get(message.from().getAddress()).decrementAndGet();
+        int count = 0;
+        if(pendingRequests.get(message.from().getAddress())!=null)
+        {
+            count = pendingRequests.get(message.from().getAddress()).decrementAndGet();
+        }
+        else
+        {
+            logger.info("rymInfo: PendingJob count is null for Endpoint: {}", message.from().getAddress());
+        }
         logger.trace("Decrementing pendingJob count Endpoint: {}, Count: {} ", message.from().getAddress(), count);
 
         int queueSize = ByteBuffer.wrap((byte[]) message.header.params().get(ParamType.QUEUE_SIZE)).getInt();
