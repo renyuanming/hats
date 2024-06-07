@@ -177,12 +177,12 @@ public class HostTracker
         }
         logger.trace("Decrementing pendingJob count Endpoint: {}, Count: {} ", message.from().getAddress(), count);
 
-        int queueSize = ByteBuffer.wrap((byte[]) message.header.params().get(ParamType.QUEUE_SIZE)).getInt();
-        double serviceTimeInMillis = ByteBuffer.wrap((byte[]) message.header.params().get(ParamType.SERVICE_TIME_IN_NANO)).getLong() / 1000000.0;
+        // int queueSize = ByteBuffer.wrap((byte[]) message.header.params().get(ParamType.QUEUE_SIZE)).getInt();
+        // double serviceTimeInMillis = ByteBuffer.wrap((byte[]) message.header.params().get(ParamType.SERVICE_TIME_IN_NANO)).getLong() / 1000000.0;
 
-        // int queueSize = (int) message.header.params().get(ParamType.QUEUE_SIZE);
-        // long serviceTime = (long) message.header.params().get(ParamType.SERVICE_TIME_IN_NANO);
-        // double serviceTimeInMillis = serviceTime / 1000000.0;
+        int queueSize = (int) message.header.params().get(ParamType.QUEUE_SIZE);
+        long serviceTime = (long) message.header.params().get(ParamType.SERVICE_TIME_IN_NANO);
+        double serviceTimeInMillis = serviceTime / 1000000.0;
 
         double latencyInMillis = latency / 1000000.0;
 
