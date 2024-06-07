@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.InetAddress;
 import java.util.Set;
 
@@ -93,6 +95,23 @@ public class HorseUtils {
             logger.error("Fail to delete file {}.", path);
         }
     }
+
+    
+    public static double rounding(double value, int scale)
+    {
+        try
+        {
+            BigDecimal bd = new BigDecimal(Double.toString(value));
+            bd = bd.setScale(scale, RoundingMode.HALF_UP);
+            return bd.doubleValue();
+        }
+        catch (Exception e)
+        {
+            logger.error("rymError: rounding error for value {}", value);
+            return value;
+        }
+    }
+
 
     public static class ByteObjectConversion {
         public static byte[] objectToByteArray(Serializable obj) throws IOException {

@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.service.StorageService;
 
 import com.codahale.metrics.Meter;
@@ -45,7 +46,6 @@ public class RateLimiter
     private final AtomicInteger totalServed;
     private final AtomicInteger totalReceived;
     private final Random random;
-    private final double targetTotalRatio;
 
     public RateLimiter(int[] targetRatiosArray) 
     {
@@ -56,7 +56,6 @@ public class RateLimiter
         this.totalServed = new AtomicInteger(0);
         this.totalReceived = new AtomicInteger(0);
         this.random = new Random();
-        this.targetTotalRatio = 1.0 / this.totalTasks;
 
         for (int i = 0; i < targetRatiosArray.length; i++) 
         {
@@ -97,18 +96,16 @@ public class RateLimiter
         {
             return false;
         }
-
-        // TODO: check if the rate is below the target rate
-        if(totalServed.get() *1.0 / totalReceived.get() < targetTotalRatio)
+        else if(foregroundRate < 1)
         {
             return true;
         }
 
-        int currentRatio = servedCounts.get(taskType).get() * 100;
-        int targetRatio = targetRatios.get(taskType) * totalServed.get();
+        int currentCount = servedCounts.get(taskType).get() * 100;
+        int targetCount = targetRatios.get(taskType) * totalServed.get();
 
         int allowance = (int) (0.1 * targetRatios.get(taskType) * totalReceived.get());
-        return currentRatio < (targetRatio + allowance);
+        return currentCount < (targetCount + allowance);
     }
 
     private void serveTask(int taskType) 
@@ -260,7 +257,7 @@ public class RateLimiter
 
         public double getRateInMB() 
         {
-            return this.dataRate.getOneMinuteRate() / (1024L * 1024L);
+            return HorseUtils.rounding(this.dataRate.getOneMinuteRate() / (1024L * 1024L), 3);
         }
     }
 

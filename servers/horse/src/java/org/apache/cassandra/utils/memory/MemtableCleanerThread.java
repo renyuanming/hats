@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.cassandra.concurrent.Interruptible;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.concurrent.WaitQueue;
 
 import static org.apache.cassandra.concurrent.InfiniteLoopExecutor.SimulatorSafe.SAFE;
@@ -81,6 +82,7 @@ public class MemtableCleanerThread<P extends MemtablePool> implements Interrupti
             else
             {
                 int numPendingTasks = this.numPendingTasks.incrementAndGet();
+                StorageService.instance.pendingFlushRate.record(numPendingTasks);
 
                 if (logger.isTraceEnabled())
                     logger.trace("Invoking cleaner with {} tasks pending", numPendingTasks);

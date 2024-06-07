@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.cassandra.io.sstable.metadata.StatsMetadata;
 import org.apache.cassandra.schema.CompactionParams;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.lifecycle.LifecycleTransaction;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
@@ -164,17 +165,20 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
             }
 
             // HORSE: We decide whether perform compaction here
-            if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
+            if(DatabaseDescriptor.getEnableHorse())
             {
-                int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
-                if(!RateLimiter.compactionRateLimiter.receiveTask(lsmIndex))
+                if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
                 {
-                    logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
-                    return null;
-                }
-                else
-                {
-                    logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                    int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+                    if(!RateLimiter.compactionRateLimiter.receiveTask(lsmIndex))
+                    {
+                        logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+                        return null;
+                    }
+                    else
+                    {
+                        logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                    }
                 }
             }
 

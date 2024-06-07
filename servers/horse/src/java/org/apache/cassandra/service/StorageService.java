@@ -88,6 +88,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -307,7 +308,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("CoordinatorWriteLatency", DatabaseDescriptor.getSchedulingInterval());
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
     public RateMonitor flushRateMonitor = new RateMonitor("FlushRate");
+    public RateMonitor pendingFlushRate = new RateMonitor("PendingFlushRate");
     public RateMonitor compactionRateMonitor = new RateMonitor("CompactionRate");
+    public RateMonitor pendingCompactionRate = new RateMonitor("PendingCompactionRate");
     public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
     public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
     public AtomicLong readRequestInFlight = new AtomicLong(0);

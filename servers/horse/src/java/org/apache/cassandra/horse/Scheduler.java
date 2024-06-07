@@ -19,8 +19,6 @@
 package org.apache.cassandra.horse;
 
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Map;
@@ -183,35 +181,6 @@ public class Scheduler {
     // We send the placement policy to all the live nodes
     private static void replicateGlobalPolicy()
     {
-
-        // Get the followers
-        // if(liveSeeds.size() > 1)
-        // {
-        //     for(InetAddressAndPort follower : liveSeeds)
-        //     {
-        //         if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
-        //         {
-        //             continue;
-        //         }
-
-        //         // Replicate the placement policy
-        //         PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
-        //     }
-        // }
-        // else
-        // {
-        //     for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
-        //     {
-        //         if (follower.equals(FBUtilities.getBroadcastAddressAndPort())) 
-        //         {
-        //             continue;
-        //         }
-
-        //         // Replicate the placement policy
-        //         PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
-        //     }
-        // }
-
         for(InetAddressAndPort follower : Gossiper.instance.getLiveMembers())
         {
             if (follower.equals(FBUtilities.getBroadcastAddressAndPort())) 
@@ -344,13 +313,13 @@ public class Scheduler {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(primaryIndex, i);
 
                 GlobalStates.globalPolicy[primaryIndex][0] = 
-                            rounding(GlobalStates.globalPolicy[primaryIndex][0] - stepSize);
+                            HorseUtils.rounding(GlobalStates.globalPolicy[primaryIndex][0] - stepSize, 2);
                 GlobalStates.globalPolicy[secondaryIndex][replicaIndex] = 
-                            rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] + stepSize);
+                            HorseUtils.rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] + stepSize, 2);
                 GlobalStates.globalStates.deltaVector[replicaIndex] = 
-                            rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - stepSize);
+                            HorseUtils.rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - stepSize, 2);
                 GlobalStates.globalStates.deltaVector[secondaryIndex] = 
-                            rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] + stepSize);
+                            HorseUtils.rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] + stepSize, 2);
             }
         }
     }
@@ -377,37 +346,22 @@ public class Scheduler {
 
 
                     GlobalStates.globalPolicy[primaryIndex][0] = 
-                                rounding(GlobalStates.globalPolicy[primaryIndex][0] + stepSize);
+                                HorseUtils.rounding(GlobalStates.globalPolicy[primaryIndex][0] + stepSize, 2);
                     GlobalStates.globalPolicy[secondaryIndex][replicaIndex] = 
-                                rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] - stepSize);
+                                HorseUtils.rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] - stepSize, 2);
                     GlobalStates.globalStates.deltaVector[primaryIndex] = 
-                                rounding(GlobalStates.globalStates.deltaVector[primaryIndex] + stepSize);
+                                HorseUtils.rounding(GlobalStates.globalStates.deltaVector[primaryIndex] + stepSize, 2);
                     GlobalStates.globalStates.deltaVector[secondaryIndex] = 
-                                rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] - stepSize);
+                                HorseUtils.rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] - stepSize, 2);
                 }
             }
         }
         
     }
 
-    private static double rounding(double value)
-    {
-        try
-        {
-            BigDecimal bd = new BigDecimal(Double.toString(value));
-            bd = bd.setScale(2, RoundingMode.HALF_UP);
-            return bd.doubleValue();
-        }
-        catch (Exception e)
-        {
-            logger.error("rymError: rounding error for value {}", value);
-            return value;
-        }
-    }
-
     private static double getStepSize(double primaryScore, double secondaryScore)
     {
-        return Math.min(0.1, rounding(Math.abs(Math.pow((1 - secondaryScore / primaryScore), 3))));
+        return Math.min(0.1, HorseUtils.rounding(Math.abs(Math.pow((1 - secondaryScore / primaryScore), 3)), 2));
     }
 
     /**
@@ -505,19 +459,19 @@ public class Scheduler {
 
         @Override
         public void run() {
-            logger.info("rymInfo: The Flush rate is {} mb/s, the local read rate is {} mb/s, the coordinator read rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}", 
+            logger.info("rymInfo: The Flush rate is {} mb/s,the coordinator read rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}, the pending flush tasks are {}", 
                         StorageService.instance.flushRateMonitor.getRateInMB() * 4,
-                        StorageService.instance.localReadRateMonitor.getRateInMB(),
                         StorageService.instance.coordinatorReadRateMonitor.getRateInMB(),
                         StorageService.instance.compactionRateMonitor.getRateInMB(),
-                        StorageService.instance.readRequestInFlight.get());        
+                        StorageService.instance.readRequestInFlight.get(),
+                        StorageService.instance.pendingFlushRate.getRate());        
         }
         
     }
 
     public static void main(String[] args) {
         double value = 0.123456789;
-        System.out.println(rounding(value));
+        System.out.println(HorseUtils.rounding(value, 2));
     }
 
 }
