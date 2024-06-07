@@ -367,7 +367,7 @@ function restartCassandra {
     # Copy playbook
     resetPlaybook "restartCassandra"
 
-    echo "Restart the server with enableHorse ${enableHorse}"
+    echo "Restart the server with enableHorse ${enableHorse}, the throttle data rate is ${throttleDataRate} MB/s"
 
     # Modify playbook
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-restartCassandra.yaml
@@ -659,7 +659,7 @@ function runExp {
                                                         ENABLE_AUTO_COMPACTION="true"
                                                         ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
                                                     fi
-                                                    echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}"
+                                                    echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
 
                                                     SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
