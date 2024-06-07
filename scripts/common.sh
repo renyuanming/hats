@@ -140,19 +140,20 @@ function flush {
 
     # Copy playbook
     resetPlaybook "flush"
+    playbook="playbook-flush.yaml"
 
     # Modify playbook
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-flush.yaml
-    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-flush.yaml
-    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-flush.yaml
-    sed -i "s/\(seconds: \)".*"/seconds: ${waitTime}/" playbook-flush.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
+    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
+    sed -i "s/\(seconds: \)".*"/seconds: ${waitTime}/" ${playbook}
     if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
-        sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-flush.yaml
+        sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}
     else
-        sed -i "s|NODETOOL_OPTION||g" playbook-flush.yaml
+        sed -i "s|NODETOOL_OPTION||g" ${playbook}
     fi
 
-    ansible-playbook -v -i hosts.ini playbook-flush.yaml
+    ansible-playbook -v -i hosts.ini ${playbook}
 }
 
 function backup {
@@ -168,13 +169,15 @@ function backup {
 
     # Copy playbook
     resetPlaybook "backup"
+    playbook="playbook-backup.yaml"
+
     # Modify playbook
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-backup.yaml
-    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-backup.yaml
-    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-backup.yaml
-    sed -i "s/Scheme/${targetScheme}/g" playbook-backup.yaml
-    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" playbook-backup.yaml
-    ansible-playbook -v -i hosts.ini playbook-backup.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
+    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
+    sed -i "s/Scheme/${targetScheme}/g" ${playbook}
+    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook}
 }
 
 function getSettingName() {
@@ -263,6 +266,7 @@ function rebuildServer {
     scheme=$2
     echo "Building the server with branch ${branch}"
     resetPlaybook "rebuildServer"
+    playbook="playbook-rebuildServer.yaml"
 
     antOption="-Duse.jdk11=true"
 
@@ -270,10 +274,10 @@ function rebuildServer {
         antOption=""
     fi
 
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-rebuildServer.yaml
-    sed -i "s|BRANCH_NAME|${branch}|g" playbook-rebuildServer.yaml
-    sed -i "s|ANT_OPTION|${antOption}|g" playbook-rebuildServer.yaml
-    ansible-playbook -v -i hosts.ini playbook-rebuildServer.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
+    sed -i "s|ANT_OPTION|${antOption}|g" ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook}
 }
 
 function rebuildClient {
@@ -309,6 +313,7 @@ function startFromBackup {
 
     # Copy playbook
     resetPlaybook "startup"
+    playbook="playbook-startup.yaml"
 
     # We use the same dataset for horse and mlsm
     if [ "${targetScheme}" == "horse" ]; then
@@ -317,35 +322,35 @@ function startFromBackup {
 
     echo "Startup the system from backup, motivation is ${motivation}"
     # Modify playbook
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-startup.yaml
-    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-startup.yaml
-    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" playbook-startup.yaml
-    sed -i "s/Scheme/${targetScheme}/g" playbook-startup.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
+    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
+    sed -i "s/Scheme/${targetScheme}/g" ${playbook}
 
     # if [ "$BACKUP_MODE" == "local" ]; then
-    #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-CompactionLevel-${compactionLevel}|g" playbook-startup.yaml
+    #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-CompactionLevel-${compactionLevel}|g" ${playbook}
     # elif [ "$BACKUP_MODE" == "remote" ]; then
-    #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}|g" playbook-startup.yaml
+    #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}|g" ${playbook}
     # fi
 
-    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" playbook-startup.yaml
-    sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" playbook-startup.yaml
-    sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" playbook-startup.yaml
-    sed -i "s/\(fromBackup: \)".*"/fromBackup: \"${fromBackup}\"/" playbook-startup.yaml
-    sed -i "s/\(rebuild: \)".*"/rebuild: \"${rebuild}\"/" playbook-startup.yaml
-    sed -i "s/\(useDirectIO: \)".*"/useDirectIO: \"${useDirectIO}\"/" playbook-startup.yaml
-    sed -i "s/\(branch: \)".*"/branch: \"${branch}\"/" playbook-startup.yaml
-    sed -i "s|LOG_LEVEL|${logLevel}|g" playbook-startup.yaml
-    sed -i "s|SUDO_PASSWD|${SudoPassword}|g" playbook-startup.yaml
-    sed -i "s/\(schedulingInitialDelay: \)".*"/schedulingInitialDelay: ${schedulingInitialDelay}/" playbook-startup.yaml
-    sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" playbook-startup.yaml
-    sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" playbook-startup.yaml
-    sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" playbook-startup.yaml
-    sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-startup.yaml
-    sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" playbook-startup.yaml
+    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+    sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" ${playbook}
+    sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" ${playbook}
+    sed -i "s/\(fromBackup: \)".*"/fromBackup: \"${fromBackup}\"/" ${playbook}
+    sed -i "s/\(rebuild: \)".*"/rebuild: \"${rebuild}\"/" ${playbook}
+    sed -i "s/\(useDirectIO: \)".*"/useDirectIO: \"${useDirectIO}\"/" ${playbook}
+    sed -i "s/\(branch: \)".*"/branch: \"${branch}\"/" ${playbook}
+    sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
+    sed -i "s|SUDO_PASSWD|${SudoPassword}|g" ${playbook}
+    sed -i "s/\(schedulingInitialDelay: \)".*"/schedulingInitialDelay: ${schedulingInitialDelay}/" ${playbook}
+    sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" ${playbook}
+    sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" ${playbook}
+    sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" ${playbook}
+    sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
+    sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
     
-    ansible-playbook -v -i hosts.ini playbook-startup.yaml
+    ansible-playbook -v -i hosts.ini ${playbook}
 }
 
 function restartCassandra {
@@ -366,26 +371,27 @@ function restartCassandra {
     
     # Copy playbook
     resetPlaybook "restartCassandra"
+    playbook="playbook-restartCassandra.yaml"
 
     echo "Restart the server with enableHorse ${enableHorse}, the throttle data rate is ${throttleDataRate} MB/s"
 
     # Modify playbook
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-restartCassandra.yaml
-    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-restartCassandra.yaml
-    sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" playbook-restartCassandra.yaml
-    sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" playbook-restartCassandra.yaml
-    sed -i "s/\(rebuild: \)".*"/rebuild: \"${rebuild}\"/" playbook-restartCassandra.yaml
-    sed -i "s/\(useDirectIO: \)".*"/useDirectIO: \"${useDirectIO}\"/" playbook-restartCassandra.yaml
-    sed -i "s/\(branch: \)".*"/branch: \"${branch}\"/" playbook-restartCassandra.yaml
-    # sed -i "s|LOG_LEVEL|${logLevel}|g" playbook-restartCassandra.yaml
-    sed -i "s/\(schedulingInitialDelay: \)".*"/schedulingInitialDelay: ${schedulingInitialDelay}/" playbook-restartCassandra.yaml
-    sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" playbook-restartCassandra.yaml
-    sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" playbook-restartCassandra.yaml
-    sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" playbook-restartCassandra.yaml
-    sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-restartCassandra.yaml
-    sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" playbook-startup.yaml
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
+    sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" ${playbook}
+    sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" ${playbook}
+    sed -i "s/\(rebuild: \)".*"/rebuild: \"${rebuild}\"/" ${playbook}
+    sed -i "s/\(useDirectIO: \)".*"/useDirectIO: \"${useDirectIO}\"/" ${playbook}
+    sed -i "s/\(branch: \)".*"/branch: \"${branch}\"/" ${playbook}
+    # sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
+    sed -i "s/\(schedulingInitialDelay: \)".*"/schedulingInitialDelay: ${schedulingInitialDelay}/" ${playbook}
+    sed -i "s/\(schedulingInterval: \)".*"/schedulingInterval: ${schedulingInterval}/" ${playbook}
+    sed -i "s/\(statesUpdateInterval: \)".*"/statesUpdateInterval: ${statesUpdateInterval}/" ${playbook}
+    sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" ${playbook}
+    sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
+    sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini playbook-restartCassandra.yaml
+    ansible-playbook -v -i hosts.ini ${playbook}
 }
 
 function collectResults {
@@ -453,34 +459,35 @@ function load {
 
     # Copy playbook
     resetPlaybook "load"
+    playbook="playbook-load.yaml"
 
     # Modify load playbook
-    sed -i "s/\(expName: \)".*"/expName: "${ExpName}-${targetScheme}-Load"/" playbook-load.yaml
-    sed -i "s/record_count:.*$/record_count: ${kvNumber}/" playbook-load.yaml
-    sed -i "s/filed_length:.*$/filed_length: ${fieldlength}/" playbook-load.yaml
-    sed -i "s/\(threads: \)".*"/threads: ${threads}/" playbook-load.yaml
-    sed -i "s/\(sstable_size_in_mb: \)".*"/sstable_size_in_mb: ${sstableSize}/" playbook-load.yaml
-    sed -i "s/\(replication_factor: \)".*"/replication_factor: ${rf}/" playbook-load.yaml
-    sed -i "s/\(workload: \)".*"/workload: workloads\/${workload}/" playbook-load.yaml
-    sed -i "s/\(mode: \)".*"/mode: ${targetScheme}/" playbook-load.yaml
+    sed -i "s/\(expName: \)".*"/expName: "${ExpName}-${targetScheme}-Load"/" ${playbook}
+    sed -i "s/record_count:.*$/record_count: ${kvNumber}/" ${playbook}
+    sed -i "s/filed_length:.*$/filed_length: ${fieldlength}/" ${playbook}
+    sed -i "s/\(threads: \)".*"/threads: ${threads}/" ${playbook}
+    sed -i "s/\(sstable_size_in_mb: \)".*"/sstable_size_in_mb: ${sstableSize}/" ${playbook}
+    sed -i "s/\(replication_factor: \)".*"/replication_factor: ${rf}/" ${playbook}
+    sed -i "s/\(workload: \)".*"/workload: workloads\/${workload}/" ${playbook}
+    sed -i "s/\(mode: \)".*"/mode: ${targetScheme}/" ${playbook}
 
-    sed -i "s/memtable_heap_space=.*$/memtable_heap_space=\"${memtable_heap_space}MiB\" \&\&/" playbook-load.yaml
-    sed -i "s/rebuild=.*$/rebuild=\"${rebuild}\" \&\&/" playbook-load.yaml
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-load.yaml
-    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" playbook-load.yaml
-    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-load.yaml
-    sed -i "s|COORDINATORS|${Coordinators}|g" playbook-load.yaml
-    sed -i "s|NODE_IP|${NodeIP}|g" playbook-load.yaml
-    sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" playbook-load.yaml
+    sed -i "s/memtable_heap_space=.*$/memtable_heap_space=\"${memtable_heap_space}MiB\" \&\&/" ${playbook}
+    sed -i "s/rebuild=.*$/rebuild=\"${rebuild}\" \&\&/" ${playbook}
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" ${playbook}
+    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
+    sed -i "s|COORDINATORS|${Coordinators}|g" ${playbook}
+    sed -i "s|NODE_IP|${NodeIP}|g" ${playbook}
+    sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" ${playbook}
     
     if [ $targetScheme == "depart" ] || [ $targetScheme == "cassandra-3.11.4" ]; then
-        sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-load.yaml
+        sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}
     else
-        sed -i "s|NODETOOL_OPTION||g" playbook-load.yaml
+        sed -i "s|NODETOOL_OPTION||g" ${playbook}
     fi
 
 
-    ansible-playbook -v -i hosts.ini playbook-load.yaml
+    ansible-playbook -v -i hosts.ini ${playbook}
 
     ## Collect load results
     resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}"
@@ -509,43 +516,44 @@ function run {
     echo "Run ${targetScheme} with ${dist} ${workload} ${threads} ${kvNumber}, enableAutoCompaction is ${enableAutoCompaction}, mode is ${mode}, enableAutoCompactionCFs is ${enableAutoCompactionCFs}"
 
     resetPlaybook "run"
+    playbook="playbook-run.yaml"
 
 
 
     # Modify run playbook
-    sed -i "s|KEYSPACE|ycsb|g" playbook-run.yaml
-    sed -i "s/\(recordNumber: \)".*"/recordNumber: ${kvNumber}/" playbook-run.yaml
-    sed -i "s/\(operationNumber: \)".*"/operationNumber: ${operations}/" playbook-run.yaml
-    sed -i "s/\(keyLength: \)".*"/keyLength: ${keyLen}/" playbook-run.yaml
-    sed -i "s/\(fieldLength: \)".*"/fieldLength: ${fieldLen}/" playbook-run.yaml
-    sed -i "s/\(threads: \)".*"/threads: ${threads}/" playbook-run.yaml
-    sed -i "s/workload:.*$/workload: workloads\/${workload}/" playbook-run.yaml
-    sed -i "s/requestDistribution:.*$/requestDistribution: ${dist}/" playbook-run.yaml
-    sed -i "s/\(scheme: \)".*"/scheme: ${targetScheme}/" playbook-run.yaml
-    sed -i "s|ENABLE_AUTO_COMPACTION|${enableAutoCompaction}|g" playbook-run.yaml
-    sed -i "s/ENABL_COMPACTION_CFS/${enableAutoCompactionCFs}/g" playbook-run.yaml
-    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" playbook-run.yaml
-    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" playbook-run.yaml
-    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" playbook-run.yaml
-    sed -i "s|COORDINATORS|${Coordinators}|g" playbook-run.yaml
-    sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" playbook-run.yaml
-    sed -i "s|DISK_DEVICE|${DiskDevice}|g" playbook-run.yaml
-    sed -i "s|NETWORK_DEVICE|${NetworkInterface}|g" playbook-run.yaml
-    sed -i "s|SUDO_PASSWD|${SudoPassword}|g" playbook-run.yaml
-    sed -i "s|MEMORY_LIMIT|${memoryLimit}|g" playbook-run.yaml
-    sed -i "s|LOG_LEVEL|${logLevel}|g" playbook-run.yaml
-    sed -i "s|ENABLE_HORSE|${enableHorse}|g" playbook-run.yaml
-    sed -i "s|SHUFFLE_REPLICAS|${shuffleReplicas}|g" playbook-run.yaml
-    sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" playbook-run.yaml
+    sed -i "s|KEYSPACE|ycsb|g" ${playbook}
+    sed -i "s/\(recordNumber: \)".*"/recordNumber: ${kvNumber}/" ${playbook}
+    sed -i "s/\(operationNumber: \)".*"/operationNumber: ${operations}/" ${playbook}
+    sed -i "s/\(keyLength: \)".*"/keyLength: ${keyLen}/" ${playbook}
+    sed -i "s/\(fieldLength: \)".*"/fieldLength: ${fieldLen}/" ${playbook}
+    sed -i "s/\(threads: \)".*"/threads: ${threads}/" ${playbook}
+    sed -i "s/workload:.*$/workload: workloads\/${workload}/" ${playbook}
+    sed -i "s/requestDistribution:.*$/requestDistribution: ${dist}/" ${playbook}
+    sed -i "s/\(scheme: \)".*"/scheme: ${targetScheme}/" ${playbook}
+    sed -i "s|ENABLE_AUTO_COMPACTION|${enableAutoCompaction}|g" ${playbook}
+    sed -i "s/ENABL_COMPACTION_CFS/${enableAutoCompactionCFs}/g" ${playbook}
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" ${playbook}
+    sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
+    sed -i "s|COORDINATORS|${Coordinators}|g" ${playbook}
+    sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" ${playbook}
+    sed -i "s|DISK_DEVICE|${DiskDevice}|g" ${playbook}
+    sed -i "s|NETWORK_DEVICE|${NetworkInterface}|g" ${playbook}
+    sed -i "s|SUDO_PASSWD|${SudoPassword}|g" ${playbook}
+    sed -i "s|MEMORY_LIMIT|${memoryLimit}|g" ${playbook}
+    sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
+    sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
+    sed -i "s|SHUFFLE_REPLICAS|${shuffleReplicas}|g" ${playbook}
+    sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" ${playbook}
 
     if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
-        sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' playbook-run.yaml
+        sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}
     else
-        sed -i "s|NODETOOL_OPTION||g" playbook-run.yaml
+        sed -i "s|NODETOOL_OPTION||g" ${playbook}
     fi
     
 
-    ansible-playbook -v -i hosts.ini playbook-run.yaml
+    ansible-playbook -v -i hosts.ini ${playbook}
 }
 
 function perpareJavaEnvironment {
