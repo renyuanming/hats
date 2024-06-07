@@ -32,6 +32,7 @@ import com.codahale.metrics.ExponentiallyDecayingReservoir;
 
 import com.codahale.metrics.Snapshot;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
+import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
@@ -176,7 +177,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddresses)
     {
         assert address.equals(FBUtilities.getBroadcastAddressAndPort()); // we only know about ourself
-        return dynamicBadnessThreshold == 0
+        return (dynamicBadnessThreshold == 0 || !DatabaseDescriptor.getScoreStrategy().equals(Config.SelectionStrategy.default_strategy))
                 ? sortedByProximityWithScore(address, unsortedAddresses)
                 : sortedByProximityWithBadness(address, unsortedAddresses);
     }
@@ -242,17 +243,32 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     // Compare endpoints given an immutable snapshot of the scores
     private int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2, Map<InetAddressAndPort, Double> scores)
     {
-        Double scored1 = scores.get(a1.endpoint());
-        Double scored2 = scores.get(a2.endpoint());
+        // Double scored1 = scores.get(a1.endpoint());
+        // Double scored2 = scores.get(a2.endpoint());
         
+        // C3 impl
+        Double scored1 = null;
+        Double scored2 = null;
+
+        switch (DatabaseDescriptor.getScoreStrategy()){
+            case c3_strategy:
+                scored1 = MessagingService.instance().getScore(a1.endpoint().getAddress());
+                scored2 = MessagingService.instance().getScore(a2.endpoint().getAddress());
+                break;
+            case default_strategy:
+                scored1 = scores.get(a1.endpoint());
+                scored2 = scores.get(a2.endpoint());
+                break;
+        }
+
         if (scored1 == null)
         {
-            scored1 = defaultStore(a1.endpoint());
+            scored1 = 0.0;
         }
 
         if (scored2 == null)
         {
-            scored2 = defaultStore(a2.endpoint());
+            scored2 = 0.0;
         }
 
         if (scored1.equals(scored2))

@@ -201,6 +201,17 @@ public class Config
     public int concurrent_materialized_view_writes = 32;
     public int available_processors = -1;
 
+    // C3 parameters
+    public SelectionStrategy score_strategy = SelectionStrategy.default_strategy;
+    public double c3_rate_limiter_max_tokens = 200;
+    public long c3_rate_interval_ms = 20; //ms
+
+    public static enum SelectionStrategy {
+        c3_strategy,
+        default_strategy
+    }
+    
+
     public int memtable_flush_writers = 0;
     @Replaces(oldName = "memtable_heap_space_in_mb", converter = Converters.MEBIBYTES_DATA_STORAGE_INT, deprecated = true)
     public DataStorageSpec.IntMebibytesBound memtable_heap_space;

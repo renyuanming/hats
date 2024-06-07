@@ -5176,4 +5176,36 @@ public class DatabaseDescriptor
     {
         return conf.throttle_data_rate;
     }
+
+    // C3 impl
+    public static Config.SelectionStrategy getScoreStrategy()
+    {
+        return conf.score_strategy;
+    }
+
+    public static void setScoreStrategy(Config.SelectionStrategy score_strategy)
+    {
+        conf.score_strategy = score_strategy;
+    }
+
+
+    public static double getC3RateLimiterMaxTokens()
+    {
+        return conf.c3_rate_limiter_max_tokens;
+    }
+
+    public static void setC3RateLimiterMaxTokens(double c3_rate_limiter_max_tokens)
+    {
+        conf.c3_rate_limiter_max_tokens = c3_rate_limiter_max_tokens;
+    }
+
+    public static long getC3RateIntervalMs()
+    {
+        return conf.c3_rate_interval_ms;
+    }
+
+    public static void setC3RateIntervalMs(long c3_rate_interval_ms)
+    {
+        conf.c3_rate_interval_ms = c3_rate_interval_ms;
+    }
 }

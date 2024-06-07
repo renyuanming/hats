@@ -18,6 +18,7 @@
 package org.apache.cassandra.net;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import akka.actor.ActorRef;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -35,14 +39,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.util.concurrent.Future; //checkstyle: permit this import
+
+import org.apache.cassandra.c3.HostTracker;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.concurrent.Stage;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.exceptions.RequestFailureReason;
+import org.apache.cassandra.locator.EndpointsForToken;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.metrics.MessagingMetrics;
+import org.apache.cassandra.net.RequestCallbacks.CallbackInfo;
 import org.apache.cassandra.service.AbstractWriteResponseHandler;
 import org.apache.cassandra.utils.ExecutorUtils;
 import org.apache.cassandra.utils.FBUtilities;
@@ -207,7 +215,8 @@ import static org.apache.cassandra.utils.Throwables.maybeFail;
 public class MessagingService extends MessagingServiceMBeanImpl implements MessageDelivery
 {
     private static final Logger logger = LoggerFactory.getLogger(MessagingService.class);
-
+    // C3
+    public final HostTracker tracker = new HostTracker();
     // 8 bits version, so don't waste versions
     public enum Version
     {
@@ -704,5 +713,37 @@ public class MessagingService extends MessagingServiceMBeanImpl implements Messa
     public void waitUntilListening() throws InterruptedException
     {
         inboundSockets.open().await();
+    }
+    public void updateMetrics(Message message, CallbackInfo callbackInfo, long latency)
+    {
+        if (message.verb().equals(Verb.READ_RSP))
+        {
+            tracker.updateMetrics(message, latency);
+        }
+    }
+
+    public void updateMetricsLocal(int qsz, long serviceTime)
+    {
+        tracker.updateMetricsLocal(qsz, serviceTime);
+    }
+
+    public double getScore(InetAddress endpoint)
+    {
+        return tracker.getScore(endpoint);
+    }
+
+    public AtomicInteger getPendingRequestsCounter(InetAddress endpoint)
+    {
+        return tracker.getPendingRequestsCounter(endpoint);
+    }
+
+    public ActorRef getActor(EndpointsForToken  endpoints)
+    {
+        return tracker.getActor(endpoints);
+    }
+
+    public double sendingRateTryAcquire(InetAddress endpoint)
+    {
+        return tracker.sendingRateTryAcquire(endpoint);
     }
 }

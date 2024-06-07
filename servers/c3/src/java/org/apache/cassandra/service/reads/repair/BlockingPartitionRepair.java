@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.cassandra.utils.concurrent.AsyncFuture;
 import org.apache.cassandra.utils.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -47,6 +48,7 @@ import org.apache.cassandra.locator.Replicas;
 import org.apache.cassandra.locator.InOurDc;
 import org.apache.cassandra.metrics.ReadRepairMetrics;
 import org.apache.cassandra.net.RequestCallback;
+import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.schema.TableId;
@@ -144,6 +146,14 @@ public class BlockingPartitionRepair
     @VisibleForTesting
     protected void sendRR(Message<Mutation> message, InetAddressAndPort endpoint)
     {
+        if(message.verb().equals(Verb.READ_REQ))
+        {
+            if(!MessagingService.instance().tracker.containsKey(endpoint.getAddress()))
+            {
+                MessagingService.instance().tracker.put(endpoint.getAddress(), new AtomicInteger(0));
+            }
+            MessagingService.instance().tracker.get(endpoint.getAddress()).incrementAndGet();
+        }
         MessagingService.instance().sendWithCallback(message, endpoint, this);
     }
 

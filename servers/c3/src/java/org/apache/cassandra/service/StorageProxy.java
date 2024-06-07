@@ -2125,7 +2125,8 @@ public class StorageProxy implements StorageProxyMBean
         // read executor, we'll only send read requests to enough replicas to satisfy the consistency level
         for (int i=0; i<cmdCount; i++)
         {
-            reads[i].executeAsync();
+            // reads[i].executeAsync();
+            reads[i].execute();
         }
 
         // if we have a speculating read executor and it looks like we may not receive a response from the initial
@@ -2187,6 +2188,7 @@ public class StorageProxy implements StorageProxyMBean
             this.command = command;
             this.handler = handler;
             this.trackRepairedStatus = trackRepairedStatus;
+            MessagingService.instance().getPendingRequestsCounter(FBUtilities.getJustBroadcastAddress()).incrementAndGet();
         }
 
         protected void runMayThrow()
@@ -2231,6 +2233,9 @@ public class StorageProxy implements StorageProxyMBean
 
                 if (!readRejected)
                     MessagingService.instance().latencySubscribers.add(FBUtilities.getBroadcastAddressAndPort(), MonotonicClock.Global.approxTime.now() - approxCreationTimeNanos, NANOSECONDS);
+
+                int qsz = MessagingService.instance().getPendingRequestsCounter(FBUtilities.getJustBroadcastAddress()).decrementAndGet();
+                MessagingService.instance().updateMetricsLocal(qsz, MonotonicClock.Global.approxTime.now() - approxCreationTimeNanos);
             }
             catch (Throwable t)
             {

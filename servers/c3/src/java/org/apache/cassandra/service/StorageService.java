@@ -5200,6 +5200,22 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         return inetList;
     }
 
+    public List<InetAddressAndPort> getNaturalEndpoints(String keyspaceName, Token token) {
+        List<InetAddress> inetList = StorageService.instance.getNaturalEndpointsForToken( keyspaceName, token);
+        List<InetAddressAndPort> inetListWithPort = new ArrayList<>();
+        inetList.forEach(r -> inetListWithPort.add(InetAddressAndPort.getByAddress(r)));
+        return inetListWithPort;
+    }
+
+    public List<InetAddressAndPort> getLiveSortedEndpoints(String keyspaceName, Token token)
+    {
+        EndpointsForToken liveEndpoints = Keyspace.open(keyspaceName).getReplicationStrategy().getNaturalReplicasForToken(token);
+        DatabaseDescriptor.getEndpointSnitch().sortedByProximity(getBroadcastAddressAndPort(), liveEndpoints);
+        List<InetAddressAndPort> inetList = new ArrayList<>(liveEndpoints.size());
+        liveEndpoints.forEach(r -> inetList.add(r.endpoint()));
+        return inetList;
+    }
+
     /** @deprecated See CASSANDRA-7544 */
     @Deprecated(since = "4.0")
     public List<InetAddress> getNaturalEndpoints(String keyspaceName, ByteBuffer key)

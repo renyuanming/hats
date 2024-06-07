@@ -57,7 +57,11 @@ public enum ParamType
     CUSTOM_MAP                       (14, CustomParamsSerializer.serializer),
     SNAPSHOT_RANGES                  (15, RangesSerializer.serializer),
     TOO_MANY_REFERENCED_INDEXES_WARN (16, Int32Serializer.serializer),
-    TOO_MANY_REFERENCED_INDEXES_FAIL (17, Int32Serializer.serializer);
+    TOO_MANY_REFERENCED_INDEXES_FAIL (17, Int32Serializer.serializer),
+    
+    // C3 impl
+    QUEUE_SIZE(18, Int32Serializer.serializer),
+    SERVICE_TIME_IN_NANO(19, Int64Serializer.serializer);
 
     final int id;
     final IVersionedSerializer serializer;

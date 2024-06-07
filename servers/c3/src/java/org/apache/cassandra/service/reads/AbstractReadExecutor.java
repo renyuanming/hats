@@ -21,7 +21,11 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import akka.actor.ActorRef;
+
 import org.apache.cassandra.concurrent.Stage;
+import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.ConsistencyLevel;
@@ -58,6 +62,7 @@ import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import org.apache.cassandra.dht.Token;
 
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -85,7 +90,7 @@ public abstract class AbstractReadExecutor
     protected final long queryStartNanoTime;
     private   final int initialDataRequestCount;
     protected volatile PartitionIterator result = null;
-    private final List<InetAddressAndPort> sendRequestAddresses;
+    private List<InetAddressAndPort> sendRequestAddresses;
     private final List<InetAddressAndPort> replicasInTheRing;
 
     AbstractReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, int initialDataRequestCount, long queryStartNanoTime, List<InetAddressAndPort> replicasInTheRing)
@@ -183,65 +188,25 @@ public abstract class AbstractReadExecutor
 
         assert all(replicas, Replica::isFull);
 
-        long tStart1 = nanoTime();
         boolean hasLocalEndpoint = false;
         Message<ReadCommand> message = null;
         int usedAddressNumber = 0;
 
-        // TODO: We need to check whether the size of replicas equals to the read consistency level?
-        // if(DatabaseDescriptor.isMotivationExperiment()) 
-        // {
-        //     // logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
-        //     Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
-
-        //     if(!replicasInTheRing.get(0).equals(replicas.iterator().next().endpoint()))
-        //     {
-        //         logger.error("[rym-ERROR] The first node in the replica plan is not the first node in the ring.");
-        //     }
-
-        //     int replicaIndex = 0;
-        //     if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
-        //     {
-        //         replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
-        //     }
-        //     // replicaIndex = ReplicaSelector.randomSelector.selectReplica();
-            
-        //     if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort()))
-        //     {
-        //         hasLocalEndpoint = true;
-        //     } 
-        //     else 
-        //     {
-        //         MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(replicaIndex), handler);
-        //     }
-        // }
-        // else
-        // {
         // The size of replicas equals to the read consistency level
-        for(Replica replica : replicas) 
-        {
-            assert replica.isFull() || readCommand.acceptsTransient();
 
-            InetAddressAndPort endpoint = replica.endpoint();
-            if (replica.isSelf())
+        for(InetAddressAndPort endpoint : sendRequestAddresses) 
+        {
+            if(endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
             {
                 hasLocalEndpoint = true;
-                usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
-                continue; // This is for the read consistency requirements
+                continue;
             }
-
-            if (traceState != null)
-                traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
-
             if (null == message)
                 message = readCommand.createMessage(false);
 
             MessagingService.instance().sendWithCallback(message, endpoint, handler);
         }
-        // }
 
-        Tracing.trace("[rym] Executed data send request time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart1) / 1000);
-        
         // We delay the local (potentially blocking) read till the end to avoid stalling remote requests.
         if (hasLocalEndpoint) 
         {
@@ -253,10 +218,7 @@ public abstract class AbstractReadExecutor
             InetAddress replicaGroup = replicasInTheRing.get(0).getAddress();
             StorageService.instance.readCounterOfEachReplica.mark(replicaGroup);
         } 
-        // else 
-        // {
-        //     logger.debug("[rym] No local endpoint, skip local read");
-        // }
+
         return usedAddressNumber;
     }
 
@@ -639,4 +601,69 @@ public abstract class AbstractReadExecutor
         Preconditions.checkState(result != null, "Result must be set first");
         return result;
     }
+
+
+    // C3 impl
+    public void execute()
+    {
+        ActorRef actor = MessagingService.instance().getActor(handler.replicaPlan().contacts());
+        actor.tell(this, null);
+    }
+
+    public double pushRead()
+    {
+        // Block until the upstream queues look all right if we're using the c3 strategy
+        if (DatabaseDescriptor.getScoreStrategy().equals(Config.SelectionStrategy.c3_strategy))
+        {
+            Token tokenForRead = (command instanceof SinglePartitionReadCommand
+                    ? ((SinglePartitionReadCommand) command).partitionKey().getToken()
+                    : ((PartitionRangeReadCommand) command).dataRange().keyRange.left.getToken());
+
+            List<InetAddressAndPort> newEndpointList = StorageService.instance.getLiveSortedEndpoints(cfs.keyspace.getName(), tokenForRead);
+            int originalSize = handler.replicaPlan().contacts().size();
+            boolean shouldWait = true;
+            int dataEndpointIndex;
+
+            // This is our backpressure knob. If we exceed the rate, bail.
+            // Every token bucket's tryAcquire() gives us the duration we need
+            // to wait until the rate is available again. If all token buckets
+            // are empty, then we tell the corresponding actor to wait for the
+            // minimum duration required until one of the rate limiters is available.
+            double minimumDurationToWait = Double.MAX_VALUE;
+            for (int i = 0; i < newEndpointList.size(); i++)
+            {
+                final InetAddressAndPort endpoint = newEndpointList.get(i);
+                double timeToNextRefill = 0L;
+                if (!endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
+                {
+                    timeToNextRefill = MessagingService.instance().sendingRateTryAcquire(endpoint.getAddress());
+                }
+
+                if (timeToNextRefill == 0L)
+                {
+                    dataEndpointIndex = i;
+                    shouldWait = false;
+
+                    // We found the best endpoint that is within rate, put it first in the list
+                    Collections.<InetAddressAndPort>swap(newEndpointList, dataEndpointIndex, 0);
+                    break;
+                }
+
+                minimumDurationToWait = Math.min(minimumDurationToWait, timeToNextRefill);
+            }
+
+            if (shouldWait)
+            {
+                return minimumDurationToWait;
+            }
+
+            // We're within our expected rate. Update endpoints.
+            this.sendRequestAddresses = newEndpointList.subList(0, originalSize);
+            // handler.endpoints = this.sendRequestAddresses;
+        }
+
+        executeAsync();
+        return 0L;
+    }
+
 }
