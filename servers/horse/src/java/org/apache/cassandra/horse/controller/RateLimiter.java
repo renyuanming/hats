@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.service.StorageService;
 
-import com.alipay.sofa.jraft.storage.Storage;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 /**
@@ -37,7 +36,7 @@ public class RateLimiter
 
     private static final MetricRegistry registry = new MetricRegistry();
 
-    public volatile static RateLimiter compactionRateLimiter = new RateLimiter(new int[] { 100, 0, 0 });
+    public volatile static RateLimiter compactionRateLimiter = new RateLimiter(new int[] { 80, 10, 10 });
 
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
@@ -90,7 +89,7 @@ public class RateLimiter
         }
 
         final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
-                                      StorageService.instance.flushRateMonitor.getRateInMB() * 4;
+                                      StorageService.instance.flushRateMonitor.getRateInMB() * 2;
         final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
         final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
         
@@ -136,7 +135,7 @@ public class RateLimiter
         int[] targetRatiosArrayInteger = new int[targetRatiosArray.length];
         for (int i = 0; i < targetRatiosArray.length; i++) 
         {
-            targetRatiosArrayInteger[i] = (int) (targetRatiosArray[i] * 100);
+            targetRatiosArrayInteger[i] =  Math.max((int) (targetRatiosArray[i] * 100), 10);
         }
         compactionRateLimiter = new RateLimiter(targetRatiosArrayInteger);
     }
