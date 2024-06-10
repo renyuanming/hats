@@ -436,40 +436,44 @@ public class Keyspace
     {
         logger.info("Creating replication strategy " + ksm.name + " params " + ksm.params);
         //////
-        Options options = new Options();
-        options.createIfMissing(true);
-        Set<InetAddressAndPort> liveHosts = Gossiper.instance.getLiveMembers();
-        try {
-            String DBname = "data/replicatedData";
-            File file = new File(DBname);
-            if(!file.exists()){
-                //StorageService.instance.db = factory.open(file, options);
-                StorageService.instance.db = new DbImpl(options, file.toJavaIOFile());
-            }
-            //db.close();
-        } catch(Throwable e){
-                logger.debug("open twoLayerLog failed!!");
-        }
-        InetAddressAndPort LOCAL = FBUtilities.getBroadcastAddressAndPort();
-        for (InetAddressAndPort host : liveHosts){///
-            if (!host.equals(LOCAL)) {          
-                Collection<Token> nodeToken = StorageService.instance.getTokenMetadata().getTokens(host);
-                //logger.debug("nodeIP:{}, nodeToken size:{}, nodeToken:{}", host, nodeToken.size(), nodeToken);
-                List<String> strTokensList = new ArrayList<String>();
-                for(Token tk: nodeToken){
-                    String strToken = StorageService.instance.getTokenFactory().toString(tk);//////
-                    strTokensList.add(strToken);
-                    StorageService.instance.groupAccessNumMap.put(strToken, 0);
-                    //logger.debug("strToken size:{}, strToken:{}", strTokensList.size(), strToken);
+        if(ksm.name.equals("ycsb"))
+        {
+            Options options = new Options();
+            options.createIfMissing(true);
+            Set<InetAddressAndPort> liveHosts = Gossiper.instance.getLiveMembers();
+            try {
+                String DBname = "data/replicatedData";
+                File file = new File(DBname);
+                if(!file.exists()){
+                    //StorageService.instance.db = factory.open(file, options);
+                    StorageService.instance.db = new DbImpl(options, file.toJavaIOFile());
                 }
-                try{
-                    byte ip[] = host.addressBytes;  
-                    int NodeID = (int)ip[3];
-                    StorageService.instance.db.createReplicaDir(NodeID, strTokensList, ksm.name);
-                } catch(Throwable e){
-                    logger.debug("create replicaDir failed!!");
+                //db.close();
+            } catch(Throwable e){
+                    logger.debug("open twoLayerLog failed!!");
+            }
+            InetAddressAndPort LOCAL = FBUtilities.getBroadcastAddressAndPort();
+            for (InetAddressAndPort host : liveHosts){///
+                if (!host.equals(LOCAL)) {          
+                    Collection<Token> nodeToken = StorageService.instance.getTokenMetadata().getTokens(host);
+                    //logger.debug("nodeIP:{}, nodeToken size:{}, nodeToken:{}", host, nodeToken.size(), nodeToken);
+                    List<String> strTokensList = new ArrayList<String>();
+                    for(Token tk: nodeToken){
+                        String strToken = StorageService.instance.getTokenFactory().toString(tk);//////
+                        strTokensList.add(strToken);
+                        StorageService.instance.groupAccessNumMap.put(strToken, 0);
+                        //logger.debug("strToken size:{}, strToken:{}", strTokensList.size(), strToken);
+                    }
+                    try{
+                        byte ip[] = host.addressBytes;  
+                        int NodeID = (int)ip[3];
+                        StorageService.instance.db.createReplicaDir(NodeID, strTokensList, ksm.name);
+                    } catch(Throwable e){
+                        logger.debug("create replicaDir failed!!");
+                    }
                 }
             }
+
         }
         //////
         replicationStrategy = ksm.createReplicationStrategy();

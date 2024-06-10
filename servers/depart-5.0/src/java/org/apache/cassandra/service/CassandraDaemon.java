@@ -430,10 +430,8 @@ public class CassandraDaemon
         // due to scheduling errors or race conditions
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
 
-
         ScheduledExecutorService splitExecutor = Executors.newSingleThreadScheduledExecutor();
         splitExecutor.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundGlobalSplitTaskSubmitter(), 5, 10, TimeUnit.SECONDS);//60//30//10
-
 
         // schedule periodic recomputation of speculative retry thresholds
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
