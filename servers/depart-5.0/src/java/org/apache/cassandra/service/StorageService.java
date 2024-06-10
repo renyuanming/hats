@@ -37,19 +37,26 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -89,6 +96,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.commons.lang3.StringUtils;
+import org.iq80.twoLayerLog.impl.DbImpl;
+import org.iq80.twoLayerLog.impl.FileMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +123,7 @@ import org.apache.cassandra.config.DurationSpec;
 import org.apache.cassandra.cql3.QueryHandler;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.db.ColumnFamilyStore;
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.SizeEstimatesRecorder;
@@ -130,6 +140,7 @@ import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.RangeStreamer;
 import org.apache.cassandra.dht.RangeStreamer.FetchReplica;
+import org.apache.cassandra.dht.RingPosition;
 import org.apache.cassandra.dht.StreamStateStore;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.dht.Token.TokenFactory;
@@ -149,6 +160,7 @@ import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
 import org.apache.cassandra.index.IndexStatusManager;
+import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.IScrubber;
 import org.apache.cassandra.io.sstable.IVerifier;
 import org.apache.cassandra.io.sstable.SSTableLoader;
@@ -193,6 +205,7 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -358,6 +371,221 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public boolean isShutdown()
     {
         return isShutdown;
+    }
+
+
+
+
+    /**
+     * DEPART impl
+    */
+    
+    public DbImpl db; // TODO
+    public InetAddress repairNode = null;
+    public int splitDelay = 60; 
+    public int minSplitSSTableNum = 20; 
+    public int splitSSTableNum = 20;
+    public int maxGlobalSSTableNum = 30; 
+    public static int maxSegNumofGroup = 20; 
+    public boolean FlushTriggeredCompaction = true;
+    public static long minSplitDataSize = 2085728;
+    public boolean duringRepair = false; // TODO
+    public InetAddress repairNodeIP = null;  // TODO
+    public boolean doingGlobalSplit = false;
+    public boolean doingGroupMerge = false;
+    public int maxScanNumber = 10;
+    public static final int replicaBufferSize = 13 * 1048576; // TODO
+    public ColumnFamilyStore largestCFS = null; // TODO
+    public Map<String,Integer> groupAccessNumMap=new HashMap<String,Integer>();
+  
+    public ExecutorService splitExecutor = Executors.newFixedThreadPool(40);
+    public ExecutorService groupMergeExecutor = Executors.newFixedThreadPool(5);
+    public Map<String,CountDownLatch> groupCountDownMap = new HashMap<String,CountDownLatch>();
+
+    public ConsistencyLevel WriteConsistencyLevel = ConsistencyLevel.ONE;
+    public Queue<byte[]> dataByteQueue = new LinkedList<byte[]>();
+    public Queue<byte[]> MetaByteQueue = new LinkedList<byte[]>();
+
+    public long totalSizeOfGlobalLog = 0;
+    public long totalSizeOfPrimaryL0 = 0;
+    public int SSTableNumOfL0 = 0;
+    public int SSTableNumOfGLog = 0;
+    public long buildMTrees = 0; // TODO
+    public long compareMTrees = 0; // TODO
+    public long[] recieveWriteData =  new long[30]; // TODO
+    public long recieveWriteLSM = 0; // TODO
+    public long beginMTrees = 0; // TODO
+    public long maxTime = 0; // TODO
+    public long[] sessionBuildMTreeTime = new long[20]; // TODO
+    public int sessionCount = 0; // TODO
+
+    public long DifferentiationTime = 0;
+    public long DifferentiationNaTime = 0;
+
+    public long insertMemTable = 0;
+    public long insertLog = 0;
+    public long flushMemTable = 0;
+    public long compaction = 0;
+    public long mergeSort = 0;
+    public long mergeSortNum = 0;
+
+    public long readMemTable = 0;
+    public long readRowCache = 0;
+    public long readKeyCache = 0;
+    public long readIndexBlock = 0;
+    public long readSSTables = 0;
+    public int transferingFiles = 0;
+
+    public long totalReadBytes = 0;
+    public long ReadGroupBytes = 0;
+    public long totalCompactWrite = 0;
+    public long writeGroupBytes = 0;
+    public long readCommandNum = 0;
+    public long totalSSTablesChecked = 0;
+    public long totalSSTablesView = 0;
+    public long[] totalLevelWrite = new long[20];
+
+    public Map<Integer, BlockingQueue<ByteBuffer>> replicaBlockMap = new HashMap<Integer, BlockingQueue<ByteBuffer>>();
+    public Map<Integer, BlockingQueue<byte[]>> ECBlockMap = new HashMap<Integer, BlockingQueue<byte[]>>();
+    public Map<Integer, BlockingQueue<byte[]>> keyMap = new HashMap<Integer, BlockingQueue<byte[]>>();
+    public Map<Integer, BlockingQueue<byte[]>> valueMap = new HashMap<Integer, BlockingQueue<byte[]>>();
+
+    public BlockingQueue<Collection<Descriptor>> replayMigratedSSTablesDes = new ArrayBlockingQueue<Collection<Descriptor>>(2);
+    public ColumnFamilyStore migartedCFS = null;
+
+    public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
+
+    
+
+    public String findBoundTokenAccordingTokeny(String token){//int nodeID
+
+        Token lookToken = getTokenFactory().fromString(token);
+        ArrayList<Token> tokens = new ArrayList<>(tokenMetadata.sortedTokens());
+        Iterator<Token> iter = TokenMetadata.ringIterator(tokens, lookToken, false);
+        Token boundToken = iter.next();
+        //InetAddress ep = tokenMetadata.getEndpoint(boundToken);
+        //logger.debug("###token:{}, lookToken:{}, boundToken:{}, node IP:{}", token, lookToken, boundToken, ep);
+        return getTokenFactory().toString(boundToken);
+
+    }
+
+    public int findNodeIDAccordingToken(String dbKeySpaceName, String token){//
+
+        //logger.debug("------dbKeySpaceName:{}, token:{}", dbKeySpaceName, token);
+        Token lookToken = getTokenFactory().fromString(token);
+        List<InetAddress> ep = getNaturalEndpoints(dbKeySpaceName, lookToken);
+		byte ip[] = ep.get(0).getAddress();  
+		int nodeID = (int)ip[3];      
+        //logger.debug("------token:{}, lookToken:{}, node IP:{}", token, lookToken, ep);
+        return nodeID;
+
+    }
+
+    public void printInfo(String info){
+        logger.debug("@@@@@@:{}", info);
+    }
+
+    // Depart TODO: StreamSession not finished
+    public Token getBoundToken(Token lookToken){//int nodeID
+
+        //Token lookToken = getTokenFactory().fromString(token);
+        ArrayList<Token> tokens = new ArrayList<>(tokenMetadata.sortedTokens());
+        Iterator<Token> iter = TokenMetadata.ringIterator(tokens, lookToken, false);
+        Token boundToken = iter.next();
+        //InetAddress ep = tokenMetadata.getEndpoint(boundToken);
+        //logger.debug("###token:{}, lookToken:{}, boundToken:{}, node IP:{}, nodeID:{}", token, lookToken, boundToken, ep, nodeID);
+        //return getTokenFactory().toString(boundToken);
+        return boundToken;
+    }
+
+    public void getRangeBoundToken(Token lookToken, Token endToken, List<Token> tokenArray, String keySpaceName){//int nodeID
+
+        //Token lookToken = getTokenFactory().fromString(token);
+        ArrayList<Token> tokens = new ArrayList<>(tokenMetadata.sortedTokens());
+        Iterator<Token> iter = TokenMetadata.ringIterator(tokens, lookToken, false);
+        List<InetAddress> primaryIP = getNaturalEndpoints(keySpaceName, lookToken);
+        //Token boundToken = iter.next();
+        while(iter.hasNext()){
+            Token boundToken = iter.next();
+            List<InetAddress> IP = getNaturalEndpoints(keySpaceName, boundToken);
+            if(primaryIP.get(0).equals(IP.get(0))){
+                tokenArray.add(boundToken);
+            }
+            if(boundToken.equals(endToken)) break;
+        }
+        //InetAddress ep = tokenMetadata.getEndpoint(boundToken);
+        //logger.debug("###token:{}, lookToken:{}, boundToken:{}, node IP:{}, nodeID:{}", token, lookToken, boundToken, ep, nodeID);
+        //return getTokenFactory().toString(boundToken);
+        //return boundToken;
+    }
+
+    public String getBoundTokenString(Token lookToken){//int nodeID
+
+        //Token lookToken = getTokenFactory().fromString(token);
+        ArrayList<Token> tokens = new ArrayList<>(tokenMetadata.sortedTokens());
+        Iterator<Token> iter = TokenMetadata.ringIterator(tokens, lookToken, false);
+        Token boundToken = iter.next();
+        //InetAddress ep = tokenMetadata.getEndpoint(boundToken);
+        //logger.debug("###token:{}, lookToken:{}, boundToken:{}, node IP:{}, nodeID:{}", token, lookToken, boundToken, ep, nodeID);
+        return getTokenFactory().toString(boundToken);      
+    }
+
+    public int getRangeGroupRowNumber(int NodeID, Token right){
+        int rangeGroupRowNumber = db.getRangeGroupRowNumber(NodeID, getTokenFactory().toString(right));
+        return rangeGroupRowNumber;
+    }
+
+    public long getGlobalLogSize(long segmentID){
+        long globalLogSize = db.getGlobalLogSize(segmentID);
+        return globalLogSize;
+    }
+
+    public int getRangeGroupSegemntNumber(int NodeID, Token right){
+        int rangeGroupSegmentNumber = db.getRangeGroupSegemntNumber(NodeID, getTokenFactory().toString(right));
+        return rangeGroupSegmentNumber;
+    }
+
+    public long[] getGroupSegementID(int NodeID, Token right){
+        long[] segmentID = db.getGroupSegementID(NodeID, getTokenFactory().toString(right));
+        return segmentID;
+    }
+
+    public long[] getGlobalSegementID(){
+        long[] globalSegmentID = db.getGlobalSegementID();
+        return globalSegmentID;
+    }
+
+    public void getGroupAllBytes(String keyspace, int NodeID, Token left, Token right, Token rightBound, FileMetaData fileMeta, boolean globalFlag, List<ByteBuffer> rangeGroupBufferList){
+        db.getGroupAllBytes(keyspace, NodeID, getTokenFactory().toString(left), getTokenFactory().toString(right), getTokenFactory().toString(rightBound), fileMeta, rangeGroupBufferList);
+    }
+
+    public boolean globalSegmentIsExist(long segmentID){
+        return db.globalSegmentIsExist(segmentID);
+    }
+
+    public int getRangeRowAndInsertValidator(int NodeID, Token rangeLeft, Token rangeRight, Map<String, byte[]> keyValueMap){
+        return db.getRangeRowAndInsertValidator(NodeID, getTokenFactory().toString(rangeLeft), getTokenFactory().toString(rangeRight), keyValueMap);
+    }
+
+
+    /**
+     * This method attempts to return N endpoints that are responsible for storing the
+     * specified key i.e for replication.
+     *
+     * @param keyspace keyspace name also known as keyspace
+     * @param pos position for which we need to find the endpoint
+     * @param liveEps the list of endpoints to mutate
+     */
+    public List<InetAddress> getLiveNaturalEndpoints(Keyspace keyspace, RingPosition pos)
+    {
+        List<InetAddress> endpoints = getNaturalEndpoints(keyspace.getName(), pos.getToken());
+        List<InetAddress> liveEps = new ArrayList<>(endpoints.size());
+        for (InetAddress endpoint : endpoints)
+        {
+            if (FailureDetector.instance.isAlive(InetAddressAndPort.getByAddress(endpoint)))
+                liveEps.add(endpoint);
+        }
+        return liveEps;
     }
 
     /**
@@ -5054,6 +5282,15 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     {
         EndpointsForToken replicas = getNaturalReplicasForToken(keyspaceName, key);
         List<InetAddress> inetList = new ArrayList<>(replicas.size());
+        replicas.forEach(r -> inetList.add(r.endpoint().getAddress()));
+        return inetList;
+    }
+
+    
+    public List<InetAddress> getNaturalEndpoints(String keyspaceName, Token token) {
+        List<InetAddress> inetList = new ArrayList<>();
+        EndpointsForToken replicas = Keyspace.open(keyspaceName).getReplicationStrategy()
+                .getNaturalReplicasForToken(token);
         replicas.forEach(r -> inetList.add(r.endpoint().getAddress()));
         return inetList;
     }

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -33,9 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.concurrent.ScheduledExecutorPlus;
+import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.streaming.messages.OutgoingStreamMessage;
 import org.apache.cassandra.utils.ExecutorUtils;
+import org.iq80.twoLayerLog.impl.FileMetaData;
 
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
 
@@ -61,6 +64,15 @@ public class StreamTransferTask extends StreamTask
     {
         super(session, tableId);
     }
+
+    
+    // public synchronized void addTransferReplicaFile(TableId cfId, int NodeID, Token left, Token right, Token rightBound, FileMetaData fileMeta, boolean globalFlag, String keyspace)
+    // {
+    //     OutgoingStreamMessage message = new OutgoingStreamMessage(sequenceNumber.getAndIncrement(), cfId, NodeID, left, right, rightBound, fileMeta, globalFlag, keyspace);
+    //     files.put(message.sequenceNumber, message);
+    //     //totalSize += replicaFile.limit();
+    // }
+
 
     public synchronized void addTransferStream(OutgoingStream stream)
     {

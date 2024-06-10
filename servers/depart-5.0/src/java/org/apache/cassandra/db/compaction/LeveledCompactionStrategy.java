@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.cassandra.io.sstable.metadata.StatsMetadata;
 import org.apache.cassandra.schema.CompactionParams;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.lifecycle.LifecycleTransaction;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
@@ -162,6 +163,12 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
                 return null;
             }
 
+            ///////////////////////
+            if(cfs.name.equals("globalReplicaTable") && candidate.sstables.size() < StorageService.instance.minSplitSSTableNum){
+                return null;
+            }
+            //////////////////////
+
             LifecycleTransaction txn = cfs.getTracker().tryModify(candidate.sstables, OperationType.COMPACTION);
             if (txn != null)
             {
@@ -171,7 +178,10 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
                 else
                     newTask = new SingleSSTableLCSTask(cfs, txn, candidate.level);
 
+                newTask.setOutputLevel(candidate.level);//////
                 newTask.setCompactionType(op);
+                StorageService.instance.minSplitSSTableNum = 20;//////
+                StorageService.instance.splitSSTableNum = 20;//////
                 return newTask;
             }
             previousCandidate = candidate.sstables;
@@ -297,6 +307,8 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
     public ScannerList getScanners(Collection<SSTableReader> sstables, Collection<Range<Token>> ranges)
     {
         Set<SSTableReader>[] sstablesPerLevel = manifest.getSStablesPerLevelSnapshot();
+        logger.debug("------LSM_tree levels:{}", manifest.getLevelCount());
+        manifest.printEachLevelSize();//////
 
         Multimap<Integer, SSTableReader> byLevel = ArrayListMultimap.create();
         for (SSTableReader sstable : sstables)

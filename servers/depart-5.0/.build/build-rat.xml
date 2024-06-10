@@ -40,6 +40,7 @@
     <target name="rat-check" depends="_build_ratinclude" unless="rat.skip" description="License checks on source" >
         <rat:report reportFile="${build.dir}/rat.txt">
             <fileset dir="." includesfile="${build.dir}/.ratinclude">
+                 <exclude name="src/java/org/iq80/*"/>
                  <!-- Config files with not much creativity -->
                  <exclude name=".asf.yaml"/>
                  <exclude name="**/cassandra*.yaml"/>

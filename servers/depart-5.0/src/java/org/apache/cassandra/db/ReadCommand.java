@@ -330,9 +330,11 @@ public abstract class ReadCommand extends AbstractReadQuery
     }
 
     protected abstract ReadCommand copyAsDigestQuery();
-
     protected abstract UnfilteredPartitionIterator queryStorage(ColumnFamilyStore cfs, ReadExecutionController executionController);
-
+    // Depart impl
+    protected abstract UnfilteredPartitionIterator queryLocalRegion(ColumnFamilyStore cfs, List<UnfilteredPartitionIterator> iterators);
+    protected abstract UnfilteredPartitionIterator queryStorage(ColumnFamilyStore cfs, ReadExecutionController executionController, int []findResults, String ksName);
+    public abstract ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata metadata);
     /**
      * Whether the underlying {@code ClusteringIndexFilter} is reversed or not.
      *
@@ -406,7 +408,9 @@ public abstract class ReadCommand extends AbstractReadQuery
         COMMAND.set(this);
         try
         {
-            ColumnFamilyStore cfs = Keyspace.openAndGetStore(metadata());
+            // ColumnFamilyStore cfs = Keyspace.openAndGetStore(metadata());
+            
+            ColumnFamilyStore cfs = getColumnFamilyStorefromMultiReplicas(metadata());
             Index.QueryPlan indexQueryPlan = indexQueryPlan();
 
             Index.Searcher searcher = null;
@@ -426,6 +430,33 @@ public abstract class ReadCommand extends AbstractReadQuery
             }
 
             UnfilteredPartitionIterator iterator = (null == searcher) ? queryStorage(cfs, executionController) : searcher.search(executionController);
+
+            int []findResults = new int[2];
+            findResults[0] = 1;
+            findResults[1] = 1;
+
+            /////////////////////////////////////////////////
+            //if(cfs.name.equals("globalReplicaTable") && findResults[0]==0 ){  //read not find in global log, then search local log
+            if(cfs.name.equals("globalReplicaTable")){  
+
+                if(findResults[0]==0){
+                    List<UnfilteredPartitionIterator> iterators = new ArrayList<>(1); 
+                    //logger.debug("####read in globalReplicaTable failed! then read local region");
+                    iterator = queryLocalRegion(cfs, iterators);
+                }
+
+                if(findResults[1]==0){
+                    List<UnfilteredPartitionIterator> iterators = new ArrayList<>(); 
+                    iterators.add(iterator);   
+                    logger.debug("####Scan in globalReplicaTable failed! then scan local region");
+                    iterator = queryLocalRegion(cfs, iterators);
+                }
+                //iterator = (null == searcher) ? queryStorage(cfs, executionController) : searcher.search(executionController);
+            }
+            
+            ////////////////////////////////////////////////
+
+
             iterator = RTBoundValidator.validate(iterator, Stage.MERGED, false);
 
             try

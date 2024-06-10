@@ -268,8 +268,8 @@ public abstract class SSTableReader extends SSTable implements UnfilteredSource,
 
     private volatile double crcCheckChance;
 
-    protected final DecoratedKey first;
-    protected final DecoratedKey last;
+    public final DecoratedKey first;
+    public final DecoratedKey last;
     public final AbstractBounds<Token> bounds;
 
     /**

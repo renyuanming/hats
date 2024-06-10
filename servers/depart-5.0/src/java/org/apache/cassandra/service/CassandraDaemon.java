@@ -26,6 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.management.ObjectName;
@@ -427,6 +429,11 @@ public class CassandraDaemon
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
+
+
+        ScheduledExecutorService splitExecutor = Executors.newSingleThreadScheduledExecutor();
+        splitExecutor.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundGlobalSplitTaskSubmitter(), 5, 10, TimeUnit.SECONDS);//60//30//10
+
 
         // schedule periodic recomputation of speculative retry thresholds
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 

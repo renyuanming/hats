@@ -18,12 +18,14 @@
 package org.apache.cassandra.db.compaction;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Predicate;
@@ -32,20 +34,28 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.lang3.StringUtils;
+import org.iq80.twoLayerLog.impl.DbImpl.CompactionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.Directories;
+import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.db.compaction.writers.CompactionAwareWriter;
 import org.apache.cassandra.db.compaction.writers.DefaultCompactionWriter;
+import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.lifecycle.LifecycleTransaction;
+import org.apache.cassandra.db.partitions.PartitionUpdate;
+import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
+import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.ActiveRepairService;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.Refs;
@@ -203,25 +213,139 @@ public class CompactionTask extends AbstractCompactionTask
                     if (!controller.cfs.getCompactionStrategyManager().isActive())
                         throw new CompactionInterruptedException(ci.getCompactionInfo());
                     estimatedKeys = writer.estimatedKeys();
-                    while (ci.hasNext())
-                    {
-                        if (writer.append(ci.next()))
+
+
+                    // Depart impl //////////////////////////////////
+                    logger.debug("during compaction, cfs.name:{}, getLevel:{}",cfs.name, getLevel());
+                    if(cfs.name.equals("globalReplicaTable") && getLevel()>0 ){
+                        
+                        StorageService.instance.doingGlobalSplit = true;
+                        //StorageService.instance.db.mutex.lock();   
+                        CompactionState compactionState = new CompactionState(null);////
+                        logger.debug("######actuallyCompact.size:{}, output size:{}", actuallyCompact.size(), compactionState.outputs.size()); 
+                        
+                        DataOutputBuffer dob = new DataOutputBuffer();                      
+                        while (ci.hasNext())
+                        {
+                            if(StorageService.instance.groupCountDownMap.size() > 5) {
+                                for (Map.Entry<String,CountDownLatch> latchEntry: StorageService.instance.groupCountDownMap.entrySet()) {
+                                    //String groupID =  latchEntry.getKey();		
+                                    try {		
+                                        CountDownLatch curLatch = latchEntry.getValue();
+                                        if(curLatch!=null) {
+                                            curLatch.await();
+                                            //groupCountDownMap.remove(groupID);
+                                        }					
+                                    } catch (InterruptedException e1) {
+                                        // TODO Auto-generated catch block
+                                        e1.printStackTrace();
+                                    }
+                                }
+                                StorageService.instance.groupCountDownMap.clear();
+                            }                                            
+                            dob.clear();      
+                               
+                            if (ci.isStopRequested())
+                                throw new CompactionInterruptedException(ci.getCompactionInfo());
+
+                            UnfilteredRowIterator rowIterator = ci.next();
+                            Mutation mutation = new Mutation(PartitionUpdate.fromIterator(rowIterator, ColumnFilter.all(cfs.metadata.get())));
+                            try{
+                                Mutation.serializer.serializeToValue(mutation, dob, MessagingService.current_version);   
+                            } catch(Throwable e){
+                                logger.debug("in splitToRangeGroups, Mutation.serializer.deserialize failed, strToken:{}!!", mutation.key().getToken());
+                            } 
+                            String strToken = StorageService.instance.getTokenFactory().toString(mutation.key().getToken());         
+                            String groupID = StorageService.instance.findBoundTokenAccordingTokeny(strToken);                                          
+
+                            try {		
+                                CountDownLatch curLatch = StorageService.instance.groupCountDownMap.get(groupID);
+                                if(curLatch!=null) {
+                                    curLatch.await();
+                                    StorageService.instance.groupCountDownMap.remove(groupID);
+                                    //logger.debug("after await, curLatch size:{}", curLatch.getCount());
+                                }					
+                            } catch (InterruptedException e1) {
+                                // TODO Auto-generated catch block
+                                e1.printStackTrace();
+                            }
+
+                            CountDownLatch latch = new CountDownLatch(1);
+                            StorageService.instance.groupCountDownMap.put(groupID,latch);
+                            byte[] value = Arrays.copyOfRange(dob.toByteArray(), 0, dob.toByteArray().length);
+                            Runnable runThread = new Runnable() {
+                                public void run() {
+                                    //StorageService.instance.db.splitToRangeGroups(strToken.getBytes(), dob.toByteArray(), groupID, compactionState);
+                                    StorageService.instance.db.splitToRangeGroups(strToken.getBytes(), value, groupID, compactionState);
+                                    CountDownLatch myLatch = StorageService.instance.groupCountDownMap.get(groupID);
+                                    if(myLatch!=null) myLatch.countDown();                   	
+                                }
+                            };
+                            StorageService.instance.splitExecutor.submit(runThread);
+
                             totalKeysWritten++;
 
-                        ci.setTargetDirectory(writer.getSStableDirectory().path());
-                        long bytesScanned = scanners.getTotalBytesScanned();
+                            long bytesScanned = scanners.getTotalBytesScanned();
 
-                        // Rate limit the scanners, and account for compression
-                        CompactionManager.compactionRateLimiterAcquire(limiter, bytesScanned, lastBytesScanned, compressionRatio);
+                            //Rate limit the scanners, and account for compression
+                            CompactionManager.compactionRateLimiterAcquire(limiter, bytesScanned, lastBytesScanned, compressionRatio);
 
-                        lastBytesScanned = bytesScanned;
+                            lastBytesScanned = bytesScanned;
 
-                        if (nanoTime() - lastCheckObsoletion > TimeUnit.MINUTES.toNanos(1L))
-                        {
-                            controller.maybeRefreshOverlaps();
-                            lastCheckObsoletion = nanoTime();
+                            if (System.nanoTime() - lastCheckObsoletion > TimeUnit.MINUTES.toNanos(1L))
+                            {
+                                controller.maybeRefreshOverlaps();
+                                lastCheckObsoletion = System.nanoTime();
+                            }
                         }
+
+                        for (Map.Entry<String,CountDownLatch> latchEntry: StorageService.instance.groupCountDownMap.entrySet()) {                                
+                            try {		
+                                CountDownLatch curLatch = latchEntry.getValue();
+                                if(curLatch!=null) {
+                                    curLatch.await();                                         
+                                }					
+                            } catch (InterruptedException e1) {
+                                // TODO Auto-generated catch block
+                                e1.printStackTrace();
+                            }
+                        }
+                        StorageService.instance.groupCountDownMap.clear();
+
+                        logger.debug("------actuallyCompact.size:{}, output size:{}", actuallyCompact.size(), compactionState.outputs.size());
+                        if(actuallyCompact.size()>0 && compactionState.currentFileNumberMap.size()>0){
+                            logger.debug("------before installSplitResults, compactionState.currentFileNumber:{}", compactionState.currentFileNumber);
+                            StorageService.instance.db.installSplitResults(compactionState);
+                        }
+                        //StorageService.instance.db.mutex.unlock();
+                        StorageService.instance.doingGlobalSplit = false;      
+                        StorageService.instance.mergeSort += System.currentTimeMillis() - startTime;
+                        StorageService.instance.db.performGroupMerge();    
+
+                    }else{/////////////////////////////////////////////
+                        
+                        while (ci.hasNext())
+                        {
+                            if (writer.append(ci.next()))
+                                totalKeysWritten++;
+
+                            ci.setTargetDirectory(writer.getSStableDirectory().path());
+                            long bytesScanned = scanners.getTotalBytesScanned();
+
+                            // Rate limit the scanners, and account for compression
+                            CompactionManager.compactionRateLimiterAcquire(limiter, bytesScanned, lastBytesScanned, compressionRatio);
+
+                            lastBytesScanned = bytesScanned;
+
+                            if (nanoTime() - lastCheckObsoletion > TimeUnit.MINUTES.toNanos(1L))
+                            {
+                                controller.maybeRefreshOverlaps();
+                                lastCheckObsoletion = nanoTime();
+                            }
+                        }
+                        StorageService.instance.compaction += System.currentTimeMillis() - startTime;//////
                     }
+                    
                     timeSpentWritingKeys = TimeUnit.NANOSECONDS.toMillis(nanoTime() - start);
 
                     // point of no return

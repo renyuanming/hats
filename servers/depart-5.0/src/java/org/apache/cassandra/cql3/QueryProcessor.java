@@ -55,6 +55,7 @@ import org.apache.cassandra.cql3.functions.Function;
 import org.apache.cassandra.cql3.functions.FunctionName;
 import org.apache.cassandra.cql3.selection.ResultSetBuilder;
 import org.apache.cassandra.cql3.statements.*;
+import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.rows.Row;
 import org.apache.cassandra.db.rows.RowIterator;
@@ -255,6 +256,26 @@ public class QueryProcessor implements QueryHandler
                              ? processNodeLocalStatement(statement, queryState, options)
                              : statement.execute(queryState, options, queryStartNanoTime);
 
+
+        // Depart impl ////////////////
+        
+        if(CreateTableStatement.class.isInstance(statement)) {
+            CreateTableStatement tableStatement = (CreateTableStatement) statement;
+            String ks = tableStatement.keyspace();
+            String tn = tableStatement.tableName;
+            // String tn = tableStatement.tableName.substring(0, tableStatement.tableName.length() - 1);
+            if(ks.equals("ycsb")) {
+                if(options.getConsistency() == ConsistencyLevel.NODE_LOCAL) {
+                } else {
+                    String tableName = "globalReplicaTable";
+                    CreateTableStatement ts = tableStatement.copyObjects(tableName);
+                    ResultMessage rs = ts.execute(queryState, options, queryStartNanoTime);
+                }
+            }
+        }
+
+        ////////////////////////////////
+        
         return result == null ? new ResultMessage.Void() : result;
     }
 

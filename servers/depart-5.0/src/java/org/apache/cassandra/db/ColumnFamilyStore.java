@@ -406,6 +406,28 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
         };
     }
 
+    //////////////////// Depart impl
+    public static Runnable getBackgroundGlobalSplitTaskSubmitter()
+    {
+        return new Runnable()
+        {
+            public void run()
+            {
+                for (Keyspace keyspace : Keyspace.all()){
+                    for (ColumnFamilyStore cfs : keyspace.getColumnFamilyStores()){
+                        if(cfs.name.equals("globalReplicaTable") && !StorageService.instance.doingGlobalSplit){
+                            logger.debug("in getBackgroundGlobalSplitTaskSubmitter, cfs.name:{}",cfs.name);
+                            CompactionManager.instance.submitBackgroundSplit(cfs);
+                        }
+                    }
+                }
+            }
+        };
+    }
+    //////////////////
+
+
+
     public Map<String, String> getCompactionParameters()
     {
         return compactionStrategyManager.getCompactionParams().asMap();
@@ -1801,7 +1823,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
     void replaceFlushed(Memtable memtable, Collection<SSTableReader> sstables)
     {
         data.replaceFlushed(memtable, sstables);
-        if (sstables != null && !sstables.isEmpty())
+        if (sstables != null && !sstables.isEmpty() && StorageService.instance.FlushTriggeredCompaction && !this.name.equals("globalReplicaTable")) //////
             CompactionManager.instance.submitBackground(this);
     }
 

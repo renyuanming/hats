@@ -49,6 +49,7 @@ import org.apache.cassandra.db.partitions.CachedPartition;
 import org.apache.cassandra.db.partitions.ImmutableBTreePartition;
 import org.apache.cassandra.db.partitions.PartitionIterator;
 import org.apache.cassandra.db.partitions.PartitionIterators;
+import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.db.partitions.SingletonUnfilteredPartitionIterator;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.db.rows.Cell;
@@ -63,19 +64,23 @@ import org.apache.cassandra.db.transform.RTBoundValidator;
 import org.apache.cassandra.db.transform.Transformation;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
+import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.io.sstable.SSTableReadsListener;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
+import org.apache.cassandra.io.util.DataInputBuffer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.metrics.TableMetrics;
+import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.CacheService;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.StorageProxy;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.btree.BTreeSet;
@@ -484,6 +489,76 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                                         : queryMemtableAndDisk(cfs, executionController);
         return new SingletonUnfilteredPartitionIterator(partition);
     }
+
+
+    // Depart impl ////////////////////////////
+
+    public ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata cfm){
+        
+        ColumnFamilyStore cfs = null;
+        cfs = Keyspace.openAndgetColumnFamilyStoreByToken(cfm, this.partitionKey.getToken());//////
+        if(cfs==null){//////
+            cfs = Keyspace.openAndGetStore(cfm);
+        }//////
+        return cfs;
+    }
+
+    
+    @SuppressWarnings("resource") // we close the created iterator through closing the result of this method (and SingletonUnfilteredPartitionIterator ctor cannot fail)
+    protected UnfilteredPartitionIterator queryStorage(final ColumnFamilyStore cfs, ReadExecutionController executionController, int []findResults, String ksName)
+    {
+        UnfilteredRowIterator partition = cfs.isRowCacheEnabled()
+                                        ? getThroughCache(cfs, executionController)
+                                        : queryMemtableAndDisk(cfs, executionController);
+        
+        if(partition.isEmpty()){
+            findResults[0] = 0;
+            //logger.debug("####read in queryStorage empty, key token:{}", this.partitionKey().getToken());
+        }
+        return new SingletonUnfilteredPartitionIterator(partition);
+    }
+
+    @SuppressWarnings("resource") // we close the created iterator through closing the result of this method (and SingletonUnfilteredPartitionIterator ctor cannot fail)
+    protected UnfilteredPartitionIterator queryLocalRegion(ColumnFamilyStore cfs, List<UnfilteredPartitionIterator> iterators)
+    {
+        //logger.debug("in queryStorage");
+        UnfilteredRowIterator partition = null;
+        Token tk = this.partitionKey().getToken();
+        if(StorageService.instance.db!=null){
+            //byte[] value = null;
+            Token rightBound = StorageService.instance.getBoundToken(tk);
+            String strToken = StorageService.instance.getTokenFactory().toString(tk);//////
+            String groupID = StorageService.instance.getTokenFactory().toString(rightBound);
+            int groupAccessNum = StorageService.instance.groupAccessNumMap.get(groupID);
+            StorageService.instance.groupAccessNumMap.put(groupID, groupAccessNum + 1 );
+            //byte[] value = StorageService.instance.db.get(strToken.getBytes(), NodeID, StorageService.instance.getTokenFactory().toString(rightBound));
+            //logger.debug("look strToken:{}, rightBound:{}", strToken, rightBound);
+            byte[] value = StorageService.instance.db.get(strToken.getBytes());//cfs.metadata
+            //byte[] value = null;
+            if(value!=null){
+                //logger.debug("look strToken:{}, Value size:{}",strToken, value.length);
+                //RebufferingInputStream bufIn = new DataInputBuffer(value);
+                try{
+                    Mutation remutation = Mutation.serializer.deserializeToMutation(new DataInputBuffer(value), MessagingService.current_version);
+                    //String strKey1=ByteBufferUtil.string(remutation.key().getKey());
+                    //logger.debug("get key:{} in replicas,strKey1:{}", theKey, strKey1);
+                    for (PartitionUpdate update : remutation.getPartitionUpdates()){
+                        partition = update.unfilteredIterator();
+                        //UnfilteredRowIterator replicasIter = update.unfilteredIterator();
+                        //return replicasIter;
+                    }
+                }catch(Throwable e){
+                    logger.debug("Mutation.serializer.deserialize failed in queryMemtableAndDiskInternal!");
+                }
+            }else{////////////////////////////////
+                ClusteringIndexFilter filter = clusteringIndexFilter();
+                partition = EmptyIterators.unfilteredRow(cfs.metadata.get(), partitionKey(), filter.isReversed());
+            }
+        }
+        return new SingletonUnfilteredPartitionIterator(partition);
+    }
+
+
 
     /**
      * Fetch the rows requested if in cache; if not, read it from disk and cache it.

@@ -18,6 +18,7 @@
 package org.apache.cassandra.db;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,6 +35,7 @@ import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.db.rows.DeserializationHelper;
+import org.apache.cassandra.db.rows.SerializationHelper;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputBuffer;
@@ -479,6 +481,19 @@ public class Mutation implements IMutation, Supplier<Mutation>
             }
         }
 
+        
+        public void serializeToValue(Mutation mutation, DataOutputPlus out, int version) throws IOException
+        {
+            if (version < MessagingService.VERSION_20)
+                out.writeUTF(mutation.getKeyspaceName());
+            /* serialize the modifications in the mutation */
+            int size = mutation.modifications.size();
+            out.writeUnsignedVInt(size);
+            assert size > 0;
+            for (Map.Entry<TableId, PartitionUpdate> entry : mutation.modifications.entrySet())
+                PartitionUpdate.serializer.serialize(entry.getValue(), out, version);
+        }
+
         public Mutation deserialize(DataInputPlus in, int version, DeserializationHelper.Flag flag) throws IOException
         {
             Mutation m;
@@ -520,6 +535,36 @@ public class Mutation implements IMutation, Supplier<Mutation>
         public Mutation deserialize(DataInputPlus in, int version) throws IOException
         {
             return deserialize(in, version, DeserializationHelper.Flag.FROM_REMOTE);
+        }
+
+        public Mutation deserializeToMutation(DataInputPlus in, int version, DeserializationHelper.Flag flag) throws IOException
+        {
+            if (version < MessagingService.VERSION_20)
+                in.readUTF(); // read pre-2.0 keyspace name
+            ByteBuffer key = null;
+            int size;
+            size = (int)in.readUnsignedVInt();
+            assert size > 0;
+            PartitionUpdate update = PartitionUpdate.serializer.deserialize(in, version, flag);
+            if (size == 1)
+                return new Mutation(update);
+
+            ImmutableMap.Builder<TableId, PartitionUpdate> modifications = new ImmutableMap.Builder<>();
+            DecoratedKey dk = update.partitionKey();
+
+            modifications.put(update.metadata().id, update);
+            for (int i = 1; i < size; ++i)
+            {
+                update = PartitionUpdate.serializer.deserialize(in, version, flag);
+                modifications.put(update.metadata().id, update);
+            }
+
+            return new Mutation(update.metadata().keyspace, dk, modifications.build(), approxTime.now());
+        }
+
+        public Mutation deserializeToMutation(DataInputPlus in, int version) throws IOException
+        {
+            return deserializeToMutation(in, version, DeserializationHelper.Flag.FROM_REMOTE);
         }
 
         public long serializedSize(Mutation mutation, int version)

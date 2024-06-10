@@ -166,6 +166,7 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
 
     private final CompactionMetrics metrics = new CompactionMetrics(executor, validationExecutor, viewBuildExecutor, secondaryIndexExecutor);
 
+    final Multiset<ColumnFamilyStore> splitingCF = ConcurrentHashMultiset.create();
     @VisibleForTesting
     final Multiset<ColumnFamilyStore> compactingCF = ConcurrentHashMultiset.create();
 
@@ -219,6 +220,98 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
         if (compactionRateLimiter.getRate() != throughput)
             compactionRateLimiter.setRate(throughput);
     }
+
+
+
+// Depart impl ///////////////////////////
+
+
+
+
+    class BackgroundSplitCandidate implements Runnable
+    {
+        private final ColumnFamilyStore cfs;
+
+        BackgroundSplitCandidate(ColumnFamilyStore cfs)
+        {
+            splitingCF.add(cfs);
+            this.cfs = cfs;
+        }
+
+        public void run()
+        {
+            try
+            {
+                logger.trace("Checking {}.{}", cfs.keyspace.getName(), cfs.name);
+                if (!cfs.isValid())
+                {
+                    logger.trace("Aborting compaction for dropped CF");
+                    return;
+                }
+
+                CompactionStrategyManager strategy = cfs.getCompactionStrategyManager();
+                AbstractCompactionTask task = strategy.getNextBackgroundTask(getDefaultGcBefore(cfs, FBUtilities.nowInSeconds()));
+                logger.debug("######in BackgroundSplitCandidate Checking {}.{}", cfs.keyspace.getName(), cfs.name);
+                if (task == null)
+                {
+                    logger.debug("No tasks available");
+                    logger.trace("No tasks available");
+                    return;
+                }
+                logger.debug("######in BackgroundSplitCandidate Checking {}.{}， before task.execute", cfs.keyspace.getName(), cfs.name);
+                task.execute(active);
+            }
+            finally
+            {
+                //logger.debug("######before splitingCF.remove: {}.{}", cfs.keyspace.getName(), cfs.name);
+                splitingCF.remove(cfs);
+            }
+
+            //submitBackgroundSplit(cfs);
+            
+        }
+    }
+
+
+
+    public List<Future<?>> submitBackgroundSplit(final ColumnFamilyStore cfs)
+    {
+        if (cfs.isAutoCompactionDisabled())
+        {
+            logger.trace("Autocompaction is disabled");
+            return Collections.emptyList();
+        }
+
+        /**
+         * If a CF is currently being compacted, and there are no idle threads, submitBackground should be a no-op;
+         * we can wait for the current compaction to finish and re-submit when more information is available.
+         * Otherwise, we should submit at least one task to prevent starvation by busier CFs, and more if there
+         * are idle threads stil. (CASSANDRA-4310)
+         */
+        int count = splitingCF.count(cfs);
+        if (count > 0 && executor.getActiveTaskCount() >= executor.getMaximumPoolSize())
+        {
+            logger.trace("Background compaction is still running for {}.{} ({} remaining). Skipping",
+                         cfs.keyspace.getName(), cfs.name, count);
+            return Collections.emptyList();
+        }
+
+        logger.trace("Scheduling a background task check for {}.{} with {}",
+                     cfs.keyspace.getName(),
+                     cfs.name,
+                     cfs.getCompactionStrategyManager().getName());
+
+        List<Future<?>> futures = new ArrayList<>(1);
+        Future<?> fut = executor.submitIfRunning(new BackgroundSplitCandidate(cfs), "background task"); //////
+        if (!fut.isCancelled())
+            futures.add(fut);
+        else
+            splitingCF.remove(cfs);
+        return futures;
+    }
+////////////////////////////////////////
+
+
 
     /**
      * Call this whenever a compaction might be needed on the given columnfamily.

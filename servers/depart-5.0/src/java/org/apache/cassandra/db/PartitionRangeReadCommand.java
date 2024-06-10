@@ -18,10 +18,12 @@
 package org.apache.cassandra.db;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.filter.ClusteringIndexFilter;
@@ -42,6 +44,7 @@ import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.dht.AbstractBounds;
 import org.apache.cassandra.dht.Bounds;
+import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.io.sstable.SSTableReadsListener;
@@ -53,7 +56,9 @@ import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.StorageProxy;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
+import org.apache.cassandra.utils.FBUtilities;
 
 /**
  * A read command that selects a (part of a) range of partitions.
@@ -388,6 +393,145 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
     {
         return requestedSlices.intersects(sstable.getSSTableMetadata().coveredClustering);
     }
+    
+    // Depart impl //////////////////////
+    public ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata cfm){
+        //PartitionPosition startKeyPP = dataRange().startKey();
+        //PartitionPosition startKeyPP = dataRange().keyRange().right;
+        //logger.debug("int getColumnFamilyStorefromMultiReplicas, dataRange().right:{}, dataRange().left:{}, dataRange().stopKey:{}", dataRange().keyRange().right, dataRange().keyRange().left, dataRange().stopKey());
+        ColumnFamilyStore cfs = null;
+        cfs = Keyspace.openAndgetColumnFamilyStoreByRingPosition(cfm.keyspace, dataRange().stopKey());//////
+        if(cfs==null){//////
+            cfs = Keyspace.openAndGetStore(cfm);
+        }//////
+        return cfs;
+    }
+
+    @VisibleForTesting
+    public UnfilteredPartitionIterator queryStorage(ColumnFamilyStore cfs, ReadExecutionController controller, int []findResults, String ksName)
+    {
+        ColumnFamilyStore newCFS = Keyspace.openAndgetColumnFamilyStoreByRingPosition(ksName, dataRange().stopKey());//////
+        logger.debug("in queryStorage cfs:{}, newCFS:{}, dataRange().left:{}, dataRange().right:{}", cfs, newCFS, dataRange().keyRange().left, dataRange().keyRange().right);
+        if(newCFS != null && !(newCFS.name.equals(cfs.name))) {
+            cfs = newCFS;
+        }
+
+        ColumnFamilyStore.ViewFragment view = cfs.select(View.selectLive(dataRange().keyRange()));
+        Tracing.trace("Executing seq scan across {} sstables for {}", view.sstables.size(), dataRange().keyRange().getString(metadata().partitionKeyType));
+
+        findResults[1] = 0;
+        
+        // fetch data from current memtable, historical memtables, and SSTables in the correct order.
+        InputCollector<UnfilteredPartitionIterator> inputCollector = iteratorsForRange(view, controller);
+
+        try
+        {
+            SSTableReadsListener readCountUpdater = newReadCountUpdater();
+            for (Memtable memtable : view.memtables)
+            {
+                UnfilteredPartitionIterator iter = memtable.partitionIterator(columnFilter(), dataRange(), readCountUpdater);
+                controller.updateMinOldestUnrepairedTombstone(memtable.getMinLocalDeletionTime());
+                inputCollector.addMemtableIterator(RTBoundValidator.validate(iter, RTBoundValidator.Stage.MEMTABLE, false));
+            }
+
+            int selectedSSTablesCnt = 0;
+            for (SSTableReader sstable : view.sstables)
+            {
+                boolean intersects = intersects(sstable);
+                boolean hasPartitionLevelDeletions = hasPartitionLevelDeletions(sstable);
+                boolean hasRequiredStatics = hasRequiredStatics(sstable);
+
+                if (!intersects && !hasPartitionLevelDeletions && !hasRequiredStatics)
+                    continue;
+
+                UnfilteredPartitionIterator iter = sstable.partitionIterator(columnFilter(), dataRange(), readCountUpdater);
+                inputCollector.addSSTableIterator(sstable, RTBoundValidator.validate(iter, RTBoundValidator.Stage.SSTABLE, false));
+
+                if (!sstable.isRepaired())
+                    controller.updateMinOldestUnrepairedTombstone(sstable.getMinLocalDeletionTime());
+
+                selectedSSTablesCnt++;
+            }
+            
+            ///////////////////////////////////
+            //scanLocalRegion();
+            if(inputCollector.isEmpty()){
+                findResults[0] = 0;
+                logger.debug("####Scan in queryStorage empty");
+            }
+            ////////////////////////////////////
+
+            final int finalSelectedSSTables = selectedSSTablesCnt;
+
+            // iterators can be empty for offline tools
+            if (inputCollector.isEmpty())
+                return EmptyIterators.unfilteredPartition(metadata());
+
+            List<UnfilteredPartitionIterator> finalizedIterators = inputCollector.finalizeIterators(cfs, nowInSec(), controller.oldestUnrepairedTombstone());
+            UnfilteredPartitionIterator merged = UnfilteredPartitionIterators.mergeLazily(finalizedIterators);
+            final ColumnFamilyStore store = cfs;
+            return checkCacheFilter(Transformation.apply(merged, new Transformation<UnfilteredRowIterator>()
+            {
+                @Override
+                protected void onClose()
+                {
+                    super.onClose();
+                    store.metric.updateSSTableIteratedInRangeRead(finalSelectedSSTables);
+                }
+            }), store);
+        }
+        catch (RuntimeException | Error e)
+        {
+            try
+            {
+                inputCollector.close();
+            }
+            catch (Exception e1)
+            {
+                e.addSuppressed(e1);
+            }
+            throw e;
+        }
+    }
+
+    @SuppressWarnings("resource") //
+    protected UnfilteredPartitionIterator queryLocalRegion(ColumnFamilyStore cfs, List<UnfilteredPartitionIterator> iterators)
+    {
+        //logger.debug("in queryStorage");
+        UnfilteredRowIterator partition = null;
+        logger.debug("###scan queryLocalRegion cfs:{}, left:{}, right:{}", cfs, this.dataRange().keyRange().left, this.dataRange().keyRange().right);
+        Token rightBound = StorageService.instance.getBoundToken(this.dataRange().keyRange().right.getToken());
+        Token leftBound = StorageService.instance.getBoundToken(this.dataRange().keyRange().left.getToken());
+
+        ArrayList<Token> tokenArray = new ArrayList<>();
+        //StorageService.instance.getRangeBoundToken(this.dataRange().keyRange().left.getToken(), rightBound, tokenArray, cfs.keyspace.getName());
+        tokenArray.add(leftBound);
+        logger.debug("###tokenArray:{}", tokenArray);
+
+        //StorageService.instance.db.mutex.lock();
+        String startKey = StorageService.instance.getTokenFactory().toString(this.dataRange().keyRange().left.getToken());
+        String stopKey = StorageService.instance.getTokenFactory().toString(this.dataRange().keyRange().right.getToken());
+        List<byte[]> valueList = new ArrayList<byte[]>();
+        for(Token boundToken: tokenArray){
+            //valueList.clear();
+            //String strToken = StorageService.instance.getTokenFactory().toString(tk);//////
+            String groupID = StorageService.instance.getTokenFactory().toString(boundToken);
+            logger.debug("----look startKey:{}, stopKey():{}, boundToken:{},  size:{}", startKey, stopKey, boundToken, valueList.size());
+            
+            if(StorageService.instance.db.groupVersionSetMap.get(groupID)!=null){
+                if(leftBound.equals(boundToken)){ //search the leftest group
+                //if(rightBound.equals(boundToken)){ //search the leftest group
+                    StorageService.instance.db.iterator(groupID, startKey, stopKey, valueList, 1, iterators);
+                }else{
+                    StorageService.instance.db.iterator(groupID, startKey, stopKey, valueList, 0, iterators);
+                }
+                logger.debug("look startKey:{}, stopKey():{}, boundToken:{}, valueList size:{}", startKey, stopKey, boundToken, valueList.size());
+            }
+        }
+
+        return UnfilteredPartitionIterators.mergeLazily(iterators);
+    }
+    ///////////////////////////////////////
 
     /**
      * Creates a new {@code SSTableReadsListener} to update the SSTables read counts.

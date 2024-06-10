@@ -253,6 +253,7 @@ public class MessagingService extends MessagingServiceMBeanImpl implements Messa
     public static final int VERSION_40 = 12;
     public static final int VERSION_50 = 13; // c14227 TTL overflow, 'uint' timestamps
     public static final int minimum_version = VERSION_40;
+    public static final int VERSION_20 = 7;
     public static final int current_version = Version.CURRENT.value;
     static AcceptVersions accept_messaging = new AcceptVersions(minimum_version, current_version);
     static AcceptVersions accept_streaming = new AcceptVersions(current_version, current_version);

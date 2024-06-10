@@ -18,6 +18,7 @@
 package org.apache.cassandra.streaming;
 
 import java.io.EOFException;
+import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.FileStore;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +68,7 @@ import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.metrics.StreamingMetrics;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.service.ActiveRepairService;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.streaming.async.StreamingMultiplexedChannel;
 import org.apache.cassandra.streaming.messages.*;
 import org.apache.cassandra.utils.FBUtilities;
@@ -73,6 +76,7 @@ import org.apache.cassandra.utils.JVMStabilityInspector;
 import org.apache.cassandra.utils.NoSpamLogger;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.FutureCombiner;
+import org.iq80.twoLayerLog.impl.FileMetaData;
 
 import static com.google.common.collect.Iterables.all;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_STREAMING_DEBUG_STACKTRACE_LIMIT;
@@ -444,11 +448,56 @@ public class StreamSession
         if (flushTables)
             flushSSTables(stores);
 
+        // Depart impl /////////////////////////////
+
+        logger.debug("ranges size:{}", replicas.size());
+        //List<Range<Token>> normalizedRanges = Range.normalize(ranges);
+        List<Range<Token>> mainRanges = new ArrayList<Range<Token>>(replicas.size());
+        List<Range<Token>> replicaRanges = new ArrayList<Range<Token>>(replicas.size());
+        Map<Token,Range<Token>> rightBoundMap = new HashMap<Token,Range<Token>>();
+        InetAddress LOCAL = FBUtilities.getJustBroadcastAddress();
+        //logger.debug("normalizedRanges size:{}", normalizedRanges.size());
+        //for(Range<Token> curRange: normalizedRanges){
+        for(Range<Token> curRange: replicas.ranges()){
+            List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(keyspace, curRange.right);
+            if (ep.get(0).equals(LOCAL)) {  
+                mainRanges.add(curRange);
+            }else{
+                //Range<Token> newRange;
+                replicaRanges.add(curRange);
+                Token rightBound = StorageService.instance.getBoundToken(curRange.right);
+                rightBoundMap.put(rightBound, curRange);                      
+            }
+            //logger.debug("range left:{}, range right:{}, IP of main range:{}, LOCAL:{}", curRange.left, curRange.right, ep.get(0), LOCAL);
+        }
+        ////////////////////////////////////////
+        TableId cfId = TableId.generate();
+        logger.debug("rightBoundMap size:{}", rightBoundMap.size());
+        List<FileMetaData> groupMetaList = new ArrayList<FileMetaData>();
+
+        for (Map.Entry<Token,Range<Token>> boundEntry: rightBoundMap.entrySet()) {
+            groupMetaList.clear();
+            List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(keyspace, boundEntry.getKey());
+            byte ip[] = ep.get(0).getAddress();  
+            int NodeID = (int)ip[3];                   
+            //long[] segmentID = StorageService.instance.getGroupSegementID(NodeID, boundEntry.getKey());
+            StorageService.instance.db.getGroupFileMeta(StorageService.instance.getTokenFactory().toString(boundEntry.getKey()), groupMetaList);
+            logger.debug("--nodeID:{}, rightBound:{}", NodeID, boundEntry.getKey());   
+            //if(segmentID!=null){
+            if(groupMetaList!=null && groupMetaList.size() > 0){
+                logger.debug("--groupMetaList size:{}", groupMetaList.size());   
+                Range<Token> curRange = boundEntry.getValue();                    
+                addTransferReplicaFile(cfId, NodeID, curRange.left, curRange.right, boundEntry.getKey(), groupMetaList, false, keyspace); 
+            }                
+        }
+        ///////////////////////////
+
         //Was it safe to remove this normalize, sorting seems not to matter, merging? Maybe we should have?
         //Do we need to unwrap here also or is that just making it worse?
         //Range and if it's transient
         RangesAtEndpoint unwrappedRanges = replicas.unwrap();
         List<OutgoingStream> streams = getOutgoingStreamsForRanges(unwrappedRanges, stores, pendingRepair, previewKind);
+
         addTransferStreams(streams);
         Set<Range<Token>> toBeUpdated = transferredRangesPerKeyspace.get(keyspace);
         if (toBeUpdated == null)
@@ -458,6 +507,33 @@ public class StreamSession
         toBeUpdated.addAll(replicas.ranges());
         transferredRangesPerKeyspace.put(keyspace, toBeUpdated);
     }
+
+
+    // Depart impl /////////////////////////////
+
+    public synchronized void addTransferReplicaFile(TableId cfId, int NodeID, Token left, Token right, Token rightBound, List<FileMetaData> groupMetaList, boolean globalFlag, String keyspace) 
+    {
+        // failIfFinished();
+        // for (FileMetaData fileMeta : groupMetaList) {          
+        //     StorageService.instance.transferingFiles++;
+        //     logger.debug("nodeID:{}, group:{}, rightBound:{}, fileMeta:{}, transferingFiles:{}", NodeID, right, rightBound, fileMeta, StorageService.instance.transferingFiles);
+        //     StreamTransferTask task = transfers.get(cfId);
+        //     if (task == null)
+        //     {
+        //         //guarantee atomicity
+        //         StreamTransferTask newTask = new StreamTransferTask(this, cfId);
+        //         task = transfers.putIfAbsent(cfId, newTask);
+        //         logger.debug("in new StreamTransferTask2222, task == null:{}", task == null);
+        //         if (task == null)
+        //             task = newTask;
+        //     }
+        //     //task.addTransferReplicaFile(replicaFile, cfId);
+        //     fileMeta.flagR = 1;
+        //     task.addTransferReplicaFile(cfId, NodeID, left, right, rightBound, fileMeta, globalFlag, keyspace);
+        // }
+        return;
+    }
+    ////////////////////////////////
 
     private void failIfFinished()
     {
