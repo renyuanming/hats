@@ -194,9 +194,9 @@ public class Keyspace
 
     
     // Depart impl//////////////////////////////////////
-    public static ColumnFamilyStore openAndgetColumnFamilyStoreByToken(TableMetadata cfm, Token keyToken)
+    public static ColumnFamilyStore openAndgetColumnFamilyStoreByToken(TableMetadata cfm, DecoratedKey key)
     {
-        return open(cfm.keyspace).getColumnFamilyStoreByToken(cfm.keyspace, keyToken);
+        return open(cfm.keyspace).getColumnFamilyStoreByToken(cfm.keyspace, key);
     }
 
     public static ColumnFamilyStore openAndgetColumnFamilyStoreByRingPosition(String ksName, RingPosition pos)
@@ -224,8 +224,8 @@ public class Keyspace
         }
     }
 
-    public ColumnFamilyStore getColumnFamilyStoreByToken(String ksName, Token keyToken){
-        List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(ksName, keyToken);
+    public ColumnFamilyStore getColumnFamilyStoreByToken(String ksName, DecoratedKey key){
+        List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(ksName, key.getKey());
         TableId replicaUUID = null;
         if(StorageService.instance.localIP.equals(ep.get(0))){
             replicaUUID = globalNodeIDtoCFIDMap.get(0);

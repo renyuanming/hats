@@ -496,7 +496,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
     public ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata cfm){
         
         ColumnFamilyStore cfs = null;
-        cfs = Keyspace.openAndgetColumnFamilyStoreByToken(cfm, this.partitionKey.getToken());//////
+        cfs = Keyspace.openAndgetColumnFamilyStoreByToken(cfm, this.partitionKey);//////
         if(cfs==null){//////
             cfs = Keyspace.openAndGetStore(cfm);
         }//////
