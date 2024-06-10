@@ -409,8 +409,15 @@ public abstract class ReadCommand extends AbstractReadQuery
         try
         {
             // ColumnFamilyStore cfs = Keyspace.openAndGetStore(metadata());
-            
-            ColumnFamilyStore cfs = getColumnFamilyStorefromMultiReplicas(metadata());
+            ColumnFamilyStore cfs = null;
+            if (metadata().name.contains("usertable"))
+            {
+                cfs = getColumnFamilyStorefromMultiReplicas(metadata());
+            }
+            else
+            {
+                cfs = Keyspace.openAndGetStore(metadata());
+            }
             Index.QueryPlan indexQueryPlan = indexQueryPlan();
 
             Index.Searcher searcher = null;
