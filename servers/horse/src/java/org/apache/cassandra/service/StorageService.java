@@ -314,6 +314,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
     public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
     public AtomicLong readRequestInFlight = new AtomicLong(0);
+    public AtomicLong getEndpointCost = new AtomicLong(0);
 
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
@@ -5142,6 +5143,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
      * When the node failure happens, we can still get all replica nodes based on the token.
     */
     public List<InetAddressAndPort> getReplicaNodesWithPortFromTokenForDegradeRead(String keyspaceName, Token token) {
+        long startTime = System.nanoTime();
         List<Long> tokenRanges =  new ArrayList<>(Gossiper.getTokenRanges());
         List<InetAddressAndPort> allHosts = Gossiper.getAllHosts();
         List<InetAddressAndPort> replicaNodes = new ArrayList<>();
@@ -5164,7 +5166,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
         // logger.debug("rym-Debug: token is ({}), replica nodes are ({}), all hosts are ({}), token ranges are ({})", 
         //              token, replicaNodes, allHosts, Gossiper.getTokenRanges());
-
+        
+        
+        StorageService.instance.getEndpointCost.addAndGet(System.nanoTime() - startTime);
+        
         return replicaNodes;
     }
 
