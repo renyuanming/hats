@@ -49,12 +49,12 @@ final class ColumnMetadataVersionComparator implements Comparator<ColumnMetadata
     @Override
     public int compare(ColumnMetadata v1, ColumnMetadata v2)
     {
-        if(!v1.ksName.equals(v2.ksName) || !v1.cfName.equals(v2.cfName) || !v1.name.equals(v2.name))
-        {
-            logger.error("rymERROR: v1.ksName: {}, v2.ksName: {}, v1.cfName: {}, v2.cfName: {}, v1.name: {}, v2.name: {}", v1.ksName, v2.ksName, v1.cfName, v2.cfName, v1.name, v2.name);
-        }
+        // if(!v1.ksName.equals(v2.ksName) || !v1.cfName.equals(v2.cfName) || !v1.name.equals(v2.name))
+        // {
+        //     logger.error("rymERROR: v1.ksName: {}, v2.ksName: {}, v1.cfName: {}, v2.cfName: {}, v1.name: {}, v2.name: {}", v1.ksName, v2.ksName, v1.cfName, v2.cfName, v1.name, v2.name);
+        // }
         assert v1.ksName.equals(v2.ksName)
-               && v1.cfName.equals(v2.cfName)
+            //    && v1.cfName.equals(v2.cfName)
                && v1.name.equals(v2.name) : v1.debugString() + " != " + v2.debugString();
 
         AbstractType<?> v1Type = v1.type;
