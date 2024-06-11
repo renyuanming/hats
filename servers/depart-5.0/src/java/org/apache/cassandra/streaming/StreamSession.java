@@ -450,45 +450,48 @@ public class StreamSession
 
         // Depart impl /////////////////////////////
 
-        logger.debug("ranges size:{}", replicas.size());
-        //List<Range<Token>> normalizedRanges = Range.normalize(ranges);
-        List<Range<Token>> mainRanges = new ArrayList<Range<Token>>(replicas.size());
-        List<Range<Token>> replicaRanges = new ArrayList<Range<Token>>(replicas.size());
-        Map<Token,Range<Token>> rightBoundMap = new HashMap<Token,Range<Token>>();
-        InetAddress LOCAL = FBUtilities.getJustBroadcastAddress();
-        //logger.debug("normalizedRanges size:{}", normalizedRanges.size());
-        //for(Range<Token> curRange: normalizedRanges){
-        for(Range<Token> curRange: replicas.ranges()){
-            List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(keyspace, curRange.right);
-            if (ep.get(0).equals(LOCAL)) {  
-                mainRanges.add(curRange);
-            }else{
-                //Range<Token> newRange;
-                replicaRanges.add(curRange);
-                Token rightBound = StorageService.instance.getBoundToken(curRange.right);
-                rightBoundMap.put(rightBound, curRange);                      
+        if(keyspace.equals("ycsb"))
+        {
+            logger.debug("ranges size:{}", replicas.size());
+            //List<Range<Token>> normalizedRanges = Range.normalize(ranges);
+            List<Range<Token>> mainRanges = new ArrayList<Range<Token>>(replicas.size());
+            List<Range<Token>> replicaRanges = new ArrayList<Range<Token>>(replicas.size());
+            Map<Token,Range<Token>> rightBoundMap = new HashMap<Token,Range<Token>>();
+            InetAddress LOCAL = FBUtilities.getJustBroadcastAddress();
+            //logger.debug("normalizedRanges size:{}", normalizedRanges.size());
+            //for(Range<Token> curRange: normalizedRanges){
+            for(Range<Token> curRange: replicas.ranges()){
+                List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(keyspace, curRange.right);
+                if (ep.get(0).equals(LOCAL)) {  
+                    mainRanges.add(curRange);
+                }else{
+                    //Range<Token> newRange;
+                    replicaRanges.add(curRange);
+                    Token rightBound = StorageService.instance.getBoundToken(curRange.right);
+                    rightBoundMap.put(rightBound, curRange);                      
+                }
+                //logger.debug("range left:{}, range right:{}, IP of main range:{}, LOCAL:{}", curRange.left, curRange.right, ep.get(0), LOCAL);
             }
-            //logger.debug("range left:{}, range right:{}, IP of main range:{}, LOCAL:{}", curRange.left, curRange.right, ep.get(0), LOCAL);
-        }
-        ////////////////////////////////////////
-        TableId cfId = TableId.generate();
-        logger.debug("rightBoundMap size:{}", rightBoundMap.size());
-        List<FileMetaData> groupMetaList = new ArrayList<FileMetaData>();
+            ////////////////////////////////////////
+            TableId cfId = TableId.generate();
+            logger.debug("rightBoundMap size:{}", rightBoundMap.size());
+            List<FileMetaData> groupMetaList = new ArrayList<FileMetaData>();
 
-        for (Map.Entry<Token,Range<Token>> boundEntry: rightBoundMap.entrySet()) {
-            groupMetaList.clear();
-            List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(keyspace, boundEntry.getKey());
-            byte ip[] = ep.get(0).getAddress();  
-            int NodeID = (int)ip[3];                   
-            //long[] segmentID = StorageService.instance.getGroupSegementID(NodeID, boundEntry.getKey());
-            StorageService.instance.db.getGroupFileMeta(StorageService.instance.getTokenFactory().toString(boundEntry.getKey()), groupMetaList);
-            logger.debug("--nodeID:{}, rightBound:{}", NodeID, boundEntry.getKey());   
-            //if(segmentID!=null){
-            if(groupMetaList!=null && groupMetaList.size() > 0){
-                logger.debug("--groupMetaList size:{}", groupMetaList.size());   
-                Range<Token> curRange = boundEntry.getValue();                    
-                addTransferReplicaFile(cfId, NodeID, curRange.left, curRange.right, boundEntry.getKey(), groupMetaList, false, keyspace); 
-            }                
+            for (Map.Entry<Token,Range<Token>> boundEntry: rightBoundMap.entrySet()) {
+                groupMetaList.clear();
+                List<InetAddress> ep = StorageService.instance.getNaturalEndpoints(keyspace, boundEntry.getKey());
+                byte ip[] = ep.get(0).getAddress();  
+                int NodeID = (int)ip[3];                   
+                //long[] segmentID = StorageService.instance.getGroupSegementID(NodeID, boundEntry.getKey());
+                StorageService.instance.db.getGroupFileMeta(StorageService.instance.getTokenFactory().toString(boundEntry.getKey()), groupMetaList);
+                logger.debug("--nodeID:{}, rightBound:{}", NodeID, boundEntry.getKey());   
+                //if(segmentID!=null){
+                if(groupMetaList!=null && groupMetaList.size() > 0){
+                    logger.debug("--groupMetaList size:{}", groupMetaList.size());   
+                    Range<Token> curRange = boundEntry.getValue();                    
+                    addTransferReplicaFile(cfId, NodeID, curRange.left, curRange.right, boundEntry.getKey(), groupMetaList, false, keyspace); 
+                }                
+            }
         }
         ///////////////////////////
 
