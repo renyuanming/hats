@@ -436,12 +436,12 @@ public abstract class ReadCommand extends AbstractReadQuery
                                             .collect(Collectors.joining(",")));
             }
 
-            UnfilteredPartitionIterator iterator = (null == searcher) ? queryStorage(cfs, executionController) : searcher.search(executionController);
+            // UnfilteredPartitionIterator iterator = (null == searcher) ? queryStorage(cfs, executionController) : searcher.search(executionController);
 
             int []findResults = new int[2];
             findResults[0] = 1;
             findResults[1] = 1;
-
+            UnfilteredPartitionIterator iterator = (null == searcher) ? queryStorage(cfs, executionController, findResults, metadata().keyspace) : searcher.search(executionController);
             /////////////////////////////////////////////////
             //if(cfs.name.equals("globalReplicaTable") && findResults[0]==0 ){  //read not find in global log, then search local log
             if(cfs.name.equals("globalReplicaTable")){  
