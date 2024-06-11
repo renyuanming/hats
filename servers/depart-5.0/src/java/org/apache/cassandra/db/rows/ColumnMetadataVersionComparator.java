@@ -21,6 +21,8 @@ import java.util.Comparator;
 
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.schema.ColumnMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@code Comparator} use to determine which version of a {@link ColumnMetadata} should be used.
@@ -39,6 +41,7 @@ final class ColumnMetadataVersionComparator implements Comparator<ColumnMetadata
 {
     public static final Comparator<ColumnMetadata> INSTANCE = new ColumnMetadataVersionComparator();
 
+    private static final Logger logger = LoggerFactory.getLogger(ColumnMetadataVersionComparator.class);
     private ColumnMetadataVersionComparator()
     {
     }
@@ -46,6 +49,10 @@ final class ColumnMetadataVersionComparator implements Comparator<ColumnMetadata
     @Override
     public int compare(ColumnMetadata v1, ColumnMetadata v2)
     {
+        if(!v1.ksName.equals(v2.ksName) || !v1.cfName.equals(v2.cfName) || !v1.name.equals(v2.name))
+        {
+            logger.error("rymERROR: v1.ksName: {}, v2.ksName: {}, v1.cfName: {}, v2.cfName: {}, v1.name: {}, v2.name: {}", v1.ksName, v2.ksName, v1.cfName, v2.cfName, v1.name, v2.name);
+        }
         assert v1.ksName.equals(v2.ksName)
                && v1.cfName.equals(v2.cfName)
                && v1.name.equals(v2.name) : v1.debugString() + " != " + v2.debugString();
