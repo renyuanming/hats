@@ -23,23 +23,22 @@ import org.slf4j.LoggerFactory;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.QueryCancelledException;
-import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
+import org.apache.cassandra.net.ParamType;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 {
@@ -53,6 +52,9 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         {
             throw new RuntimeException("Cannot service reads while bootstrapping!");
         }
+        AtomicInteger counter = MessagingService.instance().getPendingRequestsCounter(FBUtilities.getJustBroadcastAddress());
+        counter.incrementAndGet();
+        long start = System.nanoTime();
 
         ReadCommand command = message.payload;
 
@@ -114,7 +116,14 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         if (command.complete())
         {
             Tracing.trace("Enqueuing response to {}", message.from());
-            Message<ReadResponse> reply = message.responseWith(response);
+            // Message<ReadResponse> reply = message.responseWith(response);
+
+            // C3 impl
+            long serviceTimeInNanos = System.nanoTime() - start;
+            int queueSize = counter.decrementAndGet();
+            Message<ReadResponse> reply = message.responseWith(response)
+                                                .withParam(ParamType.QUEUE_SIZE, queueSize)
+                                                .withParam(ParamType.SERVICE_TIME_IN_NANO, serviceTimeInNanos);
             reply = MessageParams.addToMessage(reply);
             MessagingService.instance().send(reply, message.from());
         }
