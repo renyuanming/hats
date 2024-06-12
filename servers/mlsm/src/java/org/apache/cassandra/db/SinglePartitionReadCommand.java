@@ -492,6 +492,22 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         return new SingletonUnfilteredPartitionIterator(partition);
     }
 
+
+
+    // HORSE impl ////////////////////////////
+
+    public ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata cfm){
+        
+        ColumnFamilyStore cfs = null;
+        cfs = Keyspace.openAndgetColumnFamilyStoreByToken(cfm, this.partitionKey);//////
+        if(cfs==null){//////
+            cfs = Keyspace.openAndGetStore(cfm);
+        }//////
+        return cfs;
+    }
+
+
+
     /**
      * Fetch the rows requested if in cache; if not, read it from disk and cache it.
      * <p>

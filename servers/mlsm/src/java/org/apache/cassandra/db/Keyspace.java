@@ -50,6 +50,7 @@ import org.apache.cassandra.db.lifecycle.SSTableSet;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.db.repair.CassandraKeyspaceRepairManager;
 import org.apache.cassandra.db.view.ViewManager;
+import org.apache.cassandra.dht.RingPosition;
 import org.apache.cassandra.exceptions.WriteTimeoutException;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.index.SecondaryIndexManager;
@@ -231,6 +232,60 @@ public class Keyspace
     {
         return columnFamilyStores.containsKey(id);
     }
+
+
+    // HORSE
+    public static ColumnFamilyStore openAndgetColumnFamilyStoreByToken(TableMetadata cfm, DecoratedKey key)
+    {
+        return open(cfm.keyspace).getColumnFamilyStoreByToken(cfm.keyspace, key);
+    }
+
+    public static ColumnFamilyStore openAndgetColumnFamilyStoreByRingPosition(String ksName, RingPosition pos)
+    {
+        //logger.debug("int openAndgetColumnFamilyStoreByRingPosition, pos:{}", pos);
+        return open(ksName).getColumnFamilyStoreByRingPosition(pos);
+    }
+
+
+    public ColumnFamilyStore getColumnFamilyStoreByRingPosition(RingPosition pos){
+        List<InetAddress> eps = StorageService.instance.getNaturalEndpoints(this.getName(), pos.getToken());
+        
+
+        TableId replicaUUID = null;
+        int index = eps.indexOf(StorageService.instance.localIP);
+        if(index != -1)
+            replicaUUID = globalNodeIDtoCFIDMap.get(index);
+        else
+            throw new IllegalStateException(String.format("rym-ERROR: the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
+        
+
+        if(columnFamilyStores!=null && replicaUUID!=null){
+            ColumnFamilyStore cfs = columnFamilyStores.get(replicaUUID);
+            //logger.debug("keyToken:{}, primaryIP:{}, replicaUUID:{}, ksname:{}, cfs name:{}",keyToken, primaryIP, replicaUUID, ksName, cfs.metadata.cfName);
+            return cfs;
+        }else{
+            return null;
+        }
+    }
+
+    public ColumnFamilyStore getColumnFamilyStoreByToken(String ksName, DecoratedKey key){
+        List<InetAddress> eps = StorageService.instance.getNaturalEndpoints(ksName, key.getKey());
+        TableId replicaUUID = null;
+
+        int index = eps.indexOf(StorageService.instance.localIP);
+        if(index != -1)
+            replicaUUID = globalNodeIDtoCFIDMap.get(index);
+        else
+            throw new IllegalStateException(String.format("rym-ERROR: the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
+        
+        if(columnFamilyStores!=null && replicaUUID!=null){
+            ColumnFamilyStore cfs = columnFamilyStores.get(replicaUUID);
+            return cfs;
+        }else{
+            return null;
+        }
+    }
+
 
     /**
      * Take a snapshot of the specific column family, or the entire set of column families
@@ -681,41 +736,13 @@ public class Keyspace
         // String key = upd.partitionKey().getRawKey(upd.metadata());
         // List<InetAddress> eps = StorageService.instance.getNaturalEndpoints(keyspaceName, upd.metadata().name, key);
         List<InetAddress> eps = StorageService.instance.getNaturalEndpoints(keyspaceName, upd.partitionKey().getKey());
-        InetAddress localAddress = FBUtilities.getJustBroadcastAddress();
         TableId replicaUUID = null;
         
-        int index = eps.indexOf(localAddress);
+        int index = eps.indexOf(StorageService.instance.localIP);
         if(index != -1)
             replicaUUID = globalNodeIDtoCFIDMap.get(index);
         else
-            throw new IllegalStateException(String.format("rym-ERROR: the local address (%s) is not belong to the replica nodes (%s)", localAddress, eps));
-        
-        // String fileName = "usertable";
-        // if(index!=0) {
-        //     fileName+=index;
-        // }
-
-        // try {
-        //     FileWriter writer = new FileWriter("logs/usertableAll", true);
-        //     BufferedWriter buffer = new BufferedWriter(writer);
-        //     buffer.write("key="+upd.partitionKey().getRawKey(upd.metadata()) + ", token="+upd.partitionKey().getToken()+"\n");
-        //     buffer.close();
-        // } catch (IOException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
-
-
-
-        // try {
-        //     FileWriter writer = new FileWriter("logs/"+fileName, true);
-        //     BufferedWriter buffer = new BufferedWriter(writer);
-        //     buffer.write("key="+upd.partitionKey().getRawKey(upd.metadata()) + ", token="+upd.partitionKey().getToken()+"\n");
-        //     buffer.close();
-        // } catch (IOException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
+            throw new IllegalStateException(String.format("rym-ERROR: the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
         
         return columnFamilyStores.get(replicaUUID);
     }

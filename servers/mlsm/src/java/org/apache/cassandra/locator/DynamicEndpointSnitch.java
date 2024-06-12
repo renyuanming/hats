@@ -236,25 +236,32 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     // Compare endpoints given an immutable snapshot of the scores
     private int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2, Map<InetAddressAndPort, Double> scores)
     {
-        Double scored1 = scores.get(a1.endpoint());
-        Double scored2 = scores.get(a2.endpoint());
-        
-        if (scored1 == null)
+        if(DatabaseDescriptor.isMotivationExperiment())
         {
-            scored1 = defaultStore(a1.endpoint());
+            return 0;
         }
-
-        if (scored2 == null)
-        {
-            scored2 = defaultStore(a2.endpoint());
-        }
-
-        if (scored1.equals(scored2))
-            return subsnitch.compareEndpoints(target, a1, a2);
-        if (scored1 < scored2)
-            return -1;
         else
-            return 1;
+        {
+            Double scored1 = scores.get(a1.endpoint());
+            Double scored2 = scores.get(a2.endpoint());
+            
+            if (scored1 == null)
+            {
+                scored1 = defaultStore(a1.endpoint());
+            }
+
+            if (scored2 == null)
+            {
+                scored2 = defaultStore(a2.endpoint());
+            }
+
+            if (scored1.equals(scored2))
+                return subsnitch.compareEndpoints(target, a1, a2);
+            if (scored1 < scored2)
+                return -1;
+            else
+                return 1;
+        }
     }
 
     public int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2)
