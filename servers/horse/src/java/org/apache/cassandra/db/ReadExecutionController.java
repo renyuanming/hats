@@ -128,7 +128,16 @@ public class ReadExecutionController implements AutoCloseable
     @SuppressWarnings("resource") // ops closed during controller close
     static ReadExecutionController forCommand(ReadCommand command, boolean trackRepairedStatus)
     {
-        ColumnFamilyStore baseCfs = Keyspace.openAndGetStore(command.metadata());
+        // ColumnFamilyStore baseCfs = Keyspace.openAndGetStore(command.metadata());
+        ColumnFamilyStore baseCfs = null;
+        if(command.metadata().name.contains("usertable"))
+        {
+            baseCfs = command.getColumnFamilyStorefromMultiReplicas(command.metadata());
+        }
+        else
+        {
+            baseCfs = Keyspace.openAndGetStore(command.metadata());
+        }
         ColumnFamilyStore indexCfs = maybeGetIndexCfs(command);
 
         long createdAtNanos = baseCfs.metric.topLocalReadQueryTime.isEnabled() ? clock.now() : NO_SAMPLING;

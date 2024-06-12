@@ -91,7 +91,7 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
                                                                     .readCounterOfEachReplica
                                                                     .getCompletedRequestsOfEachReplica(), 
                                                      linearLatency, version);
-            gatheredStates.put(FBUtilities.getJustBroadcastAddress(), localStates);
+            gatheredStates.put(StorageService.instance.localIP, localStates);
         }
 
         if(!InetAddressAndPort.getByName(leaderHost).equals(message.from()))

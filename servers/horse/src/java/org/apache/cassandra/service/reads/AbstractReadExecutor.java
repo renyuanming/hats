@@ -22,22 +22,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.concurrent.Stage;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.Keyspace;
-import org.apache.cassandra.db.PartitionRangeReadCommand;
 import org.apache.cassandra.db.ReadCommand;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
-import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.PartitionIterator;
 import org.apache.cassandra.db.transform.DuplicateRowChecker;
 import org.apache.cassandra.exceptions.ReadFailureException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.exceptions.UnavailableException;
-import org.apache.cassandra.horse.controller.ReplicaSelector;
-import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.EndpointsForToken;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.Replica;
@@ -47,20 +42,12 @@ import org.apache.cassandra.locator.ReplicaPlans;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageProxy.LocalReadRunnable;
-import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.reads.repair.ReadRepair;
 import org.apache.cassandra.tracing.TraceState;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 
 import static com.google.common.collect.Iterables.all;
-import static org.apache.cassandra.utils.Clock.Global.nanoTime;
-import org.apache.cassandra.dht.Token;
-
-import java.net.InetAddress;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 
 /**
@@ -75,20 +62,18 @@ public abstract class AbstractReadExecutor
 {
     private static final Logger logger = LoggerFactory.getLogger(AbstractReadExecutor.class);
 
-    protected ReadCommand command;
+    protected final ReadCommand command;
     private   final ReplicaPlan.SharedForTokenRead replicaPlan;
     protected final ReadRepair<EndpointsForToken, ReplicaPlan.ForTokenRead> readRepair;
     protected final DigestResolver<EndpointsForToken, ReplicaPlan.ForTokenRead> digestResolver;
     protected final ReadCallback<EndpointsForToken, ReplicaPlan.ForTokenRead> handler;
     protected final TraceState traceState;
-    protected ColumnFamilyStore cfs;
+    protected final ColumnFamilyStore cfs;
     protected final long queryStartNanoTime;
     private   final int initialDataRequestCount;
     protected volatile PartitionIterator result = null;
-    private final List<InetAddressAndPort> sendRequestAddresses;
-    private final List<InetAddressAndPort> replicasInTheRing;
 
-    AbstractReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, int initialDataRequestCount, long queryStartNanoTime, List<InetAddressAndPort> replicasInTheRing)
+    AbstractReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, int initialDataRequestCount, long queryStartNanoTime)
     {
         this.command = command;
         this.replicaPlan = ReplicaPlan.shared(replicaPlan);
@@ -101,11 +86,7 @@ public abstract class AbstractReadExecutor
         this.traceState = Tracing.instance.get();
         this.queryStartNanoTime = queryStartNanoTime;
 
-        long tStart = nanoTime();
 
-        this.replicasInTheRing = replicasInTheRing;
-        this.sendRequestAddresses = replicaPlan.contacts().endpointList();
-        Tracing.trace("[rym] Executed get send target list time {}\u03bcs", "AbstractReadExecutor", (nanoTime() - tStart) / 1000);
         // Set the digest version (if we request some digests). This is the smallest version amongst all our target replicas since new nodes
         // knows how to produce older digest but the reverse is not true.
         // TODO: we need this when talking with pre-3.0 nodes. So if we preserve the digest format moving forward, we can get rid of this once
@@ -179,87 +160,6 @@ public abstract class AbstractReadExecutor
         }
     }
 
-    private int makeDataRequestForMLSM(ReadCommand readCommand, Iterable<Replica> replicas) {
-
-        assert all(replicas, Replica::isFull);
-
-        long tStart1 = nanoTime();
-        boolean hasLocalEndpoint = false;
-        Message<ReadCommand> message = null;
-        int usedAddressNumber = 0;
-
-        // TODO: We need to check whether the size of replicas equals to the read consistency level?
-        // if(DatabaseDescriptor.isMotivationExperiment()) 
-        // {
-        //     // logger.debug("[rym] This is the motivation experiment, we only send the request to the first node in the replica plan.");
-        //     Message<ReadCommand> messageForDataRequest = readCommand.createMessage(false);
-
-        //     if(!replicasInTheRing.get(0).equals(replicas.iterator().next().endpoint()))
-        //     {
-        //         logger.error("[rym-ERROR] The first node in the replica plan is not the first node in the ring.");
-        //     }
-
-        //     int replicaIndex = 0;
-        //     if(LocalStates.localPolicy.get(replicasInTheRing.get(0)) != null)
-        //     {
-        //         replicaIndex = ReplicaSelector.randomSelector.selectReplica(LocalStates.localPolicy.get(replicasInTheRing.get(0)));
-        //     }
-        //     // replicaIndex = ReplicaSelector.randomSelector.selectReplica();
-            
-        //     if(replicasInTheRing.get(replicaIndex).equals(FBUtilities.getBroadcastAddressAndPort()))
-        //     {
-        //         hasLocalEndpoint = true;
-        //     } 
-        //     else 
-        //     {
-        //         MessagingService.instance().sendWithCallback(messageForDataRequest, replicasInTheRing.get(replicaIndex), handler);
-        //     }
-        // }
-        // else
-        // {
-        // The size of replicas equals to the read consistency level
-        for(Replica replica : replicas) 
-        {
-            assert replica.isFull() || readCommand.acceptsTransient();
-
-            InetAddressAndPort endpoint = replica.endpoint();
-            if (replica.isSelf())
-            {
-                hasLocalEndpoint = true;
-                usedAddressNumber = sendRequestAddresses.indexOf(endpoint);
-                continue; // This is for the read consistency requirements
-            }
-
-            if (traceState != null)
-                traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
-
-            if (null == message)
-                message = readCommand.createMessage(false);
-
-            MessagingService.instance().sendWithCallback(message, endpoint, handler);
-        }
-        // }
-
-        Tracing.trace("[rym] Executed data send request time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart1) / 1000);
-        
-        // We delay the local (potentially blocking) read till the end to avoid stalling remote requests.
-        if (hasLocalEndpoint) 
-        {
-            long tStart = nanoTime();
-            Tracing.trace("[rym] Executed local data read time {}\u03bcs", "makeDataRequestsForELECT", (nanoTime() - tStart) / 1000);
-            Stage.READ.maybeExecuteImmediately(new LocalReadRunnable(readCommand, handler));
-
-            // record the local serve count
-            InetAddress replicaGroup = replicasInTheRing.get(0).getAddress();
-            StorageService.instance.readCounterOfEachReplica.mark(replicaGroup);
-        } 
-        // else 
-        // {
-        //     logger.debug("[rym] No local endpoint, skip local read");
-        // }
-        return usedAddressNumber;
-    }
-
     /**
      * Perform additional requests if it looks like the original will time out.  May block while it waits
      * to see if the original requests are answered first.
@@ -268,44 +168,14 @@ public abstract class AbstractReadExecutor
 
     /**
      * send the initial set of requests
-     * How are read requests accomplished:
-     * https://docs.datastax.com/en/cassandra-oss/3.x/cassandra/dml/dmlClientRequestsRead.html
      */
     public void executeAsync()
     {
         EndpointsForToken selected = replicaPlan().contacts();
         EndpointsForToken fullDataRequests = selected.filter(Replica::isFull, initialDataRequestCount);
-        if (this.command.metadata().keyspace.equals("ycsb"))
-        {
-            // Send a direct read request
-            makeDataRequestForMLSM(command, fullDataRequests);
-            
-            // [rymTODO]
-            // Send a digest read request
-            // makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
-
-            // Send a transient read request
-
-        }
-        else
-        {
-            makeFullDataRequests(fullDataRequests);
-            makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
-            makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
-        }
-
-    }
-
-    private static synchronized void recordReadCountForReplicaGroup(Keyspace keyspace, Token token)  {
-        
-        if (keyspace.getName().equals("ycsb")) {
-            InetAddress replicaGroup = StorageService.instance.getNaturalEndpointsForToken(keyspace.getName(), token).get(0);
-
-            if(!StorageService.instance.totalReadCntOfEachReplica.containsKey(replicaGroup)) {
-                StorageService.instance.totalReadCntOfEachReplica.put(replicaGroup, new AtomicLong(0));
-            }
-            StorageService.instance.totalReadCntOfEachReplica.get(replicaGroup).incrementAndGet();
-        }
+        makeFullDataRequests(fullDataRequests);
+        makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
+        makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
     }
 
     /**
@@ -316,47 +186,8 @@ public abstract class AbstractReadExecutor
                                                        long queryStartNanoTime) throws UnavailableException
     {
         Keyspace keyspace = Keyspace.open(command.metadata().keyspace);
-
-        // Get the correct cfs and update command.metadata() if necessary
-        List<InetAddressAndPort> replicasInTheRing = null;
-        if(keyspace.getName().equals("ycsb"))
-        {
-            replicasInTheRing = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(keyspace.getName(), command.partitionKey().getToken());
-
-            switch (replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
-                case 1:
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
-                    ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-                    command.updateColumnFilter(newColumnFilter1);                    
-                    break;
-                case 2:
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
-                    ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-                    command.updateColumnFilter(newColumnFilter2);
-                    break;
-            
-                default:
-                    break;
-            }
-
-            // String tableName = "usertable" + replicasInTheRing.indexOf(FBUtilities.getBroadcastAddressAndPort());
-            // command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore(tableName).metadata());
-            // ColumnFilter newColumnFilter = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-            // command.updateColumnFilter(newColumnFilter);
-        }
-
-
-
         ColumnFamilyStore cfs = keyspace.getColumnFamilyStore(command.metadata().id);
         SpeculativeRetryPolicy retry = cfs.metadata().params.speculativeRetry;
-
-        // Count the request count before replica selection
-        if(keyspace.getName().equals("ycsb"))
-        {   
-            recordReadCountForReplicaGroup(keyspace, command.partitionKey().getToken());
-            StorageService.instance.totalReadRequestCountBeforeReplicaSelection.incrementAndGet();
-        }
-        
 
         ReplicaPlan.ForTokenRead replicaPlan = ReplicaPlans.forRead(keyspace,
                                                                     command.partitionKey().getToken(),
@@ -364,31 +195,23 @@ public abstract class AbstractReadExecutor
                                                                     consistencyLevel,
                                                                     retry);
 
-
-        
-        // This is for debugging purpose, test whether we can get the correct replica plan for the token with our own method
-        if(keyspace.getName().equals("ycsb") && !replicasInTheRing.containsAll(replicaPlan.contacts().endpointList()))
-        {
-            logger.error("[rym-ERROR] For token = {}, replicasInTheRing = {}, replica plan = {}", command.partitionKey().getToken(), replicasInTheRing,replicaPlan.contacts().endpoints());
-        }
-
         // Speculative retry is disabled *OR*
         // 11980: Disable speculative retry if using EACH_QUORUM in order to prevent miscounting DC responses
         if (retry.equals(NeverSpeculativeRetryPolicy.INSTANCE) || consistencyLevel == ConsistencyLevel.EACH_QUORUM)
-            return new NeverSpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime, false, replicasInTheRing);
+            return new NeverSpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime, false);
 
         // There are simply no extra replicas to speculate.
         // Handle this separately so it can record failed attempts to speculate due to lack of replicas
         if (replicaPlan.contacts().size() == replicaPlan.readCandidates().size())
         {
             boolean recordFailedSpeculation = consistencyLevel != ConsistencyLevel.ALL;
-            return new NeverSpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime, recordFailedSpeculation, replicasInTheRing);
+            return new NeverSpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime, recordFailedSpeculation);
         }
 
         if (retry.equals(AlwaysSpeculativeRetryPolicy.INSTANCE))
-            return new AlwaysSpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime, replicasInTheRing);
+            return new AlwaysSpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime);
         else // PERCENTILE or CUSTOM.
-            return new SpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime, replicasInTheRing);
+            return new SpeculatingReadExecutor(cfs, command, replicaPlan, queryStartNanoTime);
     }
 
     public boolean hasLocalRead()
@@ -431,9 +254,9 @@ public abstract class AbstractReadExecutor
          */
         private final boolean logFailedSpeculation;
 
-        public NeverSpeculatingReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, long queryStartNanoTime, boolean logFailedSpeculation, List<InetAddressAndPort> replicasInTheRing)
+        public NeverSpeculatingReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, long queryStartNanoTime, boolean logFailedSpeculation)
         {
-            super(cfs, command, replicaPlan, 1, queryStartNanoTime, replicasInTheRing);
+            super(cfs, command, replicaPlan, 1, queryStartNanoTime);
             this.logFailedSpeculation = logFailedSpeculation;
         }
 
@@ -453,13 +276,12 @@ public abstract class AbstractReadExecutor
         public SpeculatingReadExecutor(ColumnFamilyStore cfs,
                                        ReadCommand command,
                                        ReplicaPlan.ForTokenRead replicaPlan,
-                                       long queryStartNanoTime, 
-                                       List<InetAddressAndPort> replicasInTheRing)
+                                       long queryStartNanoTime)
         {
             // We're hitting additional targets for read repair (??).  Since our "extra" replica is the least-
             // preferred by the snitch, we do an extra data read to start with against a replica more
             // likely to respond; better to let RR fail than the entire query.
-            super(cfs, command, replicaPlan, replicaPlan.readQuorum() < replicaPlan.contacts().size() ? 2 : 1, queryStartNanoTime, replicasInTheRing);
+            super(cfs, command, replicaPlan, replicaPlan.readQuorum() < replicaPlan.contacts().size() ? 2 : 1, queryStartNanoTime);
         }
 
         public void maybeTryAdditionalReplicas()
@@ -524,12 +346,11 @@ public abstract class AbstractReadExecutor
         public AlwaysSpeculatingReadExecutor(ColumnFamilyStore cfs,
                                              ReadCommand command,
                                              ReplicaPlan.ForTokenRead replicaPlan,
-                                             long queryStartNanoTime, 
-                                             List<InetAddressAndPort> replicasInTheRing)
+                                             long queryStartNanoTime)
         {
             // presumably, we speculate an extra data request here in case it is our data request that fails to respond,
             // and there are no more nodes to consult
-            super(cfs, command, replicaPlan, replicaPlan.contacts().size() > 1 ? 2 : 1, queryStartNanoTime, replicasInTheRing);
+            super(cfs, command, replicaPlan, replicaPlan.contacts().size() > 1 ? 2 : 1, queryStartNanoTime);
         }
 
         public void maybeTryAdditionalReplicas()
