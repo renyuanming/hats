@@ -430,14 +430,15 @@ function getResultsDir
     enableHorse=$2
     shuffleReplicas=$3
     throttleDataRate=$4
+    operationNumber=$5
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-${SETTING}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-enableHorse_${enableHorse}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-shuffleReplicas_${shuffleReplicas}-throttleDataRate_${throttleDataRate}-operationNumber_${operationNumber}/round_${round}"
 
-    if [ "${enableHorse}" == "true" ]; then
-        resultsDir="${resultsDir}/schedulingInterval_${schedulingInterval}-throttleDataRate_${throttleDataRate}/round_${round}"
-    else
-        resultsDir="${resultsDir}/shuffleReplicas_${shuffleReplicas}/round_${round}"
-    fi
+    # if [ "${enableHorse}" == "true" ]; then
+    #     resultsDir="${resultsDir}/schedulingInterval_${schedulingInterval}-throttleDataRate_${throttleDataRate}/round_${round}"
+    # else
+    #     resultsDir="${resultsDir}/shuffleReplicas_${shuffleReplicas}/round_${round}"
+    # fi
 
     echo ${resultsDir}
 }
@@ -683,7 +684,7 @@ function runExp {
 
 
                                                     # Collect load results
-                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate}) 
+                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate} ${OPERATION_NUMBER}) 
 
                                                     # echo "Collect results to ${resultsDir}"
                                                     collectResults ${resultsDir}
