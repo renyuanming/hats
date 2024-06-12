@@ -235,7 +235,6 @@ public class Keyspace
 
 
     // HORSE
-    
     public static ColumnFamilyStore openAndgetColumnFamilyStoreByToken(TableMetadata cfm, DecoratedKey key)
     {
         return open(cfm.keyspace).getColumnFamilyStoreByToken(cfm.keyspace, key);
