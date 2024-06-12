@@ -335,6 +335,7 @@ public abstract class ReadCommand extends AbstractReadQuery
 
     protected abstract UnfilteredPartitionIterator queryStorage(ColumnFamilyStore cfs, ReadExecutionController executionController);
 
+    public abstract ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata metadata);
     /**
      * Whether the underlying {@code ClusteringIndexFilter} is reversed or not.
      *
@@ -392,7 +393,7 @@ public abstract class ReadCommand extends AbstractReadQuery
             indexQueryPlan.validate(this);
         }
     }
-
+    
     /**
      * Executes this command on the local host.
      *
@@ -408,7 +409,16 @@ public abstract class ReadCommand extends AbstractReadQuery
         COMMAND.set(this);
         try
         {
-            ColumnFamilyStore cfs = Keyspace.openAndGetStore(metadata());
+            // ColumnFamilyStore cfs = Keyspace.openAndGetStore(metadata());
+            ColumnFamilyStore cfs = null;
+            if (metadata().name.contains("usertable"))
+            {
+                cfs = getColumnFamilyStorefromMultiReplicas(metadata());
+            }
+            else
+            {
+                cfs = Keyspace.openAndGetStore(metadata());
+            }
             Index.QueryPlan indexQueryPlan = indexQueryPlan();
 
             Index.Searcher searcher = null;

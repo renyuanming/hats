@@ -314,6 +314,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
     public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
     public AtomicLong readRequestInFlight = new AtomicLong(0);
+    public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
 
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
@@ -5200,11 +5201,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         return inetList;
     }
 
-    public List<InetAddressAndPort> getNaturalEndpoints(String keyspaceName, Token token) {
+    public List<InetAddress> getNaturalEndpoints(String keyspaceName, Token token) {
         List<InetAddress> inetList = StorageService.instance.getNaturalEndpointsForToken( keyspaceName, token);
         List<InetAddressAndPort> inetListWithPort = new ArrayList<>();
         inetList.forEach(r -> inetListWithPort.add(InetAddressAndPort.getByAddress(r)));
-        return inetListWithPort;
+        return inetList;
     }
 
     public List<InetAddressAndPort> getLiveSortedEndpoints(String keyspaceName, Token token)

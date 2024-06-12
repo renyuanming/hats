@@ -481,6 +481,16 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         
     }
 
+    public ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata cfm){
+        
+        ColumnFamilyStore cfs = null;
+        cfs = Keyspace.openAndgetColumnFamilyStoreByToken(cfm, this.partitionKey);//////
+        if(cfs==null){//////
+            cfs = Keyspace.openAndGetStore(cfm);
+        }//////
+        return cfs;
+    }
+
     protected UnfilteredPartitionIterator queryStorage(final ColumnFamilyStore cfs, ReadExecutionController executionController)
     {
         // skip the row cache and go directly to sstables/memtable if repaired status of

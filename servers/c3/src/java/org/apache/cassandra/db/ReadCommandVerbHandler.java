@@ -33,7 +33,6 @@ import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
-import org.apache.cassandra.net.ParamType;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
@@ -41,7 +40,6 @@ import org.apache.cassandra.utils.FBUtilities;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 {
@@ -56,49 +54,13 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
             throw new RuntimeException("Cannot service reads while bootstrapping!");
         }
 
-        AtomicInteger counter = MessagingService.instance().getPendingRequestsCounter(FBUtilities.getJustBroadcastAddress());
-        counter.incrementAndGet();
-        long start = System.nanoTime();
-
-
         ReadCommand command = message.payload;
 
         
         // [Horse] TEST
         long tStart = nanoTime();
         if (command.metadata().keyspace.contains("ycsb")) {
-
-            Token tokenForRead = (command instanceof SinglePartitionReadCommand ? 
-                                 ((SinglePartitionReadCommand) command).partitionKey().getToken() : 
-                                 ((PartitionRangeReadCommand) command).dataRange().keyRange.right.getToken());
-
-            List<InetAddressAndPort> sendRequestAddresses = StorageService.instance.getReplicaNodesWithPortFromTokenForDegradeRead(command.metadata().keyspace, tokenForRead);
             StorageService.instance.localReadCountOfUsertables.incrementAndGet();
-            switch (sendRequestAddresses.indexOf(FBUtilities.getBroadcastAddressAndPort())) {
-                case 0:
-                    // StorageService.instance.timeCounter.increment();
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable0").metadata());
-                    ColumnFilter newColumnFilter = ColumnFilter. allRegularColumnsBuilder(command.metadata(), false). build();
-                    command.updateColumnFilter(newColumnFilter);
-                    break;
-                case 1:
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable1").metadata());
-                    ColumnFilter newColumnFilter1 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-                    command.updateColumnFilter(newColumnFilter1);
-                    break;
-                case 2:
-                    command.updateTableMetadata(Keyspace.open("ycsb").getColumnFamilyStore("usertable2").metadata());
-                    ColumnFilter newColumnFilter2 = ColumnFilter.allRegularColumnsBuilder(command.metadata(), false).build();
-                    command.updateColumnFilter(newColumnFilter2);
-                    break;
-                default:
-                    logger.error("[rym-ERROR] Not support replication factor larger than 3");
-                    break;
-            }
-            // logger.debug("[rym] For token = {}, read {} from target table = {}, replication group = {}",
-            //         tokenForRead,
-            //         command.isDigestQuery() == true ? "digest" : "data",
-            //         command.metadata().name, sendRequestAddresses);
         }
         else{
             StorageService.instance.localReadCountOfSystemTables.incrementAndGet();
@@ -152,15 +114,7 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         if (command.complete())
         {
             Tracing.trace("Enqueuing response to {}", message.from());
-            // Message<ReadResponse> reply = message.responseWith(response);
-
-            // C3 impl
-            long serviceTimeInNanos = System.nanoTime() - start;
-            int queueSize = counter.decrementAndGet();
-            Message<ReadResponse> reply = message.responseWith(response)
-                                                .withParam(ParamType.QUEUE_SIZE, queueSize)
-                                                .withParam(ParamType.SERVICE_TIME_IN_NANO, serviceTimeInNanos);
-
+            Message<ReadResponse> reply = message.responseWith(response);
             reply = MessageParams.addToMessage(reply);
             MessagingService.instance().send(reply, message.from());
         }
