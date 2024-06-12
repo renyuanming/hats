@@ -314,6 +314,21 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
         metric.rangeLatency.addNano(latencyNanos);
     }
 
+
+    
+    public ColumnFamilyStore getColumnFamilyStorefromMultiReplicas(TableMetadata cfm){
+        //PartitionPosition startKeyPP = dataRange().startKey();
+        //PartitionPosition startKeyPP = dataRange().keyRange().right;
+        //logger.debug("int getColumnFamilyStorefromMultiReplicas, dataRange().right:{}, dataRange().left:{}, dataRange().stopKey:{}", dataRange().keyRange().right, dataRange().keyRange().left, dataRange().stopKey());
+        ColumnFamilyStore cfs = null;
+        cfs = Keyspace.openAndgetColumnFamilyStoreByRingPosition(cfm.keyspace, dataRange().stopKey());//////
+        if(cfs==null){//////
+            cfs = Keyspace.openAndGetStore(cfm);
+        }//////
+        return cfs;
+    }
+
+
     @VisibleForTesting
     public UnfilteredPartitionIterator queryStorage(final ColumnFamilyStore cfs, ReadExecutionController controller)
     {
