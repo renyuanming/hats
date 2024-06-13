@@ -1986,7 +1986,8 @@ public class StorageProxy implements StorageProxyMBean
             readMetrics.addNano(latency);
             casReadMetrics.addNano(latency);
             readMetricsForLevel(consistencyLevel).addNano(latency);
-            Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            // Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
             StorageService.instance.readRequestInFlight.decrementAndGet();
             if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
             {
@@ -2047,7 +2048,8 @@ public class StorageProxy implements StorageProxyMBean
             for (ReadCommand command : group.queries)
             {
                 StorageService.instance.readRequestInFlight.decrementAndGet();
-                Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                // Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
                 {
                     StorageService.instance.readLatencyCalculator.record(latency/1000);
