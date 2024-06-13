@@ -42,6 +42,8 @@ import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.*;
+import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.StorageProxy;
 import org.apache.cassandra.service.StorageService;
@@ -475,6 +477,7 @@ public class CassandraRoleManager implements IRoleManager
             {
                 logger.info("Setup task failed with error, rescheduling");
                 scheduleSetupTask(setupTask);
+                HorseUtils.printStackTace(AKLogLevels.ERROR, "Setup task failed with error"+e);
             }
         }, AuthKeyspace.SUPERUSER_SETUP_DELAY, TimeUnit.MILLISECONDS);
     }
