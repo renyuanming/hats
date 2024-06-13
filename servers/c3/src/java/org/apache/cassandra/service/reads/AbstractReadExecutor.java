@@ -151,6 +151,8 @@ public abstract class AbstractReadExecutor
         boolean hasLocalEndpoint = false;
         Message<ReadCommand> message = null;
 
+        logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
+
         for(InetAddressAndPort endpoint : sendRequestAddresses) 
         {
             if(endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
@@ -495,7 +497,7 @@ public abstract class AbstractReadExecutor
                     : ((PartitionRangeReadCommand) command).dataRange().keyRange.left.getToken());
 
             List<InetAddressAndPort> newEndpointList = StorageService.instance.getLiveSortedEndpoints(cfs.keyspace.getName(), tokenForRead);
-            int originalSize = handler.replicaPlan().contacts().size();
+            int originalSize = this.replicaPlan().contacts().size();
             boolean shouldWait = true;
             int dataEndpointIndex;
 
