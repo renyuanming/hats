@@ -576,6 +576,18 @@ function perpareJavaEnvironment {
 
 }
 
+function cleanup {
+    scheme=$1
+
+    resetPlaybook "cleanup"
+    playbook="playbook-cleanup.yaml"
+
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+
+    ansible-playbook -v -i hosts.ini ${playbook}
+
+}
+
 
 function runExp {
     
