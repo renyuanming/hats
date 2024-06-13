@@ -56,8 +56,8 @@ class ResponseVerbHandler implements IVerbHandler
         {
             MessagingService.instance().latencySubscribers.maybeAdd(cb, message.from(), latencyNanos, NANOSECONDS);
             cb.onResponse(message);
-            if(message.header.params().get(ParamType.QUEUE_SIZE) != null)
-                MessagingService.instance().updateMetrics(message, callbackInfo, latencyNanos); // C3 impl
+            // if(message.header.params().get(ParamType.QUEUE_SIZE) != null)
+            MessagingService.instance().updateMetrics(message, callbackInfo, latencyNanos); // C3 impl
         }
     }
 }

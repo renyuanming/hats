@@ -150,21 +150,46 @@ public abstract class AbstractReadExecutor
     {
         boolean hasLocalEndpoint = false;
         Message<ReadCommand> message = null;
-
-        logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
-
-        for(InetAddressAndPort endpoint : sendRequestAddresses) 
+        if(readCommand.metadata().name.contains("usertable"))
         {
-            if(endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
-            {
-                hasLocalEndpoint = true;
-                continue;
-            }
-            if (null == message)
-                message = readCommand.createMessage(false);
+            logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
 
-            MessagingService.instance().sendWithCallback(message, endpoint, handler);
+            for(InetAddressAndPort endpoint : sendRequestAddresses) 
+            {
+                if(endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
+                {
+                    hasLocalEndpoint = true;
+                    continue;
+                }
+                if (null == message)
+                    message = readCommand.createMessage(false);
+
+                MessagingService.instance().sendWithCallback(message, endpoint, handler);
+            }
         }
+        else
+        {
+            for (Replica replica: replicas)
+            {
+                assert replica.isFull() || readCommand.acceptsTransient();
+
+                InetAddressAndPort endpoint = replica.endpoint();
+                if (replica.isSelf())
+                {
+                    hasLocalEndpoint = true;
+                    continue;
+                }
+
+                if (traceState != null)
+                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
+
+                if (null == message)
+                    message = readCommand.createMessage(false);
+
+                MessagingService.instance().sendWithCallback(message, endpoint, handler);
+            }
+        }
+
 
         // We delay the local (potentially blocking) read till the end to avoid stalling remote requests.
         if (hasLocalEndpoint)
