@@ -216,7 +216,7 @@ public abstract class AbstractReadExecutor
         EndpointsForToken selected = replicaPlan().contacts();
         EndpointsForToken fullDataRequests = selected.filter(Replica::isFull, initialDataRequestCount, sendRequestAddresses);
         makeFullDataRequests(fullDataRequests);
-        makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
+        // makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
         makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
 
     }
