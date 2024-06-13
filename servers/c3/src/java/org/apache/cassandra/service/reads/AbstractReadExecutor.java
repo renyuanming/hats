@@ -156,7 +156,7 @@ public abstract class AbstractReadExecutor
 
             for(InetAddressAndPort endpoint : sendRequestAddresses) 
             {
-                if(endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
+                if(endpoint.getAddress().equals(StorageService.instance.localIP))
                 {
                     hasLocalEndpoint = true;
                     continue;
@@ -216,7 +216,7 @@ public abstract class AbstractReadExecutor
         EndpointsForToken selected = replicaPlan().contacts();
         EndpointsForToken fullDataRequests = selected.filter(Replica::isFull, initialDataRequestCount);
         makeFullDataRequests(fullDataRequests);
-        makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
+        // makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
         makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
 
     }
