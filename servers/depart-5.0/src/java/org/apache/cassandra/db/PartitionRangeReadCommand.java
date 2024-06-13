@@ -410,7 +410,13 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
     @VisibleForTesting
     public UnfilteredPartitionIterator queryStorage(ColumnFamilyStore cfs, ReadExecutionController controller, int []findResults, String ksName)
     {
-        ColumnFamilyStore newCFS = Keyspace.openAndgetColumnFamilyStoreByRingPosition(ksName, dataRange().stopKey());//////
+
+        ColumnFamilyStore newCFS = null;//////
+        if(cfs.name.contains("usertable"))
+        {
+            newCFS = Keyspace.openAndgetColumnFamilyStoreByRingPosition(ksName, dataRange().stopKey());//////
+        }
+
         logger.debug("in queryStorage cfs:{}, newCFS:{}, dataRange().left:{}, dataRange().right:{}", cfs, newCFS, dataRange().keyRange().left, dataRange().keyRange().right);
         if(newCFS != null && !(newCFS.name.equals(cfs.name))) {
             cfs = newCFS;
