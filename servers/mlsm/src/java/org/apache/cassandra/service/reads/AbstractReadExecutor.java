@@ -132,6 +132,7 @@ public abstract class AbstractReadExecutor
         boolean hasLocalEndpoint = false;
         Message<ReadCommand> message = null;
 
+        logger.info("rymInfo: Making requests to replicas. The replicas are: {}, replicaplan size is : {}, replica plan is {}, consistency level is {}", replicas, this.replicaPlan().contacts().size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
         for (Replica replica: replicas)
         {
             assert replica.isFull() || readCommand.acceptsTransient();
