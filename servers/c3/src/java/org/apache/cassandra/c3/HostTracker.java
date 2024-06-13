@@ -185,7 +185,7 @@ public class HostTracker
         double serviceTimeInMillis = serviceTime / 1000000.0;
 
         double latencyInMillis = latency / 1000000.0;
-        logger.info("rymInfo: QueueSize: {}, ServiceTime: {}, Latency: {}", queueSize, serviceTimeInMillis, latencyInMillis);
+        // logger.info("rymInfo: QueueSize: {}, ServiceTime: {}, Latency: {}", queueSize, serviceTimeInMillis, latencyInMillis);
         // assert serviceTimeInMillis < latencyInMillis;
         ScoreTracker scoreTracker = getScoreTracker(message.from().getAddress());
         scoreTracker.updateNodeScore(queueSize, serviceTimeInMillis, latencyInMillis);
