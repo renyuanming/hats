@@ -1986,12 +1986,15 @@ public class StorageProxy implements StorageProxyMBean
             readMetrics.addNano(latency);
             casReadMetrics.addNano(latency);
             readMetricsForLevel(consistencyLevel).addNano(latency);
-            // Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-            command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
             StorageService.instance.readRequestInFlight.decrementAndGet();
-            if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
+            if(command.metadata().name.contains("usertable"))
             {
                 StorageService.instance.readLatencyCalculator.record(latency/1000);
+                command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            }
+            else
+            {
+                Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
             }
         }
 
@@ -2049,10 +2052,14 @@ public class StorageProxy implements StorageProxyMBean
             {
                 StorageService.instance.readRequestInFlight.decrementAndGet();
                 // Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                if(Keyspace.openAndGetStore(command.metadata()).getColumnFamilyName().contains("usertable"))
+                if(command.metadata().name.contains("usertable"))
                 {
+                    command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                     StorageService.instance.readLatencyCalculator.record(latency/1000);
+                }
+                else
+                {
+                    Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 }
             }
         }
@@ -2127,6 +2134,7 @@ public class StorageProxy implements StorageProxyMBean
         // read executor, we'll only send read requests to enough replicas to satisfy the consistency level
         for (int i=0; i<cmdCount; i++)
         {
+
             // reads[i].executeAsync();
             reads[i].execute();
         }
