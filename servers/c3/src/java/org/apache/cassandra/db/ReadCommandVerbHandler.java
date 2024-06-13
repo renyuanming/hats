@@ -116,14 +116,21 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
         if (command.complete())
         {
             Tracing.trace("Enqueuing response to {}", message.from());
-            // Message<ReadResponse> reply = message.responseWith(response);
+            Message<ReadResponse> reply = null;
 
             // C3 impl
             long serviceTimeInNanos = System.nanoTime() - start;
             int queueSize = counter.decrementAndGet();
-            Message<ReadResponse> reply = message.responseWith(response)
-                                                .withParam(ParamType.QUEUE_SIZE, queueSize)
-                                                .withParam(ParamType.SERVICE_TIME_IN_NANO, serviceTimeInNanos);
+            if(command.metadata().keyspace.contains("ycsb"))
+            {
+                reply = message.responseWith(response)
+                                .withParam(ParamType.QUEUE_SIZE, queueSize)
+                                .withParam(ParamType.SERVICE_TIME_IN_NANO, serviceTimeInNanos);
+            }
+            else
+            {
+                reply = message.responseWith(response);
+            }
             reply = MessageParams.addToMessage(reply);
             MessagingService.instance().send(reply, message.from());
         }
