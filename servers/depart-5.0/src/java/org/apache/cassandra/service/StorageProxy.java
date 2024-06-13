@@ -1981,7 +1981,14 @@ public class StorageProxy implements StorageProxyMBean
             casReadMetrics.addNano(latency);
             readMetricsForLevel(consistencyLevel).addNano(latency);
             // Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-            command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            if(command.metadata().name.contains("usertable"))
+            {
+                command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            }
+            else
+            {
+                Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+            }
         }
 
         return result;
@@ -2036,8 +2043,14 @@ public class StorageProxy implements StorageProxyMBean
             // TODO avoid giving every command the same latency number.  Can fix this in CASSADRA-5329
             for (ReadCommand command : group.queries)
             {
-                // Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                if(command.metadata().name.contains("usertable"))
+                {
+                    command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                }
+                else
+                {
+                    Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                }
             }
         }
     }
