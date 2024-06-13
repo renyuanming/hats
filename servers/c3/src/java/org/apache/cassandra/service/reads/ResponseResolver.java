@@ -68,8 +68,8 @@ public abstract class ResponseResolver<E extends Endpoints<E>, P extends Replica
         }
         catch (IllegalStateException e)
         {
-            logger.error("Encountered error while trying to preprocess the message {}, in command {}, replica plan: {}",
-                         message, command, replicaPlan);
+            logger.error("Encountered error while trying to preprocess the message {}, in command {}, replica plan: {}, the cf is {}",
+                         message, command, replicaPlan, command.metadata().name);
             throw e;
         }
     }

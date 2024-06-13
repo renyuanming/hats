@@ -151,7 +151,7 @@ public abstract class AbstractReadExecutor
         boolean hasLocalEndpoint = false;
         Message<ReadCommand> message = null;
 
-        logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
+        logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
 
         for(InetAddressAndPort endpoint : sendRequestAddresses) 
         {
