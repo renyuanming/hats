@@ -544,6 +544,51 @@ public abstract class AbstractReplicaCollection<C extends AbstractReplicaCollect
         return snapshot(copy);
     }
 
+    public final C filter(Predicate<? super Replica> predicate, int limit, List<InetAddressAndPort> c3Selected)
+    {
+        if (isEmpty())
+            return snapshot();
+
+        ReplicaList copy = null;
+        int beginRun = -1, endRun = -1;
+        int i = 0;
+        for (; i < list.size() ; ++i)
+        {
+            Replica replica = list.get(i);
+            if(!c3Selected.contains(replica.endpoint()))
+                continue;
+            if (predicate.test(replica))
+            {
+                if (copy != null)
+                    copy.add(replica);
+                else if (beginRun < 0)
+                    beginRun = i;
+                else if (endRun > 0)
+                {
+                    copy = new ReplicaList(Math.min(limit, (list.size() - i) + (endRun - beginRun)));
+                    for (int j = beginRun ; j < endRun ; ++j)
+                        copy.add(list.get(j));
+                    copy.add(list.get(i));
+                }
+                if (--limit == 0)
+                {
+                    ++i;
+                    break;
+                }
+            }
+            else if (beginRun >= 0 && endRun < 0)
+                endRun = i;
+        }
+
+        if (beginRun < 0)
+            beginRun = endRun = 0;
+        if (endRun < 0)
+            endRun = i;
+        if (copy == null)
+            return subList(beginRun, endRun);
+        return snapshot(copy);
+    }
+
     /** see {@link ReplicaCollection#filterLazily(Predicate)}*/
     public final Iterable<Replica> filterLazily(Predicate<? super Replica> predicate)
     {

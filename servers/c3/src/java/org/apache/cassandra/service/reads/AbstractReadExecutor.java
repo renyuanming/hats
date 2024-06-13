@@ -150,45 +150,45 @@ public abstract class AbstractReadExecutor
     {
         boolean hasLocalEndpoint = false;
         Message<ReadCommand> message = null;
-        if(readCommand.metadata().name.contains("usertable"))
+        // if(readCommand.metadata().name.contains("usertable"))
+        // {
+        //     logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
+
+        //     for(InetAddressAndPort endpoint : sendRequestAddresses) 
+        //     {
+        //         if(endpoint.getAddress().equals(StorageService.instance.localIP))
+        //         {
+        //             hasLocalEndpoint = true;
+        //             continue;
+        //         }
+        //         if (null == message)
+        //             message = readCommand.createMessage(false);
+
+        //         MessagingService.instance().sendWithCallback(message, endpoint, handler);
+        //     }
+        // }
+        // else
+        // {
+        for (Replica replica: replicas)
         {
-            logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
+            assert replica.isFull() || readCommand.acceptsTransient();
 
-            for(InetAddressAndPort endpoint : sendRequestAddresses) 
+            InetAddressAndPort endpoint = replica.endpoint();
+            if (replica.isSelf())
             {
-                if(endpoint.getAddress().equals(StorageService.instance.localIP))
-                {
-                    hasLocalEndpoint = true;
-                    continue;
-                }
-                if (null == message)
-                    message = readCommand.createMessage(false);
-
-                MessagingService.instance().sendWithCallback(message, endpoint, handler);
+                hasLocalEndpoint = true;
+                continue;
             }
+
+            if (traceState != null)
+                traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
+
+            if (null == message)
+                message = readCommand.createMessage(false);
+
+            MessagingService.instance().sendWithCallback(message, endpoint, handler);
         }
-        else
-        {
-            for (Replica replica: replicas)
-            {
-                assert replica.isFull() || readCommand.acceptsTransient();
-
-                InetAddressAndPort endpoint = replica.endpoint();
-                if (replica.isSelf())
-                {
-                    hasLocalEndpoint = true;
-                    continue;
-                }
-
-                if (traceState != null)
-                    traceState.trace("reading {} from {}", readCommand.isDigestQuery() ? "digest" : "data", endpoint);
-
-                if (null == message)
-                    message = readCommand.createMessage(false);
-
-                MessagingService.instance().sendWithCallback(message, endpoint, handler);
-            }
-        }
+        // }
 
 
         // We delay the local (potentially blocking) read till the end to avoid stalling remote requests.
@@ -214,10 +214,10 @@ public abstract class AbstractReadExecutor
     {
 
         EndpointsForToken selected = replicaPlan().contacts();
-        EndpointsForToken fullDataRequests = selected.filter(Replica::isFull, initialDataRequestCount);
+        EndpointsForToken fullDataRequests = selected.filter(Replica::isFull, initialDataRequestCount, sendRequestAddresses);
         makeFullDataRequests(fullDataRequests);
-        // makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
-        // makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
+        makeTransientDataRequests(selected.filterLazily(Replica::isTransient));
+        makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
 
     }
     

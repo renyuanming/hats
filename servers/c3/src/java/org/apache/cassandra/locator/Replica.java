@@ -18,6 +18,7 @@
 
 package org.apache.cassandra.locator;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 

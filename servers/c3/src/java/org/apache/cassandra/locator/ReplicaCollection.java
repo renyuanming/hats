@@ -20,6 +20,7 @@ package org.apache.cassandra.locator;
 
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -78,6 +79,9 @@ public interface ReplicaCollection<C extends ReplicaCollection<C>> extends Itera
      * Only the first maxSize items will be returned.
      */
     public abstract C filter(Predicate<? super Replica> predicate, int maxSize);
+
+    
+    public abstract C filter(Predicate<? super Replica> predicate, int maxSize, List<InetAddressAndPort> c3Selected);
 
     /**
      * @return a *lazily constructed* Iterable over this collection, containing the Replica that match the provided predicate.
