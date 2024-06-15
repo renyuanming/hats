@@ -286,6 +286,27 @@ function rebuildClient {
     ansible-playbook -v -i hosts.ini playbook-rebuildClient.yaml
 }
 
+function loadDataset {
+
+    expName=$1
+    scheme=$2
+    kvNumber=$3
+    keylength=$4
+    fieldlength=$5
+    rf=$6
+
+    # Copy playbook
+    resetPlaybook "loadDataset"
+    playbook="playbook-loadDataset.yaml"
+
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
+    sed -i "s/Scheme/${scheme}/g" ${playbook}
+    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+
+    ansible-playbook -v -i hosts.ini ${playbook}
+}
+
 function startFromBackup {
     expName=$1
     targetScheme=$2
@@ -433,12 +454,6 @@ function getResultsDir
     operationNumber=$5
 
     resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-shuffleReplicas_${shuffleReplicas}-throttleDataRate_${throttleDataRate}-operationNumber_${operationNumber}/round_${round}"
-
-    # if [ "${enableHorse}" == "true" ]; then
-    #     resultsDir="${resultsDir}/schedulingInterval_${schedulingInterval}-throttleDataRate_${throttleDataRate}/round_${round}"
-    # else
-    #     resultsDir="${resultsDir}/shuffleReplicas_${shuffleReplicas}/round_${round}"
-    # fi
 
     echo ${resultsDir}
 }
@@ -626,11 +641,11 @@ function runExp {
     # test the parameters
     # echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, WORKLOADS: ${WORKLOADS[@]}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, STARTUP_FROM_BACKUP: ${STARTUP_FROM_BACKUP}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]}, ENABLE_HORSE: ${ENABLE_HORSE[@]}, SHUFFLE_REPLICAS: ${SHUFFLE_REPLICAS[@]}"
 
-    # if [[ "${TARGET_SCHEME}" == "horse" ]]; then
-    #     ENABLE_HORSE="true"
-    # else
-    #     ENABLE_HORSE="false"
-    # fi
+    if [[ "${TARGET_SCHEME}" == "horse" ]]; then
+        ENABLE_HORSE="true"
+    else
+        ENABLE_HORSE="false"
+    fi
 
 
     # Run experiments
@@ -685,7 +700,7 @@ function runExp {
                                                     SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
                                                     # startup from preload dataset
-                                                    if [ "${STARTUP_FROM_BACKUP}" == "true" ]; then
+                                                    if [ "${EXP_NAME}" == "MixedReadWrite" ]; then
                                                         echo "Start from backup"
                                                         startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${STARTUP_FROM_BACKUP} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
                                                     else
