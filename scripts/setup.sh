@@ -21,7 +21,7 @@ function updateCode {
     cluster_name=$1
     export CLUSTER_NAME=$cluster_name    
     source ${SCRIPT_DIR}/settings.sh
-    for node in "${NodesIP[@]}"; do
+    for node in "${ServersIP[@]}"; do
         echo "Update the server on ${node}"
         ssh "${node}" "cd ${PathToServer} && git pull && ant clean && ant -Duse.jdk11=true"
     done

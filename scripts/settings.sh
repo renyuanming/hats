@@ -10,10 +10,10 @@ if [[ "$CLUSTER_NAME" == "" ]]; then
     echo "Please specify the CLUSTER_NAME"
     exit 1
 elif [[ "$CLUSTER_NAME" == "1x" ]]; then
-    Nodes=("node11" "node12" "node13" "node14" "node15" "node16" "node18" "node19")
-    NodesIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.26" "192.168.10.28" "192.168.10.29")
-    Client="node20"
-    ClientIP="192.168.10.30"
+    Servers=("node11" "node12" "node13" "node14" "node15" "node16" "node18" "node19")
+    ServersIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.26" "192.168.10.28" "192.168.10.29")
+    Clients=("node17" "node20")
+    ClientsIP=("192.168.10.27" "192.168.10.30")
     Seeds=("node11" "node12" "node13")
     SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.23")
     NodeIP="192.168.10.21" # Only used for start-client.sh
@@ -21,10 +21,10 @@ elif [[ "$CLUSTER_NAME" == "1x" ]]; then
     SudoPassword="ymren"
     HOME_PATH="/mnt/ssd"
 elif [[ "$CLUSTER_NAME" == "4x" ]]; then
-    Nodes=("node41" "node42" "node43" "node45")
-    NodesIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
-    Client="node49"
-    ClientIP="192.168.10.59"
+    Servers=("node41" "node42" "node43" "node45")
+    ServersIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
+    Clients=("node49")
+    ClientsIP=("192.168.10.59")
     Seeds=("node41" "node42" "node43" "node45")
     SeedsIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
     NodeIP="192.168.10.51" # Only used for start-client.sh
@@ -39,11 +39,11 @@ fi
 
 
 
-NodeNumber=${#Nodes[@]}
+ServerNumber=${#Servers[@]}
 Coordinators=""
-for i in "${!NodesIP[@]}"; do
-    Coordinators+="${NodesIP[i]}"
-    if [ $i -ne $((${#NodesIP[@]} - 1)) ]; then
+for i in "${!ServersIP[@]}"; do
+    Coordinators+="${ServersIP[i]}"
+    if [ $i -ne $((${#ServersIP[@]} - 1)) ]; then
         Coordinators+=","
     fi
 done
@@ -56,8 +56,8 @@ for i in "${!SeedsIP[@]}"; do
     fi
 done
 
-AllNodes=("${Nodes[@]}")
-AllNodes+=("${Client}")
+AllNodes=("${Servers[@]}")
+AllNodes+=("${Clients[@]}")
 echo "All nodes list is ${AllNodes}"
 
 NumTokens=1

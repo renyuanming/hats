@@ -1,6 +1,6 @@
 ---
 - name: Rebuild the client
-  hosts: cassandra_client
+  hosts: cassandra_clients
   become: yes
   become_user: ymren
   tasks:

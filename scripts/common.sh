@@ -32,11 +32,11 @@ function getToken {
 }
 
 function initConf {
-    getToken ${#NodesIP[@]}
+    getToken ${#ServersIP[@]}
     # # Modify the the rpc_address listen_address seeds initial_token in the cassandra.yaml
-    for ((i=0; i<${#NodesIP[@]}; i++)); do
-        node_ip=${NodesIP[$i]}
-        node=${Nodes[$i]}
+    for ((i=0; i<${#ServersIP[@]}; i++)); do
+        node_ip=${ServersIP[$i]}
+        node=${Servers[$i]}
         token=${tokens[$i]}
         echo "Set set the initial token of ${node} as ${token}"
 
@@ -65,7 +65,7 @@ function initConf {
     # modify the hosts.ini
     > ${SCRIPT_DIR}/playbook/hosts.ini
     echo "[cassandra_servers]" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    for node in "${Nodes[@]}"; do
+    for node in "${Servers[@]}"; do
         echo "${node} ansible_host=${node}" >> ${SCRIPT_DIR}/playbook/hosts.ini
     done
     echo "[cassandra_seeds]" >> ${SCRIPT_DIR}/playbook/hosts.ini
@@ -73,14 +73,16 @@ function initConf {
         echo "${seed} ansible_host=${seed}" >> ${SCRIPT_DIR}/playbook/hosts.ini
     done
     echo "[cassandra_data_nodes]" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    for node in "${Nodes[@]}"; do
+    for node in "${Servers[@]}"; do
         if printf '%s\n' "${Seeds[@]}" | grep -q -P "^${node}$"; then
             continue
         fi
         echo "${node} ansible_host=${node}" >> ${SCRIPT_DIR}/playbook/hosts.ini
     done
-    echo "[cassandra_client]" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    echo "${Client} ansible_host=${Client}" >> ${SCRIPT_DIR}/playbook/hosts.ini
+    echo "[cassandra_clients]" >> ${SCRIPT_DIR}/playbook/hosts.ini
+    for client in "${Clients[@]}"; do
+        echo "${client} ansible_host=${client}" >> ${SCRIPT_DIR}/playbook/hosts.ini
+    done
 
 }
 
@@ -91,7 +93,7 @@ function treeSizeEstimation {
     fieldlength=$3
     initial_count=${SSTableSize}
     ratio=${LSMTreeFanOutRatio}
-    target_count=$((kvNumber * (keylength + fieldlength) / NodeNumber / 1024 / 1024 / 4))
+    target_count=$((kvNumber * (keylength + fieldlength) / ServerNumber / 1024 / 1024 / 4))
 
     current_count=$initial_count
     current_level=1
@@ -109,7 +111,7 @@ function dataSizeEstimation {
     keylength=$2
     fieldlength=$3
     rf=$4
-    dataSizeOnEachNode=$(echo "scale=2; $kvNumber * ($keylength + $fieldlength) / $NodeNumber / 1024 / 1024 / 1024 * $rf" | bc)
+    dataSizeOnEachNode=$(echo "scale=2; $kvNumber * ($keylength + $fieldlength) / $ServerNumber / 1024 / 1024 / 1024 * $rf" | bc)
     echo ${dataSizeOnEachNode}
 }
 
@@ -153,7 +155,7 @@ function flush {
         sed -i "s|NODETOOL_OPTION||g" ${playbook}
     fi
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function backup {
@@ -177,7 +179,7 @@ function backup {
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
     sed -i "s/Scheme/${targetScheme}/g" ${playbook}
     sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function getSettingName() {
@@ -228,7 +230,7 @@ function copyDatasetToNodes {
     resetPlaybook "decompress"
 
     if [ "${experiment}" == "Exp-MixedReadWrite" ]; then
-        for node in "${Nodes[@]}"; do
+        for node in "${Servers[@]}"; do
             dataset="${datasetDir}/${node}.tar.gz"
             echo "Copy the dataset ${dataset} to ${node}"
             ssh ${UserName}@${node} 'pkill -f CassandraDaemon'
@@ -239,7 +241,7 @@ function copyDatasetToNodes {
         done
         sed -i "s|DECOMPRESS_DIR|${targetDir}|g" playbook-decompress.yaml
     elif [ "${experiment}" == "Exp-PureRead" ]; then
-        for node in "${Nodes[@]}"; do
+        for node in "${Servers[@]}"; do
             dataset="${datasetDir}/${node}.tar.gz"
             echo "Copy the dataset ${dataset} to ${node}"
             ssh ${UserName}@${node} 'pkill -f CassandraDaemon'
@@ -277,7 +279,7 @@ function rebuildServer {
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
     sed -i "s|ANT_OPTION|${antOption}|g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function rebuildClient {
@@ -306,7 +308,7 @@ function loadDataset {
     sed -i "s/Scheme/${scheme}/g" ${playbook}
     sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function startFromBackup {
@@ -373,7 +375,7 @@ function startFromBackup {
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
     
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function restartCassandra {
@@ -414,7 +416,7 @@ function restartCassandra {
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function collectResults {
@@ -427,14 +429,17 @@ function collectResults {
 
     mkdir -p ${resultsDir}
     
-    for node in "${Nodes[@]}"; do
-        echo "Copy loading stats of ${targetScheme} back, ${node}"
-        scp -r ${UserName}@${node}:/home/${UserName}/Results ${resultsDir}/${node}
-        ssh ${UserName}@${node} "rm -rf /home/${UserName}/Results && mkdir -p /home/${UserName}/Results"
+    for server in "${Servers[@]}"; do
+        echo "Copy loading stats of ${targetScheme} back, ${server}"
+        scp -r ${UserName}@${server}:/home/${UserName}/Results ${resultsDir}/${server}
+        ssh ${UserName}@${server} "rm -rf /home/${UserName}/Results && mkdir -p /home/${UserName}/Results"
     done
-    latest_file=$(ssh "$Client" "ls -t $ClientLogDir | head -n 1")
-    echo "Copy the latest log file ${latest_file} from ${Client}"
-    scp ${Client}:${ClientLogDir}${latest_file} ${resultsDir}/
+
+    for client in "${Clients[@]}"; do
+        latest_file=$(ssh "$client" "ls -t $ClientLogDir | head -n 1")
+        echo "Copy the latest log file ${latest_file} from ${Clients}"
+        scp ${client}:${ClientLogDir}/* ${resultsDir}/
+    done
 }
 
 function getResultsDir
@@ -506,7 +511,7 @@ function load {
     fi
 
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 
     ## Collect load results
     resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}"
@@ -572,7 +577,7 @@ function run {
     fi
     
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function perpareJavaEnvironment {
@@ -602,7 +607,7 @@ function cleanup {
 
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 
 }
 

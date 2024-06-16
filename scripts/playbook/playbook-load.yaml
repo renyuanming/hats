@@ -76,7 +76,7 @@
 
 
 - name: Prepare keyspace and tables for evaluation
-  hosts: cassandra_client
+  hosts: cassandra_clients
   become: true
   become_user: ymren
   tasks:
@@ -99,7 +99,7 @@
 
 
 - name: Load data
-  hosts: cassandra_client
+  hosts: cassandra_clients
   become: true
   become_user: ymren
   tasks:

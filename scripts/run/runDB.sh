@@ -14,6 +14,7 @@ shift 9
 scheme=$1
 enableHorse=$2
 shuffleReplicas=$3
+hostName=$4
 
 cd ${PathToClient} || exit
 
@@ -36,6 +37,6 @@ sed -i "s/fieldlength=.*$/fieldlength=${field_length}/" ${workload}
 # sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" ${workload}
 
 mkdir -p logs
-file_name="Run-$(date +%s)-${operationcount}-${field_length}-${threads}-${requestDistribution}"
+file_name="Run-$(date +%s)-${hostname}-${operationcount}-${field_length}-${threads}-${requestDistribution}"
 
 bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -p shuffle.replicas="${shuffleReplicas}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1

@@ -82,12 +82,12 @@
     #   ignore_errors: true
 
 - name: Run benchmark
-  hosts: cassandra_client
+  hosts: cassandra_clients
   become: yes
   become_user: ymren
   tasks:
     - name: Execute runDB.sh
-      command: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ shuffleReplicas }}
+      command: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ shuffleReplicas }} {{ inventory_hostname }}
       vars:
         coordinator: "COORDINATORS"
         recordNumber: 10000000
