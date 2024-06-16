@@ -295,6 +295,9 @@ function loadDataset {
     fieldlength=$5
     rf=$6
 
+    if [ "${scheme}" == "horse" ] || [ "${scheme}" == "c3" ]; then
+        scheme="mlsm"
+    fi
     # Copy playbook
     resetPlaybook "loadDataset"
     playbook="playbook-loadDataset.yaml"
@@ -452,8 +455,9 @@ function getResultsDir
     shuffleReplicas=$3
     throttleDataRate=$4
     operationNumber=$5
+    kvNumber=$6
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-shuffleReplicas_${shuffleReplicas}-throttleDataRate_${throttleDataRate}-operationNumber_${operationNumber}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-shuffleReplicas_${shuffleReplicas}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -711,7 +715,7 @@ function runExp {
 
 
                                                     # Collect load results
-                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate} ${OPERATION_NUMBER}) 
+                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER}) 
 
                                                     # echo "Collect results to ${resultsDir}"
                                                     collectResults ${resultsDir}
