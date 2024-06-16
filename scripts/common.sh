@@ -301,11 +301,10 @@ function loadDataset {
     # Copy playbook
     resetPlaybook "loadDataset"
     playbook="playbook-loadDataset.yaml"
-
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
     sed -i "s/Scheme/${scheme}/g" ${playbook}
-    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+    sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
 
     ansible-playbook -v -i hosts.ini ${playbook}
 }
