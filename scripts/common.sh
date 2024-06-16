@@ -153,7 +153,7 @@ function flush {
         sed -i "s|NODETOOL_OPTION||g" ${playbook}
     fi
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function backup {
@@ -177,7 +177,7 @@ function backup {
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
     sed -i "s/Scheme/${targetScheme}/g" ${playbook}
     sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function getSettingName() {
@@ -277,7 +277,7 @@ function rebuildServer {
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
     sed -i "s|ANT_OPTION|${antOption}|g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function rebuildClient {
@@ -306,7 +306,7 @@ function loadDataset {
     sed -i "s/Scheme/${scheme}/g" ${playbook}
     sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function startFromBackup {
@@ -373,7 +373,7 @@ function startFromBackup {
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
     
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function restartCassandra {
@@ -414,7 +414,7 @@ function restartCassandra {
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function collectResults {
@@ -506,7 +506,7 @@ function load {
     fi
 
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 
     ## Collect load results
     resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}"
@@ -572,7 +572,7 @@ function run {
     fi
     
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 }
 
 function perpareJavaEnvironment {
@@ -602,7 +602,7 @@ function cleanup {
 
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${NodeNumber}
 
 }
 
