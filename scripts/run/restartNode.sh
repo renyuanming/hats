@@ -8,11 +8,10 @@ function restartNode {
     projectBaseDir=$3
     memtableSize=$4
     motivation=$5
-    fromBackup=$6
-    rebuild=$7
-    useDirectIO=$8
-    branch=$9
-    shift 9
+    rebuild=$6
+    useDirectIO=$7
+    branch=$8
+    shift 8
     schedulingInitialDelay=$1
     schedulingInterval=$2
     statesUpdateInterval=$3
@@ -20,7 +19,7 @@ function restartNode {
     enableHorse=$5
     throttleDataRate=$6
 
-    echo "Restart the node with configure file ${configureFilePath}, source data dir ${sourceDataDir}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation} and from backup ${fromBackup}, the pass word is ${passWd}, rebuild is ${rebuild}, use direct io is ${useDirectIO}, branch is ${branch}, scheduling initial delay is ${schedulingInitialDelay}, scheduling interval is ${schedulingInterval}, states update interval is ${statesUpdateInterval}, read sensitivity is ${readSensitivity}"
+    echo "Restart the node with configure file ${configureFilePath}, source data dir ${sourceDataDir}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, the pass word is ${passWd}, rebuild is ${rebuild}, use direct io is ${useDirectIO}, branch is ${branch}, scheduling initial delay is ${schedulingInitialDelay}, scheduling interval is ${schedulingInterval}, states update interval is ${statesUpdateInterval}, read sensitivity is ${readSensitivity}"
 
     kill -9 $(ps aux | grep CassandraDaemon | grep -v grep | awk 'NR == 1' | awk {'print $2'})
 
@@ -48,18 +47,18 @@ function restartNode {
     
 
     rm -rf data
-    if [ "${fromBackup}" == "true" ]; then
-        echo "Copy DB data back from ${sourceDataDir} to ${projectBaseDir}/data"
-        if [ ! -d "${sourceDataDir}" ]; then
-            echo "The backup data in ${sourceDataDir} does not exist"
-            exit
-        fi
-        cp -r ${sourceDataDir} data
-        chmod -R 775 data
-        echo "$passWd" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"
-    else
-        mkdir -p data
+    # if [ "${fromBackup}" == "true" ]; then
+    echo "Copy DB data back from ${sourceDataDir} to ${projectBaseDir}/data"
+    if [ ! -d "${sourceDataDir}" ]; then
+        echo "The backup data in ${sourceDataDir} does not exist"
+        exit
     fi
+    cp -r ${sourceDataDir} data
+    chmod -R 775 data
+    echo "$passWd" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"
+    # else
+    #     mkdir -p data
+    # fi
 
 
     rm -rf logs metrics

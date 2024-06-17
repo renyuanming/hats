@@ -8,14 +8,13 @@
       shell: |
             . /etc/profile &&
             export passWd="SUDO_PASSWD"
-            bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ fromBackup }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHorse }} {{ throttleDataRate }}
+            bash PATH_TO_SCRIPTS/run/restartNode.sh {{ configurationFile }} {{ sourceFileDir }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHorse }} {{ throttleDataRate }}
       vars:
         configurationFile: "PATH_TO_SERVER/conf/cassandra.yaml"
         sourceFileDir: "PATH_TO_BACKUP/Scheme/DATAPATH/data"
         projectBaseDir: "PATH_TO_SERVER"
         memtableSize: "128MiB"
         motivation: "false"
-        fromBackup: "true"
         rebuild: "false"
         useDirectIO: "false"
         branch: "main"

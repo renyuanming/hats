@@ -320,8 +320,7 @@ function startFromBackup {
     rf=$6
     memtable_heap_space=$7
     motivation=$8
-    fromBackup=$9
-    shift 9
+    shift 8
     rebuild=$1
     useDirectIO=$2
     logLevel=$3
@@ -361,7 +360,6 @@ function startFromBackup {
     sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
     sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" ${playbook}
     sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" ${playbook}
-    sed -i "s/\(fromBackup: \)".*"/fromBackup: \"${fromBackup}\"/" ${playbook}
     sed -i "s/\(rebuild: \)".*"/rebuild: \"${rebuild}\"/" ${playbook}
     sed -i "s/\(useDirectIO: \)".*"/useDirectIO: \"${useDirectIO}\"/" ${playbook}
     sed -i "s/\(branch: \)".*"/branch: \"${branch}\"/" ${playbook}
@@ -567,7 +565,6 @@ function run {
     sed -i "s|MEMORY_LIMIT|${memoryLimit}|g" ${playbook}
     sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
-    sed -i "s|SHUFFLE_REPLICAS|${shuffleReplicas}|g" ${playbook}
     sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" ${playbook}
 
     if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
@@ -637,17 +634,15 @@ function runExp {
     LOG_LEVEL=${21}
     BRANCH=${22}
     PURPOSE=${23}
-    STARTUP_FROM_BACKUP=${24}
-    SCHEDULING_INITIAL_DELAY=${25}
-    SCHEDULING_INTERVAL=("${!26}")
-    STATES_UPDATE_INTERVAL=${27}
-    READ_SENSISTIVITY=${28}
-    ENABLE_HORSE=${29}
-    SHUFFLE_REPLICAS=("${!30}")
-    THROTLLE_DATA_RATE=("${!31}")
+    SCHEDULING_INITIAL_DELAY=${24}
+    SCHEDULING_INTERVAL=("${!25}")
+    STATES_UPDATE_INTERVAL=${26}
+    READ_SENSISTIVITY=${27}
+    ENABLE_HORSE=${28}
+    THROTLLE_DATA_RATE=("${!29}")
 
     # test the parameters
-    # echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, WORKLOADS: ${WORKLOADS[@]}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, STARTUP_FROM_BACKUP: ${STARTUP_FROM_BACKUP}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]}, ENABLE_HORSE: ${ENABLE_HORSE[@]}, SHUFFLE_REPLICAS: ${SHUFFLE_REPLICAS[@]}"
+    # echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, WORKLOADS: ${WORKLOADS[@]}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]}, ENABLE_HORSE: ${ENABLE_HORSE[@]}
 
     if [[ "${TARGET_SCHEME}" == "horse" ]]; then
         ENABLE_HORSE="true"
@@ -690,40 +685,38 @@ function runExp {
                                 for directIO in "${USE_DIRECTIO[@]}"; do
                                     for motivation in "${MOTIVATION[@]}"; do
                                         for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
-                                            for shuffleReplicas in "${SHUFFLE_REPLICAS[@]}"; do
-                                                for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
-                                                
-                                                    if [ "${compactionLevel}" == "zero" ]; then
-                                                        ENABLE_AUTO_COMPACTION="false"
-                                                        ENABLE_COMPACTION_CFS=""
-                                                    elif [ "${compactionLevel}" == "one" ]; then
-                                                        ENABLE_AUTO_COMPACTION="true"
-                                                        ENABLE_COMPACTION_CFS="usertable0"
-                                                    elif [ "${compactionLevel}" == "all" ]; then
-                                                        ENABLE_AUTO_COMPACTION="true"
-                                                        ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
-                                                    fi
-                                                    echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
+                                            for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                                            
+                                                if [ "${compactionLevel}" == "zero" ]; then
+                                                    ENABLE_AUTO_COMPACTION="false"
+                                                    ENABLE_COMPACTION_CFS=""
+                                                elif [ "${compactionLevel}" == "one" ]; then
+                                                    ENABLE_AUTO_COMPACTION="true"
+                                                    ENABLE_COMPACTION_CFS="usertable0"
+                                                elif [ "${compactionLevel}" == "all" ]; then
+                                                    ENABLE_AUTO_COMPACTION="true"
+                                                    ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
+                                                fi
+                                                echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
 
-                                                    SETTING=$(getSettingName ${motivation} ${compactionLevel})
+                                                SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
-                                                    # startup from preload dataset
-                                                    if [ "${EXP_NAME}" == "MixedReadWrite" ]; then
-                                                        echo "Start from backup"
-                                                        startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${STARTUP_FROM_BACKUP} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
-                                                    else
-                                                        echo "Start from current data"
-                                                        restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
-                                                    fi
-                                                    run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${shuffleReplicas}"
+                                                # startup from preload dataset
+                                                if [ "${EXP_NAME}" == "MixedReadWrite" ]; then
+                                                    echo "Start from backup"
+                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
+                                                else
+                                                    echo "Start from current data"
+                                                    restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
+                                                fi
+                                                run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${shuffleReplicas}"
 
 
-                                                    # Collect load results
-                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER}) 
+                                                # Collect load results
+                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER}) 
 
-                                                    # echo "Collect results to ${resultsDir}"
-                                                    collectResults ${resultsDir}
-                                                done
+                                                # echo "Collect results to ${resultsDir}"
+                                                collectResults ${resultsDir}
                                             done
                                         done
                                     done
