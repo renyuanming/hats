@@ -453,7 +453,7 @@ public class CassandraDaemon
                 }
             }
 
-            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getPrintStatisticRunnable(), 10, 10, TimeUnit.SECONDS);
+            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getPrintStatisticRunnable(), 10, 30, TimeUnit.SECONDS);
 
             ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
                                                                     10, 1, TimeUnit.SECONDS);
