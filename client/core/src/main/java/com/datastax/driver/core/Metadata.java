@@ -297,6 +297,19 @@ public class Metadata {
 
     public void updateHorsePolicy(Map<String, List<Double>> newPolicy)
     {
+        String results = "";
+        for(Map.Entry<Token,  HorseReplicaSelector> entry : tokenToReplicaSelector.entrySet())
+        {
+            results += entry.getKey() + ": [";
+            for(Long count : entry.getValue().getSelectionCounts())
+            {
+                double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
+                results += String.valueOf(ratio) + ",";
+            }
+            results += "];";
+        }
+
+        logger.info("rymInfo: The old policy is {}, the results are: {}", policy, results);
         policy = newPolicy;
         TokenMap current = tokenMap;
         for(Map.Entry<String,  List<Double>> entry : newPolicy.entrySet())

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -90,6 +91,7 @@ public class HorseUtils
         private final double[] cumulativeWeights;
         private final AtomicLong[] selectionCounts;
         private final Random random;
+        public final AtomicLong totalSelections;
 
         public HorseReplicaSelector(List<Host> targets, List<Double> ratios) 
         {
@@ -106,9 +108,52 @@ public class HorseUtils
                 cumulativeWeights[i] = (i == 0 ? 0 : cumulativeWeights[i - 1]) + ratios.get(i);
             }
             this.random = new Random();
+            this.totalSelections = new AtomicLong(0);
         }
 
         public Host selectTarget() 
+        {
+            double rand = random.nextDouble();
+            int targetIndex = Arrays.binarySearch(cumulativeWeights, rand);
+            if (targetIndex < 0) 
+            {
+                targetIndex = -targetIndex - 1;
+            }
+            selectionCounts[targetIndex].incrementAndGet();
+            totalSelections.incrementAndGet();
+            return targets.get(targetIndex);
+        }
+
+        public long[] getSelectionCounts() 
+        {
+            return Arrays.stream(selectionCounts).mapToLong(AtomicLong::get).toArray();
+        }
+    }
+    public static class HorseReplicaSelectorTest
+    {
+        private final List<InetAddress> targets;
+        private final double[] cumulativeWeights;
+        private final AtomicLong[] selectionCounts;
+        private final Random random;
+
+        public HorseReplicaSelectorTest(List<InetAddress> targets, List<Double> ratios) 
+        {
+            if (targets.size() != ratios.size()) 
+            {
+                throw new IllegalArgumentException("Targets and ratios must have the same length.");
+            }
+            this.targets = targets;
+            this.cumulativeWeights = new double[ratios.size()];
+            this.selectionCounts = new AtomicLong[targets.size()];
+            for (int i = 0; i < targets.size(); i++) 
+            {
+                selectionCounts[i] = new AtomicLong(0);
+                cumulativeWeights[i] = (i == 0 ? 0 : cumulativeWeights[i - 1]) + ratios.get(i);
+            }
+            this.random = new Random();
+        }
+
+        public InetAddress selectTarget() 
         {
             double rand = random.nextDouble();
             int targetIndex = Arrays.binarySearch(cumulativeWeights, rand);
@@ -125,17 +170,23 @@ public class HorseUtils
             return Arrays.stream(selectionCounts).mapToLong(AtomicLong::get).toArray();
         }
     }
-
     public static void main(String[] args) throws UnknownHostException, InterruptedException 
     {
-        List<Host> targets = IntStream.range(0, 3)
+        List<InetAddress> targets = IntStream.range(0, 3)
                 .mapToObj(i -> {
-                    return new Host(InetSocketAddress.createUnresolved("192.168.1." + (i + 1), 7000), new ConvictionPolicy.DefaultConvictionPolicy.Factory(), null);
+                    try {
+                        return InetAddress.getByName("192.168.1." + (i + 1));
+                    } catch (UnknownHostException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    // return new Host(InetSocketAddress.createUnresolved("192.168.1." + (i + 1), 7000), new ConvictionPolicy.DefaultConvictionPolicy.Factory(), null);
+                    return null;
                 })
                 .collect(Collectors.toList());
         // double[] ratios = {0.7, 0.2, 0.1};
-        List<Double> ratios = Arrays.asList(0.7, 0.2, 0.1);
-        HorseReplicaSelector selector = new HorseReplicaSelector(targets, ratios);
+        List<Double> ratios = Arrays.asList(0.95, 0.02, 0.03);
+        HorseReplicaSelectorTest selector = new HorseReplicaSelectorTest(targets, ratios);
 
         // Create thread pool to simulate concurrent selection
         ExecutorService executor = Executors.newFixedThreadPool(10);

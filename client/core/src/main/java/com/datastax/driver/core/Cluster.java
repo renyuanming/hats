@@ -2329,7 +2329,6 @@ public class Cluster implements Closeable {
                     ProtocolEvent.PolicyChange plc = (ProtocolEvent.PolicyChange) event;
                     byte[] newPolicyInBytes = plc.policyInBytes;
                     try {
-                        logger.info("rymInfo: The old policy is {}", manager.metadata.policy);
                         @SuppressWarnings("unchecked")
                         Map<String, List<Double>> newPolicy = (Map<String, List<Double>>) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
                         manager.metadata.updateHorsePolicy(newPolicy);
