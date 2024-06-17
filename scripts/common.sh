@@ -270,11 +270,11 @@ function rebuildServer {
     resetPlaybook "rebuildServer"
     playbook="playbook-rebuildServer.yaml"
 
-    antOption="-Duse.jdk11=true"
+    # antOption="-Duse.jdk11=true"
 
-    if [ "${targetScheme}" == "depart" ] || [ "$targetScheme" == "cassandra-3.11.4" ]; then
-        antOption=""
-    fi
+    # if [ "${targetScheme}" == "depart" ] || [ "$targetScheme" == "cassandra-3.11.4" ]; then
+    antOption=""
+    # fi
 
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
@@ -580,14 +580,22 @@ function run {
 function perpareJavaEnvironment {
     
     TARGET_SCHEME=$1
+    JDK_VERSION=$2
 
     resetPlaybook "prepareJavaEnv"
 
     javaVersion="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"
-
-    if [ "${TARGET_SCHEME}" == "depart" ] || [ "${TARGET_SCHEME}" == "cassandra-3.11.4" ]; then
+    if [ "${JDK_VERSION}" == "8" ]; then
         javaVersion="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+    elif [ "${JDK_VERSION}" == "11" ]; then
+        javaVersion="/usr/lib/jvm/java-11-openjdk-amd64/bin/java"
+    elif [ "${JDK_VERSION}" == "17" ]; then
+        javaVersion="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
     fi
+
+    # if [ "${TARGET_SCHEME}" == "depart" ] || [ "${TARGET_SCHEME}" == "cassandra-3.11.4" ]; then
+    #     javaVersion="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+    # fi
 
     sed -i "s|SUDO_PASSWD|${SudoPassword}|g" playbook-prepareJavaEnv.yaml
     sed -i "s|JAVA_VERSION|${javaVersion}|g" playbook-prepareJavaEnv.yaml
@@ -639,6 +647,7 @@ function runExp {
     STATES_UPDATE_INTERVAL=${26}
     READ_SENSISTIVITY=${27}
     THROTLLE_DATA_RATE=("${!28}")
+    JDK_VERSION=${29}
 
     # test the parameters
     # echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, WORKLOADS: ${WORKLOADS[@]}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]}
@@ -651,7 +660,7 @@ function runExp {
 
     # Run experiments
     echo "Start experiment to ${TARGET_SCHEME}"
-    perpareJavaEnvironment "${TARGET_SCHEME}"
+    perpareJavaEnvironment "${TARGET_SCHEME}" "${JDK_VERSION}"
 
 
 

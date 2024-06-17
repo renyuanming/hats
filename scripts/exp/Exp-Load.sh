@@ -12,6 +12,8 @@ KEY_LENGTH=24
 REBUILD_SERVER="false"
 WAIT_TIME=600
 
+JDK_VERSION="17"
+
 function exportEnv {
     
     scheme=$1
@@ -30,7 +32,7 @@ function main {
     for scheme in "${SCHEMES[@]}"; do
         echo "Load data for ${scheme}"
         exportEnv $scheme
-        perpareJavaEnvironment "${scheme}"
+        perpareJavaEnvironment "${scheme}" "${JDK_VERSION}"
         
         if [ "${REBUILD_SERVER}" == "true" ]; then
             echo "Rebuild the server"

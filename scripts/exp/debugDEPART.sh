@@ -20,6 +20,7 @@ MEMORY_LIMIT="12G"
 LOG_LEVEL="debug"
 shuffleReplicas="true"
 
+JDK_VERSION="17"
 
 function exportEnv {
     
@@ -39,7 +40,7 @@ function main {
     for scheme in "${SCHEMES[@]}"; do
         echo "Load data for ${scheme}"
         exportEnv $scheme
-        perpareJavaEnvironment "${scheme}"
+        perpareJavaEnvironment "${scheme}" "${JDK_VERSION}"
         
         if [ "${REBUILD_SERVER}" == "true" ]; then
             echo "Rebuild the server"

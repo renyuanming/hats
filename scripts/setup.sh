@@ -23,7 +23,7 @@ function updateCode {
     source ${SCRIPT_DIR}/settings.sh
     for node in "${ServersIP[@]}"; do
         echo "Update the server on ${node}"
-        ssh "${node}" "cd ${PathToServer} && git pull && ant clean && ant -Duse.jdk11=true"
+        ssh "${node}" "cd ${PathToServer} && git pull && ant clean && ant"
     done
 }
 
