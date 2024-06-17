@@ -35,6 +35,8 @@ import java.util.stream.IntStream;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -44,11 +46,17 @@ import org.apache.cassandra.utils.FBUtilities;
 public class ReplicaSelector 
 {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReplicaSelector.class);
     public final static RandomSelector randomSelector = new RandomSelector();
     /**
      * 1. It can periodically update the score based on the placement policy and the sampling latency
      */
 
+     private static final String ANSI_RESET = "\u001B[0m";
+     private static final String ANSI_RED = "\u001B[31m";
+     private static final String ANSI_YELLOW = "\u001B[33m";
+     private static final String ANSI_BLUE = "\u001B[34m";
+ 
     public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 0.0);
 
     public static class SnitchMetrics 
@@ -84,9 +92,12 @@ public class ReplicaSelector
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
             latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            if (latencyScore >= 1) {
+                logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
+            }
         }
         
-        return greedyScore;//+ Math.pow(latencyScore, 3);
+        return greedyScore + Math.pow(latencyScore, 3);
     }
 
     public static class HighPerformanceWeightedSelector {
