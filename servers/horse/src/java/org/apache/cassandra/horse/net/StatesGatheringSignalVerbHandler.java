@@ -80,10 +80,11 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
         else
         {
             leaderHost = PriorityElectionBootstrap.getLeader();
-            double linearLatency = StorageService.instance.readLatencyCalculator.getWindowMean() * 
-                                   DatabaseDescriptor.getReadSensitiveFactor() +
-                                   StorageService.instance.writeLatencyCalculator.getWindowMean() * 
-                                   (1 - DatabaseDescriptor.getReadSensitiveFactor());
+            double linearLatency = StorageService.instance.readLatencyCalculator.getMedian();
+                                //    StorageService.instance.readLatencyCalculator.getMedian() * 
+                                //    DatabaseDescriptor.getReadSensitiveFactor() +
+                                //    StorageService.instance.writeLatencyCalculator.getMedian() * 
+                                //    (1 - DatabaseDescriptor.getReadSensitiveFactor());
             int version = Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort())
                                                             .getApplicationState(ApplicationState.FOREGROUND_LOAD)
                                                             .version;

@@ -473,9 +473,9 @@ public class Scheduler {
                         StorageService.instance.pendingFlushRate.getRate(),
                         StorageService.instance.getEndpointCost.get() / 1000,
                         StorageService.instance.totalReadCntOfEachReplica, 
-                        StorageService.instance.readLatencyCalculator.getWindowMean(),
+                        StorageService.instance.readLatencyCalculator.getMedian(),
                         StorageService.instance.readLatencyCalculator.getCount(), 
-                        StorageService.instance.writeLatencyCalculator.getWindowMean(), 
+                        StorageService.instance.writeLatencyCalculator.getMedian(), 
                         StorageService.instance.writeLatencyCalculator.getCount());        
         }
         

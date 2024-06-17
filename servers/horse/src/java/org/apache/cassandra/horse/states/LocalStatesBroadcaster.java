@@ -90,10 +90,10 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
                 
-                double linearLatency = StorageService.instance.readLatencyCalculator.getWindowMean();
-                                    //    StorageService.instance.readLatencyCalculator.getWindowMean() * 
+                double linearLatency = StorageService.instance.readLatencyCalculator.getMedian();
+                                    //    StorageService.instance.readLatencyCalculator.getMedian() * 
                                     //    DatabaseDescriptor.getReadSensitiveFactor() +
-                                    //    StorageService.instance.writeLatencyCalculator.getWindowMean() * 
+                                    //    StorageService.instance.writeLatencyCalculator.getMedian() * 
                                     //    (1 - DatabaseDescriptor.getReadSensitiveFactor());
                 int version = 0;
                 if(Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()).getApplicationState(ApplicationState.FOREGROUND_LOAD) != null)
@@ -113,9 +113,9 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 
                 logger.debug("rymDebug: foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}, Local states: {}", 
                              StorageService.instance.totalReadCntOfEachReplica, 
-                             StorageService.instance.readLatencyCalculator.getWindowMean(),
+                             StorageService.instance.readLatencyCalculator.getMedian(),
                              StorageService.instance.readLatencyCalculator.getCount(), 
-                             StorageService.instance.writeLatencyCalculator.getWindowMean(), 
+                             StorageService.instance.writeLatencyCalculator.getMedian(), 
                              StorageService.instance.writeLatencyCalculator.getCount(),
                              states.toString());
                 
