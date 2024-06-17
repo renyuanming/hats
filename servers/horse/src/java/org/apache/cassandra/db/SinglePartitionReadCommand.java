@@ -497,8 +497,12 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
 
     protected UnfilteredPartitionIterator queryStorage(final ColumnFamilyStore cfs, ReadExecutionController executionController)
     {
-        InetAddress replicationGroup = StorageService.instance.getNaturalEndpoints(cfs.getKeyspaceName(), partitionKey.getToken()).get(0);
-        StorageService.instance.readCounterOfEachReplica.mark(replicationGroup);
+        if(cfs.name.contains("usertable"))
+        {
+            InetAddress replicationGroup = StorageService.instance.getNaturalEndpoints(cfs.getKeyspaceName(), partitionKey.getToken()).get(0);
+            StorageService.instance.readCounterOfEachReplica.mark(replicationGroup);
+        }
+
         // skip the row cache and go directly to sstables/memtable if repaired status of
         // data is being tracked. This is only requested after an initial digest mismatch
         UnfilteredRowIterator partition = cfs.isRowCacheEnabled() && !executionController.isTrackingRepairedStatus()
