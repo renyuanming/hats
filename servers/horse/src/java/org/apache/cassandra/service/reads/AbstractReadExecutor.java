@@ -30,6 +30,7 @@ import org.apache.cassandra.db.ReadCommand;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
 import org.apache.cassandra.db.partitions.PartitionIterator;
 import org.apache.cassandra.db.transform.DuplicateRowChecker;
+import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.ReadFailureException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.exceptions.UnavailableException;
@@ -42,6 +43,7 @@ import org.apache.cassandra.locator.ReplicaPlans;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageProxy.LocalReadRunnable;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.reads.repair.ReadRepair;
 import org.apache.cassandra.tracing.TraceState;
 import org.apache.cassandra.tracing.Tracing;
@@ -49,6 +51,9 @@ import org.apache.cassandra.utils.FBUtilities;
 
 import static com.google.common.collect.Iterables.all;
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
+
+import java.net.InetAddress;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Sends a read request to the replicas needed to satisfy a given ConsistencyLevel.
@@ -178,6 +183,18 @@ public abstract class AbstractReadExecutor
         makeDigestRequests(selected.filterLazily(r -> r.isFull() && !fullDataRequests.contains(r)));
     }
 
+    private static synchronized void recordReadCountForReplicaGroup(Keyspace keyspace, Token token)  {
+        
+        if (keyspace.getName().equals("ycsb")) {
+            InetAddress replicaGroup = StorageService.instance.getNaturalEndpointsForToken(keyspace.getName(), token).get(0);
+
+            if(!StorageService.instance.totalReadCntOfEachReplica.containsKey(replicaGroup)) {
+                StorageService.instance.totalReadCntOfEachReplica.put(replicaGroup, new AtomicLong(0));
+            }
+            StorageService.instance.totalReadCntOfEachReplica.get(replicaGroup).incrementAndGet();
+        }
+    }
+
     /**
      * @return an executor appropriate for the configured speculative read policy
      */
@@ -188,6 +205,8 @@ public abstract class AbstractReadExecutor
         Keyspace keyspace = Keyspace.open(command.metadata().keyspace);
         ColumnFamilyStore cfs = keyspace.getColumnFamilyStore(command.metadata().id);
         SpeculativeRetryPolicy retry = cfs.metadata().params.speculativeRetry;
+
+        recordReadCountForReplicaGroup(keyspace, command.partitionKey().getToken());
 
         ReplicaPlan.ForTokenRead replicaPlan = ReplicaPlans.forRead(keyspace,
                                                                     command.partitionKey().getToken(),
