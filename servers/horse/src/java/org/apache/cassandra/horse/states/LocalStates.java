@@ -213,6 +213,16 @@ public class LocalStates implements Serializable {
             return this.timer.getSnapshot().getMedian();
         }
 
+        public double get75th()
+        {
+            return this.timer.getSnapshot().get75thPercentile();
+        }
+
+        public double get95th()
+        {
+            return this.timer.getSnapshot().get95thPercentile();
+        }
+
         public int getCount()
         {
             return this.timer.getSnapshot().size();
