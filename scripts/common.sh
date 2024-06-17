@@ -265,14 +265,14 @@ function copyDatasetToNodes {
 function rebuildServer {
     
     branch=$1
-    scheme=$2
+    targetScheme=$2
     echo "Building the server with branch ${branch}"
     resetPlaybook "rebuildServer"
     playbook="playbook-rebuildServer.yaml"
 
     antOption="-Duse.jdk11=true"
 
-    if [ "${scheme}" == "depart" ] || [ "$scheme" == "cassandra-3.11.4" ]; then
+    if [ "${targetScheme}" == "depart" ] || [ "$targetScheme" == "cassandra-3.11.4" ]; then
         antOption=""
     fi
 
@@ -291,21 +291,21 @@ function rebuildClient {
 function loadDataset {
 
     expName=$1
-    scheme=$2
+    local targetScheme=$2
     kvNumber=$3
     keylength=$4
     fieldlength=$5
     rf=$6
 
-    if [ "${scheme}" == "horse" ] || [ "${scheme}" == "c3" ]; then
-        scheme="mlsm"
+    if [ "${targetScheme}" == "horse" ] || [ "${targetScheme}" == "c3" ]; then
+        targetScheme="mlsm"
     fi
     # Copy playbook
     resetPlaybook "loadDataset"
     playbook="playbook-loadDataset.yaml"
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
-    sed -i "s/Scheme/${scheme}/g" ${playbook}
+    sed -i "s/Scheme/${targetScheme}/g" ${playbook}
     sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
 
     ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}

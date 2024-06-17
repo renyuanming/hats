@@ -11,22 +11,22 @@ requestDistribution=$7
 PathToClient=$8
 coordinator=$9
 shift 9
-scheme=$1
+targetScheme=$1
 enableHorse=$2
 hostName=$3
 
 cd ${PathToClient} || exit
 
-echo "Running YCSB with scheme: $scheme"
+echo "Running YCSB with scheme: $targetScheme"
 
 
 keyspace="ycsb"
-if [ "$scheme" == "c3" ] || [ "$scheme" == "horse" ] || [ "$scheme" == "mlsm" ]; then
+if [ "$targetScheme" == "c3" ] || [ "$targetScheme" == "horse" ] || [ "$targetScheme" == "mlsm" ]; then
     sed -i "s/table=.*$/table=usertable0/" ${workload}
-elif [ "$scheme" == "cassandra-5.0" ] || [ "$scheme" == "depart" ] || [ "$scheme" == "cassandra-3.11.4" ] || [ "$scheme" == "depart-5.0" ]; then
+elif [ "$targetScheme" == "cassandra-5.0" ] || [ "$targetScheme" == "depart" ] || [ "$targetScheme" == "cassandra-3.11.4" ] || [ "$targetScheme" == "depart-5.0" ]; then
     sed -i "s/table=.*$/table=usertable/" ${workload}
 else
-    echo "Unknow scheme $scheme"
+    echo "Unknow targetScheme $targetScheme"
 fi
 
 sed -i "s/recordcount=.*$/recordcount=${recordcount}/" ${workload}
