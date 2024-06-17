@@ -1274,6 +1274,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             DiskUsageBroadcaster.instance.startBroadcasting();
             if(DatabaseDescriptor.getEnableHorse())
             {
+                logger.info("rymInfo: starting broadcast the local states...");
                 LocalStatesBroadcaster.instance.startBroadcasting();
             }
             HintsService.instance.startDispatch();

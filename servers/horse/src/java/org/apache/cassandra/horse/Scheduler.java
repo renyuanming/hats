@@ -459,13 +459,18 @@ public class Scheduler {
 
         @Override
         public void run() {
-            logger.info("rymInfo: The Flush rate is {} mb/s,the coordinator read rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}, the pending flush tasks are {}, the get endpoint cost is {} us", 
+            logger.info("rymInfo: The Flush rate is {} mb/s,the coordinator read rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}, the pending flush tasks are {}, the get endpoint cost is {} us, foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}", 
                         StorageService.instance.flushRateMonitor.getRateInMB() * 4,
                         StorageService.instance.coordinatorReadRateMonitor.getRateInMB(),
                         StorageService.instance.compactionRateMonitor.getRateInMB(),
                         StorageService.instance.readRequestInFlight.get(),
                         StorageService.instance.pendingFlushRate.getRate(),
-                        StorageService.instance.getEndpointCost.get() / 1000);        
+                        StorageService.instance.getEndpointCost.get() / 1000,
+                        StorageService.instance.totalReadCntOfEachReplica, 
+                        StorageService.instance.readLatencyCalculator.getWindowMean(),
+                        StorageService.instance.readLatencyCalculator.getCount(), 
+                        StorageService.instance.writeLatencyCalculator.getWindowMean(), 
+                        StorageService.instance.writeLatencyCalculator.getCount());        
         }
         
     }

@@ -90,10 +90,11 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
                 
-                double linearLatency = StorageService.instance.readLatencyCalculator.getWindowMean() * 
-                                       DatabaseDescriptor.getReadSensitiveFactor() +
-                                       StorageService.instance.writeLatencyCalculator.getWindowMean() * 
-                                       (1 - DatabaseDescriptor.getReadSensitiveFactor());
+                double linearLatency = StorageService.instance.readLatencyCalculator.getWindowMean();
+                                    //    StorageService.instance.readLatencyCalculator.getWindowMean() * 
+                                    //    DatabaseDescriptor.getReadSensitiveFactor() +
+                                    //    StorageService.instance.writeLatencyCalculator.getWindowMean() * 
+                                    //    (1 - DatabaseDescriptor.getReadSensitiveFactor());
                 int version = 0;
                 if(Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()).getApplicationState(ApplicationState.FOREGROUND_LOAD) != null)
                 {
