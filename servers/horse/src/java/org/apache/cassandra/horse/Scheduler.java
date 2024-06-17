@@ -56,6 +56,12 @@ public class Scheduler {
     private static int priority = 100;
     private static Set<InetAddressAndPort> liveSeeds;
 
+
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_BLUE = "\u001B[34m";
+
     public static Runnable getLeaderElectionRunnable()
     {
         return new LeaderElectionRunnable();
@@ -153,7 +159,7 @@ public class Scheduler {
                         return;
                     }
                 }
-                logger.info("rymInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}",
+                logger.info(ANSI_RED + "rymInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}"+ ANSI_RESET,
                             //  GlobalStates.globalStates.latencyVector, 
                              GlobalStates.globalStates.readCountOfEachNode, 
                              GlobalStates.globalStates.scoreVector, 
@@ -240,7 +246,7 @@ public class Scheduler {
      */
     private static void calculateGlobalPolicy()
     {
-        logger.info("rymInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.globalPolicy));
+        logger.info(ANSI_YELLOW+"rymInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
 
         for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
         {
@@ -279,7 +285,7 @@ public class Scheduler {
                 logger.debug("rymDebug: do nothing for node {}.", i);
             }
         }
-        logger.info("rymInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.globalPolicy));
+        logger.info(ANSI_YELLOW+"rymInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
     }
 
     /**
