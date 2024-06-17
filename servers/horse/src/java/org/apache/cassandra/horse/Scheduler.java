@@ -153,8 +153,8 @@ public class Scheduler {
                         return;
                     }
                 }
-                logger.info("rymInfo: we now have the global states, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}",
-                             GlobalStates.globalStates.latencyVector, 
+                logger.info("rymInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}",
+                            //  GlobalStates.globalStates.latencyVector, 
                              GlobalStates.globalStates.readCountOfEachNode, 
                              GlobalStates.globalStates.scoreVector, 
                              GlobalStates.globalStates.loadMatrix);

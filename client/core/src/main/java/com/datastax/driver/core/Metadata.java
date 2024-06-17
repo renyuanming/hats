@@ -309,7 +309,7 @@ public class Metadata {
             results += "];";
         }
 
-        logger.info("rymInfo: The old policy is {}, the results are: {}", policy, results);
+        logger.info("rymInfo: The old policy is {}", policy);
         policy = newPolicy;
         TokenMap current = tokenMap;
         for(Map.Entry<String,  List<Double>> entry : newPolicy.entrySet())
