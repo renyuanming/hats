@@ -18,7 +18,6 @@ ENABLE_AUTO_COMPACTION="true"
 ENABLE_COMPACTION_CFS="usertable"
 MEMORY_LIMIT="12G"
 LOG_LEVEL="debug"
-ENABLE_HORSE="false"
 shuffleReplicas="true"
 
 
@@ -56,7 +55,7 @@ function main {
             # backup "LoadDB" $scheme ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf}
 
             # Run the workload
-            run ${scheme} "zipfian" "workloadc" 4 ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${shuffleReplicas}"
+            run ${scheme} "zipfian" "workloadc" 4 ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${shuffleReplicas}"
         done
     done
 }
