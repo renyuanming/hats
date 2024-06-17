@@ -437,8 +437,8 @@ function collectResults {
 
     for client in "${Clients[@]}"; do
         latest_file=$(ssh "$client" "ls -t $ClientLogDir | head -n 1")
-        echo "Copy the latest log file ${latest_file} from ${Clients}"
-        scp ${client}:${ClientLogDir}/* ${resultsDir}/
+        echo "Copy the latest log file ${latest_file} from ${client}"
+        scp ${client}:${ClientLogDir}${latest_file} ${resultsDir}/
     done
 }
 
