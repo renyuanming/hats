@@ -208,6 +208,11 @@ public class LocalStates implements Serializable {
             return this.timer.getSnapshot().getMean();
         }
 
+        public double getLatencyForLocalStates()
+        {
+            return get75th();
+        }
+
         public double getMedian()
         {
             return this.timer.getSnapshot().getMedian();
