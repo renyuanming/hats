@@ -13,7 +13,7 @@ coordinator=$9
 shift 9
 targetScheme=$1
 enableHorse=$2
-hostName=$3
+hostName=$(hostname)
 
 cd ${PathToClient} || exit
 
