@@ -96,8 +96,15 @@ public class ReplicaSelector
                 logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
             }
         }
+
+        latencyScore = Math.pow(latencyScore, 3);
+        double score = greedyScore + latencyScore;
+        if(score > 1 && !targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
+        {
+            logger.info(ANSI_RED + "rymInfo: For the target host {}, the score is {}, greedy score is {}, latency score is {}" + ANSI_RESET, targetAddr, score, greedyScore, latencyScore);
+        }
         
-        return greedyScore + Math.pow(latencyScore, 3);
+        return score;
     }
 
     public static class HighPerformanceWeightedSelector {
