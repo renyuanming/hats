@@ -1946,6 +1946,7 @@ public class NodeProbe implements AutoCloseable
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxCounterMBean.class).getCount();
                 case "CoordinatorReadLatency":
                 case "CoordinatorScanLatency":
+                case "CoordinatorWriteLatency":
                 case "ReadLatency":
                 case "WriteLatency":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxTimerMBean.class);
