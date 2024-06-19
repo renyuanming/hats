@@ -709,7 +709,7 @@ function runExp {
                                                 SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
                                                 # startup from preload dataset
-                                                if [ "${EXP_NAME}" == "MixedReadWrite" ]; then
+                                                if [ "${EXP_NAME}" == "Exp-MixedReadWrite" ]; then
                                                     echo "Start from backup"
                                                     startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
                                                 else
