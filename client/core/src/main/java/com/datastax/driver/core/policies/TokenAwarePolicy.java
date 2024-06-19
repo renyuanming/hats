@@ -21,6 +21,9 @@ import com.datastax.driver.core.HorseUtils.QueryType;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -48,6 +51,7 @@ import java.util.*;
  */
 public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
+    private static final Logger logger = LoggerFactory.getLogger(TokenAwarePolicy.class);
     private final LoadBalancingPolicy childPolicy;
     private boolean shuffleReplicas;
     private volatile boolean enableHorse;
@@ -165,6 +169,8 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
             return childPolicy.newQueryPlan(loggedKeyspace, statement);
 
         final Iterator<Host> iter;
+
+        logger.info("rymInfo: We get the statement is {}, query type is {}", statement, queryType);
 
         if(enableHorse && (queryType == QueryType.READ || queryType == QueryType.SCAN))
         {
