@@ -170,9 +170,9 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         final Iterator<Host> iter;
 
-        logger.info("rymInfo: We get the statement is {}, query type is {}", statement, queryType);
+        logger.info("rymInfo: We get the statement is {}, query type is {}, enable horse is {}, the expression is {}", statement, queryType, enableHorse, enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)));
 
-        if(enableHorse && (queryType == QueryType.READ || queryType == QueryType.SCAN))
+        if(enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)))
         {
             final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
             HorseReplicaSelector selector = clusterMetadata.getSelector(partitionKey);
