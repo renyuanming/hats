@@ -173,7 +173,7 @@ public class GetBreakdown extends NodeToolCmd
             double averageCoordiantorWriteLatency = 0;
             
             out.println(format("%-10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s",
-            "Keypsace", "Table", "Read", "ReadCnt", "Write", "WriteCnt", "CoordRead", "CoordReadCnt", "CoordScan", "CoordScanCnt", "CoordWrite", "CoordWriteCnt"));
+            "Keypsace", "Table", "Read", "ReadCnt", "Write", "WriteCnt", "CordRead", "CordReadCnt", "CordScan", "CordScanCnt", "CordWrite", "CordWriteCnt"));
             for(String table : tablesList.get(keyspace))
             { 
                 
