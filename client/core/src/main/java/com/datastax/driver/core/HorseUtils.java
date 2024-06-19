@@ -41,6 +41,15 @@ public class HorseUtils
 {
     private static final Logger logger = LoggerFactory.getLogger(HorseUtils.class);
 
+    public enum QueryType
+    {
+        READ,
+        INSERT,
+        UPDATE,
+        SCAN,
+        DELETE
+    }
+
     public enum HorseLogLevels 
     {
         TRACE, 

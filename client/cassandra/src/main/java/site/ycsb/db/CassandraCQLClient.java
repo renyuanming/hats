@@ -26,6 +26,7 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.querybuilder.Insert;
@@ -332,7 +333,8 @@ public class CassandraCQLClient extends DB {
       logger.debug(stmt.getQueryString());
       logger.debug("key = {}", key);
 
-      ResultSet rs = session.execute(stmt.bind(key));
+      // ResultSet rs = session.execute(stmt.bind(key));
+      ResultSet rs = session.execute(stmt.bind(key), QueryType.READ);
 
       if (rs.isExhausted()) {
         return Status.NOT_FOUND;
@@ -437,7 +439,8 @@ public class CassandraCQLClient extends DB {
       logger.debug(stmt.getQueryString());
       logger.debug("startKey = {}, recordcount = {}", startkey, recordcount);
 
-      ResultSet rs = session.execute(stmt.bind(startkey, Integer.valueOf(recordcount)));
+      // ResultSet rs = session.execute(stmt.bind(startkey, Integer.valueOf(recordcount)));
+      ResultSet rs = session.execute(stmt.bind(startkey, Integer.valueOf(recordcount)), QueryType.SCAN);
 
       HashMap<String, ByteIterator> tuple;
       while (!rs.isExhausted()) {
@@ -530,7 +533,8 @@ public class CassandraCQLClient extends DB {
       // Add key
       boundStmt.setString(vars.size() - 1, key);
 
-      session.execute(boundStmt);
+      // session.execute(boundStmt);
+      session.execute(boundStmt, QueryType.UPDATE);
 
       return Status.OK;
     } catch (Exception e) {
@@ -601,7 +605,8 @@ public class CassandraCQLClient extends DB {
         boundStmt.setString(i, values.get(vars.getName(i)).toString());
       }
 
-      session.execute(boundStmt);
+      // session.execute(boundStmt);
+      session.execute(boundStmt, QueryType.INSERT);
 
       return Status.OK;
     } catch (Exception e) {
@@ -644,7 +649,8 @@ public class CassandraCQLClient extends DB {
       logger.debug(stmt.getQueryString());
       logger.debug("key = {}", key);
 
-      session.execute(stmt.bind(key));
+      // session.execute(stmt.bind(key));
+      session.execute(stmt.bind(key), QueryType.DELETE);
 
       return Status.OK;
     } catch (Exception e) {

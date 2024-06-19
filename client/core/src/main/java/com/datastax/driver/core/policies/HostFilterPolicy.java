@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
@@ -167,6 +168,12 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
                 return (hdc == null) ? includeNullDC : _dcs.contains(hdc);
             }
         };
+    }
+
+    @Override
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement, QueryType queryType) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'newQueryPlan'");
     }
 
 }

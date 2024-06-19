@@ -16,8 +16,10 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Timer;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
 import com.google.common.collect.Sets;
@@ -65,7 +67,7 @@ class RequestHandler {
     private final AtomicBoolean isDone = new AtomicBoolean();
     private AtomicInteger executionCount = new AtomicInteger();
 
-    public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
+    public RequestHandler(SessionManager manager, Callback callback, Statement statement, QueryType queryType) {
         this.id = Long.toString(System.identityHashCode(this));
         if (logger.isTraceEnabled())
             logger.trace("[{}] {}", id, statement);
@@ -75,7 +77,15 @@ class RequestHandler {
 
         callback.register(this);
 
-        this.queryPlan = new QueryPlan(manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement));
+        if(manager.loadBalancingPolicy() instanceof TokenAwarePolicy)
+        {
+            this.queryPlan = new QueryPlan(manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement, queryType));
+        }
+        else
+        {
+            this.queryPlan = new QueryPlan(manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement));
+        }
+
         this.speculativeExecutionPlan = manager.speculativeExecutionPolicy().newPlan(manager.poolsState.keyspace, statement);
         this.allowSpeculativeExecutions = statement != Statement.DEFAULT
                 && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());

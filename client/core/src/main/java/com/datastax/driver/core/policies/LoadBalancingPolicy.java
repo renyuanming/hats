@@ -19,6 +19,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.HorseUtils.QueryType;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -88,6 +89,8 @@ public interface LoadBalancingPolicy {
      * successfully to one of the host.
      */
     public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement);
+
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement, QueryType queryType);
 
     /**
      * Called when a new node is added to the cluster.

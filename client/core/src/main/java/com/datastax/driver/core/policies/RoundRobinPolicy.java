@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,5 +161,11 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void close() {
         // nothing to do
+    }
+
+    @Override
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement, QueryType queryType) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'newQueryPlan'");
     }
 }

@@ -17,6 +17,7 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.HorseUtils.HorseLogLevels;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -362,5 +363,11 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         public DCAwareRoundRobinPolicy build() {
             return new DCAwareRoundRobinPolicy(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, true);
         }
+    }
+
+    @Override
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement, QueryType queryType) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'newQueryPlan'");
     }
 }

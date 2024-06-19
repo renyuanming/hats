@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.exceptions.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
@@ -724,5 +725,11 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
     public void close() {
         childPolicy.close();
         updaterService.shutdown();
+    }
+
+    @Override
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement, QueryType queryType) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'newQueryPlan'");
     }
 }

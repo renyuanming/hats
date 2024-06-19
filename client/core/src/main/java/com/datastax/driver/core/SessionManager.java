@@ -129,7 +129,7 @@ class SessionManager extends AbstractSession {
     public ResultSetFuture executeAsync(final Statement statement) {
         if (isInit) {
             DefaultResultSetFuture future = new DefaultResultSetFuture(this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
-            new RequestHandler(this, future, statement).sendRequest();
+            new RequestHandler(this, future, statement, null).sendRequest();
             return future;
         } else {
             // If the session is not initialized, we can't call makeRequestMessage() synchronously, because it
@@ -147,6 +147,31 @@ class SessionManager extends AbstractSession {
             return chainedFuture;
         }
     }
+
+    // HORSE
+    @Override
+    public ResultSetFuture executeAsync(final Statement statement, final HorseUtils.QueryType queryType) {
+        if (isInit) {
+            DefaultResultSetFuture future = new DefaultResultSetFuture(this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
+            new RequestHandler(this, future, statement, queryType).sendRequest();
+            return future;
+        } else {
+            // If the session is not initialized, we can't call makeRequestMessage() synchronously, because it
+            // requires internal Cluster state that might not be initialized yet (like the protocol version).
+            // Because of the way the future is built, we need another 'proxy' future that we can return now.
+            final ChainedResultSetFuture chainedFuture = new ChainedResultSetFuture();
+            this.initAsync().addListener(new Runnable() {
+                @Override
+                public void run() {
+                    DefaultResultSetFuture actualFuture = new DefaultResultSetFuture(SessionManager.this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
+                    execute(actualFuture, statement, queryType);
+                    chainedFuture.setSource(actualFuture);
+                }
+            }, executor());
+            return chainedFuture;
+        }
+    }
+
 
     @Override
     protected ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload) {
@@ -601,12 +626,30 @@ class SessionManager extends AbstractSession {
      */
     void execute(final RequestHandler.Callback callback, final Statement statement) {
         if (isInit)
-            new RequestHandler(this, callback, statement).sendRequest();
+            new RequestHandler(this, callback, statement, null).sendRequest();
         else
             this.initAsync().addListener(new Runnable() {
                 @Override
                 public void run() {
-                    new RequestHandler(SessionManager.this, callback, statement).sendRequest();
+                    new RequestHandler(SessionManager.this, callback, statement, null).sendRequest();
+                }
+            }, executor());
+    }
+
+    /**
+     * Execute the provided request.
+     * <p/>
+     * This method will find a suitable node to connect to using the
+     * {@link LoadBalancingPolicy} and handle host failover.
+     */
+    void execute(final RequestHandler.Callback callback, final Statement statement, final HorseUtils.QueryType queryType) {
+        if (isInit)
+            new RequestHandler(this, callback, statement, queryType).sendRequest();
+        else
+            this.initAsync().addListener(new Runnable() {
+                @Override
+                public void run() {
+                    new RequestHandler(SessionManager.this, callback, statement, queryType).sendRequest();
                 }
             }, executor());
     }

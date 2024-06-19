@@ -17,6 +17,7 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 
@@ -121,7 +122,36 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      */
     @Override
     public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
+        return newQueryPlan(loggedKeyspace, statement, null);        
+    }
 
+    @Override
+    public void onUp(Host host) {
+        childPolicy.onUp(host);
+    }
+
+    @Override
+    public void onDown(Host host) {
+        childPolicy.onDown(host);
+    }
+
+    @Override
+    public void onAdd(Host host) {
+        childPolicy.onAdd(host);
+    }
+
+    @Override
+    public void onRemove(Host host) {
+        childPolicy.onRemove(host);
+    }
+
+    @Override
+    public void close() {
+        childPolicy.close();
+    }
+
+    @Override
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement, QueryType queryType) {
         ByteBuffer partitionKey = statement.getRoutingKey(protocolVersion, codecRegistry);
         String keyspace = statement.getKeyspace();
         if (keyspace == null)
@@ -136,7 +166,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         final Iterator<Host> iter;
 
-        if(enableHorse)
+        if(enableHorse && (queryType == QueryType.READ || queryType == QueryType.SCAN))
         {
             final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
             HorseReplicaSelector selector = clusterMetadata.getSelector(partitionKey);
@@ -196,30 +226,5 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
                 return endOfData();
             }
         };
-    }
-
-    @Override
-    public void onUp(Host host) {
-        childPolicy.onUp(host);
-    }
-
-    @Override
-    public void onDown(Host host) {
-        childPolicy.onDown(host);
-    }
-
-    @Override
-    public void onAdd(Host host) {
-        childPolicy.onAdd(host);
-    }
-
-    @Override
-    public void onRemove(Host host) {
-        childPolicy.onRemove(host);
-    }
-
-    @Override
-    public void close() {
-        childPolicy.close();
     }
 }
