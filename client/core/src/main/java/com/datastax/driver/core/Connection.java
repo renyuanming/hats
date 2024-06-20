@@ -1012,7 +1012,7 @@ class Connection {
             {
                 if (handler.getQueryType().equals(QueryType.READ))
                 {
-                    updateTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    updateTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency/1000L, handler.getQueryType());
                     // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
                 }
                 else if (handler.getQueryType().equals(QueryType.SCAN))
