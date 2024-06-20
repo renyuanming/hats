@@ -101,6 +101,11 @@ class RequestHandler {
         startNewExecution();
     }
 
+    // HORSE
+    void sendRequest(QueryType queryType) {
+        startNewExecution(queryType);
+    }
+
     // Called when the corresponding ResultSetFuture is cancelled by the client
     void cancel() {
         if (!isDone.compareAndSet(false, true))
@@ -121,6 +126,23 @@ class RequestHandler {
             request = request.copy();
 
         SpeculativeExecution execution = new SpeculativeExecution(request, position);
+        runningExecutions.add(execution);
+        execution.sendRequest();
+    }
+
+    // HORSE
+    private void startNewExecution(QueryType queryType) {
+        if (isDone.get())
+            return;
+
+        Message.Request request = callback.request();
+        int position = executionCount.incrementAndGet();
+        // Clone the request after the first execution, since we set the streamId on it later and we
+        // don't want to share that across executions.
+        if (position > 1)
+            request = request.copy();
+
+        SpeculativeExecution execution = new SpeculativeExecution(request, position, queryType);
         runningExecutions.add(execution);
         execution.sendRequest();
     }
@@ -258,9 +280,10 @@ class RequestHandler {
      * - it gets cancelled, either because another execution completed the query, or because the RequestHandler was cancelled
      * - it reaches the end of the query plan and informs the RequestHandler, which will decide what to do
      */
-    class SpeculativeExecution implements Connection.ResponseCallback {
+    public class SpeculativeExecution implements Connection.ResponseCallback {
         final String id;
         private final Message.Request request;
+        private final QueryType queryType;
         private volatile Host current;
         private volatile ConsistencyLevel retryConsistencyLevel;
         private final AtomicReference<QueryState> queryStateRef;
@@ -274,12 +297,22 @@ class RequestHandler {
 
         private volatile Connection.ResponseHandler connectionHandler;
 
-        SpeculativeExecution(Message.Request request, int position) {
+        SpeculativeExecution(Message.Request request, int position, QueryType queryType) {
             this.id = RequestHandler.this.id + "-" + position;
             this.request = request;
+            this.queryType = queryType;
             this.queryStateRef = new AtomicReference<QueryState>(QueryState.INITIAL);
             if (logger.isTraceEnabled())
                 logger.trace("[{}] Starting", id);
+        }
+
+        SpeculativeExecution(Message.Request request, int position)
+        {
+            this(request, position, null);
+        }
+
+        public QueryType getQueryType() {
+            return queryType;
         }
 
         void sendRequest() {

@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.RequestHandler.SpeculativeExecution;
 import com.datastax.driver.core.Responses.Result.SetKeyspace;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.MoreFutures;
@@ -1002,7 +1004,17 @@ class Connection {
                 return;
             }
             handler.cancelTimeout();
-            handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime, handler.retryCount);
+            long latency = System.nanoTime() - handler.startTime;
+            if(handler.getQueryType().equals(QueryType.READ) || handler.getQueryType().equals(QueryType.SCAN))
+            {
+                logger.info("rymInfo: We get the read response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
+            }
+            else
+            {
+                logger.info("rymInfo: We get the {} response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", handler.getQueryType(), Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
+            }
+
+            handler.callback.onSet(Connection.this, response, latency, handler.retryCount);
 
             // If we happen to be closed and we're the last outstanding request, we need to terminate the connection
             // (note: this is racy as the signaling can be called more than once, but that's not a problem)
@@ -1239,6 +1251,12 @@ class Connection {
         void cancelTimeout() {
             if (timeout != null)
                 timeout.cancel();
+        }
+
+        QueryType getQueryType() {
+            if(SpeculativeExecution.class.isInstance(callback))
+                return ((SpeculativeExecution) callback).getQueryType();
+            return null;
         }
 
         boolean cancelHandler() {
