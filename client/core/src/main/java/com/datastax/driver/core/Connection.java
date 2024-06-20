@@ -1008,22 +1008,22 @@ class Connection {
             handler.cancelTimeout();
             long latency = System.nanoTime() - handler.startTime;
 
-            // if (handler.getQueryType() != null)
-            // {
-            //     if (handler.getQueryType().equals(QueryType.READ))
-            //     {
-            //         updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
-            //         logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
-            //     }
-            //     else if (handler.getQueryType().equals(QueryType.SCAN))
-            //     {
-            //         updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
-            //     }
-            //     // else
-            //     // {
-            //     //     // logger.info("rymInfo: We get the {} response from {}, and the latency is {} us, inflight is {}", handler.getQueryType(), Connection.this.address, latency/1000L, Connection.this.inFlight);
-            //     // }
-            // }
+            if (handler.getQueryType() != null && handler.connection.keyspace.equals("ycsb"))
+            {
+                if (handler.getQueryType().equals(QueryType.READ))
+                {
+                    updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
+                }
+                else if (handler.getQueryType().equals(QueryType.SCAN))
+                {
+                    updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                }
+                // else
+                // {
+                //     // logger.info("rymInfo: We get the {} response from {}, and the latency is {} us, inflight is {}", handler.getQueryType(), Connection.this.address, latency/1000L, Connection.this.inFlight);
+                // }
+            }
 
             handler.callback.onSet(Connection.this, response, latency, handler.retryCount);
 
