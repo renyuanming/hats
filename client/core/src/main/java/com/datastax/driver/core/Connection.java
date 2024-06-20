@@ -1008,12 +1008,12 @@ class Connection {
             handler.cancelTimeout();
             long latency = System.nanoTime() - handler.startTime;
 
-            if (handler.getQueryType() != null && handler.connection.keyspace.equals("ycsb"))
+            if (handler.getQueryType() != null)
             {
                 if (handler.getQueryType().equals(QueryType.READ))
                 {
                     updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
-                    // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}", Connection.this.address, latency/1000L, Connection.this.inFlight);
+                    logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
                 }
                 else if (handler.getQueryType().equals(QueryType.SCAN))
                 {
