@@ -1034,7 +1034,7 @@ class Connection {
         }
 
         // HORSE TODO
-        private void updateLatencyTracker(ConcurrentHashMap<InetAddress, HorseLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
+        private synchronized void updateLatencyTracker(ConcurrentHashMap<InetAddress, HorseLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
         {
             if(trackers.containsKey(address) && trackers.get(address) != null)
             {
