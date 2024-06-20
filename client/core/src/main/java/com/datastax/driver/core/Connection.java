@@ -1254,6 +1254,7 @@ class Connection {
         }
 
         QueryType getQueryType() {
+            logger.info("rymInfo: getQueryType, the callback is {}", callback);
             if(callback instanceof SpeculativeExecution)
                 return ((SpeculativeExecution) callback).getQueryType();
             return null;

@@ -283,7 +283,7 @@ class RequestHandler {
     public class SpeculativeExecution implements Connection.ResponseCallback {
         final String id;
         private final Message.Request request;
-        private final QueryType queryType;
+        public final QueryType queryType;
         private volatile Host current;
         private volatile ConsistencyLevel retryConsistencyLevel;
         private final AtomicReference<QueryState> queryStateRef;
