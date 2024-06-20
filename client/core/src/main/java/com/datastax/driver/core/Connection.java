@@ -1012,12 +1012,12 @@ class Connection {
             {
                 if (handler.getQueryType().equals(QueryType.READ))
                 {
-                    updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
-                    // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
+                    // updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
                 }
                 else if (handler.getQueryType().equals(QueryType.SCAN))
                 {
-                    updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    // updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
                 }
                 // else
                 // {
