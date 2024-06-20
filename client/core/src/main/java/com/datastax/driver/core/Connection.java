@@ -1012,12 +1012,12 @@ class Connection {
             {
                 if (handler.getQueryType().equals(QueryType.READ))
                 {
-                    updateReadLatencyTracker(handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    updateTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
                     // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
                 }
                 else if (handler.getQueryType().equals(QueryType.SCAN))
                 {
-                    // updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    // updateTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
                 }
                 // else
                 // {
@@ -1034,17 +1034,11 @@ class Connection {
         }
 
         // HORSE TODO
-        private synchronized void updateReadLatencyTracker(InetAddress address, long latency, QueryType queryType)
+        private void updateTracker(ConcurrentHashMap<InetAddress, HorseLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
         {
-            if(Cluster.readLatencyTracker.containsKey(address) && Cluster.readLatencyTracker.get(address) != null)
+            if(trackers.containsKey(address) && trackers.get(address) != null)
             {
-                Cluster.readLatencyTracker.get(address).update(latency);
-            }
-            else
-            {
-                HorseLatencyTracker horseTracker = new HorseLatencyTracker("ReadLatencyTracker", 60);
-                // horseTracker.update(latency);
-                // Cluster.readLatencyTracker.put(address, horseTracker);
+                trackers.get(address).update(latency);
             }
         }
 

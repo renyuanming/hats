@@ -2309,9 +2309,14 @@ public class Cluster implements Closeable {
                     switch (tpc.change) {
                         case NEW_NODE:
                             submitNodeRefresh(tpAddr, HostEvent.ADDED);
+                            if(Cluster.readLatencyTracker.get(tpAddr.getAddress()) == null) {
+                                HorseLatencyTracker tracker = new HorseLatencyTracker("ReadLatencyTracker", 60);
+                                Cluster.readLatencyTracker.putIfAbsent(tpAddr.getAddress(), tracker);
+                            }
                             break;
                         case REMOVED_NODE:
                             submitNodeRefresh(tpAddr, HostEvent.REMOVED);
+                            Cluster.readLatencyTracker.remove(tpAddr.getAddress());
                             break;
                         case MOVED_NODE:
                             submitNodeListRefresh();
@@ -2325,6 +2330,10 @@ public class Cluster implements Closeable {
                     switch (stc.status) {
                         case UP:
                             submitNodeRefresh(stAddr, HostEvent.UP);
+                            if(Cluster.readLatencyTracker.get(stAddr.getAddress()) == null) {
+                                HorseLatencyTracker tracker = new HorseLatencyTracker("ReadLatencyTracker", 60);
+                                Cluster.readLatencyTracker.putIfAbsent(stAddr.getAddress(), tracker);
+                            }
                             break;
                         case DOWN:
                             submitNodeRefresh(stAddr, HostEvent.DOWN);
