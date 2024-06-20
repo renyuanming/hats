@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,10 +38,15 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
+import com.codahale.metrics.Timer;
+
 public class HorseUtils 
 {
     private static final Logger logger = LoggerFactory.getLogger(HorseUtils.class);
 
+    private final static MetricRegistry registry = new MetricRegistry();
     public enum QueryType
     {
         READ,
@@ -57,6 +63,67 @@ public class HorseUtils
         INFO, 
         WARN, 
         ERROR
+    }
+
+    public static class StatesForClients implements Serializable
+    {
+        final Map<String, List<Double>> policy;
+        final Map<InetAddress, Double> coordinatorReadLatency;
+        
+        public StatesForClients(Map<String, List<Double>> policy, Map<InetAddress, Double> coordinatorReadLatency)
+        {
+            this.policy = policy;
+            this.coordinatorReadLatency = coordinatorReadLatency;
+        }
+    }
+
+    public static class HorseLatencyTracker
+    {
+        private final Timer timer;
+
+        public HorseLatencyTracker(String metricName, int windowInterval) {
+            this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
+            registry.register(metricName, this.timer);
+        }
+
+        public void update(long latency) {
+            this.timer.update(latency, TimeUnit.MICROSECONDS);
+        }
+
+        public double getStdDev() {
+            return this.timer.getSnapshot().getStdDev();
+        }
+
+        public double getWindowMean() 
+        {
+            return this.timer.getSnapshot().getMean();
+        }
+
+        public double getLatencyForLocalStates()
+        {
+            // return get75th();
+            return getMedian();
+        }
+
+        public double getMedian()
+        {
+            return this.timer.getSnapshot().getMedian();
+        }
+
+        public double get75th()
+        {
+            return this.timer.getSnapshot().get75thPercentile();
+        }
+
+        public double get95th()
+        {
+            return this.timer.getSnapshot().get95thPercentile();
+        }
+
+        public int getCount()
+        {
+            return this.timer.getSnapshot().size();
+        }
     }
 
     public static void printStackTace(HorseLogLevels logLevel, String msg) 

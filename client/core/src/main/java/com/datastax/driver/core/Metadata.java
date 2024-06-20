@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.HorseLatencyTracker;
 import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
+import com.datastax.driver.core.HorseUtils.StatesForClients;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -295,29 +297,50 @@ public class Metadata {
         return policy;
     }
 
-    public void updateHorsePolicy(Map<String, List<Double>> newPolicy)
+    public void updateHorsePolicy(StatesForClients states)
     {
-        String results = "";
-        for(Map.Entry<Token,  HorseReplicaSelector> entry : tokenToReplicaSelector.entrySet())
-        {
-            results += entry.getKey() + ": [";
-            for(Long count : entry.getValue().getSelectionCounts())
-            {
-                double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
-                results += String.valueOf(ratio) + ",";
-            }
-            results += "];";
-        }
+        // String results = "";
+        // for(Map.Entry<Token,  HorseReplicaSelector> entry : tokenToReplicaSelector.entrySet())
+        // {
+        //     results += entry.getKey() + ": [";
+        //     for(Long count : entry.getValue().getSelectionCounts())
+        //     {
+        //         double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
+        //         results += String.valueOf(ratio) + ",";
+        //     }
+        //     results += "];";
+        // }
 
         logger.info("rymInfo: The old policy is {}", policy);
-        policy = newPolicy;
+
+        String fullReadLatencyStr = "";
+        String coordinatorReadLatencyStr = "";
+        String clientToServerLatencyStr = "";
+
+        for (Map.Entry<InetAddress, HorseLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
+        {
+            fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getMedian() + "]  ";
+        }
+
+        for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
+        {
+            coordinatorReadLatencyStr += entry.getKey() + ": [" + entry.getValue() + "]  ";
+            clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(Cluster.readLatencyTracker.get(entry.getKey()).getMedian() - entry.getValue()) + "]  ";
+        }
+
+        logger.info("rymInfo: The full read latency is {}, the coordinator read latency is {}, the read network cost is {}", fullReadLatencyStr, coordinatorReadLatencyStr, clientToServerLatencyStr);
+
+
+        policy = states.policy;
         TokenMap current = tokenMap;
-        for(Map.Entry<String,  List<Double>> entry : newPolicy.entrySet())
+        for(Map.Entry<String,  List<Double>> entry : policy.entrySet())
         {
             Token token = current.factory.fromString(entry.getKey());
             List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(token));
             tokenToReplicaSelector.put(token, new HorseReplicaSelector(replicas, entry.getValue()));
         }
+
+        logger.info("rymInfo: The new policy is {}", policy);
     }
 
     /**

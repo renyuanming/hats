@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.HorseUtils.ByteObjectConversion;
+import com.datastax.driver.core.HorseUtils.HorseLatencyTracker;
+import com.datastax.driver.core.HorseUtils.StatesForClients;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
@@ -82,6 +84,10 @@ public class Cluster implements Closeable {
     private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
     private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
+
+    public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> readLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
+    public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> writeLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
+    public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> scanLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
 
     final Manager manager;
 
@@ -2330,9 +2336,9 @@ public class Cluster implements Closeable {
                     byte[] newPolicyInBytes = plc.policyInBytes;
                     try {
                         @SuppressWarnings("unchecked")
-                        Map<String, List<Double>> newPolicy = (Map<String, List<Double>>) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
-                        manager.metadata.updateHorsePolicy(newPolicy);
-                        logger.info("rymInfo: The new policy is {}", manager.metadata.policy);
+                        // HORSE TODO
+                        final StatesForClients states = (StatesForClients) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
+                        manager.metadata.updateHorsePolicy(states);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

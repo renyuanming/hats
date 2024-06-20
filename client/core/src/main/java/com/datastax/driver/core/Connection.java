@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.HorseLatencyTracker;
 import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.RequestHandler.SpeculativeExecution;
 import com.datastax.driver.core.Responses.Result.SetKeyspace;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.ref.WeakReference;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1005,14 +1007,22 @@ class Connection {
             }
             handler.cancelTimeout();
             long latency = System.nanoTime() - handler.startTime;
-            
-            if(handler.getQueryType() != null && (handler.getQueryType().equals(QueryType.READ) || handler.getQueryType().equals(QueryType.SCAN)))
+
+            if (handler.getQueryType() != null && handler.connection.keyspace.equals("ycsb"))
             {
-                logger.info("rymInfo: We get the read response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
-            }
-            else
-            {
-                logger.info("rymInfo: We get the {} response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", handler.getQueryType(), Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
+                if (handler.getQueryType().equals(QueryType.READ))
+                {
+                    updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}", Connection.this.address, latency/1000L, Connection.this.inFlight);
+                }
+                else if (handler.getQueryType().equals(QueryType.SCAN))
+                {
+                    updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                }
+                // else
+                // {
+                //     // logger.info("rymInfo: We get the {} response from {}, and the latency is {} us, inflight is {}", handler.getQueryType(), Connection.this.address, latency/1000L, Connection.this.inFlight);
+                // }
             }
 
             handler.callback.onSet(Connection.this, response, latency, handler.retryCount);
@@ -1021,6 +1031,18 @@ class Connection {
             // (note: this is racy as the signaling can be called more than once, but that's not a problem)
             if (isClosed())
                 tryTerminate(false);
+        }
+
+        // HORSE TODO
+        private void updateLatencyTracker(ConcurrentHashMap<InetAddress, HorseLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
+        {
+            HorseLatencyTracker tracker = trackers.get(address);
+            if (tracker == null)
+            {
+                tracker = new HorseLatencyTracker(queryType.toString(), 60);
+                trackers.put(address, tracker);
+            }
+            tracker.update(latency);
         }
 
         @Override
@@ -1267,7 +1289,6 @@ class Connection {
         }
 
         QueryType getQueryType() {
-            logger.info("rymInfo: getQueryType, the callback is {}, query type is {}", callback, callback.getQueryType());
             return callback.getQueryType();
         }
 
