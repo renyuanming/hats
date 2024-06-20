@@ -251,18 +251,25 @@ public abstract class Event
     */
     public static class PolicyChange extends Event
     {
+        public final int policyInBytesSize;
         public final byte[] policyInBytes;
-        private PolicyChange(byte[] policyInBytes)
+        public final int readLatencyInBytesSize;
+        public final byte[] readLatencyInBytes;
+        private PolicyChange(byte[] policyInBytes, byte[] readLatencyInBytes)
         {
             super(Type.POLICY_CHANGE);
             this.policyInBytes = policyInBytes;
+            this.policyInBytesSize = readLatencyInBytes.length;
+            this.readLatencyInBytes = readLatencyInBytes;
+            this.readLatencyInBytesSize = readLatencyInBytes.length;
         }
 
         public static PolicyChange updatePolicy(StatesForClients states)
         { 
             try {
-                byte[] policyInBytes = ByteObjectConversion.objectToByteArray((Serializable) states);
-                return new PolicyChange(policyInBytes);
+                byte[] policyInBytes = ByteObjectConversion.objectToByteArray((Serializable) states.policy);
+                byte[] readLatencyInBytes = ByteObjectConversion.objectToByteArray((Serializable) states.coordinatorReadLatency);
+                return new PolicyChange(policyInBytes, readLatencyInBytes);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -271,18 +278,27 @@ public abstract class Event
 
         private static PolicyChange deserializeEvent(ByteBuf cb, ProtocolVersion version)
         {
+            // int policyInBytesSize = Integer.parseInt(CBUtil.readString(cb));
             byte[] policyInBytes = CBUtil.readBytes(cb);
-            return new PolicyChange(policyInBytes);
+            // int readLatencyInBytesSize = Integer.parseInt(CBUtil.readString(cb));
+            byte[] readLatencyInBytes = CBUtil.readBytes(cb);
+            return new PolicyChange(policyInBytes, readLatencyInBytes);
         }
 
         @Override
         protected void serializeEvent(ByteBuf dest, ProtocolVersion version) {
+            // CBUtil.writeString(String.valueOf(policyInBytesSize), dest);
             CBUtil.writeBytes(policyInBytes, dest);
+            // CBUtil.writeString(String.valueOf(readLatencyInBytesSize), dest);
+            CBUtil.writeBytes(readLatencyInBytes, dest);
         }
 
         @Override
         protected int eventSerializedSize(ProtocolVersion version) {
-            return CBUtil.sizeOfBytes(policyInBytes);
+            return //CBUtil.sizeOfString(String.valueOf(policyInBytesSize)) +
+                   CBUtil.sizeOfBytes(policyInBytes) +
+                //    CBUtil.sizeOfString(String.valueOf(readLatencyInBytesSize)) +
+                   CBUtil.sizeOfBytes(readLatencyInBytes);
         }
         
     }

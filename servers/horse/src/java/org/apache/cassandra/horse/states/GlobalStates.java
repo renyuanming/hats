@@ -186,8 +186,8 @@ public class GlobalStates implements Serializable {
 
     public static class StatesForClients implements Serializable
     {
-        final Map<String, List<Double>> policy;
-        final Map<InetAddress, Double> coordinatorReadLatency;
+        public final Map<String, List<Double>> policy;
+        public final Map<InetAddress, Double> coordinatorReadLatency;
         
         public StatesForClients(Map<String, List<Double>> policy, Map<InetAddress, Double> coordinatorReadLatency)
         {
