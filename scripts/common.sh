@@ -454,12 +454,11 @@ function getResultsDir
     shift 9
     round=$1
     enableHorse=$2
-    shuffleReplicas=$3
-    throttleDataRate=$4
-    operationNumber=$5
-    kvNumber=$6
+    throttleDataRate=$3
+    operationNumber=$4
+    kvNumber=$5
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-shuffleReplicas_${shuffleReplicas}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -533,7 +532,6 @@ function run {
     memoryLimit=$2
     logLevel=$3
     enableHorse=$4
-    shuffleReplicas=$5
 
     echo "Run ${targetScheme} with ${dist} ${workload} ${threads} ${kvNumber}, enableAutoCompaction is ${enableAutoCompaction}, mode is ${mode}, enableAutoCompactionCFs is ${enableAutoCompactionCFs}"
 
@@ -716,11 +714,11 @@ function runExp {
                                                     echo "Start from current data"
                                                     restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
                                                 fi
-                                                run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${shuffleReplicas}"
+                                                run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}"
 
 
                                                 # Collect load results
-                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${shuffleReplicas} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER}) 
+                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER}) 
 
                                                 # echo "Collect results to ${resultsDir}"
                                                 collectResults ${resultsDir}

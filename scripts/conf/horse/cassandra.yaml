@@ -38,7 +38,7 @@ concurrent_reads: 64
 concurrent_writes: 64
 concurrent_counter_writes: 32
 concurrent_materialized_view_writes: 32
-memtable_heap_space: 2048MiB
+# memtable_heap_space: 2048MiB
 memtable_allocation_type: heap_buffers
 listen_address: 192.168.10.55
 rpc_address: 192.168.10.55
