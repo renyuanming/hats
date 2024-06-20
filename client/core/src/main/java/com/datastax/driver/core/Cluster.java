@@ -2334,10 +2334,14 @@ public class Cluster implements Closeable {
                 case POLICY_CHANGE:
                     ProtocolEvent.PolicyChange plc = (ProtocolEvent.PolicyChange) event;
                     byte[] newPolicyInBytes = plc.policyInBytes;
+                    byte[] readLatencyInBytes = plc.readLatencyInBytes;
                     try {
                         @SuppressWarnings("unchecked")
-                        // HORSE TODO
-                        final StatesForClients states = (StatesForClients) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
+                        // HORSE  de/serialize the states
+                        final Map<String, List<Double>> policy = (Map<String, List<Double>> ) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
+                        @SuppressWarnings("unchecked")
+                        final Map<InetAddress, Double> coordinatorReadLatency = (Map<InetAddress, Double>) ByteObjectConversion.byteArrayToObject(readLatencyInBytes);
+                        final StatesForClients states = new StatesForClients(policy, coordinatorReadLatency);
                         manager.metadata.updateHorsePolicy(states);
                     } catch (Exception e) {
                         e.printStackTrace();

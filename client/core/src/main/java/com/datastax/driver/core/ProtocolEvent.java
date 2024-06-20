@@ -100,18 +100,29 @@ class ProtocolEvent {
 
     static class PolicyChange extends ProtocolEvent 
     {
+        
+        public final int policyInBytesSize;
         public final byte[] policyInBytes;
-        private PolicyChange(byte[] policyInBytes)
+        public final int readLatencyInBytesSize;
+        public final byte[] readLatencyInBytes;
+        private PolicyChange(byte[] policyInBytes, byte[] readLatencyInBytes)
         {
             super(Type.POLICY_CHANGE);
             this.policyInBytes = policyInBytes;
+            this.policyInBytesSize = readLatencyInBytes.length;
+            this.readLatencyInBytes = readLatencyInBytes;
+            this.readLatencyInBytesSize = readLatencyInBytes.length;
         }
 
 
         // Assumes the type has already been deserialized
-        private static PolicyChange deserializeEvent(ByteBuf bb) {
-            byte[] policyInBytes = CBUtil.readBytes(bb);
-            return new PolicyChange(policyInBytes);
+        private static PolicyChange deserializeEvent(ByteBuf cb)
+        {
+            // int policyInBytesSize = Integer.parseInt(CBUtil.readString(cb));
+            byte[] policyInBytes = CBUtil.readBytes(cb);
+            // int readLatencyInBytesSize = Integer.parseInt(CBUtil.readString(cb));
+            byte[] readLatencyInBytes = CBUtil.readBytes(cb);
+            return new PolicyChange(policyInBytes, readLatencyInBytes);
         }
 
         @Override
