@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.util.concurrent.Futures;
@@ -409,6 +410,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     // This is only called for internal calls (i.e, when the callback is not wrapped in RequestHandler).
                     // There is no retry logic in that case, so the value does not really matter.
                     return 0;
+                }
+
+                @Override
+                public QueryType getQueryType() {
+                    return null;
                 }
             }, statement);
 
