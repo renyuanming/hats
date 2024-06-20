@@ -311,9 +311,9 @@ class RequestHandler {
             this(request, position, null);
         }
 
-        public QueryType getQueryType() {
-            return queryType;
-        }
+        // public QueryType getQueryType() {
+        //     return queryType;
+        // }
 
         void sendRequest() {
             try {
@@ -751,6 +751,11 @@ class RequestHandler {
                     retry(false, null);
                     return true;
                 }
+
+                @Override
+                public QueryType getQueryType() {
+                    return queryType;
+                }
             };
         }
 
@@ -839,6 +844,11 @@ class RequestHandler {
 
         private void setFinalResult(Connection connection, Message.Response response) {
             RequestHandler.this.setFinalResult(this, connection, response);
+        }
+
+        @Override
+        public QueryType getQueryType() {
+            return queryType;
         }
     }
 

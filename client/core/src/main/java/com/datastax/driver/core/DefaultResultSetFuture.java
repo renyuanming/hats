@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.HorseUtils.QueryType;
 import com.datastax.driver.core.exceptions.*;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -327,5 +328,10 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         // This is only called for internal calls (i.e, when the future is not wrapped in RequestHandler).
         // There is no retry logic in that case, so the value does not really matter.
         return 0;
+    }
+
+    @Override
+    public QueryType getQueryType() {
+        return null;
     }
 }

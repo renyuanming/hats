@@ -1116,6 +1116,11 @@ class Connection {
         private void fail(Connection connection, Exception e) {
             connection.defunct(e);
         }
+
+        @Override
+        public QueryType getQueryType() {
+            return null;
+        }
     };
 
     private class ConnectionCloseFuture extends CloseFuture {
@@ -1205,6 +1210,11 @@ class Connection {
         InetSocketAddress getAddress() {
             return address;
         }
+
+        @Override
+        public QueryType getQueryType() {
+            return null;
+        }
     }
 
     interface ResponseCallback {
@@ -1217,6 +1227,8 @@ class Connection {
         void onException(Connection connection, Exception exception, long latency, int retryCount);
 
         boolean onTimeout(Connection connection, long latency, int retryCount);
+
+        QueryType getQueryType();
     }
 
     static class ResponseHandler {
@@ -1255,9 +1267,7 @@ class Connection {
 
         QueryType getQueryType() {
             logger.info("rymInfo: getQueryType, the callback is {}", callback);
-            if(callback instanceof SpeculativeExecution)
-                return ((SpeculativeExecution) callback).getQueryType();
-            return null;
+            return callback.getQueryType();
         }
 
         boolean cancelHandler() {
