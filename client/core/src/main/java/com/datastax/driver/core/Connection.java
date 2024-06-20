@@ -1266,7 +1266,7 @@ class Connection {
         }
 
         QueryType getQueryType() {
-            logger.info("rymInfo: getQueryType, the callback is {}", callback);
+            logger.info("rymInfo: getQueryType, the callback is {}, query type is {}", callback, callback.getQueryType());
             return callback.getQueryType();
         }
 
