@@ -1005,14 +1005,14 @@ class Connection {
             }
             handler.cancelTimeout();
             long latency = System.nanoTime() - handler.startTime;
-            // if(handler.getQueryType().equals(QueryType.READ) || handler.getQueryType().equals(QueryType.SCAN))
-            // {
-            //     logger.info("rymInfo: We get the read response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
-            // }
-            // else
-            // {
-            //     logger.info("rymInfo: We get the {} response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", handler.getQueryType(), Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
-            // }
+            if(handler.getQueryType().equals(QueryType.READ) || handler.getQueryType().equals(QueryType.SCAN))
+            {
+                logger.info("rymInfo: We get the read response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
+            }
+            else
+            {
+                logger.info("rymInfo: We get the {} response from connection {}, and the latency is {} us, address is {}, channel is {}, inflight is {}", handler.getQueryType(), Connection.this, latency/1000L, Connection.this.address, Connection.this.channel, Connection.this.inFlight);
+            }
 
             handler.callback.onSet(Connection.this, response, latency, handler.retryCount);
 
@@ -1254,7 +1254,7 @@ class Connection {
         }
 
         QueryType getQueryType() {
-            if(SpeculativeExecution.class.isInstance(callback))
+            if(callback instanceof SpeculativeExecution)
                 return ((SpeculativeExecution) callback).getQueryType();
             return null;
         }
