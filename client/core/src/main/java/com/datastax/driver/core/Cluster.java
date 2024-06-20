@@ -1414,7 +1414,7 @@ public class Cluster implements Closeable {
 
             for(Host host : allHosts)
             {
-                readLatencyTracker.put(host.getAddress(), new HorseLatencyTracker("ReadLatency", 60));
+                readLatencyTracker.put(host.getAddress(), new HorseLatencyTracker("ReadLatency-"+host.getAddress().getHostName(), 60));
             }
 
             // At this stage, metadata.allHosts() only contains the contact points, that's what we want to pass to LBP.init().
