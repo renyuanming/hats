@@ -1012,12 +1012,12 @@ class Connection {
             {
                 if (handler.getQueryType().equals(QueryType.READ))
                 {
-                    updateLatencyTracker(Cluster.readLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    updateReadLatencyTracker(handler.connection.address.getAddress(), latency, handler.getQueryType());
                     // logger.info("rymInfo: We get the read response from {}, and the latency is {} us, inflight is {}, keyspace is {}", Connection.this.address, latency/1000L, Connection.this.inFlight, handler.connection.keyspace);
                 }
                 else if (handler.getQueryType().equals(QueryType.SCAN))
                 {
-                    updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    // updateLatencyTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
                 }
                 // else
                 // {
@@ -1034,17 +1034,17 @@ class Connection {
         }
 
         // HORSE TODO
-        private synchronized void updateLatencyTracker(ConcurrentHashMap<InetAddress, HorseLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
+        private synchronized void updateReadLatencyTracker(InetAddress address, long latency, QueryType queryType)
         {
-            if(trackers.containsKey(address) && trackers.get(address) != null)
+            if(Cluster.readLatencyTracker.containsKey(address) && Cluster.readLatencyTracker.get(address) != null)
             {
-                trackers.get(address).update(latency);
+                Cluster.readLatencyTracker.get(address).update(latency);
             }
             else
             {
                 HorseLatencyTracker tracker = new HorseLatencyTracker(queryType.toString(), 60);
                 tracker.update(latency);
-                trackers.put(address, tracker);
+                Cluster.readLatencyTracker.put(address, tracker);
             }
         }
 
