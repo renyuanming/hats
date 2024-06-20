@@ -1043,8 +1043,8 @@ class Connection {
             else
             {
                 HorseLatencyTracker horseTracker = new HorseLatencyTracker("ReadLatencyTracker", 60);
-                horseTracker.update(latency);
-                Cluster.readLatencyTracker.put(address, horseTracker);
+                // horseTracker.update(latency);
+                // Cluster.readLatencyTracker.put(address, horseTracker);
             }
         }
 
