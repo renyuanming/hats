@@ -1040,12 +1040,12 @@ class Connection {
             {
                 Cluster.readLatencyTracker.get(address).update(latency);
             }
-            else
-            {
-                HorseLatencyTracker tracker = new HorseLatencyTracker(queryType.toString(), 60);
-                tracker.update(latency);
-                Cluster.readLatencyTracker.put(address, tracker);
-            }
+            // else
+            // {
+            //     HorseLatencyTracker tracker = new HorseLatencyTracker(queryType.toString(), 60);
+            //     tracker.update(latency);
+            //     Cluster.readLatencyTracker.put(address, tracker);
+            // }
         }
 
         @Override
