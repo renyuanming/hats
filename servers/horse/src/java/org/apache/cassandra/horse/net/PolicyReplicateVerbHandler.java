@@ -56,7 +56,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         LocalStates.updateLocalPolicy();
 
         // Acknowledge to the client driver
-        StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient());
+        StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.getGlobalCoordinatorReadLatencyFromGossipInfo());
         
         // Update the compaction rate limiter
         RateLimiter.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);

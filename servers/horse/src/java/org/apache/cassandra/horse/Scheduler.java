@@ -172,7 +172,7 @@ public class Scheduler {
                 LocalStates.updateLocalPolicy();
 
                 // Step4. Acknowledge to the client driver
-                StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient());
+                StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.globalStates.getGlobalCoordinatorReadLatency());
 
                 // Step5. Replicate the placement policy to the followers
                 replicateGlobalPolicy();

@@ -46,6 +46,7 @@ import org.apache.cassandra.cql3.functions.UDFunction;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.UserType;
 import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.horse.states.GlobalStates.StatesForClients;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.Schema;
@@ -574,9 +575,9 @@ public class Server implements CassandraDaemon.Server
         }
 
         @Override
-        public void onUpdatePolicy(Map<String, List<Double>> policy) 
+        public void onUpdatePolicy(StatesForClients states) 
         {
-            send(Event.PolicyChange.updatePolicy(policy));
+            send(Event.PolicyChange.updatePolicy(states));
         }
     }
 }

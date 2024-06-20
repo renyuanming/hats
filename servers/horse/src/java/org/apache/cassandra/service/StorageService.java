@@ -152,7 +152,9 @@ import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
 import org.apache.cassandra.horse.controller.RateLimiter.RateMonitor;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStatesBroadcaster;
+import org.apache.cassandra.horse.states.GlobalStates.StatesForClients;
 import org.apache.cassandra.horse.states.LocalStates.LatencyCalculator;
 import org.apache.cassandra.horse.states.LocalStates.ReplicaRequestCounter;
 import org.apache.cassandra.index.IndexStatusManager;
@@ -3039,10 +3041,13 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             subscriber.onDown(endpoint);
     }
 
-    public void notifyPolicy(Map<String, List<Double>> policy)
+    public void notifyPolicy(Map<String, List<Double>> policy, Map<InetAddress, Double> globalCoordinatorLatency)
     {
+
+        final StatesForClients states = new StatesForClients(policy, globalCoordinatorLatency);
+
         for (IEndpointLifecycleSubscriber subscriber : lifecycleSubscribers)
-            subscriber.onUpdatePolicy(policy);
+            subscriber.onUpdatePolicy(states);
     }
 
     private void notifyJoined(InetAddressAndPort endpoint)

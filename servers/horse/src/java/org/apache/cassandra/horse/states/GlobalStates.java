@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.gms.ApplicationState;
+import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
@@ -182,4 +184,57 @@ public class GlobalStates implements Serializable {
         return policyForClient;
     }
 
+    public static class StatesForClients implements Serializable
+    {
+        final Map<String, List<Double>> policy;
+        final Map<InetAddress, Double> coordinatorReadLatency;
+        
+        public StatesForClients(Map<String, List<Double>> policy, Map<InetAddress, Double> coordinatorReadLatency)
+        {
+            this.policy = policy;
+            this.coordinatorReadLatency = coordinatorReadLatency;
+        }
+    }
+
+    public Map<InetAddress, Double> getGlobalCoordinatorReadLatency()
+    {
+        Map<InetAddress, Double> coordinatorReadLatency = new HashMap<>();
+
+        if(this.latencyVector.length != Gossiper.getAllHosts().size())
+            throw new IllegalStateException(String.format("rymERROR: the latency vector length %s is not equal to the host vector length %s", this.latencyVector.length, Gossiper.getAllHosts().size()));
+
+        for(int i = 0; i < this.latencyVector.length; i++)
+        {
+            coordinatorReadLatency.put(Gossiper.getAllHosts().get(i).getAddress(), this.latencyVector[i]);
+        }
+
+        return coordinatorReadLatency;
+    }
+
+    public static Map<InetAddress, Double> getGlobalCoordinatorReadLatencyFromGossipInfo()
+    {
+        Map<InetAddress, Double> coordinatorReadLatency = new HashMap<>();
+
+        for(Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
+        {
+            String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
+            int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
+            LocalStates localStates = LocalStates.fromString(localStatesStr, version);
+            if(localStates == null)
+            {
+                continue;
+            }
+
+            int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
+            if (nodeIndex == -1)
+            {
+                throw new IllegalStateException("Host not found in Gossiper");
+            }
+
+            coordinatorReadLatency.put(entry.getKey().getAddress(), localStates.latency);
+
+        }
+
+        return coordinatorReadLatency;
+    }
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.horse.states.GlobalStates.StatesForClients;
 import org.apache.cassandra.locator.InetAddressAndPort;
 
 /**
@@ -73,5 +74,5 @@ public interface IEndpointLifecycleSubscriber
      * Called when a new policy is generated.
      * @param policy the new policy.
      */
-    public void onUpdatePolicy(Map<String, List<Double>> policy);
+    public void onUpdatePolicy(StatesForClients states);
 }

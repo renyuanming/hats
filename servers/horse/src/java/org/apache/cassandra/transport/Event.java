@@ -31,6 +31,7 @@ import org.apache.cassandra.cql3.functions.UDAggregate;
 import org.apache.cassandra.cql3.functions.UDFunction;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
+import org.apache.cassandra.horse.states.GlobalStates.StatesForClients;
 import org.apache.cassandra.locator.InetAddressAndPort;
 
 public abstract class Event
@@ -257,10 +258,10 @@ public abstract class Event
             this.policyInBytes = policyInBytes;
         }
 
-        public static PolicyChange updatePolicy(Map<String, List<Double>> policy)
+        public static PolicyChange updatePolicy(StatesForClients states)
         { 
             try {
-                byte[] policyInBytes = ByteObjectConversion.objectToByteArray((Serializable) policy);
+                byte[] policyInBytes = ByteObjectConversion.objectToByteArray((Serializable) states);
                 return new PolicyChange(policyInBytes);
             } catch (IOException e) {
                 e.printStackTrace();
