@@ -153,7 +153,7 @@ class SessionManager extends AbstractSession {
     public ResultSetFuture executeAsync(final Statement statement, final HorseUtils.QueryType queryType) {
         if (isInit) {
             DefaultResultSetFuture future = new DefaultResultSetFuture(this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
-            new RequestHandler(this, future, statement, queryType).sendRequest();
+            new RequestHandler(this, future, statement, queryType).sendRequest(queryType);
             return future;
         } else {
             // If the session is not initialized, we can't call makeRequestMessage() synchronously, because it
@@ -644,12 +644,12 @@ class SessionManager extends AbstractSession {
      */
     void execute(final RequestHandler.Callback callback, final Statement statement, final HorseUtils.QueryType queryType) {
         if (isInit)
-            new RequestHandler(this, callback, statement, queryType).sendRequest();
+            new RequestHandler(this, callback, statement, queryType).sendRequest(queryType);
         else
             this.initAsync().addListener(new Runnable() {
                 @Override
                 public void run() {
-                    new RequestHandler(SessionManager.this, callback, statement, queryType).sendRequest();
+                    new RequestHandler(SessionManager.this, callback, statement, queryType).sendRequest(queryType);
                 }
             }, executor());
     }
