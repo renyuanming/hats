@@ -25,9 +25,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -69,11 +71,32 @@ public class HorseUtils
     {
         final Map<String, List<Double>> policy;
         final Map<InetAddress, Double> coordinatorReadLatency;
+        final Map<InetAddress, Double> readLatency = new HashMap<>();
+        final double coordinatorWeight;
         
-        public StatesForClients(Map<String, List<Double>> policy, Map<InetAddress, Double> coordinatorReadLatency)
+        public StatesForClients(Map<String, List<Double>> policy, Map<InetAddress, Double> coordinatorReadLatency, ConcurrentHashMap<InetAddress, HorseLatencyTracker> readLatencyTrackers)
         {
             this.policy = policy;
             this.coordinatorReadLatency = coordinatorReadLatency;
+
+
+            long totalReadCount = 0;
+            double averageReadLatency = 0.0;
+            double averageCoordinatorLatency = 0.0;
+
+            for (Map.Entry<InetAddress, HorseLatencyTracker> entry : readLatencyTrackers.entrySet())
+            {
+                this.readLatency.put(entry.getKey(), entry.getValue().getMedian());
+                totalReadCount += entry.getValue().getCount();
+            }
+
+            for(Map.Entry<InetAddress, HorseLatencyTracker> entry : readLatencyTrackers.entrySet())
+            {
+                averageReadLatency = (entry.getValue().getCount() * 1.0 / totalReadCount) * this.readLatency.get(entry.getKey());
+                averageCoordinatorLatency = (entry.getValue().getCount() * 1.0 / totalReadCount) * this.coordinatorReadLatency.get(entry.getKey());
+            }
+            this.coordinatorWeight = averageCoordinatorLatency / averageReadLatency;
+
         }
     }
 
@@ -281,6 +304,60 @@ public class HorseUtils
         for (int i = 0; i < selectionCounts.length; i++) 
         {
             System.out.printf("Target %s: %d selections (%.2f%%)%n", targets.get(i), selectionCounts[i], selectionCounts[i] * 100.0 / totalSelections);
+        }
+    }
+
+
+
+    public static class LoadBalancer {
+        public static void main(String[] args) {
+            long[] requests = {100, 150, 200, 250, 100, 150, 200, 250}; // 示例输入
+            long[][] result = balanceLoad(requests);
+
+            for (int i = 0; i < result.length; i++) {
+                System.out.println("Node " + i + ": " + Arrays.toString(result[i]));
+            }
+        }
+
+        public static long[][] balanceLoad(long[] requests) {
+            int n = requests.length;
+            long totalRequests = Arrays.stream(requests).sum();
+            long averageRequests = totalRequests / n;
+            long threshold = (long) (averageRequests * 1.00);
+            int rf = 3; // replication factor
+    
+            long[][] result = new long[n][3];
+    
+            // Initialize result array
+            for (int i = 0; i < n; i++) {
+                result[i][0] = requests[i];
+            }
+    
+            // Distribute requests
+            for (int i = 0; i < n; i++) {
+                long excess = result[i][0] - threshold;
+                if (excess > 0) {
+                    for(int j = 0; j < rf && excess > 0; j++) {
+                        if (excess == 0) {
+                            break;
+                        }
+                        
+                        int index = (i + j) % n;
+                        if(requests[index] < averageRequests)
+                        {
+                            long capacity = threshold - requests[index];
+                            long offload = Math.min(capacity, excess);
+                            requests[i] -= offload;
+                            requests[index] += offload;
+                            result[i][0] -= offload;
+                            result[index][j] += offload;
+                            excess -= offload;
+                        }
+                    }
+                }
+            }
+    
+            return result;
         }
     }
 

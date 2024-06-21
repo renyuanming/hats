@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
@@ -88,6 +89,7 @@ public class Cluster implements Closeable {
     public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> readLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
     public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> writeLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
     public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> scanLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
+    public static ConcurrentHashMap<Token, AtomicLong> requestCountOfEachReplicationGroup = new ConcurrentHashMap<Token, AtomicLong>();
 
     final Manager manager;
 
@@ -2355,7 +2357,7 @@ public class Cluster implements Closeable {
                         final Map<String, List<Double>> policy = (Map<String, List<Double>> ) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
                         @SuppressWarnings("unchecked")
                         final Map<InetAddress, Double> coordinatorReadLatency = (Map<InetAddress, Double>) ByteObjectConversion.byteArrayToObject(readLatencyInBytes);
-                        final StatesForClients states = new StatesForClients(policy, coordinatorReadLatency);
+                        final StatesForClients states = new StatesForClients(policy, coordinatorReadLatency, readLatencyTracker);
                         manager.metadata.updateHorsePolicy(states);
                     } catch (Exception e) {
                         e.printStackTrace();

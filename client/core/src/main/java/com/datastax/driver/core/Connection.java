@@ -1017,12 +1017,8 @@ class Connection {
                 }
                 else if (handler.getQueryType().equals(QueryType.SCAN))
                 {
-                    // updateTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
+                    updateTracker(Cluster.scanLatencyTracker, handler.connection.address.getAddress(), latency, handler.getQueryType());
                 }
-                // else
-                // {
-                //     // logger.info("rymInfo: We get the {} response from {}, and the latency is {} us, inflight is {}", handler.getQueryType(), Connection.this.address, latency/1000L, Connection.this.inFlight);
-                // }
             }
 
             handler.callback.onSet(Connection.this, response, latency, handler.retryCount);

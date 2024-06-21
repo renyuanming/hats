@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
@@ -284,6 +285,16 @@ public class Metadata {
                 if (primaryTokenIndex >= current.ring.size())
                     primaryTokenIndex = 0;
             }
+            
+            if(Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)) != null)
+            {
+                Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)).incrementAndGet();
+            }
+            else
+            {
+                Cluster.requestCountOfEachReplicationGroup.put(current.ring.get(primaryTokenIndex), new AtomicLong(1));
+            }
+
             return tokenToReplicaSelector.get(current.ring.get(primaryTokenIndex));
         }
     }
@@ -317,30 +328,99 @@ public class Metadata {
         String coordinatorReadLatencyStr = "";
         String clientToServerLatencyStr = "";
 
-        for (Map.Entry<InetAddress, HorseLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
-        {
-            fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getMedian() + "]  ";
-        }
-
         for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
         {
-            coordinatorReadLatencyStr += entry.getKey() + ": [" + entry.getValue() + "]  ";
-            clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(Cluster.readLatencyTracker.get(entry.getKey()).getMedian() - entry.getValue()) + "]  ";
+            fullReadLatencyStr += entry.getKey().getAddress() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
+            coordinatorReadLatencyStr += entry.getKey().getAddress() + ": [" + entry.getValue() + "]  ";
+            clientToServerLatencyStr += entry.getKey().getAddress() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
         }
 
-        logger.info("rymInfo: The full read latency is {}, the coordinator read latency is {}, the read network cost is {}", fullReadLatencyStr, coordinatorReadLatencyStr, clientToServerLatencyStr);
+        logger.info("rymInfo: The full read latency is {}, the coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", fullReadLatencyStr, coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
 
 
-        policy = states.policy;
         TokenMap current = tokenMap;
-        for(Map.Entry<String,  List<Double>> entry : policy.entrySet())
+        Map<Token, List<Double>> networkPolicy = getNetworkPolicy(states, current);
+        for(Map.Entry<String,  List<Double>> entry : states.policy.entrySet())
         {
             Token token = current.factory.fromString(entry.getKey());
             List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(token));
+            
+            List<Double> cordPolicy = entry.getValue();
+            List<Double> netPolicy = networkPolicy.get(token);
+            List<Double> combinedPolicy = new ArrayList<>();
+
+            for(int i = 0; i < cordPolicy.size(); i++) {
+                combinedPolicy.add(cordPolicy.get(i) * states.coordinatorWeight + netPolicy.get(i) * (1 - states.coordinatorWeight));
+            }
+
+            policy.put(entry.getKey(), combinedPolicy);
+
             tokenToReplicaSelector.put(token, new HorseReplicaSelector(replicas, entry.getValue()));
         }
+        Cluster.requestCountOfEachReplicationGroup.clear();
 
-        logger.info("rymInfo: The new policy is {}", policy);
+        logger.info("rymInfo: The coordinatorPolicy is {}, the networkPolicy is {}, the new policy is {}", states.policy, networkPolicy, policy);
+    }
+
+    private Map<Token, List<Double>> getNetworkPolicy(StatesForClients states, TokenMap current)
+    {
+        Map<Token, List<Double>> networkPolicy = new HashMap<>();
+        long totalReadCount = 0;
+        long averageReadCount = 0;
+        
+        for(Map.Entry<Token, AtomicLong> entry : Cluster.requestCountOfEachReplicationGroup.entrySet())
+        {
+            totalReadCount += entry.getValue().get();
+        }
+        averageReadCount = totalReadCount / Cluster.requestCountOfEachReplicationGroup.size();
+        
+        logger.info("rymInfo: check the token ring is {}", current.ring);
+
+        Long[] requestCount = new Long[current.ring.size()];
+        for(int i = 0; i < current.ring.size(); i++)
+        {
+            requestCount[i] = Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(i)) == null ? 0 : Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(i)).get();
+        }
+
+        long threshold = (long) (averageReadCount * 1.05);
+        int rf = 3;
+        long[][] result = new long[current.ring.size()][3];
+
+        for(int i = 0; i < current.ring.size(); i++)
+        {
+            long request = requestCount[i];
+            long excess = requestCount[i] - threshold;
+            List<Double> netPolicy = new ArrayList<>();
+            if(excess > 0)
+            {
+                for(int j = 1; j < rf && excess > 0; j++)
+                {
+                    if(excess == 0) {
+                        break;
+                    }
+                    int index = (i + j) % current.ring.size();
+                    if(requestCount[index] < averageReadCount)
+                    {
+                        long capacity = threshold - requestCount[index];
+                        long offload = Math.min(capacity, excess);
+                        requestCount[i] -= offload;
+                        requestCount[index] += offload;
+                        result[i][0] -= offload;
+                        result[index][j] += offload;
+                        excess -= offload;
+                    }
+                }
+            }
+
+            for(int j = 0; j < rf; j++)
+            {
+                int index = (i + j) % current.ring.size();
+                netPolicy.add((double)result[index][j] / request);
+            }
+            networkPolicy.put(current.ring.get(i), netPolicy);
+        }
+
+        return networkPolicy;
     }
 
     /**
