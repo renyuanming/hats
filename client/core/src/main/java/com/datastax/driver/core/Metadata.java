@@ -385,6 +385,11 @@ public class Metadata {
         long threshold = (long) (averageReadCount * 1.05);
         int rf = 3;
         long[][] result = new long[current.ring.size()][3];
+        logger.info("rymInfo: The total request count is {}, the average read count is {}, the threshold is {}", totalReadCount, averageReadCount, threshold);
+
+        for (int i = 0; i < current.ring.size(); i++) {
+            result[i][0] = requestCount[i];
+        }
 
         for(int i = 0; i < current.ring.size(); i++)
         {
