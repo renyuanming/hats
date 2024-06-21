@@ -393,7 +393,7 @@ public class Metadata {
             List<Double> netPolicy = new ArrayList<>();
             if(excess > 0)
             {
-                for(int j = 1; j < rf && excess > 0; j++)
+                for(int j = 0; j < rf && excess > 0; j++)
                 {
                     if(excess == 0) {
                         break;
@@ -419,7 +419,7 @@ public class Metadata {
             }
             networkPolicy.put(current.ring.get(i), netPolicy);
         }
-
+        logger.info("rymInfo: The result is {}, the request count is {}", result, requestCount);
         return networkPolicy;
     }
 
