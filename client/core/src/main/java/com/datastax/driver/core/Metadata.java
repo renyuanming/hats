@@ -49,7 +49,7 @@ public class Metadata {
     volatile TokenMap tokenMap;
 
     // Horse
-    volatile Map<String, List<Double>>  policy = null;
+    volatile Map<String, List<Double>>  policy = new HashMap<>();
     volatile ConcurrentHashMap<Token, HorseReplicaSelector> tokenToReplicaSelector = new ConcurrentHashMap<Token, HorseReplicaSelector>();
 
     final ReentrantLock lock = new ReentrantLock();
