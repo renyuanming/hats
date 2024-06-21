@@ -390,12 +390,11 @@ public class Metadata {
         for (int i = 0; i < current.ring.size(); i++) {
             result[i][0] = requestCount[i];
         }
+        Long[] initialRequestCount = requestCount;
 
         for(int i = 0; i < current.ring.size(); i++)
         {
-            long request = requestCount[i];
             long excess = requestCount[i] - threshold;
-            List<Double> netPolicy = new ArrayList<>();
             if(excess > 0)
             {
                 for(int j = 0; j < rf && excess > 0; j++)
@@ -416,11 +415,14 @@ public class Metadata {
                     }
                 }
             }
+        }
 
+        for (int i = 0; i < current.ring.size(); i++) {
+            List<Double> netPolicy = new ArrayList<>();
             for(int j = 0; j < rf; j++)
             {
                 int index = (i + j) % current.ring.size();
-                netPolicy.add((double)result[index][j] / request);
+                netPolicy.add((double)result[index][j] / initialRequestCount[i]);
             }
             networkPolicy.put(current.ring.get(i), netPolicy);
         }
