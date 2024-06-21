@@ -387,10 +387,12 @@ public class Metadata {
         long[][] result = new long[current.ring.size()][3];
         logger.info("rymInfo: The total request count is {}, the average read count is {}, the threshold is {}", totalReadCount, averageReadCount, threshold);
 
+        Long initialRequestCount[] = new Long[current.ring.size()];
         for (int i = 0; i < current.ring.size(); i++) {
             result[i][0] = requestCount[i];
+            initialRequestCount[i] = requestCount[i];
         }
-        Long[] initialRequestCount = requestCount;
+        
 
         for(int i = 0; i < current.ring.size(); i++)
         {
@@ -426,7 +428,7 @@ public class Metadata {
             }
             networkPolicy.put(current.ring.get(i), netPolicy);
         }
-        logger.info("rymInfo: The result is {}, the request count is {}", result, requestCount);
+        logger.info("rymInfo: The result is {}, the initial request count is {}, the request count is {}", result, initialRequestCount, requestCount);
         return networkPolicy;
     }
 
