@@ -396,7 +396,7 @@ public class Metadata {
             requestCount[i] = Cluster.requestCountOfEachReplicationGroup.get(primaryAddr) == null ? 0 : Cluster.requestCountOfEachReplicationGroup.get(primaryAddr).get();
         }
 
-        long threshold = (long) (averageReadCount * 1.05);
+        long threshold = (long) (averageReadCount * 1.00);
         int rf = 3;
         long[][] result = new long[current.ring.size()][3];
         logger.info("rymInfo: The total request count is {}, the average read count is {}, the threshold is {}", totalReadCount, averageReadCount, threshold);
