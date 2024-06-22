@@ -20,6 +20,7 @@ import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
 import com.datastax.driver.core.HorseUtils.StatesForClients;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class Metadata {
 
     // Horse
     volatile Map<String, List<Double>>  policy = new HashMap<>();
-    volatile ConcurrentHashMap<Token, HorseReplicaSelector> tokenToReplicaSelector = new ConcurrentHashMap<Token, HorseReplicaSelector>();
+    volatile ConcurrentHashMap<InetAddress, HorseReplicaSelector> addrToReplicaSelector = new ConcurrentHashMap<InetAddress, HorseReplicaSelector>();
 
     final ReentrantLock lock = new ReentrantLock();
 
@@ -271,32 +272,44 @@ public class Metadata {
         }
     }
 
-    public HorseReplicaSelector getSelector(ByteBuffer partitionKey)
+    public HorseReplicaSelector getSelector(InetAddress primAddress)
     {
-        TokenMap current = tokenMap;
-        if (current == null) 
-        {
-            return null;
-        } else {
-            Token keyToken = current.factory.hash(partitionKey);
-            int primaryTokenIndex = Collections.binarySearch(current.ring, keyToken);
-            if (primaryTokenIndex < 0) {
-                primaryTokenIndex = -primaryTokenIndex - 1;
-                if (primaryTokenIndex >= current.ring.size())
-                    primaryTokenIndex = 0;
-            }
+        // TokenMap current = tokenMap;
+        // if (current == null) 
+        // {
+        //     return null;
+        // } else {
+        //     Token keyToken = current.factory.hash(partitionKey);
+        //     int primaryTokenIndex = Collections.binarySearch(current.ring, keyToken);
+        //     if (primaryTokenIndex < 0) {
+        //         primaryTokenIndex = -primaryTokenIndex - 1;
+        //         if (primaryTokenIndex >= current.ring.size())
+        //             primaryTokenIndex = 0;
+        //     }
             
-            if(Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)) != null)
-            {
-                Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)).incrementAndGet();
-            }
-            else
-            {
-                Cluster.requestCountOfEachReplicationGroup.put(current.ring.get(primaryTokenIndex), new AtomicLong(1));
-            }
+        //     if(Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)) != null)
+        //     {
+        //         Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)).incrementAndGet();
+        //     }
+        //     else
+        //     {
+        //         Cluster.requestCountOfEachReplicationGroup.put(current.ring.get(primaryTokenIndex), new AtomicLong(1));
+        //     }
 
-            return tokenToReplicaSelector.get(current.ring.get(primaryTokenIndex));
+        //     return addrToReplicaSelector.get(current.ring.get(primaryTokenIndex));
+        // }
+
+                    
+        if(Cluster.requestCountOfEachReplicationGroup.get(primAddress) != null)
+        {
+            Cluster.requestCountOfEachReplicationGroup.get(primAddress).incrementAndGet();
         }
+        else
+        {
+            Cluster.requestCountOfEachReplicationGroup.put(primAddress, new AtomicLong(1));
+        }
+
+        return addrToReplicaSelector.get(primAddress);
     }
 
     /**
@@ -355,7 +368,7 @@ public class Metadata {
 
             policy.put(entry.getKey(), combinedPolicy);
 
-            tokenToReplicaSelector.put(token, new HorseReplicaSelector(replicas, entry.getValue()));
+            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, entry.getValue()));
         }
         Cluster.requestCountOfEachReplicationGroup.clear();
 
@@ -368,7 +381,7 @@ public class Metadata {
         long totalReadCount = 0;
         long averageReadCount = 0;
         
-        for(Map.Entry<Token, AtomicLong> entry : Cluster.requestCountOfEachReplicationGroup.entrySet())
+        for(Map.Entry<InetAddress, AtomicLong> entry : Cluster.requestCountOfEachReplicationGroup.entrySet())
         {
             totalReadCount += entry.getValue().get();
         }
@@ -379,7 +392,8 @@ public class Metadata {
         Long[] requestCount = new Long[current.ring.size()];
         for(int i = 0; i < current.ring.size(); i++)
         {
-            requestCount[i] = Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(i)) == null ? 0 : Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(i)).get();
+            InetAddress primaryAddr = Lists.newArrayList(current.tokenToHosts.get("ycsb").get(current.ring.get(i))).get(0).getAddress();
+            requestCount[i] = Cluster.requestCountOfEachReplicationGroup.get(primaryAddr) == null ? 0 : Cluster.requestCountOfEachReplicationGroup.get(primaryAddr).get();
         }
 
         long threshold = (long) (averageReadCount * 1.05);

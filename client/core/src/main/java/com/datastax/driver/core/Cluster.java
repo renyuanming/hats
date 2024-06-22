@@ -89,7 +89,7 @@ public class Cluster implements Closeable {
     public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> readLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
     public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> writeLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
     public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> scanLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
-    public static ConcurrentHashMap<Token, AtomicLong> requestCountOfEachReplicationGroup = new ConcurrentHashMap<Token, AtomicLong>();
+    public static ConcurrentHashMap<InetAddress, AtomicLong> requestCountOfEachReplicationGroup = new ConcurrentHashMap<InetAddress, AtomicLong>();
 
     final Manager manager;
 

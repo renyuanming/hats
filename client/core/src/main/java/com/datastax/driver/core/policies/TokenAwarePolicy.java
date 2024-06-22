@@ -175,29 +175,29 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         if(enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)))
         {
-            iter = replicas.iterator();
-            // final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
-            // HorseReplicaSelector selector = clusterMetadata.getSelector(partitionKey);
-            // if(policy.isEmpty() || selector == null)
-            // {
-            //     iter = replicas.iterator();
-            // }
-            // else
-            // {
-            //     List<Host> l = Lists.newArrayList(replicas);
+            // iter = replicas.iterator();
+            final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
+            if(policy.isEmpty())
+            {
+                iter = replicas.iterator();
+            }
+            else
+            {
+                List<Host> l = Lists.newArrayList(replicas);
+                HorseReplicaSelector selector = clusterMetadata.getSelector(l.get(0).getAddress());
 
-            //     Host target = selector.selectTarget();
-            //     if(l.indexOf(target) > 0)
-            //     {
-            //         l.remove(target);
-            //         l.add(0, target);
-            //     }
-            //     else if(l.indexOf(target) == -1)
-            //     {
-            //         throw new IllegalStateException("Target not found in replicas");
-            //     }
-            //     iter = l.iterator();
-            // }
+                Host target = selector.selectTarget();
+                if(l.indexOf(target) > 0)
+                {
+                    l.remove(target);
+                    l.add(0, target);
+                }
+                else if(l.indexOf(target) == -1)
+                {
+                    throw new IllegalStateException("Target not found in replicas");
+                }
+                iter = l.iterator();
+            }
         }
         else
         {
