@@ -22,7 +22,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,6 +31,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -188,85 +188,79 @@ public class HorseUtils
     public static class HorseReplicaSelector 
     {
         private final List<Host> targets;
-        private final double[] cumulativeWeights;
+        private final int[] cumulativeWeights;
         private final AtomicLong[] selectionCounts;
-        private final Random random;
+        private final int totalWeight;
         public final AtomicLong totalSelections;
 
         public HorseReplicaSelector(List<Host> targets, List<Double> ratios) 
         {
-            if (targets.size() != ratios.size()) 
-            {
+            if (targets.size() != ratios.size()) {
                 throw new IllegalArgumentException("Targets and ratios must have the same length.");
             }
             this.targets = targets;
-            this.cumulativeWeights = new double[ratios.size()];
+            this.cumulativeWeights = new int[ratios.size()];
             this.selectionCounts = new AtomicLong[targets.size()];
-            for (int i = 0; i < targets.size(); i++) 
-            {
+    
+            int cumulativeSum = 0;
+            for (int i = 0; i < targets.size(); i++) {
+                cumulativeSum += (int)(ratios.get(i) * 100000);  // Scale to avoid floating point issues
+                cumulativeWeights[i] = cumulativeSum;
                 selectionCounts[i] = new AtomicLong(0);
-                cumulativeWeights[i] = (i == 0 ? 0 : cumulativeWeights[i - 1]) + ratios.get(i);
             }
-            this.random = new Random();
+            this.totalWeight = cumulativeSum;
             this.totalSelections = new AtomicLong(0);
         }
-
-        public Host selectTarget() 
-        {
-            double rand = random.nextDouble();
+    
+        public Host selectTarget() {
+            int rand = ThreadLocalRandom.current().nextInt(totalWeight);
             int targetIndex = Arrays.binarySearch(cumulativeWeights, rand);
-            if (targetIndex < 0) 
-            {
+            if (targetIndex < 0) {
                 targetIndex = -targetIndex - 1;
             }
             selectionCounts[targetIndex].incrementAndGet();
             totalSelections.incrementAndGet();
             return targets.get(targetIndex);
         }
-
-        public long[] getSelectionCounts() 
-        {
+    
+        public long[] getSelectionCounts() {
             return Arrays.stream(selectionCounts).mapToLong(AtomicLong::get).toArray();
         }
     }
-    public static class HorseReplicaSelectorTest
-    {
+    public static class HorseReplicaSelectorTest {
         private final List<InetAddress> targets;
-        private final double[] cumulativeWeights;
+        private final int[] cumulativeWeights;
         private final AtomicLong[] selectionCounts;
-        private final Random random;
-
-        public HorseReplicaSelectorTest(List<InetAddress> targets, List<Double> ratios) 
-        {
-            if (targets.size() != ratios.size()) 
-            {
+        private final int totalWeight;
+    
+        public HorseReplicaSelectorTest(List<InetAddress> targets, List<Double> ratios) {
+            if (targets.size() != ratios.size()) {
                 throw new IllegalArgumentException("Targets and ratios must have the same length.");
             }
             this.targets = targets;
-            this.cumulativeWeights = new double[ratios.size()];
+            this.cumulativeWeights = new int[ratios.size()];
             this.selectionCounts = new AtomicLong[targets.size()];
-            for (int i = 0; i < targets.size(); i++) 
-            {
+    
+            int cumulativeSum = 0;
+            for (int i = 0; i < targets.size(); i++) {
+                cumulativeSum += (int)(ratios.get(i) * 100000);  // Scale to avoid floating point issues
+                cumulativeWeights[i] = cumulativeSum;
                 selectionCounts[i] = new AtomicLong(0);
-                cumulativeWeights[i] = (i == 0 ? 0 : cumulativeWeights[i - 1]) + ratios.get(i);
             }
-            this.random = new Random();
+            this.totalWeight = cumulativeSum;
         }
-
-        public InetAddress selectTarget() 
-        {
-            double rand = random.nextDouble();
+    
+        public InetAddress selectTarget() {
+            int rand = ThreadLocalRandom.current().nextInt(totalWeight);
             int targetIndex = Arrays.binarySearch(cumulativeWeights, rand);
-            if (targetIndex < 0) 
-            {
+            if (targetIndex < 0) {
                 targetIndex = -targetIndex - 1;
             }
             selectionCounts[targetIndex].incrementAndGet();
             return targets.get(targetIndex);
         }
-
-        public long[] getSelectionCounts() 
-        {
+    
+        public long[] getSelectionCounts() {
             return Arrays.stream(selectionCounts).mapToLong(AtomicLong::get).toArray();
         }
     }
@@ -285,7 +279,7 @@ public class HorseUtils
                 })
                 .collect(Collectors.toList());
         // double[] ratios = {0.7, 0.2, 0.1};
-        List<Double> ratios = Arrays.asList(0.95, 0.02, 0.03);
+        List<Double> ratios = Arrays.asList(0.9655987904308467, 0.03440120956915328, 0.0);
         HorseReplicaSelectorTest selector = new HorseReplicaSelectorTest(targets, ratios);
 
         // Create thread pool to simulate concurrent selection

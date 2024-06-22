@@ -170,9 +170,9 @@ public class GlobalStates implements Serializable {
         }
 
         List<Long> tokenList = new ArrayList<Long>(Gossiper.getTokenRanges());
-        logger.info("rymInfo: The token list before sorting is {}", tokenList);
+        // logger.info("rymInfo: The token list before sorting is {}", tokenList);
         Collections.sort(tokenList);
-        logger.info("rymInfo: The token list after sorting is {}", tokenList);
+        // logger.info("rymInfo: The token list after sorting is {}", tokenList);
         int nodeCount = tokenList.size();
 
         for(int i = 0; i < policy.length; i++)
