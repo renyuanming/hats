@@ -296,10 +296,10 @@ public class Scheduler {
     private static void offloadRequests(int primaryIndex, final double recoverThreshold)
     {
         // If the current node already has some requests to be offloaded, we do nothing
-        if(GlobalStates.globalStates.deltaVector[primaryIndex] > 0)
-        {
-            return;
-        }
+        // if(GlobalStates.globalStates.deltaVector[primaryIndex] > 0)
+        // {
+        //     return;
+        // }
 
         // Traverse every secondary replica node, and offload the request to the node with the lower score
         for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.globalStates.rf; i++)
@@ -308,7 +308,7 @@ public class Scheduler {
             if(GlobalStates.globalStates.scoreVector[secondaryIndex] < recoverThreshold)
             {
                 
-                if(GlobalStates.globalPolicy[primaryIndex][0] <= 0)
+                if(GlobalStates.globalPolicy[primaryIndex][0] <= 0.5)
                 {
                     continue;
                 }
