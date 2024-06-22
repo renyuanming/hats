@@ -434,11 +434,16 @@ public class Metadata {
         }
 
         for (int i = 0; i < current.ring.size(); i++) {
-            List<Double> netPolicy = new ArrayList<>();
+            List<Double> netPolicy = new ArrayList<>(Arrays.asList(1.0, 0.0, 0.0));
+            if(initialRequestCount[i] == 0)
+            {
+                continue;
+            }
             for(int j = 0; j < rf; j++)
             {
                 int index = (i + j) % current.ring.size();
-                netPolicy.add((double)result[index][j] / initialRequestCount[i]);
+                double value = (double)result[index][j] / initialRequestCount[i];
+                netPolicy.add(value);
             }
             networkPolicy.put(current.ring.get(i), netPolicy);
         }
