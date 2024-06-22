@@ -210,9 +210,9 @@ public class LocalStates implements Serializable {
 
         public double getLatencyForLocalStates()
         {
-            // return get75th();
+            return get75th();
             // return getMedian();
-            return getWindowMean();
+            // return getWindowMean();
         }
 
         public double getMedian()
