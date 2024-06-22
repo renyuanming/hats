@@ -23,6 +23,8 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +170,9 @@ public class GlobalStates implements Serializable {
         }
 
         List<Long> tokenList = new ArrayList<Long>(Gossiper.getTokenRanges());
+        logger.info("rymInfo: The token list before sorting is {}", tokenList);
+        Collections.sort(tokenList);
+        logger.info("rymInfo: The token list after sorting is {}", tokenList);
         int nodeCount = tokenList.size();
 
         for(int i = 0; i < policy.length; i++)
