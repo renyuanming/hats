@@ -323,19 +323,19 @@ public class Metadata {
 
     public void updateHorsePolicy(StatesForClients states)
     {
-        // String results = "";
-        // for(Map.Entry<Token,  HorseReplicaSelector> entry : tokenToReplicaSelector.entrySet())
-        // {
-        //     results += entry.getKey() + ": [";
-        //     for(Long count : entry.getValue().getSelectionCounts())
-        //     {
-        //         double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
-        //         results += String.valueOf(ratio) + ",";
-        //     }
-        //     results += "];";
-        // }
+        String results = "";
+        for(Map.Entry<InetAddress,  HorseReplicaSelector> entry : addrToReplicaSelector.entrySet())
+        {
+            results += entry.getKey() + ": [";
+            for(Long count : entry.getValue().getSelectionCounts())
+            {
+                // double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
+                results += String.valueOf(count) + ",";
+            }
+            results += "];";
+        }
 
-        // logger.info("rymInfo: The old policy is {}", policy);
+        logger.info("rymInfo: The results under old result is {}", results);
 
         String fullReadLatencyStr = "";
         String coordinatorReadLatencyStr = "";
