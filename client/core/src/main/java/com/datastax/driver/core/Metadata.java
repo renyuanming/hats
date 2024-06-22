@@ -322,7 +322,7 @@ public class Metadata {
         //     results += "];";
         // }
 
-        logger.info("rymInfo: The old policy is {}", policy);
+        // logger.info("rymInfo: The old policy is {}", policy);
 
         String fullReadLatencyStr = "";
         String coordinatorReadLatencyStr = "";
@@ -330,9 +330,9 @@ public class Metadata {
 
         for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
         {
-            fullReadLatencyStr += entry.getKey().getAddress() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
-            coordinatorReadLatencyStr += entry.getKey().getAddress() + ": [" + entry.getValue() + "]  ";
-            clientToServerLatencyStr += entry.getKey().getAddress() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
+            fullReadLatencyStr += entry.getKey().getHostAddress() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
+            coordinatorReadLatencyStr += entry.getKey().getHostAddress() + ": [" + entry.getValue() + "]  ";
+            clientToServerLatencyStr += entry.getKey().getHostAddress() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
         }
 
         logger.info("rymInfo: The full read latency is {}, the coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", fullReadLatencyStr, coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
@@ -374,7 +374,7 @@ public class Metadata {
         }
         averageReadCount = totalReadCount / Cluster.requestCountOfEachReplicationGroup.size();
         
-        logger.info("rymInfo: check the token ring is {}", current.ring);
+        // logger.info("rymInfo: check the token ring is {}", current.ring);
 
         Long[] requestCount = new Long[current.ring.size()];
         for(int i = 0; i < current.ring.size(); i++)
