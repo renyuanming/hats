@@ -368,7 +368,7 @@ public class Metadata {
 
             policy.put(entry.getKey(), combinedPolicy);
 
-            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, entry.getValue()));
+            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
         }
         Cluster.requestCountOfEachReplicationGroup.clear();
 
