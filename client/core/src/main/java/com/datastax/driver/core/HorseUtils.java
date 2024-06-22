@@ -86,7 +86,7 @@ public class HorseUtils
 
             for (Map.Entry<InetAddress, HorseLatencyTracker> entry : readLatencyTrackers.entrySet())
             {
-                this.readLatency.put(entry.getKey(), entry.getValue().getMedian());
+                this.readLatency.put(entry.getKey(), entry.getValue().getLatencyForLocalStates());
                 totalReadCount += entry.getValue().getCount();
             }
 
@@ -125,7 +125,8 @@ public class HorseUtils
         public double getLatencyForLocalStates()
         {
             // return get75th();
-            return getMedian();
+            // return getMedian();
+            return getWindowMean();
         }
 
         public double getMedian()
