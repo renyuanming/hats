@@ -385,7 +385,7 @@ public class Metadata {
         {
             totalReadCount += entry.getValue().get();
         }
-        averageReadCount = totalReadCount / Cluster.requestCountOfEachReplicationGroup.size();
+        averageReadCount = totalReadCount / current.ring.size();
         
         // logger.info("rymInfo: check the token ring is {}", current.ring);
 
