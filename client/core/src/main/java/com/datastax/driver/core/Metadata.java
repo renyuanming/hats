@@ -315,6 +315,7 @@ public class Metadata {
             final StatesForClients currentStatesForClients = statesForClients;
             Map<Token, List<Double>> networkPolicy = getNetworkPolicy(current);
 
+            printStatistic(currentStatesForClients);
 
             for(Map.Entry<Token,  List<Double>> entry : networkPolicy.entrySet())
             {
@@ -342,7 +343,6 @@ public class Metadata {
             }
             Cluster.requestCountOfEachReplicationGroup.clear();
             
-            printStatistic(currentStatesForClients);
             logger.info("rymInfo: The coordinatorPolicy is {}, the networkPolicy is {}, the new policy is {}", currentStatesForClients.policy, networkPolicy, policy);
         }
 
