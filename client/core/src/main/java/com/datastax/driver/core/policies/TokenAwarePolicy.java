@@ -191,7 +191,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
             }
             else
             {
-
+                logger.info("rymDebug: We select the replica based on the policy");
                 Host target = selector.selectTarget();
                 if(l.indexOf(target) > 0)
                 {

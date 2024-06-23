@@ -66,7 +66,7 @@ public class Metadata {
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
-        policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 2, 1, TimeUnit.MINUTES);
+        policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 1, 1, TimeUnit.MINUTES);
     }
 
     void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
@@ -367,7 +367,7 @@ public class Metadata {
                 fullReadLatencyStr += entry.getKey() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
             }
 
-            logger.info("rymInfo: The results under old result is {}, the full read latency is {}", results, fullReadLatencyStr);
+            logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}", results, fullReadLatencyStr);
 
             if(states != null)
             {
