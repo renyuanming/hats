@@ -31,6 +31,9 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
@@ -40,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public class Metadata {
 
-    private static final Logger logger = LoggerFactory.getLogger(Metadata.class);
+    public static final Logger logger = LoggerFactory.getLogger(Metadata.class);
 
     final Cluster.Manager cluster;
     volatile String clusterName;
@@ -52,6 +55,9 @@ public class Metadata {
     // Horse
     volatile Map<String, List<Double>>  policy = new HashMap<>();
     volatile ConcurrentHashMap<InetAddress, HorseReplicaSelector> addrToReplicaSelector = new ConcurrentHashMap<InetAddress, HorseReplicaSelector>();
+    ScheduledExecutorService policyUpdateService = Executors.newScheduledThreadPool(1);
+    volatile StatesForClients statesForClients = null;
+    
 
     final ReentrantLock lock = new ReentrantLock();
 
@@ -60,6 +66,7 @@ public class Metadata {
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
+        policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 2, 1, TimeUnit.MINUTES);
     }
 
     void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
@@ -274,32 +281,11 @@ public class Metadata {
 
     public HorseReplicaSelector getSelector(InetAddress primAddress)
     {
-        // TokenMap current = tokenMap;
-        // if (current == null) 
-        // {
-        //     return null;
-        // } else {
-        //     Token keyToken = current.factory.hash(partitionKey);
-        //     int primaryTokenIndex = Collections.binarySearch(current.ring, keyToken);
-        //     if (primaryTokenIndex < 0) {
-        //         primaryTokenIndex = -primaryTokenIndex - 1;
-        //         if (primaryTokenIndex >= current.ring.size())
-        //             primaryTokenIndex = 0;
-        //     }
-            
-        //     if(Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)) != null)
-        //     {
-        //         Cluster.requestCountOfEachReplicationGroup.get(current.ring.get(primaryTokenIndex)).incrementAndGet();
-        //     }
-        //     else
-        //     {
-        //         Cluster.requestCountOfEachReplicationGroup.put(current.ring.get(primaryTokenIndex), new AtomicLong(1));
-        //     }
+        return addrToReplicaSelector.get(primAddress);
+    }
 
-        //     return addrToReplicaSelector.get(current.ring.get(primaryTokenIndex));
-        // }
-
-                    
+    public void recordReadRequestCount(InetAddress primAddress)
+    {
         if(Cluster.requestCountOfEachReplicationGroup.get(primAddress) != null)
         {
             Cluster.requestCountOfEachReplicationGroup.get(primAddress).incrementAndGet();
@@ -308,8 +294,6 @@ public class Metadata {
         {
             Cluster.requestCountOfEachReplicationGroup.put(primAddress, new AtomicLong(1));
         }
-
-        return addrToReplicaSelector.get(primAddress);
     }
 
     /**
@@ -321,62 +305,95 @@ public class Metadata {
         return policy;
     }
 
+
+    // Update the policy based on network policy and coordinator policy
+    public class PolicyUpdater implements Runnable {
+
+        @Override
+        public void run() {
+            final TokenMap current = tokenMap;
+            final StatesForClients currentStatesForClients = statesForClients;
+            Map<Token, List<Double>> networkPolicy = getNetworkPolicy(current);
+
+
+            for(Map.Entry<Token,  List<Double>> entry : networkPolicy.entrySet())
+            {
+                String tokenStr = entry.getKey().toString();
+                List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(entry.getKey()));
+                List<Double> netPolicy = entry.getValue();
+                List<Double> combinedPolicy = new ArrayList<>();
+
+                if(currentStatesForClients != null)
+                {
+                    List<Double> cordPolicy = currentStatesForClients.policy.get(tokenStr);
+        
+                    for(int i = 0; i < cordPolicy.size(); i++) {
+                        combinedPolicy.add(cordPolicy.get(i) * currentStatesForClients.coordinatorWeight + netPolicy.get(i) * (1 - currentStatesForClients.coordinatorWeight));
+                    }
+                }
+                else
+                {
+                    combinedPolicy = netPolicy;
+                }
+    
+                policy.put(tokenStr, combinedPolicy);
+    
+                addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
+            }
+            Cluster.requestCountOfEachReplicationGroup.clear();
+            
+            printStatistic(currentStatesForClients);
+            logger.info("rymInfo: The coordinatorPolicy is {}, the networkPolicy is {}, the new policy is {}", currentStatesForClients.policy, networkPolicy, policy);
+        }
+
+        private void printStatistic(StatesForClients states)
+        {
+            // print the statistics
+            String results = "";
+            for(Map.Entry<InetAddress,  HorseReplicaSelector> entry : addrToReplicaSelector.entrySet())
+            {
+                results += entry.getKey() + ": [";
+                for(Long count : entry.getValue().getSelectionCounts())
+                {
+                    // double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
+                    results += String.valueOf(count) + ",";
+                }
+                results += "];";
+            }
+
+            String fullReadLatencyStr = "";
+            for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
+            {
+                fullReadLatencyStr += entry.getKey() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
+            }
+
+            logger.info("rymInfo: The results under old result is {}, the full read latency is {}", results, fullReadLatencyStr);
+
+            if(states != null)
+            {
+                String coordinatorReadLatencyStr = "";
+                String clientToServerLatencyStr = "";
+
+                for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
+                {
+                    fullReadLatencyStr += entry.getKey() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
+                    coordinatorReadLatencyStr += entry.getKey() + ": [" + entry.getValue() + "]  ";
+                    clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
+                }
+
+                logger.info("rymInfo: The coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
+            }
+        }
+    }
+
+
     // TODO
     public void updateHorsePolicy(StatesForClients states)
     {
-        String results = "";
-        for(Map.Entry<InetAddress,  HorseReplicaSelector> entry : addrToReplicaSelector.entrySet())
-        {
-            results += entry.getKey() + ": [";
-            for(Long count : entry.getValue().getSelectionCounts())
-            {
-                // double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
-                results += String.valueOf(count) + ",";
-            }
-            results += "];";
-        }
-
-        logger.info("rymInfo: The results under old result is {}", results);
-
-        String fullReadLatencyStr = "";
-        String coordinatorReadLatencyStr = "";
-        String clientToServerLatencyStr = "";
-
-        for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
-        {
-            fullReadLatencyStr += entry.getKey().getHostAddress() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
-            coordinatorReadLatencyStr += entry.getKey().getHostAddress() + ": [" + entry.getValue() + "]  ";
-            clientToServerLatencyStr += entry.getKey().getHostAddress() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
-        }
-
-        logger.info("rymInfo: The full read latency is {}, the coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", fullReadLatencyStr, coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
-
-
-        TokenMap current = tokenMap;
-        Map<Token, List<Double>> networkPolicy = getNetworkPolicy(states, current);
-        for(Map.Entry<String,  List<Double>> entry : states.policy.entrySet())
-        {
-            Token token = current.factory.fromString(entry.getKey());
-            List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(token));
-            
-            List<Double> cordPolicy = entry.getValue();
-            List<Double> netPolicy = networkPolicy.get(token);
-            List<Double> combinedPolicy = new ArrayList<>();
-
-            for(int i = 0; i < cordPolicy.size(); i++) {
-                combinedPolicy.add(cordPolicy.get(i) * states.coordinatorWeight + netPolicy.get(i) * (1 - states.coordinatorWeight));
-            }
-
-            policy.put(entry.getKey(), combinedPolicy);
-
-            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
-        }
-        Cluster.requestCountOfEachReplicationGroup.clear();
-
-        logger.info("rymInfo: The coordinatorPolicy is {}, the networkPolicy is {}, the new policy is {}", states.policy, networkPolicy, policy);
+        statesForClients = states;
     }
 
-    private Map<Token, List<Double>> getNetworkPolicy(StatesForClients states, TokenMap current)
+    private Map<Token, List<Double>> getNetworkPolicy(TokenMap current)
     {
         Map<Token, List<Double>> networkPolicy = new HashMap<>();
         long totalReadCount = 0;

@@ -24,6 +24,8 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -173,18 +175,22 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         // logger.info("rymInfo: We get the statement is {}, query type is {}, enable horse is {}, the expression is {}", statement, queryType, enableHorse, enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)));
 
+        List<Host> l = Lists.newArrayList(replicas);
+        InetAddress primAddress = l.get(0).getAddress();
+        if(keyspace.equals("ycsb"))
+        {
+            clusterMetadata.recordReadRequestCount(primAddress);
+        }
+
         if(enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)))
         {
-            // iter = replicas.iterator();
-            final Map<String, List<Double>>  policy = clusterMetadata.getPolicy();
-            if(policy.isEmpty())
+            if(clusterMetadata.getPolicy().isEmpty())
             {
                 iter = replicas.iterator();
             }
             else
             {
-                List<Host> l = Lists.newArrayList(replicas);
-                HorseReplicaSelector selector = clusterMetadata.getSelector(l.get(0).getAddress());
+                HorseReplicaSelector selector = clusterMetadata.getSelector(primAddress);
 
                 Host target = selector.selectTarget();
                 if(l.indexOf(target) > 0)
@@ -202,7 +208,6 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         else
         {
             if (shuffleReplicas) {
-                List<Host> l = Lists.newArrayList(replicas);
                 Collections.shuffle(l);
                 iter = l.iterator();
             } else {
