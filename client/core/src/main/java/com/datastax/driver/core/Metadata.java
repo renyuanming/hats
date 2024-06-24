@@ -367,8 +367,6 @@ public class Metadata {
                 fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getLatencyForLocalStates() + "]  ";
             }
 
-            logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}", results, fullReadLatencyStr);
-
             if(states != null)
             {
                 String coordinatorReadLatencyStr = "";
@@ -382,6 +380,8 @@ public class Metadata {
 
                 logger.info("rymInfo: The coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
             }
+
+            logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}, states is {}", results, fullReadLatencyStr, states);
         }
     }
 
