@@ -344,7 +344,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (mean < minLatency)
                 minLatency = mean;
         }
-        ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency);
+        ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
         ////////////////////////////////////////////////////////
 
         // now make another pass to do the weighting based on the maximums we found before

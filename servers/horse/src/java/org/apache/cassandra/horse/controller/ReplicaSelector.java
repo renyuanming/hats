@@ -57,17 +57,19 @@ public class ReplicaSelector
      private static final String ANSI_YELLOW = "\u001B[33m";
      private static final String ANSI_BLUE = "\u001B[34m";
  
-    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 0.0);
+    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 0.0, 0.0);
 
     public static class SnitchMetrics 
     {
         public final ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency;
         public final double minLatency;
+        public final double maxLatency;
 
-        public SnitchMetrics(ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency, double minLatency) 
+        public SnitchMetrics(ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency, double minLatency, double maxLatency) 
         {
             this.sampleLatency = sampleLatency;
             this.minLatency = minLatency;
+            this.maxLatency = maxLatency;
         }
         
     }
@@ -79,30 +81,28 @@ public class ReplicaSelector
 
         if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
         {
-            if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-            {
-                greedyScore = 1.0;
-            }
-            else
-            {
-                greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
-            }
+            // if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
+            // {
+            //     greedyScore = 1.0;
+            // }
+            // else
+            // {
+            //     greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            // }
+            greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
         }
 
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            // latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
             if (latencyScore >= 1) {
                 logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
             }
         }
 
-        latencyScore = Math.pow(latencyScore, 3);
+        // latencyScore = Math.pow(latencyScore, 3);
         double score = greedyScore + latencyScore;
-        if(score > 1 && !targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-        {
-            logger.info(ANSI_RED + "rymInfo: For the target host {}, the score is {}, greedy score is {}, latency score is {}" + ANSI_RESET, targetAddr, score, greedyScore, latencyScore);
-        }
         
         return score;
     }
