@@ -317,6 +317,8 @@ public class Metadata {
 
             printStatistic(currentStatesForClients);
 
+            logger.info("rymDebug: Before traverse the networkPolicy {}", networkPolicy);
+
             for(Map.Entry<Token,  List<Double>> entry : networkPolicy.entrySet())
             {
                 String tokenStr = entry.getKey().toString();
