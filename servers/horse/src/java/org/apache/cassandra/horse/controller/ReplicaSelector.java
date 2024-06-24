@@ -102,7 +102,7 @@ public class ReplicaSelector
         }
 
         // latencyScore = Math.pow(latencyScore, 3);
-        double score = greedyScore + latencyScore;
+        double score = latencyScore;
         
         return score;
     }
