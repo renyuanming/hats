@@ -124,8 +124,8 @@ public class HorseUtils
 
         public double getLatencyForLocalStates()
         {
-            return get75th();
-            // return getMedian();
+            // return get75th();
+            return getMedian();
             // return getWindowMean();
         }
 
