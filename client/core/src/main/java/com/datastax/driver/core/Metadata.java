@@ -340,10 +340,16 @@ public class Metadata {
     
                 addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
             }
-            // if(!Cluster.requestCountOfEachReplicationGroup.isEmpty())
-            //     Cluster.requestCountOfEachReplicationGroup.clear();
-            
-            logger.info("rymInfo: The coordinatorPolicy is {}, the networkPolicy is {}, the new policy is {}", currentStatesForClients.policy, networkPolicy, policy);
+
+            if(!Cluster.requestCountOfEachReplicationGroup.isEmpty())
+                Cluster.requestCountOfEachReplicationGroup.clear();
+            if(currentStatesForClients != null)
+            {
+                logger.info("rymDebug: The coordinator policy is {}", currentStatesForClients.policy);
+            }
+
+
+            logger.info("rymInfo: The networkPolicy is {}, the new policy is {}", networkPolicy, policy);
         }
 
         private void printStatistic(StatesForClients states)
