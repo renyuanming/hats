@@ -317,15 +317,12 @@ public class Metadata {
 
             printStatistic(currentStatesForClients);
 
-            logger.info("rymDebug: Before traverse the networkPolicy {}", networkPolicy);
-
             for(Map.Entry<Token,  List<Double>> entry : networkPolicy.entrySet())
             {
                 String tokenStr = entry.getKey().toString();
                 List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(entry.getKey()));
                 List<Double> netPolicy = entry.getValue();
                 List<Double> combinedPolicy = new ArrayList<>();
-                logger.info("rymDebug: For the token {}, the replicas are {}", tokenStr, replicas);
                 if(currentStatesForClients != null)
                 {
                     List<Double> cordPolicy = currentStatesForClients.policy.get(tokenStr);
@@ -342,9 +339,9 @@ public class Metadata {
                 policy.put(tokenStr, combinedPolicy);
     
                 addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
-                logger.info("rymDebug: For the token {}, the combined policy is {}", tokenStr, combinedPolicy);
             }
-            Cluster.requestCountOfEachReplicationGroup.clear();
+            if(!Cluster.requestCountOfEachReplicationGroup.isEmpty())
+                Cluster.requestCountOfEachReplicationGroup.clear();
             
             logger.info("rymInfo: The coordinatorPolicy is {}, the networkPolicy is {}, the new policy is {}", currentStatesForClients.policy, networkPolicy, policy);
         }
