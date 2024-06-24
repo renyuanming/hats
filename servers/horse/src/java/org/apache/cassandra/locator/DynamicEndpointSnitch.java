@@ -191,8 +191,8 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         if(DatabaseDescriptor.getEnableHorse())
         {
             InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
-            // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
-            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
+            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
+            // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
         }
         return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
     }
