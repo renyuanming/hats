@@ -325,7 +325,7 @@ public class Metadata {
                 List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(entry.getKey()));
                 List<Double> netPolicy = entry.getValue();
                 List<Double> combinedPolicy = new ArrayList<>();
-
+                logger.info("rymDebug: For the token {}, the replicas are {}", tokenStr, replicas);
                 if(currentStatesForClients != null)
                 {
                     List<Double> cordPolicy = currentStatesForClients.policy.get(tokenStr);
@@ -336,12 +336,13 @@ public class Metadata {
                 }
                 else
                 {
-                    combinedPolicy = netPolicy;
+                    combinedPolicy.addAll(netPolicy);
                 }
     
                 policy.put(tokenStr, combinedPolicy);
     
                 addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
+                logger.info("rymDebug: For the token {}, the combined policy is {}", tokenStr, combinedPolicy);
             }
             Cluster.requestCountOfEachReplicationGroup.clear();
             
