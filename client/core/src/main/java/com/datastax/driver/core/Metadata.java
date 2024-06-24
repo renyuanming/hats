@@ -442,9 +442,10 @@ public class Metadata {
                         break;
                     }
                     int index = (i + j) % current.ring.size();
-                    if(requestCount[index] < averageReadCount)
+                    if(requestCount[index] < threshold)
                     {
-                        long capacity = threshold - requestCount[index];
+                        // long capacity = threshold - requestCount[index];
+                        long capacity = requestCount[i] - (requestCount[i] + requestCount[index]) / 2;
                         long offload = Math.min(capacity, excess);
                         requestCount[i] -= offload;
                         requestCount[index] += offload;

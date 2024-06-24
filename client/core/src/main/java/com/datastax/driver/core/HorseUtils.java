@@ -306,12 +306,17 @@ public class HorseUtils
 
     public static class LoadBalancer {
         public static void main(String[] args) {
-            long[] requests = {100, 150, 200, 250, 100, 150, 200, 250}; // 示例输入
+            long[] requests = {147210, 186375, 147838, 197073, 130805, 165453, 145773, 136649}; // 示例输入
             long[][] result = balanceLoad(requests);
 
+            System.out.println(String.format("The average count is %s, the total count is %s", Arrays.stream(requests).sum() / requests.length, Arrays.stream(requests).sum()));
+
+            long sumAfterAlg = 0;
             for (int i = 0; i < result.length; i++) {
-                System.out.println("Node " + i + ": " + Arrays.toString(result[i]));
+                System.out.println("Node " + i + ": " + Arrays.toString(result[i]) + "   " + Arrays.stream(result[i]).sum());
+                sumAfterAlg += requests[i];
             }
+            System.out.println("Sum after algorithm: " + sumAfterAlg);
         }
 
         public static long[][] balanceLoad(long[] requests) {
@@ -338,9 +343,10 @@ public class HorseUtils
                         }
                         
                         int index = (i + j) % n;
-                        if(requests[index] < averageRequests)
+                        if(requests[index] < threshold)
                         {
-                            long capacity = threshold - requests[index];
+                            // long capacity = threshold - requests[index];
+                            long capacity = requests[i] - (requests[i] + requests[index]) / 2;
                             long offload = Math.min(capacity, excess);
                             requests[i] -= offload;
                             requests[index] += offload;
