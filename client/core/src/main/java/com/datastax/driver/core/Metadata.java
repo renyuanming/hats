@@ -362,9 +362,9 @@ public class Metadata {
             }
 
             String fullReadLatencyStr = "";
-            for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
+            for (Map.Entry<InetAddress, HorseLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
             {
-                fullReadLatencyStr += entry.getKey() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
+                fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getLatencyForLocalStates() + "]  ";
             }
 
             logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}", results, fullReadLatencyStr);
@@ -376,7 +376,6 @@ public class Metadata {
 
                 for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
                 {
-                    fullReadLatencyStr += entry.getKey() + ": [" + states.readLatency.get(entry.getKey()) + "]  ";
                     coordinatorReadLatencyStr += entry.getKey() + ": [" + entry.getValue() + "]  ";
                     clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
                 }
