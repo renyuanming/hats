@@ -81,7 +81,7 @@
   become_user: ymren
   tasks:
   - name: Execute script start-client.sh
-    shell: bash PATH_TO_SCRIPTS/run/start-client.sh {{ coordinator }} {{ sstable_size_in_mb }} {{ fanout_size }} {{ file_dir }} {{ replication_factor }} {{ mode }}
+    shell: bash PATH_TO_SCRIPTS/run/start-client.sh {{ coordinator }} {{ sstable_size_in_mb }} {{ fanout_size }} {{ file_dir }} {{ replication_factor }} {{ mode }} {{ compaction_strategy }}
     vars:
       coordinator: "NODE_IP"
       sstable_size_in_mb: 4
@@ -89,6 +89,7 @@
       file_dir: "PATH_TO_SERVER"
       replication_factor: 3
       mode: "mlsm"
+      compaction_strategy: "LCS"
     register: command_result
     ignore_errors: True
 

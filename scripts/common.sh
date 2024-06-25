@@ -165,6 +165,8 @@ function backup {
     keylength=$4
     fieldlength=$5
     rf=$6
+    sstableSize=$7
+    compactionStrategy=$8
 
     echo "Start copy data of ${targetScheme} to backup, this will kill the online system!!!"
 
@@ -178,7 +180,7 @@ function backup {
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
     sed -i "s/Scheme/${targetScheme}/g" ${playbook}
-    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-SSTableSize-${sstableSize}-CompactionStrategy-${compactionStrategy}/g" ${playbook}
     ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
@@ -296,6 +298,8 @@ function loadDataset {
     keylength=$4
     fieldlength=$5
     rf=$6
+    sstableSize=$7
+    compactionStrategy=$8
 
     if [ "${targetScheme}" == "horse" ] || [ "${targetScheme}" == "c3" ]; then
         targetScheme="mlsm"
@@ -306,7 +310,7 @@ function loadDataset {
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
     sed -i "s/Scheme/${targetScheme}/g" ${playbook}
-    sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+    sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-SSTableSize-${sstableSize}-CompactionStrategy-${compactionStrategy}/g" ${playbook}
 
     ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
@@ -332,6 +336,8 @@ function startFromBackup {
     enableHorse=$9
     shift 9
     throttleDataRate=$1
+    sstableSize=$2
+    compactionStrategy=$3
 
 
 
@@ -357,7 +363,7 @@ function startFromBackup {
     #     sed -i "s|DATAPATH|${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}|g" ${playbook}
     # fi
 
-    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}/g" ${playbook}
+    sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-SSTableSize-${sstableSize}-CompactionStrategy-${compactionStrategy}/g" ${playbook}
     sed -i "s/\(memtableSize: \)".*"/memtableSize: ${memtable_heap_space}MiB/" ${playbook}
     sed -i "s/\(motivation: \)".*"/motivation: \"${motivation}\"/" ${playbook}
     sed -i "s/\(rebuild: \)".*"/rebuild: \"${rebuild}\"/" ${playbook}
@@ -457,8 +463,10 @@ function getResultsDir
     throttleDataRate=$3
     operationNumber=$4
     kvNumber=$5
+    sstableSize=$6
+    compactionStrategy=$7
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -473,6 +481,8 @@ function load {
     kvNumber=$7
     fieldlength=$8
     keyLength=$9
+    shift 9
+    compaction_strategy=$1
     
 
 
@@ -491,6 +501,7 @@ function load {
     sed -i "s/\(replication_factor: \)".*"/replication_factor: ${rf}/" ${playbook}
     sed -i "s/\(workload: \)".*"/workload: workloads\/${workload}/" ${playbook}
     sed -i "s/\(mode: \)".*"/mode: ${targetScheme}/" ${playbook}
+    sed -i "s/\(compaction_strategy: \)".*"/compaction_strategy: ${compaction_strategy}/" ${playbook}
 
     sed -i "s/memtable_heap_space=.*$/memtable_heap_space=\"${memtable_heap_space}MiB\" \&\&/" ${playbook}
     sed -i "s/rebuild=.*$/rebuild=\"${rebuild}\" \&\&/" ${playbook}
@@ -511,7 +522,7 @@ function load {
     ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 
     ## Collect load results
-    resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}"
+    resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}-compactionStrategy_${compaction_strategy}"
     collectResults ${resultsDir}
     
 }
@@ -646,6 +657,8 @@ function runExp {
     READ_SENSISTIVITY=${27}
     THROTLLE_DATA_RATE=("${!28}")
     JDK_VERSION=${29}
+    SSTABLE_SIZE_IN_MB=${30}
+    COMPACTION_STRATEGY=${31}
 
     # test the parameters
     # echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, WORKLOADS: ${WORKLOADS[@]}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]}
@@ -709,7 +722,7 @@ function runExp {
                                                 # startup from preload dataset
                                                 if [ "${EXP_NAME}" == "Exp-MixedReadWrite" ]; then
                                                     echo "Start from backup"
-                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
+                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${COMPACTION_STRATEGY}
                                                 else
                                                     echo "Start from current data"
                                                     restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
@@ -718,7 +731,7 @@ function runExp {
 
 
                                                 # Collect load results
-                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER}) 
+                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${COMPACTION_STRATEGY}) 
 
                                                 # echo "Collect results to ${resultsDir}"
                                                 collectResults ${resultsDir}
