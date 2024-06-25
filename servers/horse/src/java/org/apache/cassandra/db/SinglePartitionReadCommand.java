@@ -682,7 +682,6 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
 
     private UnfilteredRowIterator queryMemtableAndDiskInternal(ColumnFamilyStore cfs, ReadExecutionController controller)
     {
-        logger.info("rymDebug: queryMemtableAndDiskInternal");
         /*
          * We have 2 main strategies:
          *   1) We query memtables and sstables simulateneously. This is our most generic strategy and the one we use
@@ -980,7 +979,6 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
             if (result != null && sstable.getMaxTimestamp() < result.partitionLevelDeletion().markedForDeleteAt())
                 break;
 
-            StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
             long currentMaxTs = sstable.getMaxTimestamp();
             filter = reduceFilter(filter, result, currentMaxTs);
 
@@ -1030,6 +1028,8 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
 
             try (UnfilteredRowIterator iter = makeRowIterator(cfs, sstable, filter, metricsCollector))
             {
+                
+                StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
                 if (iter.isEmpty())
                     continue;
 
