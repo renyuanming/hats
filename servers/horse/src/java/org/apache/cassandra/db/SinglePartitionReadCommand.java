@@ -767,6 +767,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                     break;
                 }
                 StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
+                logger.info("rymDebug: Read sstable {} bytes", sstable.bytesOnDisk());
                 boolean intersects = intersects(sstable);
                 boolean hasRequiredStatics = hasRequiredStatics(sstable);
                 boolean hasPartitionLevelDeletions = hasPartitionLevelDeletions(sstable);
