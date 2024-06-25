@@ -66,7 +66,10 @@ public class Metadata {
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
-        policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 1, 1, TimeUnit.MINUTES);
+        if(this.cluster.getCluster().getConfiguration().getHorseOptions().isHorseEnabled())
+        {
+            policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 1, 1, TimeUnit.MINUTES);
+        }
     }
 
     void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
