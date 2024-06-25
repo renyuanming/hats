@@ -705,11 +705,9 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
             && !queriesMulticellType()
             && !controller.isTrackingRepairedStatus())
         {
-            logger.info("rymDebug: Before queryMemtableAndSSTablesInTimestampOrder");
             return queryMemtableAndSSTablesInTimestampOrder(cfs, (ClusteringIndexNamesFilter)clusteringIndexFilter(), controller);
         }
 
-        logger.info("rymDebug: After queryMemtableAndSSTablesInTimestampOrder");
         Tracing.trace("Acquiring sstable references");
         ColumnFamilyStore.ViewFragment view = cfs.select(View.select(SSTableSet.LIVE, partitionKey()));
         view.sstables.sort(SSTableReader.maxTimestampDescending);
@@ -770,7 +768,6 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                     break;
                 }
                 StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
-                logger.info("rymDebug: Read sstable {} bytes", sstable.bytesOnDisk());
                 boolean intersects = intersects(sstable);
                 boolean hasRequiredStatics = hasRequiredStatics(sstable);
                 boolean hasPartitionLevelDeletions = hasPartitionLevelDeletions(sstable);
@@ -983,6 +980,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
             if (result != null && sstable.getMaxTimestamp() < result.partitionLevelDeletion().markedForDeleteAt())
                 break;
 
+            StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
             long currentMaxTs = sstable.getMaxTimestamp();
             filter = reduceFilter(filter, result, currentMaxTs);
 
