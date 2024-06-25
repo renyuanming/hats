@@ -682,6 +682,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
 
     private UnfilteredRowIterator queryMemtableAndDiskInternal(ColumnFamilyStore cfs, ReadExecutionController controller)
     {
+        logger.info("rymDebug: queryMemtableAndDiskInternal");
         /*
          * We have 2 main strategies:
          *   1) We query memtables and sstables simulateneously. This is our most generic strategy and the one we use
@@ -704,9 +705,11 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
             && !queriesMulticellType()
             && !controller.isTrackingRepairedStatus())
         {
+            logger.info("rymDebug: Before queryMemtableAndSSTablesInTimestampOrder");
             return queryMemtableAndSSTablesInTimestampOrder(cfs, (ClusteringIndexNamesFilter)clusteringIndexFilter(), controller);
         }
 
+        logger.info("rymDebug: After queryMemtableAndSSTablesInTimestampOrder");
         Tracing.trace("Acquiring sstable references");
         ColumnFamilyStore.ViewFragment view = cfs.select(View.select(SSTableSet.LIVE, partitionKey()));
         view.sstables.sort(SSTableReader.maxTimestampDescending);
