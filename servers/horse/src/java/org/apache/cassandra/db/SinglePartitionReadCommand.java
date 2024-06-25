@@ -766,7 +766,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                     inputCollector.markInconclusive();
                     break;
                 }
-
+                StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
                 boolean intersects = intersects(sstable);
                 boolean hasRequiredStatics = hasRequiredStatics(sstable);
                 boolean hasPartitionLevelDeletions = hasPartitionLevelDeletions(sstable);
