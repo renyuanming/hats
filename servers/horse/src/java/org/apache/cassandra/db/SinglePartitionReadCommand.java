@@ -1028,7 +1028,6 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
 
             try (UnfilteredRowIterator iter = makeRowIterator(cfs, sstable, filter, metricsCollector))
             {
-                
                 StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
                 if (iter.isEmpty())
                     continue;
