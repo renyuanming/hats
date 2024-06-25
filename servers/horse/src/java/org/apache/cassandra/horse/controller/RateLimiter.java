@@ -87,7 +87,7 @@ public class RateLimiter
             return true;
         }
 
-        final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() * 2 +
+        final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() * Math.max(2, StorageService.instance.readRequestInFlight.get()) +
                                       StorageService.instance.flushRateMonitor.getRateInMB() * 4;
         final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
         final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
