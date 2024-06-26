@@ -41,9 +41,9 @@ func() {
         bin/cqlsh "$coordinator" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': $replication_factor };
         USE ycsb;
         create table usertable0 (y_id varchar primary key, field0 varchar);
-        ALTER TABLE usertable0 WITH compaction = { 'class': ${compaction_strategy}, 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
-        ALTER TABLE usertable1 WITH compaction = { 'class': ${compaction_strategy}, 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
-        ALTER TABLE usertable2 WITH compaction = { 'class': ${compaction_strategy}, 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
+        ALTER TABLE usertable0 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
+        ALTER TABLE usertable1 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
+        ALTER TABLE usertable2 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
         consistency all;"
     elif [ "$mode" == "cassandra-5.0" ] || [ "$mode" == "depart" ] || [ "$mode" == "cassandra-3.11.4" ] || [ "$mode" == "depart-5.0" ]; then
         bin/cqlsh "$coordinator" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': $replication_factor };
