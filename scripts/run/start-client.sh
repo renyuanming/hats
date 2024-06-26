@@ -58,7 +58,7 @@ func() {
     fi
 }
 
-func "$1" "$2" "$3" "$4" "$5" "$6"
+func "$1" "$2" "$3" "$4" "$5" "$6" "$7"
 
 # bin/cqlsh "192.168.10.41" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': 3 };
 #         USE ycsb;
