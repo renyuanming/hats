@@ -37,7 +37,7 @@ public class RateLimiter
 
     private static final MetricRegistry registry = new MetricRegistry();
 
-    public volatile static RateLimiter compactionRateLimiter = new RateLimiter(new int[] { 80, 10, 10 });
+    public volatile static RateLimiter compactionRateLimiter = new RateLimiter(new int[] { 100, 0, 0 });
 
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
