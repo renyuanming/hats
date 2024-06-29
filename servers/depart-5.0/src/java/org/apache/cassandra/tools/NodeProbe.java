@@ -1930,6 +1930,7 @@ public class NodeProbe implements AutoCloseable
                 case "PendingFlushes":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxCounterMBean.class).getCount();
                 case "CoordinatorReadLatency":
+                case "CoordinatorWriteLatency":
                 case "CoordinatorScanLatency":
                 case "ReadLatency":
                 case "WriteLatency":
