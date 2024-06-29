@@ -29,7 +29,7 @@ import java.util.Properties;
  */
 public class OneMeasurementHistogram extends OneMeasurement {
   public static final String BUCKETS = "histogram.buckets";
-  public static final String BUCKETS_DEFAULT = "100000";
+  public static final String BUCKETS_DEFAULT = "100000000";
   public static final String VERBOSE_PROPERTY = "measurement.histogram.verbose";
 
   /**
