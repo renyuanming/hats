@@ -32,12 +32,12 @@ import com.codahale.metrics.MetricRegistry;
  * @author renyuanming1@gmail.com
  */
 
-public class RateLimiter 
+public class BackgroundController 
 {
 
     private static final MetricRegistry registry = new MetricRegistry();
 
-    public volatile static RateLimiter compactionRateLimiter = new RateLimiter(new int[] { 100, 0, 0 });
+    public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 100, 0, 0 });
 
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
@@ -47,7 +47,7 @@ public class RateLimiter
     private final AtomicInteger totalReceived;
     private final Random random;
 
-    public RateLimiter(int[] targetRatiosArray) 
+    public BackgroundController(int[] targetRatiosArray) 
     {
         this.targetRatios = new ConcurrentHashMap<>();
         this.servedCounts = new ConcurrentHashMap<>();
@@ -148,11 +148,11 @@ public class RateLimiter
         {
             targetRatiosArrayInteger[i] =  Math.max((int) (targetRatiosArray[i] * 100), 10);
         }
-        compactionRateLimiter = new RateLimiter(targetRatiosArrayInteger);
+        compactionRateLimiter = new BackgroundController(targetRatiosArrayInteger);
     }
 
 
-    private static void runRandomTaskSelectionTest(RateLimiter rateLimiter) 
+    private static void runRandomTaskSelectionTest(BackgroundController rateLimiter) 
     {
         int numThreads = 10;
         Thread[] threads = new Thread[numThreads];
@@ -187,7 +187,7 @@ public class RateLimiter
         printFinalServedCounts(rateLimiter);
     }
 
-    private static void runSimulatedTaskDistributionTest(RateLimiter rateLimiter) 
+    private static void runSimulatedTaskDistributionTest(BackgroundController rateLimiter) 
     {
         int numThreads = 10;
         double[] probabilities = {0.1, 0.45, 0.45};
@@ -238,7 +238,7 @@ public class RateLimiter
         return probabilities.length - 1; // Fallback in case of rounding errors
     }
 
-    private static void printFinalServedCounts(RateLimiter rateLimiter) 
+    private static void printFinalServedCounts(BackgroundController rateLimiter) 
     {
         System.out.println("Final served counts:");
         for (int i = 0; i < rateLimiter.totalTasks; i++) 

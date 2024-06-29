@@ -151,7 +151,7 @@ import org.apache.cassandra.gms.IFailureDetector;
 import org.apache.cassandra.gms.TokenSerializer;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.hints.HintsService;
-import org.apache.cassandra.horse.controller.RateLimiter.RateMonitor;
+import org.apache.cassandra.horse.controller.BackgroundController.RateMonitor;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStatesBroadcaster;
 import org.apache.cassandra.horse.states.GlobalStates.StatesForClients;

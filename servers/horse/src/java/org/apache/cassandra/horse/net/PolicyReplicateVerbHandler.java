@@ -21,7 +21,7 @@ import java.io.IOException;
 
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
-import org.apache.cassandra.horse.controller.RateLimiter;
+import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.net.IVerbHandler;
@@ -59,7 +59,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.getGlobalCoordinatorReadLatencyFromGossipInfo());
         
         // Update the compaction rate limiter
-        RateLimiter.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
+        BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
     }
     
 }

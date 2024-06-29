@@ -54,6 +54,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.RateLimiter;
+import org.apache.cassandra.horse.controller.BackgroundController;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -361,6 +362,24 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
                 }
 
                 CompactionStrategyManager strategy = cfs.getCompactionStrategyManager();
+
+                if(DatabaseDescriptor.getEnableHorse() && strategy.isLeveledCompaction())
+                {
+                    if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
+                    {
+                        int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+                        if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
+                        {
+                            logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+                            return;
+                        }
+                        else
+                        {
+                            logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                        }
+                    }
+                }
+
                 AbstractCompactionTask task = strategy.getNextBackgroundTask(getDefaultGcBefore(cfs, FBUtilities.nowInSeconds()));
                 if (task == null)
                 {

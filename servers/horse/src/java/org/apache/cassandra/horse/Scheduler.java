@@ -29,7 +29,7 @@ import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
-import org.apache.cassandra.horse.controller.RateLimiter;
+import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
 import org.apache.cassandra.horse.net.PolicyDistribute;
@@ -178,7 +178,7 @@ public class Scheduler {
                 replicateGlobalPolicy();
                 
                 // Step6. Update the policy for background task control.
-                RateLimiter.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
+                BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
 
             }
         }
