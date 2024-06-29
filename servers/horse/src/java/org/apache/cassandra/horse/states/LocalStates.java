@@ -200,12 +200,12 @@ public class LocalStates implements Serializable {
         }
 
         public double getStdDev() {
-            return this.timer.getSnapshot().getStdDev();
+            return this.timer.getSnapshot().getStdDev() / 1000L;
         }
 
         public double getWindowMean() 
         {
-            return this.timer.getSnapshot().getMean();
+            return this.timer.getSnapshot().getMean() / 1000L;
         }
 
         public double getLatencyForLocalStates()
@@ -217,17 +217,17 @@ public class LocalStates implements Serializable {
 
         public double getMedian()
         {
-            return this.timer.getSnapshot().getMedian();
+            return this.timer.getSnapshot().getMedian() / 1000L;
         }
 
         public double get75th()
         {
-            return this.timer.getSnapshot().get75thPercentile();
+            return this.timer.getSnapshot().get75thPercentile() / 1000L;
         }
 
         public double get95th()
         {
-            return this.timer.getSnapshot().get95thPercentile();
+            return this.timer.getSnapshot().get95thPercentile() / 1000L;
         }
 
         public int getCount()

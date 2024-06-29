@@ -101,6 +101,10 @@ public class RateLimiter
         {
             return true;
         }
+        else if (foregroundRate >= 1 && taskType > 0)
+        {
+            return false;
+        }
 
         int currentCount = servedCounts.get(taskType).get() * 100;
         int targetCount = targetRatios.get(taskType) * totalServed.get();
