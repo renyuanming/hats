@@ -82,10 +82,10 @@ public class RateLimiter
 
     private boolean shouldServeTask(int taskType) 
     {
-        if (totalServed.get() == 0) 
-        {
-            return true;
-        }
+        // if (totalServed.get() == 0) 
+        // {
+        //     return true;
+        // }
 
         final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
                                       StorageService.instance.localReadRateMonitor.getRateInMB() +
