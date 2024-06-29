@@ -112,6 +112,7 @@ import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.StartupException;
+import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.index.SecondaryIndexManager;
 import org.apache.cassandra.index.internal.CassandraIndex;
 import org.apache.cassandra.index.transactions.UpdateTransaction;
@@ -405,7 +406,27 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
         return () -> {
             for (Keyspace keyspace : Keyspace.all())
                 for (ColumnFamilyStore cfs : keyspace.getColumnFamilyStores())
+                {
+                    if(DatabaseDescriptor.getEnableHorse())
+                    {
+                        if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
+                        {
+                            int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+                            if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
+                            {
+                                logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+                                continue;
+                            }
+                            else
+                            {
+                                logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                            }
+                        }
+                    }
+
                     CompactionManager.instance.submitBackground(cfs);
+                }
+
         };
     }
 
