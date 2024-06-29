@@ -93,15 +93,24 @@ public class RateLimiter
         final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
         final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
         
-        if(backgroundRate >= throttleBackgroundRate)
-        {
-            return false;
-        }
-        else if(foregroundRate < 1)
-        {
-            return true;
-        }
-        else if (foregroundRate >= 1 && taskType > 0)
+        // if(backgroundRate >= throttleBackgroundRate)
+        // {
+        //     return false;
+        // }
+        // else if (StorageService.instance.readRequestInFlight.get() > 0)
+        // {
+        //     return false;
+        // }
+        // else if (taskType > 0)
+        // {
+        //     return false;
+        // }
+        // else if(foregroundRate < 1)
+        // {
+        //     return true;
+        // }
+
+        if (taskType > 0)
         {
             return false;
         }
