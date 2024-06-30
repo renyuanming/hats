@@ -234,6 +234,23 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
             return Collections.emptyList();
         }
 
+        if(DatabaseDescriptor.getEnableHorse())
+        {
+            if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
+            {
+                int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+                if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
+                {
+                    logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+                    return Collections.emptyList();
+                }
+                else
+                {
+                    logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                }
+            }
+        }
+
         /**
          * If a CF is currently being compacted, and there are no idle threads, submitBackground should be a no-op;
          * we can wait for the current compaction to finish and re-submit when more information is available.
@@ -362,23 +379,6 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
                 }
 
                 CompactionStrategyManager strategy = cfs.getCompactionStrategyManager();
-
-                // if(DatabaseDescriptor.getEnableHorse() && strategy.isLeveledCompaction())
-                // {
-                //     if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
-                //     {
-                //         int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
-                //         if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
-                //         {
-                //             logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
-                //             return;
-                //         }
-                //         else
-                //         {
-                //             logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
-                //         }
-                //     }
-                // }
 
                 AbstractCompactionTask task = strategy.getNextBackgroundTask(getDefaultGcBefore(cfs, FBUtilities.nowInSeconds()));
                 if (task == null)

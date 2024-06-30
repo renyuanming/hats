@@ -407,23 +407,6 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             for (Keyspace keyspace : Keyspace.all())
                 for (ColumnFamilyStore cfs : keyspace.getColumnFamilyStores())
                 {
-                    if(DatabaseDescriptor.getEnableHorse())
-                    {
-                        if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
-                        {
-                            int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
-                            if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
-                            {
-                                logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
-                                continue;
-                            }
-                            else
-                            {
-                                logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
-                            }
-                        }
-                    }
-
                     CompactionManager.instance.submitBackground(cfs);
                 }
 
