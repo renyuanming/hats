@@ -234,7 +234,7 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
             return Collections.emptyList();
         }
 
-        if(DatabaseDescriptor.getEnableHorse())
+        if(DatabaseDescriptor.getEnableHorse() &&  cfs.getCompactionStrategyManager().isLeveledCompaction())
         {
             if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
             {
