@@ -176,6 +176,7 @@ public class ReplicaPlans
                 {
                     if (logger.isTraceEnabled())
                         logger.trace("Live nodes {} do not satisfy ConsistencyLevel ({} required)", Iterables.toString(allLive), blockFor);
+                    logger.info("Live nodes {} do not satisfy ConsistencyLevel ({} required)", Iterables.toString(allLive), blockFor);
                     throw UnavailableException.create(consistencyLevel, blockFor, blockForFullReplicas, live, full);
                 }
                 break;
