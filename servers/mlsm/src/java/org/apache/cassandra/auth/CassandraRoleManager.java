@@ -475,7 +475,7 @@ public class CassandraRoleManager implements IRoleManager
             }
             catch (Exception e)
             {
-                HorseUtils.printStackTace(AKLogLevels.INFO, "Setup task failed with error, rescheduling");
+                HorseUtils.printStackTace(AKLogLevels.INFO, String.format("Setup task failed with error, rescheduling: %s", e));
                 logger.info("Setup task failed with error, rescheduling");
                 scheduleSetupTask(setupTask);
             }
