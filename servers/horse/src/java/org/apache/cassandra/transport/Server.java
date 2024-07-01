@@ -577,6 +577,7 @@ public class Server implements CassandraDaemon.Server
         @Override
         public void onUpdatePolicy(StatesForClients states) 
         {
+            // logger.info("rymDebug: send the policy to client {}", );
             send(Event.PolicyChange.updatePolicy(states));
         }
     }

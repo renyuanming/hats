@@ -744,33 +744,6 @@ public class Keyspace
         else
             throw new IllegalStateException(String.format("rym-ERROR: the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
         
-        // String fileName = "usertable";
-        // if(index!=0) {
-        //     fileName+=index;
-        // }
-
-        // try {
-        //     FileWriter writer = new FileWriter("logs/usertableAll", true);
-        //     BufferedWriter buffer = new BufferedWriter(writer);
-        //     buffer.write("key="+upd.partitionKey().getRawKey(upd.metadata()) + ", token="+upd.partitionKey().getToken()+"\n");
-        //     buffer.close();
-        // } catch (IOException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
-
-
-
-        // try {
-        //     FileWriter writer = new FileWriter("logs/"+fileName, true);
-        //     BufferedWriter buffer = new BufferedWriter(writer);
-        //     buffer.write("key="+upd.partitionKey().getRawKey(upd.metadata()) + ", token="+upd.partitionKey().getToken()+"\n");
-        //     buffer.close();
-        // } catch (IOException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
-        
         return columnFamilyStores.get(replicaUUID);
     }
 

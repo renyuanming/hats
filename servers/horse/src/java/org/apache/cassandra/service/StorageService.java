@@ -3047,7 +3047,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         final StatesForClients states = new StatesForClients(policy, globalCoordinatorLatency);
 
         for (IEndpointLifecycleSubscriber subscriber : lifecycleSubscribers)
+        {
             subscriber.onUpdatePolicy(states);
+        }
     }
 
     private void notifyJoined(InetAddressAndPort endpoint)
