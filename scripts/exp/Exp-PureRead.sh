@@ -23,27 +23,27 @@ PURPOSE="ReadAmplification" # To prove ReadAmplification, CompactionOverhead, we
 READ_SENSISTIVITY=0.9
 BRANCH="main"
 LOG_LEVEL="info"
-SSTABLE_SIZE_IN_MB=16
-COMPACTION_STRATEGY="LCS"
+SSTABLE_SIZE_IN_MB=160
+COMPACTION_STRATEGY=("LCS" "STCS" "LSTCS")
 
 
 # Debug Settings
 REBUILD_SERVER="true"
-REBUILD_CLIENT="true"
+REBUILD_CLIENT="false"
 
 # Server settings
 ROUND_NUMBER=5
-COMPACTION_LEVEL=("zero") # zero one all
+COMPACTION_LEVEL=("all") # zero one all
 
 # Horse
-SCHEDULING_INITIAL_DELAY=3600 # seconds
+SCHEDULING_INITIAL_DELAY=600 # seconds
 SCHEDULING_INTERVAL=(60) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 THROTLLE_DATA_RATE=(90) # MB/s
 
 JDK_VERSION="17"
 
-SCHEMES=("horse" "depart" "mlsm")
+SCHEMES=("horse" "c3" "mlsm")
 
 
 function exportEnv {
@@ -59,8 +59,10 @@ function exportEnv {
 }
 
 for scheme in "${SCHEMES[@]}"; do
-    exportEnv $scheme
-    loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${COMPACTION_STRATEGY}"
-    runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${COMPACTION_STRATEGY}"
-    cleanup $scheme
+    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
+        exportEnv $scheme
+        loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+        runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+        cleanup $scheme
+    done
 done
