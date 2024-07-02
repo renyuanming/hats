@@ -28,6 +28,7 @@ import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.lifecycle.ILifecycleTransaction;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
+import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.format.SSTableWriter;
 import org.apache.cassandra.service.StorageService;
@@ -333,6 +334,11 @@ public class SSTableRewriter extends Transactional.AbstractTransactional impleme
             writer.prepareToCommit();
             SSTableReader reader = writer.finished();
             StorageService.instance.compactionRateMonitor.record(reader.bytesOnDisk());
+            if(writer.metadata.keyspace.equals("ycsb"))
+            {
+                int lsmIndex = writer.metadata.name.matches(".*\\d+$") ? Integer.parseInt(writer.metadata.name.replaceAll("\\D+", "")) : -1;
+                BackgroundController.compactionRateLimiter.recordServedThpt(lsmIndex, reader.bytesOnDisk() / 1024L / 1024L);
+            }
             transaction.update(reader, false);
             preparedForCommit.add(reader);
         }

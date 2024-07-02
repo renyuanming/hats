@@ -21,6 +21,7 @@ package org.apache.cassandra.horse.controller;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.horse.HorseUtils;
@@ -37,14 +38,16 @@ public class BackgroundController
 
     private static final MetricRegistry registry = new MetricRegistry();
 
-    public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 100, 0, 0 });
+    public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 80, 10, 10 });
 
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
+    private final ConcurrentHashMap<Integer, AtomicLong> servedThpt;
+    private final AtomicLong totalServedThpt;
     private final ConcurrentHashMap<Integer, AtomicInteger> receivedCounts;
     private final int totalTasks;
-    private final AtomicInteger totalServed;
-    private final AtomicInteger totalReceived;
+    private final AtomicInteger totalServedCount;
+    private final AtomicInteger totalReceivedCount;
     private final Random random;
 
     public BackgroundController(int[] targetRatiosArray) 
@@ -53,8 +56,10 @@ public class BackgroundController
         this.servedCounts = new ConcurrentHashMap<>();
         this.receivedCounts = new ConcurrentHashMap<>();
         this.totalTasks = targetRatiosArray.length;
-        this.totalServed = new AtomicInteger(0);
-        this.totalReceived = new AtomicInteger(0);
+        this.totalServedCount = new AtomicInteger(0);
+        this.totalReceivedCount = new AtomicInteger(0);
+        this.servedThpt = new ConcurrentHashMap<>();
+        this.totalServedThpt = new AtomicLong(0);
         this.random = new Random();
 
         for (int i = 0; i < targetRatiosArray.length; i++) 
@@ -62,13 +67,20 @@ public class BackgroundController
             targetRatios.put(i, targetRatiosArray[i]);
             servedCounts.put(i, new AtomicInteger(0));
             receivedCounts.put(i, new AtomicInteger(0));
+            servedThpt.put(i, new AtomicLong(0));
         }
+    }
+
+    public void recordServedThpt(int taskType, long dataSize) 
+    {
+        servedThpt.get(taskType).addAndGet(dataSize);
+        totalServedThpt.addAndGet(dataSize);
     }
 
     public Boolean receiveTask(int taskType) 
     {
         receivedCounts.get(taskType).incrementAndGet();
-        totalReceived.incrementAndGet();
+        totalReceivedCount.incrementAndGet();
 
         boolean shouldServe = shouldServeTask(taskType);
 
@@ -80,19 +92,18 @@ public class BackgroundController
         return false;
     }
 
-    private boolean shouldServeTask(int taskType) 
+    private boolean shouldServeTask(int taskType)
     {
-        // if (totalServed.get() == 0) 
-        // {
-        //     return true;
-        // }
-
         final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
                                       StorageService.instance.localReadRateMonitor.getRateInMB() +
                                       StorageService.instance.flushRateMonitor.getRateInMB() * 3;
         final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
         final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
-        
+
+        if(foregroundRate < 1)
+        {
+            return true;
+        }
         // if(backgroundRate >= throttleBackgroundRate)
         // {
         //     return false;
@@ -110,33 +121,45 @@ public class BackgroundController
         //     return true;
         // }
 
-        if (taskType > 0)
-        {
-            return false;
-        }
+        boolean shouldServeTaskByCount = shouldServeTaskByCount(taskType);
+        boolean shouldServeTaskByThpt = shouldServeTaskByThpt(taskType);
 
+        return shouldServeTaskByCount && shouldServeTaskByThpt;
+    }
+
+    private boolean shouldServeTaskByThpt(int taskType) 
+    {
+        
+        long currentThpt = servedThpt.get(taskType).get() * 100;
+        long targetThpt = targetRatios.get(taskType) * totalServedThpt.get();
+
+        return currentThpt <= targetThpt;
+    }
+
+    private boolean shouldServeTaskByCount(int taskType) 
+    {
         int currentCount = servedCounts.get(taskType).get() * 100;
-        int targetCount = targetRatios.get(taskType) * totalServed.get();
+        int targetCount = targetRatios.get(taskType) * totalServedCount.get();
 
-        int allowance = (int) (0.1 * targetRatios.get(taskType) * totalReceived.get());
+        int allowance = (int) (0.1 * targetRatios.get(taskType) * totalReceivedCount.get());
         return currentCount < (targetCount + allowance);
     }
 
     private void serveTask(int taskType) 
     {
         servedCounts.get(taskType).incrementAndGet();
-        totalServed.incrementAndGet();
-        // System.out.println("Served task type: " + taskType);
+        totalServedCount.incrementAndGet();
     }
 
     private void reset() 
     {
-        this.totalServed.set(0);
-        this.totalReceived.set(0);
+        this.totalServedCount.set(0);
+        this.totalReceivedCount.set(0);
         for (int i = 0; i < totalTasks; i++) 
         {
             this.servedCounts.get(i).set(0);
             this.receivedCounts.get(i).set(0);
+            this.servedThpt.get(i).set(0);
         }
     }
 

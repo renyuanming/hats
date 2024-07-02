@@ -81,15 +81,15 @@ public class ReplicaSelector
 
         if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
         {
-            if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-            {
-                greedyScore = 1.0;
-            }
-            else
-            {
-                greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
-            }
-            // greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            // if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
+            // {
+            //     greedyScore = 1.0;
+            // }
+            // else
+            // {
+            //     greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            // }
+            greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
         }
 
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
@@ -103,6 +103,7 @@ public class ReplicaSelector
         }
 
         // latencyScore = Math.pow(latencyScore, 3);
+        latencyScore = 1 / (1 + Math.exp(-latencyScore));
         double score = latencyScore + greedyScore;
         
         return score;

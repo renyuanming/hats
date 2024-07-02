@@ -42,6 +42,7 @@ import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.db.compaction.writers.CompactionAwareWriter;
 import org.apache.cassandra.db.compaction.writers.DefaultCompactionWriter;
 import org.apache.cassandra.db.lifecycle.LifecycleTransaction;
+import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
 import org.apache.cassandra.io.util.File;
@@ -213,6 +214,11 @@ public class CompactionTask extends AbstractCompactionTask
 
                         // Rate limit the scanners, and account for compression
                         CompactionManager.compactionRateLimiterAcquire(limiter, bytesScanned, lastBytesScanned, compressionRatio);
+                        if(cfs.keyspace.equals("ycsb"))
+                        {
+                            int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+                            BackgroundController.compactionRateLimiter.recordServedThpt(lsmIndex, (bytesScanned - lastBytesScanned) / 1024L / 1024L);
+                        }
 
                         lastBytesScanned = bytesScanned;
 
