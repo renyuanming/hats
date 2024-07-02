@@ -65,9 +65,17 @@ public class BackgroundController
         for (int i = 0; i < targetRatiosArray.length; i++) 
         {
             targetRatios.put(i, targetRatiosArray[i]);
-            servedCounts.put(i, new AtomicInteger(0));
-            receivedCounts.put(i, new AtomicInteger(0));
-            servedThpt.put(i, new AtomicLong(0));
+            servedCounts.putIfAbsent(i, new AtomicInteger(0));
+            receivedCounts.putIfAbsent(i, new AtomicInteger(0));
+            servedThpt.putIfAbsent(i, new AtomicLong(0));
+        }
+    }
+
+    public void updatePolicy(int[] targetRatiosArray) 
+    {
+        for (int i = 0; i < targetRatiosArray.length; i++) 
+        {
+            targetRatios.put(i, targetRatiosArray[i]);
         }
     }
 
@@ -171,7 +179,7 @@ public class BackgroundController
         {
             targetRatiosArrayInteger[i] =  Math.max((int) (targetRatiosArray[i] * 100), 10);
         }
-        compactionRateLimiter = new BackgroundController(targetRatiosArrayInteger);
+        compactionRateLimiter.updatePolicy(targetRatiosArrayInteger);
     }
 
 
