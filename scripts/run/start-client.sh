@@ -27,14 +27,15 @@ func() {
     compaction_strategy=$7
 
     cd $file_dir
-    if [ "$compaction_strategy" == "LCS" ]; then
-        compaction_strategy="LeveledCompactionStrategy"
-    elif [ "$compaction_strategy" == "STCS" ]; then
-        compaction_strategy="SizeTieredCompactionStrategy"
-    else
-        echo "ERROR compaction strategy $compaction_strategy"
-        exit 1
-    fi
+    echo "The compaction strategy is $compaction_strategy"
+    # if [ "$compaction_strategy" == "LCS" ]; then
+    #     compaction_strategy="LeveledCompactionStrategy"
+    # elif [ "$compaction_strategy" == "STCS" ]; then
+    #     compaction_strategy="SizeTieredCompactionStrategy"
+    # else
+    #     echo "ERROR compaction strategy $compaction_strategy"
+    #     exit 1
+    # fi
 
     if [ "$mode" == "mlsm" ] || [ "$mode" == "horse" ]; then
         echo "Enable multiple LSM tree"
@@ -49,6 +50,10 @@ func() {
             ALTER TABLE usertable0 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
             ALTER TABLE usertable1 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
             ALTER TABLE usertable2 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};"
+        elif [ "$compaction_strategy" == "LSTCS" ]; then
+            bin/cqlsh "$coordinator" -e "
+            USE ycsb;
+            ALTER TABLE usertable0 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};"
         fi
 
     elif [ "$mode" == "cassandra-5.0" ] || [ "$mode" == "depart" ] || [ "$mode" == "cassandra-3.11.4" ] || [ "$mode" == "depart-5.0" ]; then
