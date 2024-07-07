@@ -60,15 +60,12 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 
         
         // [Horse] TEST
-        long tStart = nanoTime();
         if (command.metadata().keyspace.contains("ycsb")) {
             StorageService.instance.localReadCountOfUsertables.incrementAndGet();
         }
         else{
             StorageService.instance.localReadCountOfSystemTables.incrementAndGet();
         }
-        Tracing.trace("[rym] Executed remote modify read command time {}\u03bcs", "ReadCommandVerbHandler",
-                (nanoTime() - tStart) / 1000);
 
 
 

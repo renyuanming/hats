@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
+import com.codahale.metrics.Timer;
 
 public class LocalStates implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(LocalStates.class);
@@ -178,91 +179,53 @@ public class LocalStates implements Serializable {
         }
     }
 
-    public static class LatencyCalculator {
-        private final ConcurrentLinkedQueue<Double> dataQueue = new ConcurrentLinkedQueue<>();
-        private final AtomicReference<Double> ewmaValue = new AtomicReference<>(0.0);
-        private final ConcurrentLinkedQueue<Double> windowData = new ConcurrentLinkedQueue<>();
-        private AtomicLong windowSum = new AtomicLong(0);
-        private static final int windowSize = 1000;
-        private final AtomicBoolean running = new AtomicBoolean(true);
-        private Thread workerThread;
-        private final Histogram histogram;
+    public static class LatencyCalculator 
+    {
+        private final Timer timer;
 
         public LatencyCalculator(String metricName, int windowInterval) {
-            startWorker();
-            this.histogram = new Histogram(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
-            registry.register(metricName, this.histogram);
+            this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
+            registry.register(metricName, this.timer);
         }
 
-        private void startWorker() {
-            workerThread = new Thread(() -> {
-                while (running.get()) {
-                    processMetrics();
-                    // try {
-                    //     Thread.sleep(10); // Calculate every 10 ms
-                    // } catch (InterruptedException e) {
-                    //     Thread.currentThread().interrupt();
-                    // }
-                }
-            });
-            workerThread.start();
+        public void record(long latency) {
+            this.timer.update(latency, TimeUnit.MICROSECONDS);
         }
 
-        private void processMetrics() {
-            Double currentValueForEWMA ;
-            double currentValueForWindow;
-            while ((currentValueForEWMA = this.dataQueue.poll()) != null || this.windowData.size() > windowSize) {
-                // Sliding window mean value
-                if (this.windowData.size() > windowSize) {
-                    currentValueForWindow = this.windowData.poll();
-                    this.windowSum.addAndGet(- (long)currentValueForWindow);
-                }
-
-                // EWMA
-                if (currentValueForEWMA == null) {
-                    continue;
-                }
-                else
-                {
-                    double prevEwma = this.ewmaValue.get();
-                    double newEwma = prevEwma == 0.0 ? currentValueForEWMA  : ALPHA * currentValueForEWMA    + (1 - ALPHA) * prevEwma;
-                    this.ewmaValue.set(newEwma);
-                }
-            }
-        }
-
-        public void record(double latency) {
-            this.dataQueue.add(latency);
-            this.windowData.add(latency);
-            this.windowSum.addAndGet((long)latency);
-            this.histogram.update((int)latency);
-        }
-
-        public double getEWMA() {
-            return ewmaValue.get();
+        public double getStdDev() {
+            return this.timer.getSnapshot().getStdDev() / 1000L;
         }
 
         public double getWindowMean() 
         {
-            // return this.windowSum.get() * 1.0 / this.windowData.size();
-            return this.histogram.getSnapshot().getMean();
+            return this.timer.getSnapshot().getMean() / 1000L;
+        }
+
+        public double getLatencyForLocalStates()
+        {
+            // return get75th();
+            return getMedian();
+            // return getWindowMean();
+        }
+
+        public double getMedian()
+        {
+            return this.timer.getSnapshot().getMedian() / 1000L;
+        }
+
+        public double get75th()
+        {
+            return this.timer.getSnapshot().get75thPercentile() / 1000L;
+        }
+
+        public double get95th()
+        {
+            return this.timer.getSnapshot().get95thPercentile() / 1000L;
         }
 
         public int getCount()
         {
-            return this.histogram.getSnapshot().size();
-        }
-
-        public void stop() {
-            running.set(false);
-            workerThread.interrupt();
-        }
-
-        @Override
-        protected void finalize() throws Throwable {
-            stop();
-            super.finalize();
+            return this.timer.getSnapshot().size();
         }
     }
-
 }

@@ -1983,12 +1983,12 @@ public class StorageProxy implements StorageProxyMBean
             // Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
             if(command.metadata().name.contains("usertable"))
             {
-                command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency/1000, TimeUnit.MICROSECONDS);
+                command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 StorageService.instance.readLatencyCalculator.record(latency/1000);
             }
             else
             {
-                Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency/1000, TimeUnit.MICROSECONDS);
+                Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
             }
         }
 

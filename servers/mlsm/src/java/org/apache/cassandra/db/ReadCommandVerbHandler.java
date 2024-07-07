@@ -20,26 +20,19 @@ package org.apache.cassandra.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.cassandra.utils.Clock.Global.nanoTime;
-
 import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.QueryCancelledException;
-import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
-import org.apache.cassandra.utils.FBUtilities;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
-import java.util.List;
 
 public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 {
@@ -58,16 +51,12 @@ public class ReadCommandVerbHandler implements IVerbHandler<ReadCommand>
 
         
         // [Horse] TEST
-        long tStart = nanoTime();
         if (command.metadata().keyspace.contains("ycsb")) {
             StorageService.instance.localReadCountOfUsertables.incrementAndGet();
         }
         else{
             StorageService.instance.localReadCountOfSystemTables.incrementAndGet();
         }
-        Tracing.trace("[rym] Executed remote modify read command time {}\u03bcs", "ReadCommandVerbHandler",
-                (nanoTime() - tStart) / 1000);
-
 
 
         validateTransientStatus(message);
