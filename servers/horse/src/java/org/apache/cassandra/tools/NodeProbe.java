@@ -1949,6 +1949,7 @@ public class NodeProbe implements AutoCloseable
                 case "CoordinatorWriteLatency":
                 case "ReadLatency":
                 case "WriteLatency":
+                case "RangeLatency":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxTimerMBean.class);
                 case "LiveScannedHistogram":
                 case "SSTablesPerReadHistogram":
