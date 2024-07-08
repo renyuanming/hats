@@ -83,11 +83,14 @@ public class GetBreakdown extends NodeToolCmd
             long totalCoordinatorReadCount = 0;
             long totalWriteCount = 0;
             long totalCoordinatorWriteCount = 0;
+            long totalRangeCount = 0;
             long totalCoordinatorScanCount = 0;
             Map<String, Long> readCount = new HashMap<>();
             Map<String, Long> writeCount = new HashMap<>();
+            Map<String, Long> rangeCount = new HashMap<>();
             Map<String, Double> readLatency = new HashMap<>();
             Map<String, Double> writeLatency = new HashMap<>();
+            Map<String, Double> rangeLatency = new HashMap<>();
             Map<String, Long> coordinatorReadCount = new HashMap<>();
             Map<String, Double> coordinatorReadLatency = new HashMap<>();
             Map<String, Double> coordinatorScanCount = new HashMap<>();
@@ -101,8 +104,10 @@ public class GetBreakdown extends NodeToolCmd
             {
                 long tableWriteCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency")).getCount();
                 long tableReadCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "ReadLatency")).getCount();
+                long tableRangeCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "RangeLatency")).getCount();
                 double localReadLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "ReadLatency")).getMean();
                 double localWriteLatency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "WriteLatency")).getMean();
+                double range_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "RangeLatency")).getMean();
                 long tableCoordinatorReadCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getCount();
                 double coordinator_read_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorReadLatency")).getMean();
                 double tableCoordinatorScanCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorScanLatency")).getCount();
@@ -113,12 +118,15 @@ public class GetBreakdown extends NodeToolCmd
                 
                 totalReadCount += tableReadCount;
                 totalWriteCount += tableWriteCount;
+                totalRangeCount += tableRangeCount;
                 totalCoordinatorReadCount += tableCoordinatorReadCount;
                 totalCoordinatorScanCount += tableCoordinatorScanCount;
                 totalCoordinatorWriteCount += tableCoordinatorWriteCount;
 
+
                 readCount.put(table, tableReadCount);
                 writeCount.put(table, tableWriteCount);
+                rangeCount.put(table, tableRangeCount);
                 coordinatorReadCount.put(table, tableCoordinatorReadCount);
                 coordinatorScanCount.put(table, tableCoordinatorScanCount);
                 coordinatorWriteCount.put(table, tableCoordinatorWriteCount);
@@ -139,6 +147,14 @@ public class GetBreakdown extends NodeToolCmd
                 else
                 {
                     writeLatency.put(table, (double) 0);
+                }
+                if(tableRangeCount > 0 && !Double.isNaN(range_latency))
+                {
+                    rangeLatency.put(table, range_latency);
+                }
+                else
+                {
+                    rangeLatency.put(table, (double) 0);
                 }
                 if(tableCoordinatorReadCount > 0 && !Double.isNaN(coordinator_read_latency))
                 {
@@ -168,28 +184,35 @@ public class GetBreakdown extends NodeToolCmd
 
             double averageLocalReadLatency = 0;
             double averageLocalWriteLatency = 0;
+            double averageLocalRangeLatency = 0;
             double averageCoordiantorReadLatency = 0;
             double averageCoordiantorScanLatency = 0;
             double averageCoordiantorWriteLatency = 0;
             
-            out.println(format("%-10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s",
-            "Keypsace", "Table", "Read", "ReadCnt", "Write", "WriteCnt", "CordRead", "CordReadCnt", "CordScan", "CordScanCnt", "CordWrite", "CordWriteCnt"));
+            out.println(format("%-10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s",
+            "Table", "Read", "ReadCnt", "CordRead", "CordReadCnt", "Write", "WriteCnt", "CordWrite", "CordWriteCnt", "Scan", "ScanCnt", "CordScan", "CordScanCnt"));
             for(String table : tablesList.get(keyspace))
             { 
                 
-                out.println(format("%-10s%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s",
-                keyspace, table, readLatency.get(table), readCount.get(table), writeLatency.get(table), writeCount.get(table), coordinatorReadLatency.get(table), coordinatorReadCount.get(table), coordinatorScanLatency.get(table), coordinatorScanCount.get(table), coordinatorWriteLatency.get(table), coordinatorWriteCount.get(table)));
+                out.println(format("%-10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s",
+                                    table, 
+                                    readLatency.get(table), readCount.get(table), coordinatorReadLatency.get(table), coordinatorReadCount.get(table),
+                                    writeLatency.get(table), writeCount.get(table), coordinatorWriteLatency.get(table), coordinatorWriteCount.get(table), 
+                                    rangeLatency.get(table), rangeCount.get(table), coordinatorScanLatency.get(table), coordinatorScanCount.get(table)));
+
                 averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
                 averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
+                averageLocalRangeLatency += rangeLatency.get(table) * rangeCount.get(table) / totalRangeCount;
                 averageCoordiantorReadLatency += coordinatorReadLatency.get(table) * coordinatorReadCount.get(table) / totalCoordinatorReadCount;
                 averageCoordiantorScanLatency += coordinatorScanLatency.get(table) * coordinatorScanCount.get(table) / totalCoordinatorScanCount;
                 averageCoordiantorWriteLatency += coordinatorWriteLatency.get(table) * coordinatorWriteCount.get(table) / totalCoordinatorWriteCount;
             }
             out.println(format("Local read latency: %.2f", averageLocalReadLatency));
-            // out.println(format("The cost of replica selection for %s: %f", averageCoordiantorReadLatency - averageLocalReadLatency));
             out.println(format("Local read count: %d", totalReadCount));
             out.println(format("Local write latency: %.2f", averageLocalWriteLatency));
             out.println(format("Local write count: %d", totalWriteCount));
+            out.println(format("Local range latency: %.2f", averageLocalRangeLatency));
+            out.println(format("Local range count: %d", totalRangeCount));
             out.println(format("Coordinator read latency: %.2f", averageCoordiantorReadLatency));
             out.println(format("Coordinator read count: %d", totalCoordinatorReadCount));
             out.println(format("Coordinator scan latency: %.2f", averageCoordiantorScanLatency));
