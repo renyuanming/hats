@@ -25,6 +25,7 @@ BRANCH="main"
 LOG_LEVEL="info"
 SSTABLE_SIZE_IN_MB=160
 COMPACTION_STRATEGY=("LCS" "STCS" "LSTCS")
+CONSISTENCY_LEVEL=("ONE" "TWO" "ALL")
 
 # Debug Settings
 REBUILD_SERVER="false"
@@ -58,12 +59,10 @@ function exportEnv {
 }
 
 for scheme in "${SCHEMES[@]}"; do
-    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do    
+    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
         exportEnv $scheme
-        if [ "${EXP_NAME}" == "Exp-PureRead" ]; then
-            loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
-        fi
-        runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+        loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+        runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
         cleanup $scheme
     done
 done

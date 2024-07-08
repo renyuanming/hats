@@ -87,7 +87,7 @@
   become_user: ymren
   tasks:
     - name: Execute runDB.sh
-      shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ hostName }}
+      shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ hostName }} {{ consistencyLevel }}
       vars:
         coordinator: "COORDINATORS"
         recordNumber: 10000000
@@ -101,6 +101,7 @@
         scheme: "normal"
         enableHorse: "ENABLE_HORSE"
         hostName: "{{ inventory_hostname }}"
+        consistencyLevel: "CONSISTENCY"
       register: command_result
       ignore_errors: true
     - name: Fail the play if the previous command did not succeed

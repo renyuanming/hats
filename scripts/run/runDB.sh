@@ -14,6 +14,7 @@ shift 9
 targetScheme=$1
 enableHorse=$2
 hostName=$3
+consistency=$4
 
 cd ${PathToClient} || exit
 
@@ -28,6 +29,9 @@ elif [ "$targetScheme" == "cassandra-5.0" ] || [ "$targetScheme" == "depart" ] |
 else
     echo "Unknow targetScheme $targetScheme"
 fi
+
+firstCoordinator=$(echo $coordinator | cut -d ',' -f1)
+bin/cqlsh "$firstCoordinator" -e "consistency $consistency;"
 
 sed -i "s/recordcount=.*$/recordcount=${recordcount}/" ${workload}
 sed -i "s/operationcount=.*$/operationcount=${operationcount}/" ${workload}
