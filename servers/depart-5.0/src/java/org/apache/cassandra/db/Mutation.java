@@ -488,7 +488,7 @@ public class Mutation implements IMutation, Supplier<Mutation>
                 out.writeUTF(mutation.getKeyspaceName());
             /* serialize the modifications in the mutation */
             int size = mutation.modifications.size();
-            out.writeUnsignedVInt(size);
+            out.writeUnsignedVInt32(size);
             assert size > 0;
             for (Map.Entry<TableId, PartitionUpdate> entry : mutation.modifications.entrySet())
                 PartitionUpdate.serializer.serialize(entry.getValue(), out, version);

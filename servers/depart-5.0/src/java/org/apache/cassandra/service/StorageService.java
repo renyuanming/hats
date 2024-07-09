@@ -384,9 +384,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public InetAddress repairNode = null;
     public int splitDelay = 60; 
     public int minSplitSSTableNum = 5; 
-    public int splitSSTableNum = 20;
+    public int splitSSTableNum = 5;
     public int maxGlobalSSTableNum = 10; 
-    public static int maxSegNumofGroup = 20; 
+    public static int maxSegNumofGroup = 5; 
     public boolean FlushTriggeredCompaction = true;
     public static long minSplitDataSize = 2085728;
     public boolean duringRepair = false; // TODO
