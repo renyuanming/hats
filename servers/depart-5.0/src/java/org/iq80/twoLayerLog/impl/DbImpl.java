@@ -1668,7 +1668,7 @@ public class DbImpl
                 // TODO Auto-generated catch block
                 StorageService.instance.printInfo("in splitToRangeGroups failed, curKey: "+curKey);
                 e.printStackTrace();
-			}
+        }
         //mutex.unlock();
     }
 

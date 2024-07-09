@@ -482,7 +482,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     }
 
     public void printInfo(String info){
-        logger.debug("@@@@@@:{}", info);
+        logger.info("@@@@@@:{}", info);
     }
 
     // Depart TODO: StreamSession not finished
