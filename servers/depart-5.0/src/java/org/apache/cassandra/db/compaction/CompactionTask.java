@@ -314,7 +314,7 @@ public class CompactionTask extends AbstractCompactionTask
 
                         logger.debug("------actuallyCompact.size:{}, output size:{}", actuallyCompact.size(), compactionState.outputs.size());
                         if(actuallyCompact.size()>0 && compactionState.currentFileNumberMap.size()>0){
-                            logger.debug("------before installSplitResults, compactionState.currentFileNumber:{}", compactionState.currentFileNumber);
+                            logger.info("------before installSplitResults, compactionState.currentFileNumber:{}", compactionState.currentFileNumber);
                             StorageService.instance.db.installSplitResults(compactionState);
                         }
                         //StorageService.instance.db.mutex.unlock();
