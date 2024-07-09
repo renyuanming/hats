@@ -416,7 +416,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
                 for (Keyspace keyspace : Keyspace.all()){
                     for (ColumnFamilyStore cfs : keyspace.getColumnFamilyStores()){
                         if(cfs.name.equals("globalReplicaTable") && !StorageService.instance.doingGlobalSplit){
-                            logger.debug("in getBackgroundGlobalSplitTaskSubmitter, cfs.name:{}",cfs.name);
+                            logger.info("in getBackgroundGlobalSplitTaskSubmitter, cfs.name:{}",cfs.name);
                             CompactionManager.instance.submitBackgroundSplit(cfs);
                         }
                     }

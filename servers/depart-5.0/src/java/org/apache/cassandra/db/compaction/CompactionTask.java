@@ -276,6 +276,7 @@ public class CompactionTask extends AbstractCompactionTask
                             Runnable runThread = new Runnable() {
                                 public void run() {
                                     //StorageService.instance.db.splitToRangeGroups(strToken.getBytes(), dob.toByteArray(), groupID, compactionState);
+                                    logger.info("DepartDebug: start a split thread, strToken:{}, groupID:{}", strToken, groupID);
                                     StorageService.instance.db.splitToRangeGroups(strToken.getBytes(), value, groupID, compactionState);
                                     CountDownLatch myLatch = StorageService.instance.groupCountDownMap.get(groupID);
                                     if(myLatch!=null) myLatch.countDown();                   	
@@ -312,7 +313,7 @@ public class CompactionTask extends AbstractCompactionTask
                         }
                         StorageService.instance.groupCountDownMap.clear();
 
-                        logger.debug("------actuallyCompact.size:{}, output size:{}", actuallyCompact.size(), compactionState.outputs.size());
+                        logger.info("------actuallyCompact.size:{}, output size:{}", actuallyCompact.size(), compactionState.outputs.size());
                         if(actuallyCompact.size()>0 && compactionState.currentFileNumberMap.size()>0){
                             logger.info("------before installSplitResults, compactionState.currentFileNumber:{}", compactionState.currentFileNumber);
                             StorageService.instance.db.installSplitResults(compactionState);

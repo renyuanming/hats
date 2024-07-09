@@ -165,12 +165,12 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
 
             ///////////////////////
             if(cfs.name.equals("globalReplicaTable") && candidate.sstables.size() < StorageService.instance.minSplitSSTableNum){
-                logger.warn("DepartWarn: Selected {} sstables for the local log, but we drop them", candidate.sstables.size());
+                logger.warn("departWarn: Selected {} sstables for the local log, but we drop them", candidate.sstables.size());
                 return null;
             }
             else
             {
-                logger.warn("DepartWarn: Selected {} sstables for splitting", candidate.sstables.size());
+                logger.info("departDebug: Selected {} sstables for cfs {}", candidate.sstables.size(), cfs.name);
             }
             //////////////////////
 

@@ -383,7 +383,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public DbImpl db; // TODO
     public InetAddress repairNode = null;
     public int splitDelay = 60; 
-    public int minSplitSSTableNum = 20; 
+    public int minSplitSSTableNum = 5; 
     public int splitSSTableNum = 20;
     public int maxGlobalSSTableNum = 30; 
     public static int maxSegNumofGroup = 20; 
