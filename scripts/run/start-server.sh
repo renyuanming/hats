@@ -16,6 +16,7 @@
 
 
 kill -9 $(ps aux | grep CassandraDaemon| grep -v grep | awk 'NR == 1'  | awk {'print $2'})
+kill -9 $(ps aux | grep CassandraDaemon| grep -v grep | awk 'NR == 1'  | awk {'print $2'})
 func() {
 
 
