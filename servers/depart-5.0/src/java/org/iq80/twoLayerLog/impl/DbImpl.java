@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -102,7 +103,7 @@ import org.slf4j.LoggerFactory;
 // todo make thread safe and concurrent
 @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
 public class DbImpl
-        implements DB
+        implements DB, Serializable
 {
     private final Options options;
     private final File databaseDir;

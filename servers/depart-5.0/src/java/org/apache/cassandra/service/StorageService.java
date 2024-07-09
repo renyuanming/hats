@@ -18,13 +18,19 @@
 package org.apache.cassandra.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -454,6 +460,75 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public ColumnFamilyStore migartedCFS = null;
 
     public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
+
+    public static void writeBytesToFile(String fileName, byte[] buffer) throws IOException {
+        Files.write(Paths.get(fileName), buffer);
+    }
+
+    public static class ByteObjectConversion {
+        public static byte[] objectToByteArray(Serializable obj) throws IOException {
+            logger.debug("ELECT-Debug: start to transform");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(obj);
+            oos.flush();
+            oos.close();
+            bos.close();
+            return bos.toByteArray();
+        }
+
+        public static Object byteArrayToObject(byte[] bytes) throws Exception {
+            ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            Object obj = ois.readObject();
+            bis.close();
+            ois.close();
+            return obj;
+        }
+    }
+
+    public void persistentInMemoryData() {
+        String path = System.getProperty("user.dir") + "/data/inMemoryData/";
+        if(!Files.exists(Paths.get(path))) {
+            try {
+                Files.createDirectories(Paths.get(path));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            // writeBytesToFile(path + "dataByteQueue", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.dataByteQueue));
+            // writeBytesToFile(path + "MetaByteQueue", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.MetaByteQueue));
+            writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
+            writeBytesToFile(path + "groupAccessNumMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap));
+            // writeBytesToFile(path + "replicaBlockMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.replicaBlockMap));
+            // writeBytesToFile(path + "ECBlockMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.ECBlockMap));
+            // writeBytesToFile(path + "keyMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.keyMap));
+            // writeBytesToFile(path + "valueMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.valueMap));
+            // writeBytesToFile(path + "replayMigratedSSTablesDes", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.replayMigratedSSTablesDes));
+            writeBytesToFile(path + "db", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void reloadInMemoryData() {
+        String path = System.getProperty("user.dir") + "/data/inMemoryData/";
+        try {
+            // StorageService.instance.dataByteQueue = (Queue<byte[]>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dataByteQueue")));
+            // StorageService.instance.MetaByteQueue = (Queue<byte[]>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "MetaByteQueue")));
+            StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
+            StorageService.instance.groupAccessNumMap = (Map<String, Integer>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupAccessNumMap")));
+            // StorageService.instance.replicaBlockMap = (Map<Integer, BlockingQueue<ByteBuffer>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "replicaBlockMap")));
+            // StorageService.instance.ECBlockMap = (Map<Integer, BlockingQueue<byte[]>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "ECBlockMap")));
+            // StorageService.instance.keyMap = (Map<Integer, BlockingQueue<byte[]>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "keyMap")));
+            // StorageService.instance.valueMap = (Map<Integer, BlockingQueue<byte[]>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "valueMap")));
+            // StorageService.instance.replayMigratedSSTablesDes = (BlockingQueue<Collection<Descriptor>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "replayMigratedSSTablesDes")));
+            StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     
 
@@ -5963,6 +6038,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     protected synchronized void drain(boolean isFinalShutdown) throws IOException, InterruptedException, ExecutionException
     {
+        StorageService.instance.persistentInMemoryData();
         if (Stage.areMutationExecutorsTerminated())
         {
             if (!isFinalShutdown)
