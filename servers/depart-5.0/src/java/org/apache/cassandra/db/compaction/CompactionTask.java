@@ -276,7 +276,7 @@ public class CompactionTask extends AbstractCompactionTask
                             Runnable runThread = new Runnable() {
                                 public void run() {
                                     //StorageService.instance.db.splitToRangeGroups(strToken.getBytes(), dob.toByteArray(), groupID, compactionState);
-                                    logger.info("DepartDebug: start a split thread, strToken:{}, groupID:{}", strToken, groupID);
+                                    // logger.info("DepartDebug: start a split thread, strToken:{}, groupID:{}", strToken, groupID);
                                     StorageService.instance.db.splitToRangeGroups(strToken.getBytes(), value, groupID, compactionState);
                                     CountDownLatch myLatch = StorageService.instance.groupCountDownMap.get(groupID);
                                     if(myLatch!=null) myLatch.countDown();                   	
