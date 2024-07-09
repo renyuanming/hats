@@ -56,11 +56,18 @@ func() {
             ALTER TABLE usertable0 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};"
         fi
 
-    elif [ "$mode" == "cassandra-5.0" ] || [ "$mode" == "depart" ] || [ "$mode" == "cassandra-3.11.4" ] || [ "$mode" == "depart-5.0" ]; then
+    elif [ "$mode" == "cassandra-5.0" ] || [ "$mode" == "cassandra-3.11.4" ]; then
         bin/cqlsh "$coordinator" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': $replication_factor };
         USE ycsb;
         create table usertable (y_id varchar primary key, field0 varchar);
         ALTER TABLE usertable WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': $sstable_size, 'fanout_size': $fanout_size};
+        consistency all;"
+    elif [ "$mode" == "depart" ] || [ "$mode" == "depart-5.0" ]; then
+        bin/cqlsh "$coordinator" -e "create keyspace ycsb WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor': $replication_factor };
+        USE ycsb;
+        create table usertable (y_id varchar primary key, field0 varchar);
+        ALTER TABLE usertable WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': $sstable_size, 'fanout_size': $fanout_size};
+        ALTER TABLE globalReplicaTable WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': $sstable_size, 'fanout_size': $fanout_size};
         consistency all;"
     else
 
