@@ -555,6 +555,10 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                 partition = EmptyIterators.unfilteredRow(cfs.metadata.get(), partitionKey(), filter.isReversed());
             }
         }
+        else
+        {
+            logger.error("rymERROR: StorageService.instance.db is null in queryLocalRegion!");
+        }
         return new SingletonUnfilteredPartitionIterator(partition);
     }
 
