@@ -67,7 +67,7 @@ func() {
         USE ycsb;
         create table usertable (y_id varchar primary key, field0 varchar);
         ALTER TABLE usertable WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': $sstable_size, 'fanout_size': $fanout_size};
-        ALTER TABLE globalReplicaTable WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': $sstable_size, 'fanout_size': $fanout_size};
+        ALTER TABLE \"globalReplicaTable\" WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': $sstable_size, 'fanout_size': $fanout_size};
         consistency all;"
     else
 

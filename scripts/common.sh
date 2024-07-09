@@ -484,6 +484,7 @@ function load {
     keyLength=$9
     shift 9
     compaction_strategy=$1
+    logLevel=$2
     
 
 
@@ -512,6 +513,7 @@ function load {
     sed -i "s|COORDINATORS|${Coordinators}|g" ${playbook}
     sed -i "s|NODE_IP|${NodeIP}|g" ${playbook}
     sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" ${playbook}
+    sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
     
     if [ $targetScheme == "depart" ] || [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}

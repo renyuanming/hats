@@ -70,7 +70,7 @@
   tasks:
   - name: Setup log levels
     shell: |
-      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION setlogginglevel org.apache.cassandra error && bin/nodetool NODETOOL_OPTION setlogginglevel ROOT error
+      . /etc/profile && cd PATH_TO_SERVER && bin/nodetool NODETOOL_OPTION setlogginglevel org.apache.cassandra LOG_LEVEL && bin/nodetool NODETOOL_OPTION setlogginglevel ROOT LOG_LEVEL
     register: command_result
     ignore_errors: true
 
