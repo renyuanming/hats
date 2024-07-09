@@ -463,7 +463,7 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
             //scanLocalRegion();
             if(inputCollector.isEmpty()){
                 findResults[0] = 0;
-                logger.debug("####Scan in queryStorage empty");
+                logger.warn("####Scan in queryStorage empty");
             }
             ////////////////////////////////////
 

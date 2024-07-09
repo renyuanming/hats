@@ -444,7 +444,7 @@ public abstract class ReadCommand extends AbstractReadQuery
             UnfilteredPartitionIterator iterator = (null == searcher) ? queryStorage(cfs, executionController, findResults, metadata().keyspace) : searcher.search(executionController);
             /////////////////////////////////////////////////
             //if(cfs.name.equals("globalReplicaTable") && findResults[0]==0 ){  //read not find in global log, then search local log
-            if(cfs.name.equals("globalReplicaTable")){  
+            if(cfs.name.equals("globalReplicaTable") && iterator == null){  
 
                 if(findResults[0]==0){
                     List<UnfilteredPartitionIterator> iterators = new ArrayList<>(1); 
