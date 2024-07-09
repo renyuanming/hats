@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -81,6 +82,8 @@ import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.FutureCombiner;
 import org.apache.cassandra.utils.logging.LoggingSupportFactory;
 import org.apache.cassandra.utils.logging.VirtualTableAppender;
+import org.iq80.twoLayerLog.Options;
+import org.iq80.twoLayerLog.impl.DbImpl;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_FOREGROUND;
@@ -425,6 +428,7 @@ public class CassandraDaemon
         }
 
         AuditLogManager.instance.initialize();
+        openTwoLayerLog();
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
@@ -451,6 +455,25 @@ public class CassandraDaemon
         PaxosState.startAutoRepairs();
 
         completeSetup();
+    }
+
+    public void openTwoLayerLog()
+    {
+        Options options = new Options();
+        options.createIfMissing(true);
+        try {
+            String DBname = "data/replicatedData";
+            File file = new File(DBname);
+            // if(!file.exists()){
+                //StorageService.instance.db = factory.open(file, options);
+            StorageService.instance.db = new DbImpl(options, file.toJavaIOFile());
+            logger.info("open twoLayerLog success!!");
+            // }
+            //db.close();
+        } catch(Throwable e){
+                logger.debug("open twoLayerLog failed!!");
+        }
+
     }
 
     public void runStartupChecks()
