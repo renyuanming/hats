@@ -65,7 +65,6 @@ import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.db.*;
 import org.apache.cassandra.repair.Validator;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
-import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.*;
@@ -97,6 +96,8 @@ import org.iq80.twoLayerLog.impl.WriteBatchImpl;
 import java.util.concurrent.ScheduledExecutorService;
 import org.iq80.twoLayerLog.util.InternalTableIterator;
 import org.iq80.twoLayerLog.util.Closeables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // todo make thread safe and concurrent
 @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
@@ -107,6 +108,7 @@ public class DbImpl
     private final File databaseDir;
     private final DbLock dbLock;
     
+    private static final Logger logger = LoggerFactory.getLogger(DbImpl.class);
     private Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); 
     public Map<String, VersionSet> groupVersionSetMap = new HashMap<String,VersionSet>();
 
@@ -350,6 +352,7 @@ public class DbImpl
             }
         }, 5, 60, TimeUnit.SECONDS);//30
         */
+        logger.info("{}", new Exception("rymDebug: Invoke the DbImpl constructor"));
     }
 
     public void performGroupMerge(){
