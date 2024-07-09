@@ -391,7 +391,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public int splitDelay = 60; 
     public int minSplitSSTableNum = 5; 
     public int splitSSTableNum = 5;
-    public int maxGlobalSSTableNum = 10; 
+    public int maxGlobalSSTableNum = 5; 
     public static int maxSegNumofGroup = 5; 
     public boolean FlushTriggeredCompaction = true;
     public static long minSplitDataSize = 2085728;
@@ -467,7 +467,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public static class ByteObjectConversion {
         public static byte[] objectToByteArray(Serializable obj) throws IOException {
-            logger.debug("ELECT-Debug: start to transform");
+            logger.debug("rymDebug: start to transform");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(obj);
@@ -497,16 +497,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             }
         }
         try {
-            // writeBytesToFile(path + "dataByteQueue", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.dataByteQueue));
-            // writeBytesToFile(path + "MetaByteQueue", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.MetaByteQueue));
             writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
             writeBytesToFile(path + "groupAccessNumMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap));
-            // writeBytesToFile(path + "replicaBlockMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.replicaBlockMap));
-            // writeBytesToFile(path + "ECBlockMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.ECBlockMap));
-            // writeBytesToFile(path + "keyMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.keyMap));
-            // writeBytesToFile(path + "valueMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.valueMap));
-            // writeBytesToFile(path + "replayMigratedSSTablesDes", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.replayMigratedSSTablesDes));
-            writeBytesToFile(path + "db", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db));
+            byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
+            logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
+            writeBytesToFile(path + "db", dbBytes);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -515,15 +510,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public void reloadInMemoryData() {
         String path = System.getProperty("user.dir") + "/data/inMemoryData/";
         try {
-            // StorageService.instance.dataByteQueue = (Queue<byte[]>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dataByteQueue")));
-            // StorageService.instance.MetaByteQueue = (Queue<byte[]>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "MetaByteQueue")));
             StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
             StorageService.instance.groupAccessNumMap = (Map<String, Integer>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupAccessNumMap")));
-            // StorageService.instance.replicaBlockMap = (Map<Integer, BlockingQueue<ByteBuffer>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "replicaBlockMap")));
-            // StorageService.instance.ECBlockMap = (Map<Integer, BlockingQueue<byte[]>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "ECBlockMap")));
-            // StorageService.instance.keyMap = (Map<Integer, BlockingQueue<byte[]>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "keyMap")));
-            // StorageService.instance.valueMap = (Map<Integer, BlockingQueue<byte[]>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "valueMap")));
-            // StorageService.instance.replayMigratedSSTablesDes = (BlockingQueue<Collection<Descriptor>>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "replayMigratedSSTablesDes")));
             StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
         } catch (Exception e) {
             e.printStackTrace();
