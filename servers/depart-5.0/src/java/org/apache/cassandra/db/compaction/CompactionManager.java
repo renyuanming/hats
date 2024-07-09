@@ -258,7 +258,7 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
                     logger.trace("No tasks available");
                     return;
                 }
-                logger.info("######in BackgroundSplitCandidate Checking {}.{}， before task.execute", cfs.keyspace.getName(), cfs.name);
+                logger.info("######in BackgroundSplitCandidate Checking {}.{}, before task.execute, compaction strategy is {}, output level is {}", cfs.keyspace.getName(), cfs.name, strategy.getName(), task.getOutputLevel());
                 task.execute(active);
             }
             finally
