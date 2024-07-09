@@ -24,7 +24,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -57,6 +59,7 @@ import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.db.virtual.SystemViewsKeyspace;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualSchemaKeyspace;
+import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.StartupException;
 import org.apache.cassandra.gms.Gossiper;
@@ -472,6 +475,29 @@ public class CassandraDaemon
             //db.close();
         } catch(Throwable e){
                 logger.debug("open twoLayerLog failed!!");
+        }
+
+        Set<InetAddressAndPort> liveHosts = Gossiper.instance.getLiveMembers();
+        InetAddressAndPort LOCAL = FBUtilities.getBroadcastAddressAndPort();
+        for (InetAddressAndPort host : liveHosts){///
+            if (!host.equals(LOCAL)) {          
+                Collection<Token> nodeToken = StorageService.instance.getTokenMetadata().getTokens(host);
+                //logger.debug("nodeIP:{}, nodeToken size:{}, nodeToken:{}", host, nodeToken.size(), nodeToken);
+                List<String> strTokensList = new ArrayList<String>();
+                for(Token tk: nodeToken){
+                    String strToken = StorageService.instance.getTokenFactory().toString(tk);//////
+                    strTokensList.add(strToken);
+                    StorageService.instance.groupAccessNumMap.put(strToken, 0);
+                    //logger.debug("strToken size:{}, strToken:{}", strTokensList.size(), strToken);
+                }
+                // try{
+                //     byte ip[] = host.addressBytes;  
+                //     int NodeID = (int)ip[3];
+                //     StorageService.instance.db.createReplicaDir(NodeID, strTokensList, ksm.name);
+                // } catch(Throwable e){
+                //     logger.debug("create replicaDir failed!!");
+                // }
+            }
         }
 
     }
