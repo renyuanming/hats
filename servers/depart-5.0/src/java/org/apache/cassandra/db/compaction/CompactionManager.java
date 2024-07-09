@@ -462,6 +462,7 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
                 }
                 else
                 {
+                    logger.info("Checking {}.{} for compaction, the compaction strategy is {}", cfs.getKeyspaceName(), cfs.name, strategy.getName());
                     task.execute(active);
                     ranCompaction = true;
                 }

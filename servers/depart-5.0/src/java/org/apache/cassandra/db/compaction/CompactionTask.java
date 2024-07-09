@@ -253,7 +253,7 @@ public class CompactionTask extends AbstractCompactionTask
                             try{
                                 Mutation.serializer.serializeToValue(mutation, dob, MessagingService.current_version);   
                             } catch(Throwable e){
-                                logger.debug("in splitToRangeGroups, Mutation.serializer.deserialize failed, strToken:{}!!", mutation.key().getToken());
+                                logger.debug("in splitToRangeGroups, Mutation.serializer.deserialize failed, strToken:{}!!, {}", mutation.key().getToken(), e);
                             } 
                             String strToken = StorageService.instance.getTokenFactory().toString(mutation.key().getToken());         
                             String groupID = StorageService.instance.findBoundTokenAccordingTokeny(strToken);                                          

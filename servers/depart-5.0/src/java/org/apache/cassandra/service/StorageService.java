@@ -385,7 +385,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public int splitDelay = 60; 
     public int minSplitSSTableNum = 5; 
     public int splitSSTableNum = 20;
-    public int maxGlobalSSTableNum = 30; 
+    public int maxGlobalSSTableNum = 10; 
     public static int maxSegNumofGroup = 20; 
     public boolean FlushTriggeredCompaction = true;
     public static long minSplitDataSize = 2085728;
