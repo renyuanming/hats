@@ -262,8 +262,6 @@ public class LeveledManifest
             logger.info("rymDebug: the size of overlappedL0 is:{}, the remaining sstable is {}, compacting sstable count is {}", overlappedL0.size(), remaining.size(), compactingL0.size());
             // if (!Sets.intersection(overlappedL0, compactingL0).isEmpty())
             //     continue;
-            if(compactingL0.contains(sstable))
-                continue;
 
             for (SSTableReader newCandidate : overlappedL0)
             {
