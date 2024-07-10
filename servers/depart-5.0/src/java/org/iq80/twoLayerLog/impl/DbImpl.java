@@ -291,6 +291,7 @@ public class DbImpl
 
             if(metadata == null)
             {
+                logger.info("rymDebug: the metadata is null, we generate new group versions.");
                 TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
 
                 //List<FileMetaData> files = new ArrayList<FileMetaData>();
@@ -300,7 +301,6 @@ public class DbImpl
                 groupVersionSetMap.put(globalLogName, versions);
                 this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
                 prepareVersions(versions);
-                logger.info("rymDebug: the metadata is null, we generate new group versions.");
             }
             else
             {
