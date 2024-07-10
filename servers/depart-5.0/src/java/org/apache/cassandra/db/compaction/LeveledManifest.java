@@ -259,6 +259,7 @@ public class LeveledManifest
                 continue;
 
             Sets.SetView<SSTableReader> overlappedL0 = Sets.union(Collections.singleton(sstable), overlappingWithBounds(sstable, remaining));
+            logger.info("rymDebug: the size of overlappedL0 is:{}, the remaining sstable is {}", overlappedL0.size(), remaining.size());
             if (!Sets.intersection(overlappedL0, compactingL0).isEmpty())
                 continue;
 
