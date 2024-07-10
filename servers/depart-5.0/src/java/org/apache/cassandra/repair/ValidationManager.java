@@ -189,7 +189,7 @@ public class ValidationManager implements IValidationManager
             File file = new File(DBname);
             if(!file.exists()){
                 //StorageService.instance.db = factory.open(file, options);
-                StorageService.instance.db = new DbImpl(options, file);
+                StorageService.instance.db = new DbImpl(options, file, null);
             }
             //db.close();
         } catch(Throwable e){
@@ -209,7 +209,7 @@ public class ValidationManager implements IValidationManager
                 try{
                     byte ip[] = host.getAddress().getAddress();  
                     int NodeID = (int)ip[3];
-                    StorageService.instance.db.createReplicaDir(NodeID, strTokensList, cfs.keyspace.getName());
+                    StorageService.instance.db.initializeReplicaDir(NodeID, strTokensList, cfs.keyspace.getName());
                 } catch(Throwable e){
                     logger.debug("create replicaDir failed!!");
                 }

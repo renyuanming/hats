@@ -446,7 +446,7 @@ public class Keyspace
                 File file = new File(DBname);
                 if(!file.exists()){
                     //StorageService.instance.db = factory.open(file, options);
-                    StorageService.instance.db = new DbImpl(options, file.toJavaIOFile());
+                    StorageService.instance.db = new DbImpl(options, file.toJavaIOFile(), null);
                 }
                 //db.close();
             } catch(Throwable e){
@@ -467,7 +467,7 @@ public class Keyspace
                     try{
                         byte ip[] = host.addressBytes;  
                         int NodeID = (int)ip[3];
-                        StorageService.instance.db.createReplicaDir(NodeID, strTokensList, ksm.name);
+                        StorageService.instance.db.initializeReplicaDir(NodeID, strTokensList, ksm.name);
                     } catch(Throwable e){
                         logger.debug("create replicaDir failed!!");
                     }

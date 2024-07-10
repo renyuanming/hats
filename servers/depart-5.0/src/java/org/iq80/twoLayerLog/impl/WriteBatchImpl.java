@@ -11,8 +11,10 @@ import java.util.Map.Entry;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.Serializable;
+
 public class WriteBatchImpl
-        implements WriteBatch
+        implements WriteBatch, Serializable
 {
     private final List<Entry<Slice, Slice>> batch = new ArrayList<>();
     private int approximateSize;

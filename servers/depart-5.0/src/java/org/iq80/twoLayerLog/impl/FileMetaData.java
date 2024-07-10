@@ -1,11 +1,12 @@
 package org.iq80.twoLayerLog.impl;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.iq80.twoLayerLog.util.Slice;
 import org.iq80.twoLayerLog.util.Slices;
 import org.iq80.twoLayerLog.util.Snappy;
 
-public class FileMetaData
+public class FileMetaData implements Serializable
 {
 	private final String groupID;
 	

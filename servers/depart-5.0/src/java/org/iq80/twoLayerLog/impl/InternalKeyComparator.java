@@ -2,12 +2,13 @@ package org.iq80.twoLayerLog.impl;
 
 import org.iq80.twoLayerLog.table.UserComparator;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
 public class InternalKeyComparator
-        implements Comparator<InternalKey>
+        implements Comparator<InternalKey>, Serializable
 {
     private final UserComparator userComparator;
 

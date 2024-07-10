@@ -431,7 +431,6 @@ public class CassandraDaemon
         }
 
         AuditLogManager.instance.initialize();
-        openTwoLayerLog();
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
@@ -439,6 +438,7 @@ public class CassandraDaemon
 
         ScheduledExecutorService splitExecutor = Executors.newSingleThreadScheduledExecutor();
         splitExecutor.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundGlobalSplitTaskSubmitter(), 5, 10, TimeUnit.SECONDS);//60//30//10
+        openTwoLayerLog();
 
         // schedule periodic recomputation of speculative retry thresholds
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
@@ -462,44 +462,20 @@ public class CassandraDaemon
 
     public void openTwoLayerLog()
     {
-        // Options options = new Options();
-        // options.createIfMissing(true);
-        // try {
-        //     String DBname = "data/replicatedData";
-        //     File file = new File(DBname);
-        //     // if(!file.exists()){
-        //         //StorageService.instance.db = factory.open(file, options);
-        //     StorageService.instance.db = new DbImpl(options, file.toJavaIOFile());
-        //     logger.info("open twoLayerLog success!!");
-        //     // }
-        //     //db.close();
-        // } catch(Throwable e){
-        //         logger.debug("open twoLayerLog failed!!");
-        // }
-
-        // Set<InetAddressAndPort> liveHosts = Gossiper.instance.getLiveMembers();
-        // InetAddressAndPort LOCAL = FBUtilities.getBroadcastAddressAndPort();
-        // for (InetAddressAndPort host : liveHosts){///
-        //     if (!host.equals(LOCAL)) {          
-        //         Collection<Token> nodeToken = StorageService.instance.getTokenMetadata().getTokens(host);
-        //         //logger.debug("nodeIP:{}, nodeToken size:{}, nodeToken:{}", host, nodeToken.size(), nodeToken);
-        //         List<String> strTokensList = new ArrayList<String>();
-        //         for(Token tk: nodeToken){
-        //             String strToken = StorageService.instance.getTokenFactory().toString(tk);//////
-        //             strTokensList.add(strToken);
-        //             StorageService.instance.groupAccessNumMap.put(strToken, 0);
-        //             //logger.debug("strToken size:{}, strToken:{}", strTokensList.size(), strToken);
-        //         }
-        //         // try{
-        //         //     byte ip[] = host.addressBytes;  
-        //         //     int NodeID = (int)ip[3];
-        //         //     StorageService.instance.db.createReplicaDir(NodeID, strTokensList, ksm.name);
-        //         // } catch(Throwable e){
-        //         //     logger.debug("create replicaDir failed!!");
-        //         // }
-        //     }
-        // }
-        StorageService.instance.reloadInMemoryData();
+        // If the file exists, we need to open the file from backup
+        String DBname = "data/replicatedData";
+        File file = new File(DBname);
+        if(file.exists())
+        {
+            StorageService.instance.reloadInMemoryData();
+            Options options = new Options();
+            options.createIfMissing(true);
+            try {
+                StorageService.instance.db = new DbImpl(options, file.toJavaIOFile(), StorageService.instance.dbMeta);
+            } catch(Throwable e){
+                    logger.debug("open twoLayerLog failed!!");
+            }
+        }
     }
 
     public void runStartupChecks()
