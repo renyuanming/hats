@@ -527,7 +527,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public void reloadInMemoryData() {
         String path = System.getProperty("user.dir") + "/data/inMemoryData/";
         try {
-            StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
+            // StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
             StorageService.instance.groupAccessNumMap = (Map<String, Integer>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupAccessNumMap")));
             // StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
             StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
