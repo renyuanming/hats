@@ -534,6 +534,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         } catch (Exception e) {
             e.printStackTrace();
         }
+        logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
     }
 
     
