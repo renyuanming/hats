@@ -265,10 +265,10 @@ public class LeveledManifest
 
             for (SSTableReader newCandidate : overlappedL0)
             {
-                if (firstCompactingKey == null || lastCompactingKey == null || overlapping(firstCompactingKey.getToken(), lastCompactingKey.getToken(), Arrays.asList(newCandidate)).size() == 0){
-                    candidates.add(newCandidate);
-                    totalCandidatesSize = totalCandidatesSize + newCandidate.bytesOnDisk();
-                }
+                // if (firstCompactingKey == null || lastCompactingKey == null || overlapping(firstCompactingKey.getToken(), lastCompactingKey.getToken(), Arrays.asList(newCandidate)).size() == 0){
+                candidates.add(newCandidate);
+                totalCandidatesSize = totalCandidatesSize + newCandidate.bytesOnDisk();
+                // }
                 remaining.remove(newCandidate);
                 if (candidates.size() >= (StorageService.instance.splitSSTableNum+2) && totalCandidatesSize/1024 > 2985728) break; //3985728
             }
