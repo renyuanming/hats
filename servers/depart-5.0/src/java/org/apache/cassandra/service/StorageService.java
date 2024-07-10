@@ -499,11 +499,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             }
         }
         try {
-            logger.info("rymDebug: This is persistentInMemoryData, the groupCountDownMap instance is {}");
-            if(!StorageService.instance.groupCountDownMap.isEmpty())
-            {
-                writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
-            }
+            // logger.info("rymDebug: This is persistentInMemoryData, the groupCountDownMap instance is {}", StorageService.instance.groupCountDownMap);
+            // if(!StorageService.instance.groupCountDownMap.isEmpty())
+            // {
+            //     writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
+            // }
             if(!StorageService.instance.groupAccessNumMap.isEmpty())
             {
                 byte[] groupAccessNumMapBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap);
