@@ -298,6 +298,7 @@ public class DbImpl
                 VersionSet versions = new VersionSet(databaseDir, tableCache, internalKeyComparator, filesID);
                 groupTableCacheMap.put(globalLogName, tableCache);
                 groupVersionSetMap.put(globalLogName, versions);
+                this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
                 prepareVersions(versions);
                 logger.info("rymDebug: the metadata is null, we generate new group versions.");
             }

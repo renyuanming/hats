@@ -463,6 +463,7 @@ public class CassandraDaemon
     public void openTwoLayerLog()
     {
         // If the file exists, we need to open the file from backup
+        logger.info("rymDebug: this is openTwoLayerLog");
         String DBname = "data/replicatedData";
         File file = new File(DBname);
         if(file.exists())
@@ -473,7 +474,7 @@ public class CassandraDaemon
             try {
                 StorageService.instance.db = new DbImpl(options, file.toJavaIOFile(), StorageService.instance.dbMeta);
             } catch(Throwable e){
-                    logger.debug("open twoLayerLog failed!!");
+                    logger.error("open twoLayerLog failed!!");
             }
         }
     }
