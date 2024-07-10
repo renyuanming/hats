@@ -499,6 +499,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             }
         }
         try {
+            logger.info("rymDebug: This is persistentInMemoryData, the groupCountDownMap instance is {}");
             writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
             byte[] groupAccessNumMapBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap);
             logger.info("rymDebug: groupAccessNumMapBytes length:{}, the groupAccessNumMap instance is {}", groupAccessNumMapBytes.length, StorageService.instance.groupAccessNumMap);

@@ -385,7 +385,7 @@ public class DbImpl
         // apply recovered edits
         versions.logAndApply(edit, 1);
         // cleanup unused files
-        deleteObsoleteFiles(globalLogName, databaseDir);
+        // deleteObsoleteFiles(globalLogName, databaseDir);
         // schedule compactions
         //maybeScheduleCompaction();
     }
