@@ -15,6 +15,8 @@ COMPACTION_STRATEGY=("LCS" "STCS")
 
 JDK_VERSION="17"
 LOG_LEVEL="info"
+BRANCH="main"
+
 
 function exportEnv {
     
@@ -44,7 +46,7 @@ function main {
         for rf in "${REPLICAS[@]}"; do
             for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
                 # Load data
-                load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL}
+                load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
                 # Wait for flush or compaction ready
                 flush "LoadDB" $scheme $WAIT_TIME
                 # Backup the DB and the logs

@@ -485,6 +485,7 @@ function load {
     shift 9
     compaction_strategy=$1
     logLevel=$2
+    branch=$3
     
 
 
@@ -514,6 +515,7 @@ function load {
     sed -i "s|NODE_IP|${NodeIP}|g" ${playbook}
     sed -i "s|PATH_TO_RESULT_DIR|${PathToResultDir}|g" ${playbook}
     sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
+    sed -i "s|BRANCH|${branch}|g" ${playbook}
     
     if [ $targetScheme == "depart" ] || [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}
@@ -724,16 +726,16 @@ function runExp {
                                                     echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
 
                                                     SETTING=$(getSettingName ${motivation} ${compactionLevel})
-                                                    if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
-                                                        # startup from preload dataset
-                                                        if [ "${EXP_NAME}" == "Exp-MixedReadWrite" ]; then
-                                                            echo "Start from backup"
-                                                            startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
-                                                        else
-                                                            echo "Start from current data"
-                                                            restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
-                                                        fi
+                                                    # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
+                                                    # startup from preload dataset
+                                                    if [ "${EXP_NAME}" == "Exp-MixedReadWrite" ]; then
+                                                        echo "Start from backup"
+                                                        startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
+                                                    else
+                                                        echo "Start from current data"
+                                                        restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
                                                     fi
+                                                    # fi
                                                     run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
 
 
