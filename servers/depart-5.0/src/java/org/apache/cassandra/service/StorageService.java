@@ -500,10 +500,16 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         }
         try {
             logger.info("rymDebug: This is persistentInMemoryData, the groupCountDownMap instance is {}");
-            writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
-            byte[] groupAccessNumMapBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap);
-            logger.info("rymDebug: groupAccessNumMapBytes length:{}, the groupAccessNumMap instance is {}", groupAccessNumMapBytes.length, StorageService.instance.groupAccessNumMap);
-            writeBytesToFile(path + "groupAccessNumMap", groupAccessNumMapBytes);
+            if(!StorageService.instance.groupCountDownMap.isEmpty())
+            {
+                writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
+            }
+            if(!StorageService.instance.groupAccessNumMap.isEmpty())
+            {
+                byte[] groupAccessNumMapBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap);
+                logger.info("rymDebug: groupAccessNumMapBytes length:{}, the groupAccessNumMap instance is {}", groupAccessNumMapBytes.length, StorageService.instance.groupAccessNumMap);
+                writeBytesToFile(path + "groupAccessNumMap", groupAccessNumMapBytes);
+            }
             // byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
             // logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
             // writeBytesToFile(path + "db", dbBytes);
