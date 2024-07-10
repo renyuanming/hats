@@ -9,7 +9,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static org.iq80.twoLayerLog.util.SizeOf.SIZE_OF_LONG;
 
-public class InternalKey
+import java.io.Serializable;
+
+public class InternalKey implements Serializable
 {
     private final Slice userKey;
     private final long sequenceNumber;

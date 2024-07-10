@@ -3,6 +3,7 @@ package org.iq80.twoLayerLog.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
@@ -25,7 +26,7 @@ import org.apache.cassandra.service.StorageService;
  * Little Endian slice of a byte array.
  */
 public final class Slice
-        implements Comparable<Slice>
+        implements Comparable<Slice>, Serializable
 {
     private final byte[] data;
     private final int offset;

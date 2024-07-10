@@ -6,6 +6,7 @@ import org.iq80.twoLayerLog.CompressionType;
 import org.iq80.twoLayerLog.DB;
 import org.iq80.twoLayerLog.DBComparator;
 import org.iq80.twoLayerLog.DBException;
+import org.iq80.twoLayerLog.DBMeta;
 import org.iq80.twoLayerLog.Options;
 import org.iq80.twoLayerLog.Range;
 import org.iq80.twoLayerLog.ReadOptions;
@@ -108,10 +109,11 @@ public class DbImpl
     private final Options options;
     private final File databaseDir;
     private final DbLock dbLock;
+    public final DBMeta metadata;
     
     private static final Logger logger = LoggerFactory.getLogger(DbImpl.class);
-    private Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); 
-    public Map<String, VersionSet> groupVersionSetMap = new HashMap<String,VersionSet>();
+    private Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); // Serial
+    public Map<String, VersionSet> groupVersionSetMap = new HashMap<String,VersionSet>(); // Serial
 
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
     public final ReentrantLock mutex = new ReentrantLock();
@@ -165,27 +167,35 @@ public class DbImpl
 	
     public Map<String,LogWriter> replicasLogMap = new HashMap<String,LogWriter>();
     
-    public Map<Integer,File> replicasDirMap = new HashMap<Integer,File>();
+    // public Map<Integer,File> replicasDirMap = new HashMap<Integer,File>(); // Serial
     public Map<Integer,ExecutorService> replicasThreadMap = new HashMap<Integer,ExecutorService>();
-    public Map<String,Integer> grouptoIDMap=new HashMap<String,Integer>();
+    // public Map<String,Integer> grouptoIDMap=new HashMap<String,Integer>(); // Serial
 	public Map<Integer,List<String>> rangeUpperBoundMap=new HashMap<Integer,List<String>>();
 	
 	public Map<String,Integer> currentLogSizeMap=new HashMap<String,Integer>();
-	public Map<String,Integer> continueWriteGroupMap=new HashMap<String,Integer>();
+	// public Map<String,Integer> continueWriteGroupMap=new HashMap<String,Integer>(); // Serial
   	public Map<String,CountDownLatch> groupCountDownMap = new HashMap<String,CountDownLatch>();
-    public Map<Integer, Slice> tableMetaMap = new HashMap<Integer, Slice>();
+    // public Map<Integer, Slice> tableMetaMap = new HashMap<Integer, Slice>(); // Serial
 	
 	public int totalLogDirNumber;
     
     private final ScheduledExecutorService splitExecutor = Executors.newSingleThreadScheduledExecutor();
     private final ScheduledExecutorService gcExecutor = Executors.newSingleThreadScheduledExecutor();
 
-    public DbImpl(Options options, File databaseDir)
+    public DbImpl(Options options, File databaseDir, DBMeta metadata)
             throws IOException
     {
         requireNonNull(options, "options is null");
         requireNonNull(databaseDir, "databaseDir is null");
         this.options = options;
+        if(metadata == null)
+        {
+            this.metadata = new DBMeta();
+        }
+        else
+        {
+            this.metadata = metadata;
+        }
 
         if (this.options.compressionType() == CompressionType.SNAPPY && !Snappy.available()) {
             // Disable snappy if it's not available.
@@ -254,15 +264,12 @@ public class DbImpl
                 .build();
         flushExecutor = Executors.newSingleThreadExecutor(flushThreadFactory);
 
-        // Reserve ten files or so for other uses and give the rest to TableCache.
-        int tableCacheSize = options.maxOpenFiles() - 10;
-        TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
-
-        groupTableCacheMap.put(globalLogName, tableCache);
         // create the version set
 
         // create the database dir if it does not already exist
-        databaseDir.mkdirs();
+        // databaseDir.mkdirs();
+        if(!databaseDir.exists())
+            databaseDir.mkdirs();
         checkArgument(databaseDir.exists(), "Database directory '%s' does not exist and could not be created", databaseDir);
         checkArgument(databaseDir.isDirectory(), "Database directory '%s' is not a directory", databaseDir);
 
@@ -279,57 +286,34 @@ public class DbImpl
             else {
                 checkArgument(!options.errorIfExists(), "Database '%s' exists and the error if exists option is enabled", databaseDir);
             }
-            //List<FileMetaData> files = new ArrayList<FileMetaData>();
-            List<Long> filesID = new ArrayList<Long>();
-            VersionSet versions = new VersionSet(databaseDir, tableCache, internalKeyComparator, filesID);
+            // Reserve ten files or so for other uses and give the rest to TableCache.
+            int tableCacheSize = options.maxOpenFiles() - 10;
 
-            groupVersionSetMap.put(globalLogName, versions);
-            // load  (and recover) current version
-            versions.recover();
+            if(metadata == null)
+            {
+                TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
 
-            // Recover from all newer log files than the ones named in the
-            // descriptor (new log files may have been added by the previous
-            // incarnation without registering them in the descriptor).
-            //
-            // Note that PrevLogNumber() is no longer used, but we pay
-            // attention to it in case we are recovering a database
-            // produced by an older version of twoLayerLog.
-            long minLogNumber = versions.getLogNumber();
-            long previousLogNumber = versions.getPrevLogNumber();
-            List<File> filenames = Filename.listFiles(databaseDir);
-
-            List<Long> logs = new ArrayList<>();
-            for (File filename : filenames) {
-                FileInfo fileInfo = Filename.parseFileName(filename);
-
-                if (fileInfo != null &&
-                        fileInfo.getFileType() == FileType.LOG &&
-                        ((fileInfo.getFileNumber() >= minLogNumber) || (fileInfo.getFileNumber() == previousLogNumber))) {
-                    logs.add(fileInfo.getFileNumber());
+                //List<FileMetaData> files = new ArrayList<FileMetaData>();
+                List<Long> filesID = new ArrayList<Long>();
+                VersionSet versions = new VersionSet(databaseDir, tableCache, internalKeyComparator, filesID);
+                groupTableCacheMap.put(globalLogName, tableCache);
+                groupVersionSetMap.put(globalLogName, versions);
+                prepareVersions(versions);
+            }
+            else
+            {
+                for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
+                {
+                    String groupID = entry.getKey();
+                    File groupFile = entry.getValue();
+                    TableCache groupTableCache = new TableCache(groupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
+                    List<Long> groupFilesID = new ArrayList<Long>();
+                    VersionSet groupVersions = new VersionSet(groupFile, groupTableCache, internalKeyComparator, groupFilesID);
+                    groupTableCacheMap.put(groupID, groupTableCache);
+                    groupVersionSetMap.put(groupID, groupVersions);
                 }
             }
 
-            // Recover in the order in which the logs were generated
-            VersionEdit edit = new VersionEdit();
-            Collections.sort(logs);
-            for (Long fileNumber : logs) {
-                long maxSequence = recoverLogFile(fileNumber, edit);
-                if (versions.getLastSequence() < maxSequence) {
-                    versions.setLastSequence(maxSequence);
-                }
-            }
-
-            // open transaction log
-            long logFileNumber = versions.getNextFileNumber();
-            this.log = Logs.createLogWriter(new File(databaseDir, Filename.logFileName(logFileNumber)), logFileNumber);
-            edit.setLogNumber(log.getFileNumber());
-
-            // apply recovered edits
-            versions.logAndApply(edit, 1);
-            // cleanup unused files
-            deleteObsoleteFiles(globalLogName, databaseDir);
-            // schedule compactions
-            //maybeScheduleCompaction();
         }
         finally {
             mutex.unlock();
@@ -356,6 +340,56 @@ public class DbImpl
         logger.info("{}", new Exception("rymDebug: Invoke the DbImpl constructor"));
     }
 
+    private void prepareVersions(VersionSet versions) throws IOException
+    {
+        // load  (and recover) current version
+        versions.recover();
+
+        // Recover from all newer log files than the ones named in the
+        // descriptor (new log files may have been added by the previous
+        // incarnation without registering them in the descriptor).
+        //
+        // Note that PrevLogNumber() is no longer used, but we pay
+        // attention to it in case we are recovering a database
+        // produced by an older version of twoLayerLog.
+        long minLogNumber = versions.getLogNumber();
+        long previousLogNumber = versions.getPrevLogNumber();
+        List<File> filenames = Filename.listFiles(databaseDir);
+
+        List<Long> logs = new ArrayList<>();
+        for (File filename : filenames) {
+            FileInfo fileInfo = Filename.parseFileName(filename);
+
+            if (fileInfo != null &&
+                    fileInfo.getFileType() == FileType.LOG &&
+                    ((fileInfo.getFileNumber() >= minLogNumber) || (fileInfo.getFileNumber() == previousLogNumber))) {
+                logs.add(fileInfo.getFileNumber());
+            }
+        }
+
+        // Recover in the order in which the logs were generated
+        VersionEdit edit = new VersionEdit();
+        Collections.sort(logs);
+        for (Long fileNumber : logs) {
+            long maxSequence = recoverLogFile(fileNumber, edit);
+            if (versions.getLastSequence() < maxSequence) {
+                versions.setLastSequence(maxSequence);
+            }
+        }
+
+        // open transaction log
+        long logFileNumber = versions.getNextFileNumber();
+        this.log = Logs.createLogWriter(new File(databaseDir, Filename.logFileName(logFileNumber)), logFileNumber);
+        edit.setLogNumber(log.getFileNumber());
+
+        // apply recovered edits
+        versions.logAndApply(edit, 1);
+        // cleanup unused files
+        // deleteObsoleteFiles(globalLogName, databaseDir);
+        // schedule compactions
+        //maybeScheduleCompaction();
+    }
+
     public void performGroupMerge(){
         mutex.lock();
         StorageService.instance.printInfo("---in performGroupMerge");
@@ -368,7 +402,7 @@ public class DbImpl
                 //mutex.lock();//////
                 groupID = batchEntry.getKey();		
                 StorageService.instance.printInfo("performGroupMerge in groupID:"+groupID+", numberOfFilesInLevel:" + curVersionSet.numberOfFilesInLevel(0));
-                int nodeID = grouptoIDMap.get(groupID);
+                int nodeID = this.metadata.grouptoIDMap.get(groupID);
                 try{
                     backgroundGroupGC(nodeID, groupID);
                     StorageService.instance.groupAccessNumMap.put(groupID, 0);
@@ -441,7 +475,7 @@ public class DbImpl
         dbLock.release();
     }
     
-    public void createReplicaDir(int noeID, List<String> strTokensList, String keySpaceName) throws IOException {
+    public void initializeReplicaDir(int noeID, List<String> strTokensList, String keySpaceName) throws IOException {
     	String replicaDBName = databaseDir.getAbsoluteFile() + File.separator + "replica" + String.valueOf(noeID);           
         File replicaFile = new File(replicaDBName); 
         dbKeySpaceName = keySpaceName;
@@ -458,15 +492,15 @@ public class DbImpl
         		writeBatchMap.put(curToken, newWriteBatch);
             	tokensList.add(curToken);
             	totalLogDirNumber++;
-            	grouptoIDMap.put(curToken, noeID);
-            	continueWriteGroupMap.put(curToken, 0);
+            	this.metadata.grouptoIDMap.put(curToken, noeID);
+            	this.metadata.continueWriteGroupMap.put(curToken, 0);
             } 
         	//groupDirMapTest.put(noeID, strTokensList.get(0));////
         	rangeUpperBoundMap.put(noeID, tokensList);
-        	replicasDirMap.put(noeID, replicaFile);  
-        	ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-        	replicasThreadMap.put(noeID, singleThreadExecutor);
+        	this.metadata.replicasDirMap.put(noeID, replicaFile);  
         }
+        ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+        replicasThreadMap.put(noeID, singleThreadExecutor);
     }
     
     public int getRangeGroupRowNumber(int NodeID, String groupID) {
@@ -613,7 +647,7 @@ public class DbImpl
     public int getRangeRowAndInsertValidator(int NodeID, String rangeLeft, String rangeRight, Map<String, byte[]> keyValueMap) {
         //public Slice getRangeRowAndInsertValidator(int NodeID, String rangeLeft, String rangeRight) {
         	//WriteBatchImpl groupWriteBatch = new WriteBatchImpl();
-        	File perNodeLogDir = replicasDirMap.get(NodeID);
+        	File perNodeLogDir = this.metadata.replicasDirMap.get(NodeID);
         	String rangeGroupName = perNodeLogDir.getAbsoluteFile() + File.separator + "group" + rangeRight;    	
         	File rangeGroupFile = new File(rangeGroupName);        
             if(!rangeGroupFile.exists()){
@@ -854,7 +888,7 @@ public class DbImpl
     //private void maybeScheduleBackgroundGC()
     {
         if(groupID == null) return;
-        int nodeID = grouptoIDMap.get(groupID);
+        int nodeID = this.metadata.grouptoIDMap.get(groupID);
         StorageService.instance.printInfo("in maybeScheduleBackgroundGC, groupID:"+groupID);
         
         if (backgroundGroupGC != null || backgroundCompaction != null) {
@@ -1008,7 +1042,7 @@ public class DbImpl
             StorageService.instance.printInfo("after new CompactionState");
             doGroupGCWork(compactionState, groupID);
             cleanupGroupMerge(compactionState);
-            continueWriteGroupMap.put(groupID, 0);
+            this.metadata.continueWriteGroupMap.put(groupID, 0);
         }      
         //duringBackgroundGC = 0;
         StorageService.instance.mergeSort += System.currentTimeMillis() - startTime;
@@ -1586,7 +1620,7 @@ public class DbImpl
             InternalKey smallest = null;
             InternalKey largest = null;
             FileChannel channel = new FileOutputStream(file).getChannel();
-            tableMetaMap.clear();
+            this.metadata.tableMetaMap.clear();
             try {
                 TableBuilder tableBuilder = new TableBuilder(options, channel, new InternalUserComparator(internalKeyComparator));
 
@@ -1601,7 +1635,7 @@ public class DbImpl
                     tableBuilder.add(key.encode(), entry.getValue());
                 }
                 
-                tableBuilder.finish(tableMetaMap);
+                tableBuilder.finish(this.metadata.tableMetaMap);
             }
             finally {
                 try {
@@ -1616,7 +1650,7 @@ public class DbImpl
                 return null;
             }
             
-            FileMetaData fileMetaData = new FileMetaData(globalLogName, fileNumber, tableMetaMap.get(0), tableMetaMap.get(1), file.length(), smallest, largest);
+            FileMetaData fileMetaData = new FileMetaData(globalLogName, fileNumber, this.metadata.tableMetaMap.get(0), this.metadata.tableMetaMap.get(1), file.length(), smallest, largest);
 
             // verify table can be opened
             //tableCache.newIterator(fileMetaData);
@@ -1832,7 +1866,7 @@ public class DbImpl
         checkState(mutex.isHeldByCurrentThread());
         compactionState.smallestSnapshot = versions.getLastSequence();
         int count = 0;
-        int nodeID = grouptoIDMap.get(rangGroupID);
+        int nodeID = this.metadata.grouptoIDMap.get(rangGroupID);
         //mutex.unlock();
         try {
             MergingIterator iterator = versions.makeInputIterator(compactionState.compaction);
@@ -1936,7 +1970,7 @@ public class DbImpl
             throws FileNotFoundException
     {
         //mutex.lock();
-        File replicaFile = replicasDirMap.get(nodeID);
+        File replicaFile = this.metadata.replicasDirMap.get(nodeID);
         String rangeGroupName = replicaFile.getAbsoluteFile() + File.separator + "group" + rangGroupID;                   	    
 		File rangeGroupFile = new File(rangeGroupName); 
 		//String info = "in openCompactionOutputFile,"+rangeGroupFile;
@@ -1947,6 +1981,7 @@ public class DbImpl
         	int tableCacheSize = options.maxOpenFiles() - 10;
             TableCache curtableCache = new TableCache(rangeGroupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
             groupTableCacheMap.put(rangGroupID, curtableCache);
+            this.metadata.groupIdFileMap.put(rangGroupID, rangeGroupFile);
             
             VersionSet groupVersions = null;
 			try {
@@ -1970,7 +2005,7 @@ public class DbImpl
     {
         requireNonNull(compactionState, "compactionState is null");
         mutex.lock();
-        File replicaFile = replicasDirMap.get(nodeID);
+        File replicaFile = this.metadata.replicasDirMap.get(nodeID);
         String rangeGroupName = replicaFile.getAbsoluteFile() + File.separator + "group" + rangGroupID;                   	    
 		File rangeGroupFile = new File(rangeGroupName); 
 		//String info = "in openCompactionOutputFile,"+rangeGroupFile;
@@ -1981,6 +2016,7 @@ public class DbImpl
         	int tableCacheSize = options.maxOpenFiles() - 10;
             TableCache curtableCache = new TableCache(rangeGroupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
             groupTableCacheMap.put(rangGroupID, curtableCache);
+            this.metadata.groupIdFileMap.put(rangGroupID, rangeGroupFile);
             
             VersionSet groupVersions = null;
 			try {
@@ -2022,7 +2058,7 @@ public class DbImpl
     {
         //mutex.lock();
         try {
-            File replicaFile = replicasDirMap.get(nodeID);
+            File replicaFile = this.metadata.replicasDirMap.get(nodeID);
             String rangeGroupName = replicaFile.getAbsoluteFile() + File.separator + "group" + rangGroupID;                   	    
             File rangeGroupFile = new File(rangeGroupName); 
             //String info = "in openCompactionOutputFileForGC,"+rangeGroupFile;
@@ -2032,6 +2068,7 @@ public class DbImpl
                 int tableCacheSize = options.maxOpenFiles() - 10;
                 TableCache curtableCache = new TableCache(rangeGroupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
                 groupTableCacheMap.put(rangGroupID, curtableCache);
+                this.metadata.groupIdFileMap.put(rangGroupID, rangeGroupFile);
                 
                 VersionSet groupVersions = null;
                 try {
@@ -2073,9 +2110,9 @@ public class DbImpl
         StorageService.instance.printInfo("rangGroupID:"+rangGroupID+", outputNumber:"+outputNumber);
         checkArgument(outputNumber != 0);
 
-        tableMetaMap.clear();
+        this.metadata.tableMetaMap.clear();
         long currentEntries = builderMap.get(rangGroupID).getEntryCount();
-        builderMap.get(rangGroupID).finish(tableMetaMap);
+        builderMap.get(rangGroupID).finish(this.metadata.tableMetaMap);
         //long currentBytes = compactionState.builder.getFileSize();
         long currentBytes = builderMap.get(rangGroupID).getFileSize();
         compactionState.currentFileSize = currentBytes;
@@ -2083,8 +2120,8 @@ public class DbImpl
         compactionState.totalBytes += currentBytes;
         
         if(splitWrite==1) {
-	        int newContinueWriteGroupSize = continueWriteGroupMap.get(rangGroupID) + (int)(currentBytes/1024);
-			continueWriteGroupMap.put(rangGroupID, newContinueWriteGroupSize);	
+	        int newContinueWriteGroupSize = this.metadata.continueWriteGroupMap.get(rangGroupID) + (int)(currentBytes/1024);
+			this.metadata.continueWriteGroupMap.put(rangGroupID, newContinueWriteGroupSize);	
         }
 		InternalKey smallest = compactionState.currentSmallestMap.get(rangGroupID);
         InternalKey largest = compactionState.currentLargestMap.get(rangGroupID);
@@ -2092,8 +2129,8 @@ public class DbImpl
         //StorageService.instance.printInfo(info);
 
         FileMetaData currentFileMetaData = new FileMetaData(rangGroupID, compactionState.currentFileNumberMap.get(rangGroupID),
-                tableMetaMap.get(0),
-                tableMetaMap.get(1),
+                this.metadata.tableMetaMap.get(0),
+                this.metadata.tableMetaMap.get(1),
                 compactionState.currentFileSize,
                 smallest,
                 largest);
@@ -2112,8 +2149,8 @@ public class DbImpl
         checkArgument(outputNumber != 0);
 
         long currentEntries = compactionState.builder.getEntryCount();
-        tableMetaMap.clear();
-        compactionState.builder.finish(tableMetaMap);
+        this.metadata.tableMetaMap.clear();
+        compactionState.builder.finish(this.metadata.tableMetaMap);
 
         long currentBytes = compactionState.builder.getFileSize();
         compactionState.currentFileSize = currentBytes;
@@ -2121,8 +2158,8 @@ public class DbImpl
         compactionState.totalBytes += currentBytes;
         InternalKey currentLargest = new InternalKey(compactionState.currentLargest.getUserKey().copySlice(), 0, VALUE);   //////
         FileMetaData currentFileMetaData = new FileMetaData(rangGroupID, compactionState.currentFileNumber,
-                tableMetaMap.get(0),
-                tableMetaMap.get(1),
+                this.metadata.tableMetaMap.get(0),
+                this.metadata.tableMetaMap.get(1),
                 compactionState.currentFileSize,
                 compactionState.currentSmallest,
                 //compactionState.currentLargest
@@ -2232,8 +2269,8 @@ public class DbImpl
 				deleteObsoleteFiles(splitOrGCgroupID, databaseDir);
                 //StorageService.instance.printInfo("after deleteObsoleteFiles");
 		}else {
-				int nodeID = grouptoIDMap.get(splitOrGCgroupID);
-				File replicaFile = replicasDirMap.get(nodeID);
+				int nodeID = this.metadata.grouptoIDMap.get(splitOrGCgroupID);
+				File replicaFile = this.metadata.replicasDirMap.get(nodeID);
 		        String rangeGroupName = replicaFile.getAbsoluteFile() + File.separator + "group" + splitOrGCgroupID;                   	    
 				File rangeGroupFile = new File(rangeGroupName); 
 				//System.out.println("delete dir:"+rangeGroupFile);
@@ -2259,8 +2296,8 @@ public class DbImpl
         try {
             groupVersionSetMap.get(splitOrGCgroupID).logAndApply(compact.compaction.getEdit(), 0);
 
-            int nodeID = grouptoIDMap.get(splitOrGCgroupID);
-			File replicaFile = replicasDirMap.get(nodeID);
+            int nodeID = this.metadata.grouptoIDMap.get(splitOrGCgroupID);
+			File replicaFile = this.metadata.replicasDirMap.get(nodeID);
 		    String rangeGroupName = replicaFile.getAbsoluteFile() + File.separator + "group" + splitOrGCgroupID;                   	    
 			File rangeGroupFile = new File(rangeGroupName); 
 			//System.out.println("delete dir:"+rangeGroupFile);

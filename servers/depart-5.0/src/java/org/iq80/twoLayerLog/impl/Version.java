@@ -10,6 +10,7 @@ import org.iq80.twoLayerLog.util.LevelIterator;
 import org.iq80.twoLayerLog.util.MergingIterator;
 import org.iq80.twoLayerLog.util.Slice;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,7 +28,7 @@ import org.apache.cassandra.service.StorageService;
 
 // todo this class should be immutable
 public class Version
-        implements SeekingIterable<InternalKey, Slice>
+        implements SeekingIterable<InternalKey, Slice>, Serializable
 {
     private final AtomicInteger retained = new AtomicInteger(1);
     private final VersionSet versionSet;

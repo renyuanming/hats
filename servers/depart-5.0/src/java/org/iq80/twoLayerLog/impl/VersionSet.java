@@ -16,6 +16,7 @@ import org.iq80.twoLayerLog.util.Slice;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +43,7 @@ import static org.iq80.twoLayerLog.impl.DbImpl.TARGET_FILE_SIZE;
 import org.apache.cassandra.service.StorageService;
 
 public class VersionSet
-        implements SeekingIterable<InternalKey, Slice>
+        implements SeekingIterable<InternalKey, Slice>, Serializable
 {
     private static final int L0_COMPACTION_TRIGGER = 4;
 

@@ -102,6 +102,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.commons.lang3.StringUtils;
+import org.iq80.twoLayerLog.DBMeta;
 import org.iq80.twoLayerLog.impl.DbImpl;
 import org.iq80.twoLayerLog.impl.FileMetaData;
 import org.slf4j.Logger;
@@ -386,7 +387,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
      * DEPART impl
     */
     
-    public DbImpl db; // TODO
+    public DBMeta dbMeta;
+    public DbImpl db;
     public InetAddress repairNode = null;
     public int splitDelay = 60; 
     public int minSplitSSTableNum = 20; 
@@ -497,11 +499,26 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             }
         }
         try {
-            writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
-            writeBytesToFile(path + "groupAccessNumMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap));
-            byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
-            logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
-            writeBytesToFile(path + "db", dbBytes);
+            // logger.info("rymDebug: This is persistentInMemoryData, the groupCountDownMap instance is {}", StorageService.instance.groupCountDownMap);
+            // if(!StorageService.instance.groupCountDownMap.isEmpty())
+            // {
+            //     writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
+            // }
+            if(!StorageService.instance.groupAccessNumMap.isEmpty())
+            {
+                byte[] groupAccessNumMapBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap);
+                logger.info("rymDebug: groupAccessNumMapBytes length:{}, the groupAccessNumMap instance is {}", groupAccessNumMapBytes.length, StorageService.instance.groupAccessNumMap);
+                writeBytesToFile(path + "groupAccessNumMap", groupAccessNumMapBytes);
+            }
+            // byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
+            // logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
+            // writeBytesToFile(path + "db", dbBytes);
+            DBMeta dbMeta = StorageService.instance.db.metadata;
+            byte[] dbMetaBytes = ByteObjectConversion.objectToByteArray((Serializable) dbMeta);
+            logger.info("rymDebug: dbMetaBytes length:{}, the dbMeta instance is {}", dbMetaBytes.length, dbMeta);
+            writeBytesToFile(path + "dbMeta", dbMetaBytes);
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -510,9 +527,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public void reloadInMemoryData() {
         String path = System.getProperty("user.dir") + "/data/inMemoryData/";
         try {
-            StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
+            // StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
             StorageService.instance.groupAccessNumMap = (Map<String, Integer>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupAccessNumMap")));
-            StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
+            // StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
+            StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
         } catch (Exception e) {
             e.printStackTrace();
         }
