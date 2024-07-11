@@ -289,19 +289,19 @@ public class DbImpl
             // Reserve ten files or so for other uses and give the rest to TableCache.
             int tableCacheSize = options.maxOpenFiles() - 10;
 
-            // if(metadata == null)
-            // {
-            logger.info("rymDebug: the metadata is null, we generate new group versions.");
-            TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
+            if(metadata == null)
+            {
+                logger.info("rymDebug: the metadata is null, we generate new group versions.");
+                TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
 
-            //List<FileMetaData> files = new ArrayList<FileMetaData>();
-            List<Long> filesID = new ArrayList<Long>();
-            VersionSet versions = new VersionSet(databaseDir, tableCache, internalKeyComparator, filesID);
-            groupTableCacheMap.put(globalLogName, tableCache);
-            groupVersionSetMap.put(globalLogName, versions);
-            // this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
-            prepareVersions(versions);
-            // }
+                //List<FileMetaData> files = new ArrayList<FileMetaData>();
+                List<Long> filesID = new ArrayList<Long>();
+                VersionSet versions = new VersionSet(databaseDir, tableCache, internalKeyComparator, filesID);
+                groupTableCacheMap.put(globalLogName, tableCache);
+                groupVersionSetMap.put(globalLogName, versions);
+                // this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
+                prepareVersions(versions);
+            }
             if(metadata != null)
             {
                 logger.info("rymDebug: the metadata is not null, we reload old group versions.");
