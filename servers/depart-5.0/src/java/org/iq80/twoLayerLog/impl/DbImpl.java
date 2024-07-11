@@ -1480,6 +1480,7 @@ public class DbImpl
             snapshot = (SnapshotImpl) options.snapshot();
         }
         else {
+            logger.info("###in getSnapshot, globalLogName:"+globalLogName);
         	VersionSet versions = groupVersionSetMap.get(globalLogName);
             if(versions == null) {
                 logger.error("rymERROR: no versions for group " + globalLogName);
