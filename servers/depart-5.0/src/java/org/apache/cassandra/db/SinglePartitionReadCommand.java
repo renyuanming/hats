@@ -524,7 +524,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         //logger.debug("in queryStorage");
         UnfilteredRowIterator partition = null;
         Token tk = this.partitionKey().getToken();
-        // logger.info("rymInfo: queryLocalRegion, the db instance is {}", StorageService.instance.db);
+        logger.info("rymInfo: queryLocalRegion, the db instance is {}", StorageService.instance.db);
         if(StorageService.instance.db!=null){
             //byte[] value = null;
             Token rightBound = StorageService.instance.getBoundToken(tk);
