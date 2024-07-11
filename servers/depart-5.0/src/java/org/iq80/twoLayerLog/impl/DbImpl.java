@@ -1478,6 +1478,7 @@ public class DbImpl
         SnapshotImpl snapshot;
         if (options.snapshot() != null) {
             snapshot = (SnapshotImpl) options.snapshot();
+            logger.info("###in getSnapshot, options.snapshot():"+options.snapshot());
         }
         else {
             logger.info("###in getSnapshot, globalLogName:"+globalLogName);
