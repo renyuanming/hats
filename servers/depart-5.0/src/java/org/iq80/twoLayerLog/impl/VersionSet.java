@@ -63,7 +63,7 @@ public class VersionSet
     private long logNumber;
     private long prevLogNumber;
 
-    public final Map<Version, Object> activeVersions = new ConcurrentHashMap<>(); // test
+    public transient Map<Version, Object> activeVersions = new ConcurrentHashMap<>(); // test
     private final File databaseDir;
     private final TableCache tableCache;
     public final InternalKeyComparator internalKeyComparator;
