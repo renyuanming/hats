@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -62,7 +63,7 @@ public class VersionSet
     private long logNumber;
     private long prevLogNumber;
 
-    private final Map<Version, Object> activeVersions = new MapMaker().weakKeys().makeMap();
+    private final Map<Version, Object> activeVersions = new ConcurrentHashMap<>();
     private final File databaseDir;
     private final TableCache tableCache;
     private final InternalKeyComparator internalKeyComparator;
