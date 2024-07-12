@@ -391,10 +391,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public DbImpl db;
     public InetAddress repairNode = null;
     public int splitDelay = 60; 
-    public int minSplitSSTableNum = 20; 
-    public int splitSSTableNum = 20;
-    public int maxGlobalSSTableNum = 30; 
-    public static int maxSegNumofGroup = 20; 
+    public int minSplitSSTableNum = 20; // 20
+    public int splitSSTableNum = 20; // 20
+    public int maxGlobalSSTableNum = 30; // 30
+    public static int maxSegNumofGroup = 20; // 20
     public boolean FlushTriggeredCompaction = true;
     public static long minSplitDataSize = 2085728;
     public boolean duringRepair = false; // TODO
@@ -534,6 +534,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         } catch (Exception e) {
             e.printStackTrace();
         }
+        logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
     }
 
     

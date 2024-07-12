@@ -291,6 +291,7 @@ public class DbImpl
 
             if(metadata == null)
             {
+                logger.info("rymDebug: the metadata is null, we generate new group versions.");
                 TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
 
                 //List<FileMetaData> files = new ArrayList<FileMetaData>();
@@ -298,10 +299,12 @@ public class DbImpl
                 VersionSet versions = new VersionSet(databaseDir, tableCache, internalKeyComparator, filesID);
                 groupTableCacheMap.put(globalLogName, tableCache);
                 groupVersionSetMap.put(globalLogName, versions);
+                // this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
                 prepareVersions(versions);
             }
-            else
+            if(metadata != null)
             {
+                logger.info("rymDebug: the metadata is not null, we reload old group versions.");
                 for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
                 {
                     String groupID = entry.getKey();
@@ -311,6 +314,7 @@ public class DbImpl
                     VersionSet groupVersions = new VersionSet(groupFile, groupTableCache, internalKeyComparator, groupFilesID);
                     groupTableCacheMap.put(groupID, groupTableCache);
                     groupVersionSetMap.put(groupID, groupVersions);
+                    logger.info("rymDebug: load groupID: " + groupID);
                 }
             }
 
@@ -1474,9 +1478,14 @@ public class DbImpl
         SnapshotImpl snapshot;
         if (options.snapshot() != null) {
             snapshot = (SnapshotImpl) options.snapshot();
+            logger.info("###in getSnapshot, options.snapshot():"+options.snapshot());
         }
         else {
+            logger.info("###in getSnapshot, globalLogName:"+globalLogName);
         	VersionSet versions = groupVersionSetMap.get(globalLogName);
+            if(versions == null) {
+                logger.error("rymERROR: no versions for group " + globalLogName);
+            }
             snapshot = new SnapshotImpl(versions.getCurrent(), versions.getLastSequence());
             snapshot.close(); // To avoid holding the snapshot active..
         }
