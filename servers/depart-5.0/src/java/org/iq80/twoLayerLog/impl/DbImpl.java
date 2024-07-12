@@ -302,16 +302,18 @@ public class DbImpl
             }
             else
             {
-                for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
-                {
-                    String groupID = entry.getKey();
-                    File groupFile = entry.getValue();
-                    TableCache groupTableCache = new TableCache(groupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
-                    List<Long> groupFilesID = new ArrayList<Long>();
-                    VersionSet groupVersions = new VersionSet(groupFile, groupTableCache, internalKeyComparator, groupFilesID);
-                    groupTableCacheMap.put(groupID, groupTableCache);
-                    groupVersionSetMap.put(groupID, groupVersions);
-                }
+                // for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
+                // {
+                //     String groupID = entry.getKey();
+                //     File groupFile = entry.getValue();
+                //     TableCache groupTableCache = new TableCache(groupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
+                //     List<Long> groupFilesID = new ArrayList<Long>();
+                //     VersionSet groupVersions = new VersionSet(groupFile, groupTableCache, internalKeyComparator, groupFilesID);
+                //     groupTableCacheMap.put(groupID, groupTableCache);
+                //     groupVersionSetMap.put(groupID, groupVersions);
+                // }
+                groupTableCacheMap = metadata.groupTableCacheMap;
+                groupVersionSetMap = metadata.groupVersionSetMap;
             }
 
         }

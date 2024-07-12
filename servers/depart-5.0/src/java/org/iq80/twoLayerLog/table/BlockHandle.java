@@ -1,12 +1,14 @@
 package org.iq80.twoLayerLog.table;
 
+import java.io.Serializable;
+
 import org.iq80.twoLayerLog.util.Slice;
 import org.iq80.twoLayerLog.util.SliceInput;
 import org.iq80.twoLayerLog.util.SliceOutput;
 import org.iq80.twoLayerLog.util.Slices;
 import org.iq80.twoLayerLog.util.VariableLengthQuantity;
 
-public class BlockHandle
+public class BlockHandle implements Serializable
 {
     public static final int MAX_ENCODED_LENGTH = 10 + 10;
 

@@ -19,10 +19,10 @@ import org.apache.cassandra.service.StorageService;
 public class FileChannelTable
         extends Table
 {
-    public FileChannelTable(String name, FileChannel fileChannel, Comparator<Slice> comparator, boolean verifyChecksums, Slice indexBlockSlice, Slice footerSlice, int flagR)
+    public FileChannelTable(String name, String filePath, Comparator<Slice> comparator, boolean verifyChecksums, Slice indexBlockSlice, Slice footerSlice, int flagR)
             throws IOException
     {
-        super(name, fileChannel, comparator, verifyChecksums, indexBlockSlice, footerSlice, flagR);
+        super(name, filePath, comparator, verifyChecksums, indexBlockSlice, footerSlice, flagR);
     }
 
     @Override

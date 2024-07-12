@@ -6,8 +6,10 @@ import org.iq80.twoLayerLog.util.Slice;
 import static com.google.common.base.Preconditions.checkState;
 import static org.iq80.twoLayerLog.impl.SequenceNumber.MAX_SEQUENCE_NUMBER;
 
+import java.io.Serializable;
+
 public class InternalUserComparator
-        implements UserComparator
+        implements UserComparator, Serializable
 {
     private final InternalKeyComparator internalKeyComparator;
 

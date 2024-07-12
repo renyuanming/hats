@@ -10,6 +10,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,11 +25,11 @@ import static org.iq80.twoLayerLog.impl.LogConstants.BLOCK_SIZE;
 import static org.iq80.twoLayerLog.impl.LogConstants.HEADER_SIZE;
 
 public class FileChannelLogWriter
-        implements LogWriter
+        implements LogWriter, Serializable
 {
     private final File file;
     private final long fileNumber;
-    private final FileChannel fileChannel;
+    private transient FileChannel fileChannel;
     private final AtomicBoolean closed = new AtomicBoolean();
     /**
      * Current offset in the current block
@@ -40,8 +44,35 @@ public class FileChannelLogWriter
 
         this.file = file;
         this.fileNumber = fileNumber;
-        this.fileChannel = new FileOutputStream(file).getChannel();
+        openFileChannel();
     }
+
+    @SuppressWarnings("resource")
+    private void openFileChannel() {
+        try {
+            this.fileChannel = new FileOutputStream(file).getChannel();
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private void closeFileChannel() throws IOException {
+        if (fileChannel != null) {
+            fileChannel.close();
+        }
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        openFileChannel();
+    }
+
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        closeFileChannel();
+        oos.defaultWriteObject();
+    }
+
 
     @Override
     public boolean isClosed()

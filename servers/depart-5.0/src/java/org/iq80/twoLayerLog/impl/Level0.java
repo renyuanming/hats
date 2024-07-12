@@ -5,6 +5,7 @@ import org.iq80.twoLayerLog.util.InternalTableIterator;
 import org.iq80.twoLayerLog.util.Level0Iterator;
 import org.iq80.twoLayerLog.util.Slice;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,7 +21,7 @@ import org.apache.cassandra.service.StorageService;
 
 // todo this class should be immutable
 public class Level0
-        implements SeekingIterable<InternalKey, Slice>
+        implements SeekingIterable<InternalKey, Slice>, Serializable
 {
     private final TableCache tableCache;
     private final InternalKeyComparator internalKeyComparator;

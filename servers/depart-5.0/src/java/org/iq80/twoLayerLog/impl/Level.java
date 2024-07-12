@@ -6,6 +6,7 @@ import org.iq80.twoLayerLog.util.InternalTableIterator;
 import org.iq80.twoLayerLog.util.LevelIterator;
 import org.iq80.twoLayerLog.util.Slice;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,7 +22,7 @@ import static org.iq80.twoLayerLog.impl.ValueType.VALUE;
 
 // todo this class should be immutable
 public class Level
-        implements SeekingIterable<InternalKey, Slice>
+        implements SeekingIterable<InternalKey, Slice>, Serializable
 {
     private final int levelNumber;
     private final TableCache tableCache;

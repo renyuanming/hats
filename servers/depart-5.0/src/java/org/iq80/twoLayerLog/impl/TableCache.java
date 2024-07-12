@@ -17,41 +17,55 @@ import org.iq80.twoLayerLog.util.Slice;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.ExecutionException;
 import org.apache.cassandra.service.StorageService;
 
 import static java.util.Objects.requireNonNull;
 
-public class TableCache
+public class TableCache implements Serializable
 {
-    private final LoadingCache<FileMetaData, TableAndFile> cache;
-    private final Finalizer<Table> finalizer = new Finalizer<>(1);
+    private transient LoadingCache<FileMetaData, TableAndFile> cache;
+    private transient Finalizer<Table> finalizer = new Finalizer<>(1);
+    private File databaseDir;
+    private int tableCacheSize;
+    private UserComparator userComparator;
+    private boolean verifyChecksums;
 
     public TableCache(final File databaseDir, int tableCacheSize, final UserComparator userComparator, final boolean verifyChecksums)
     {
         requireNonNull(databaseDir, "databaseName is null");
+        this.databaseDir = databaseDir;
+        this.tableCacheSize = tableCacheSize;
+        this.userComparator = userComparator;
+        this.verifyChecksums = verifyChecksums;
+        initializeCache();
+    }
 
-        cache = CacheBuilder.newBuilder()
-                .maximumSize(tableCacheSize)
-                .removalListener(new RemovalListener<FileMetaData, TableAndFile>()
-                {
-                    @Override
-                    public void onRemoval(RemovalNotification<FileMetaData, TableAndFile> notification)
-                    {
-                        Table table = notification.getValue().getTable();
-                        finalizer.addCleanup(table, table.closer());
-                    }
-                })
-                .build(new CacheLoader<FileMetaData, TableAndFile>()
-                {
-                    @Override
-                    public TableAndFile load(FileMetaData fileMetaData)
-                            throws IOException
-                    {
-                        return new TableAndFile(databaseDir, fileMetaData.getNumber(), userComparator, verifyChecksums, fileMetaData);
-                    }
-                });
+    private void initializeCache() {
+        this.cache = CacheBuilder.newBuilder()
+            .maximumSize(tableCacheSize)
+            .removalListener(new RemovalListener<FileMetaData, TableAndFile>() {
+                @Override
+                public void onRemoval(RemovalNotification<FileMetaData, TableAndFile> notification) {
+                    Table table = notification.getValue().getTable();
+                    finalizer.addCleanup(table, table.closer());
+                }
+            })
+            .build(new CacheLoader<FileMetaData, TableAndFile>() {
+                @Override
+                public TableAndFile load(FileMetaData fileMetaData) throws IOException {
+                    return new TableAndFile(databaseDir, fileMetaData.getNumber(), userComparator, verifyChecksums, fileMetaData);
+                }
+            });
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        finalizer = new Finalizer<>(1);
+        initializeCache();
     }
 
     public InternalTableIterator newIterator(FileMetaData file)
@@ -104,7 +118,7 @@ public class TableCache
         cache.invalidate(number);
     }
 
-    private final class TableAndFile
+    private final class TableAndFile implements Serializable
     {
         private final Table table;
         
@@ -116,17 +130,17 @@ public class TableCache
             FileInputStream fis = null;
             //FileChannel fileChannel = null;
             try {
-            	fis = new FileInputStream(tableFile);
-                FileChannel fileChannel = fis.getChannel();
+            	// fis = new FileInputStream(tableFile);
+                // FileChannel fileChannel = fis.getChannel();
                 //fileChannel = fis.getChannel();
                 if (Iq80DBFactory.USE_MMAP) {
-                    table = new MMapTable(tableFile.getAbsolutePath(), fileChannel, userComparator, verifyChecksums, fileMetaData.indexBlock, fileMetaData.footer, fileMetaData.flagR);
+                    table = new MMapTable(tableFile.getAbsolutePath(), tableFile.getPath(), userComparator, verifyChecksums, fileMetaData.indexBlock, fileMetaData.footer, fileMetaData.flagR);
                     // We can close the channel and input stream as the mapping does not need them
                     Closeables.closeQuietly(fis);
                     //Closeables.closeQuietly(fileChannel);
                 }
                 else {
-                    table = new FileChannelTable(tableFile.getAbsolutePath(), fileChannel, userComparator, verifyChecksums, fileMetaData.indexBlock, fileMetaData.footer, fileMetaData.flagR);
+                    table = new FileChannelTable(tableFile.getAbsolutePath(), tableFile.getPath(), userComparator, verifyChecksums, fileMetaData.indexBlock, fileMetaData.footer, fileMetaData.flagR);
                     //Closeables.closeQuietly(fis);
                     //Closeables.closeQuietly(fileChannel);
                 }

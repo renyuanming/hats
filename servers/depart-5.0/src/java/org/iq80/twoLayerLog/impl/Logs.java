@@ -5,8 +5,9 @@ import org.iq80.twoLayerLog.util.Slice;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 
-public final class Logs
+public final class Logs implements Serializable
 {
     private Logs()
     {

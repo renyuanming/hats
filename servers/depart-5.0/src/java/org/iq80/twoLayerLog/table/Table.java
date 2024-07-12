@@ -9,6 +9,10 @@ import org.iq80.twoLayerLog.util.VariableLengthQuantity;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Comparator;
@@ -19,27 +23,29 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 public abstract class Table
-        implements SeekingIterable<Slice, Slice>
+        implements SeekingIterable<Slice, Slice>, Serializable
 {
     protected final String name;
-    protected final FileChannel fileChannel;
+    protected transient FileChannel fileChannel;
     protected final Comparator<Slice> comparator;
     protected final boolean verifyChecksums;
     protected final Block indexBlock;
     protected final BlockHandle metaindexBlockHandle;
     public int flagR;
+    private final String filePath;
 
-    public Table(String name, FileChannel fileChannel, Comparator<Slice> comparator, boolean verifyChecksums, Slice indexBlockSlice, Slice footerSlice, int flagR)
+    public Table(String name, String filePath, Comparator<Slice> comparator, boolean verifyChecksums, Slice indexBlockSlice, Slice footerSlice, int flagR)
             throws IOException
     {
         requireNonNull(name, "name is null");
-        requireNonNull(fileChannel, "fileChannel is null");
-        long size = fileChannel.size();
-        checkArgument(size >= Footer.ENCODED_LENGTH, "File is corrupt: size must be at least %s bytes", Footer.ENCODED_LENGTH);
+        requireNonNull(filePath, "filePath is null");
+        this.filePath = filePath;
+        openFileChannel();
+        // long size = this.fileChannel.size();
+        // checkArgument(size >= Footer.ENCODED_LENGTH, "File is corrupt: size must be at least %s bytes", Footer.ENCODED_LENGTH);
         requireNonNull(comparator, "comparator is null");
 
         this.name = name;
-        this.fileChannel = fileChannel;
         this.verifyChecksums = verifyChecksums;
         this.comparator = comparator;
         
@@ -129,7 +135,7 @@ public abstract class Table
     }
 
     private static class Closer
-            implements Callable<Void>
+            implements Callable<Void>, Serializable
     {
         private final Closeable closeable;
 
@@ -145,4 +151,26 @@ public abstract class Table
             return null;
         }
     }
+
+    @SuppressWarnings("resource")
+    private void openFileChannel() throws IOException {
+        this.fileChannel = new RandomAccessFile(this.filePath, "rw").getChannel();
+    }
+
+    private void closeFileChannel() throws IOException {
+        if (fileChannel != null) {
+            fileChannel.close();
+        }
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        openFileChannel();
+    }
+
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        closeFileChannel();
+        oos.defaultWriteObject();
+    }
+
 }

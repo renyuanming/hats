@@ -4,6 +4,7 @@ import org.iq80.twoLayerLog.impl.SeekingIterable;
 import org.iq80.twoLayerLog.util.Slice;
 import org.iq80.twoLayerLog.util.Slices;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -11,7 +12,7 @@ import static java.util.Objects.requireNonNull;
 import static org.iq80.twoLayerLog.util.SizeOf.SIZE_OF_INT;
 
 public class Block
-        implements SeekingIterable<Slice, Slice>
+        implements SeekingIterable<Slice, Slice>, Serializable
 {
     private final Slice block;
     private final Comparator<Slice> comparator;

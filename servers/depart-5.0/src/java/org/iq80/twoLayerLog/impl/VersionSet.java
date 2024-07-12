@@ -16,6 +16,8 @@ import org.iq80.twoLayerLog.util.Slice;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -55,7 +57,7 @@ public class VersionSet
 
     private final AtomicLong nextFileNumber = new AtomicLong(2);
     private long manifestFileNumber = 1;
-    private Version current;
+    private transient Version current;
     private long lastSequence;
     private long logNumber;
     private long prevLogNumber;
@@ -125,6 +127,22 @@ public class VersionSet
         Set<Version> versions = activeVersions.keySet();
         // TODO:
         // log("DB closed with "+versions.size()+" open snapshots. This could mean your application has a resource leak.");
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeObject(current);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        current = (Version) in.readObject();
+        current.setVersionSet(this);
+    }
+
+    // Setters and Getters
+    public void setCurrentVersion(Version version) {
+        this.current = version;
     }
 
     private void appendVersion(Version version)
