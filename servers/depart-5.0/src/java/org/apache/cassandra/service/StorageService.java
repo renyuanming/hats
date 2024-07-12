@@ -521,8 +521,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             logger.info("rymDebug: internalKeyComparatorBytes length:{}, the internalKeyComparator instance is {}", internalKeyComparatorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
             byte[] compactPointersBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
             logger.info("rymDebug: compactPointersBytes length:{}, the compactPointers instance is {}", compactPointersBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
-            byte[] activeVersionBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
-            logger.info("rymDebug: activeVersionBytes length:{}, the activeVersion instance is {}", activeVersionBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+            // byte[] activeVersionBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+            // logger.info("rymDebug: activeVersionBytes length:{}, the activeVersion instance is {}", activeVersionBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
             byte[] descriptorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
             logger.info("rymDebug: descriptorBytes length:{}, the descriptor instance is {}", descriptorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
 
