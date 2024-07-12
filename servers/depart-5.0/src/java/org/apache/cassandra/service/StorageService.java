@@ -550,7 +550,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             // StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
             StorageService.instance.groupAccessNumMap = (Map<String, Integer>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupAccessNumMap")));
             // StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
-            StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
+            if(Paths.get(path + "dbMeta").toFile().exists())
+            {
+                StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
