@@ -515,6 +515,19 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             // writeBytesToFile(path + "db", dbBytes);
             byte[] tableCacheBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupTableCacheMap);
             logger.info("rymDebug: tableCacheBytes length:{}, the tableCache instance is {}", tableCacheBytes.length, StorageService.instance.db.groupTableCacheMap);
+
+
+            byte[] internalKeyComparatorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
+            logger.info("rymDebug: internalKeyComparatorBytes length:{}, the internalKeyComparator instance is {}", internalKeyComparatorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
+            byte[] compactPointersBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
+            logger.info("rymDebug: compactPointersBytes length:{}, the compactPointers instance is {}", compactPointersBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
+            byte[] activeVersionBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+            logger.info("rymDebug: activeVersionBytes length:{}, the activeVersion instance is {}", activeVersionBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+            byte[] descriptorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
+            logger.info("rymDebug: descriptorBytes length:{}, the descriptor instance is {}", descriptorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
+
+
+
              byte[] versionSetBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap);
             logger.info("rymDebug: versionSetBytes length:{}, the versionSet instance is {}", versionSetBytes.length, StorageService.instance.db.groupVersionSetMap);
 

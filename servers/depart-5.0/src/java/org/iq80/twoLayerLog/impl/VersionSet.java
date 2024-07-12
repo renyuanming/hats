@@ -63,15 +63,15 @@ public class VersionSet
     private long logNumber;
     private long prevLogNumber;
 
-    private final Map<Version, Object> activeVersions = new ConcurrentHashMap<>();
+    public final Map<Version, Object> activeVersions = new ConcurrentHashMap<>(); // test
     private final File databaseDir;
     private final TableCache tableCache;
-    private final InternalKeyComparator internalKeyComparator;
+    public final InternalKeyComparator internalKeyComparator;
     //public final List<FileMetaData> files;
     public List<Long> filesID;
 
-    private LogWriter descriptorLog;
-    private final Map<Integer, InternalKey> compactPointers = new TreeMap<>();
+    public LogWriter descriptorLog;
+    public final Map<Integer, InternalKey> compactPointers = new TreeMap<>();
 
     public VersionSet(File databaseDir, TableCache tableCache, InternalKeyComparator internalKeyComparator, List<Long> filesID)
             throws IOException
