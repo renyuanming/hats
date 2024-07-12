@@ -468,7 +468,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     }
 
     public static class ByteObjectConversion {
-        public static byte[] objectToByteArray(Serializable obj) throws IOException {
+        public static byte[] objectToByteArray(Object obj) throws IOException {
             logger.debug("rymDebug: start to transform");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -515,7 +515,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             // writeBytesToFile(path + "db", dbBytes);
             byte[] tableCacheBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupTableCacheMap);
             logger.info("rymDebug: tableCacheBytes length:{}, the tableCache instance is {}", tableCacheBytes.length, StorageService.instance.db.groupTableCacheMap);
-             byte[] versionSetBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupVersionSetMap);
+             byte[] versionSetBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap);
             logger.info("rymDebug: versionSetBytes length:{}, the versionSet instance is {}", versionSetBytes.length, StorageService.instance.db.groupVersionSetMap);
 
             DBMeta dbMeta = StorageService.instance.db.metadata;
