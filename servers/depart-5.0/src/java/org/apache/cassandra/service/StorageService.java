@@ -513,7 +513,14 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             // byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
             // logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
             // writeBytesToFile(path + "db", dbBytes);
+            byte[] tableCacheBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupTableCacheMap);
+            logger.info("rymDebug: tableCacheBytes length:{}, the tableCache instance is {}", tableCacheBytes.length, StorageService.instance.db.groupTableCacheMap);
+             byte[] versionSetBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupVersionSetMap);
+            logger.info("rymDebug: versionSetBytes length:{}, the versionSet instance is {}", versionSetBytes.length, StorageService.instance.db.groupVersionSetMap);
+
             DBMeta dbMeta = StorageService.instance.db.metadata;
+            dbMeta.groupTableCacheMap = StorageService.instance.db.groupTableCacheMap;
+            dbMeta.groupVersionSetMap = StorageService.instance.db.groupVersionSetMap;
             byte[] dbMetaBytes = ByteObjectConversion.objectToByteArray((Serializable) dbMeta);
             logger.info("rymDebug: dbMetaBytes length:{}, the dbMeta instance is {}", dbMetaBytes.length, dbMeta);
             writeBytesToFile(path + "dbMeta", dbMetaBytes);

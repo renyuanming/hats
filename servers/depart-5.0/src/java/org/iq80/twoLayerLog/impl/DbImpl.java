@@ -112,7 +112,7 @@ public class DbImpl
     public final DBMeta metadata;
     
     private static final Logger logger = LoggerFactory.getLogger(DbImpl.class);
-    private Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); // Serial
+    public Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); // Serial
     public Map<String, VersionSet> groupVersionSetMap = new HashMap<String,VersionSet>(); // Serial
 
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
