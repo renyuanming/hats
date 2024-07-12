@@ -302,7 +302,7 @@ public class DbImpl
                 // this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
                 prepareVersions(versions);
             }
-            if(metadata != null)
+            else
             {
                 // for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
                 // {
