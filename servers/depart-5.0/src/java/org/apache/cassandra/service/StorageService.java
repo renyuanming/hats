@@ -553,11 +553,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             if(Paths.get(path + "dbMeta").toFile().exists())
             {
                 StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
+                logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
     }
 
     
