@@ -1,10 +1,13 @@
 package org.iq80.twoLayerLog.table;
 
 import org.iq80.twoLayerLog.util.Slice;
+
+import java.io.Serializable;
+
 import org.apache.cassandra.service.StorageService;
 
 public class BytewiseComparator
-        implements UserComparator
+        implements UserComparator, Serializable
 {
     @Override
     public String name()

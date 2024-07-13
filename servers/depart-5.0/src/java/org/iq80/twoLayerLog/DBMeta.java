@@ -14,8 +14,8 @@ import org.iq80.twoLayerLog.util.Slice;
 public class DBMeta implements Serializable
 {
     // TODO: We need to open these two parameters instead of serializing them
-    // public Map<String, TableCache> groupTableCacheMap; // Map<rangGroupID, rangeGroupFile>
-    // public Map<String, VersionSet> groupVersionSetMap; // 
+    public Map<String, TableCache> groupTableCacheMap; // Map<rangGroupID, rangeGroupFile>
+    public Map<String, VersionSet> groupVersionSetMap; // 
     public Map<String, File> groupIdFileMap; // Map<rangGroupID, rangeGroupFile>
 
     // public Map<String,WriteBatchImpl> writeBatchMap;

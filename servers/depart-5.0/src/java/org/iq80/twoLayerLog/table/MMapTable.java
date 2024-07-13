@@ -24,10 +24,10 @@ public class MMapTable
 {
     private MappedByteBuffer data;
 
-    public MMapTable(String name, FileChannel fileChannel, Comparator<Slice> comparator, boolean verifyChecksums, Slice indexBlockSlice, Slice footerSlice, int flagR)
+    public MMapTable(String name, String filePath, Comparator<Slice> comparator, boolean verifyChecksums, Slice indexBlockSlice, Slice footerSlice, int flagR)
             throws IOException
     {
-        super(name, fileChannel, comparator, verifyChecksums, indexBlockSlice, footerSlice, flagR);
+        super(name, filePath, comparator, verifyChecksums, indexBlockSlice, footerSlice, flagR);
         checkArgument(fileChannel.size() <= Integer.MAX_VALUE, "File must be smaller than %s bytes", Integer.MAX_VALUE);
     }
 

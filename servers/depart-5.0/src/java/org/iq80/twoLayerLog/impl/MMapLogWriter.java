@@ -10,6 +10,7 @@ import org.iq80.twoLayerLog.util.Slices;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -23,7 +24,7 @@ import static org.iq80.twoLayerLog.impl.LogConstants.HEADER_SIZE;
 import static org.iq80.twoLayerLog.impl.Logs.getChunkChecksum;
 
 public class MMapLogWriter
-        implements LogWriter
+        implements LogWriter, Serializable
 {
     private static final int PAGE_SIZE = 1024 * 1024;
 

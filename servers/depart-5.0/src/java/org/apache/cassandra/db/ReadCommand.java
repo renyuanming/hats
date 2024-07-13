@@ -448,7 +448,7 @@ public abstract class ReadCommand extends AbstractReadQuery
 
                 if(findResults[0]==0){
                     List<UnfilteredPartitionIterator> iterators = new ArrayList<>(1); 
-                    logger.info("####read in globalReplicaTable failed! then read local region");
+                    // logger.info("####read in globalReplicaTable failed! then read local region");
                     iterator = queryLocalRegion(cfs, iterators);
                 }
 

@@ -391,10 +391,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public DbImpl db;
     public InetAddress repairNode = null;
     public int splitDelay = 60; 
-    public int minSplitSSTableNum = 20; // 20
+    public int minSplitSSTableNum = 20; // 20 
     public int splitSSTableNum = 20; // 20
-    public int maxGlobalSSTableNum = 30; // 30
-    public static int maxSegNumofGroup = 20; // 20
+    public int maxGlobalSSTableNum = 30; //30
+    public static int maxSegNumofGroup = 20; //20 
     public boolean FlushTriggeredCompaction = true;
     public static long minSplitDataSize = 2085728;
     public boolean duringRepair = false; // TODO
@@ -468,7 +468,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     }
 
     public static class ByteObjectConversion {
-        public static byte[] objectToByteArray(Serializable obj) throws IOException {
+        public static byte[] objectToByteArray(Object obj) throws IOException {
             logger.debug("rymDebug: start to transform");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -513,7 +513,27 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             // byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
             // logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
             // writeBytesToFile(path + "db", dbBytes);
+            byte[] tableCacheBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupTableCacheMap);
+            logger.info("rymDebug: tableCacheBytes length:{}, the tableCache instance is {}", tableCacheBytes.length, StorageService.instance.db.groupTableCacheMap);
+
+
+            byte[] internalKeyComparatorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
+            logger.info("rymDebug: internalKeyComparatorBytes length:{}, the internalKeyComparator instance is {}", internalKeyComparatorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
+            byte[] compactPointersBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
+            logger.info("rymDebug: compactPointersBytes length:{}, the compactPointers instance is {}", compactPointersBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
+            byte[] descriptorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
+            logger.info("rymDebug: descriptorBytes length:{}, the descriptor instance is {}", descriptorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
+            // byte[] activeVersionBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+            // logger.info("rymDebug: activeVersionBytes length:{}, the activeVersion instance is {}", activeVersionBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+
+
+
+             byte[] versionSetBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap);
+            logger.info("rymDebug: versionSetBytes length:{}, the versionSet instance is {}", versionSetBytes.length, StorageService.instance.db.groupVersionSetMap);
+
             DBMeta dbMeta = StorageService.instance.db.metadata;
+            dbMeta.groupTableCacheMap = StorageService.instance.db.groupTableCacheMap;
+            dbMeta.groupVersionSetMap = StorageService.instance.db.groupVersionSetMap;
             byte[] dbMetaBytes = ByteObjectConversion.objectToByteArray((Serializable) dbMeta);
             logger.info("rymDebug: dbMetaBytes length:{}, the dbMeta instance is {}", dbMetaBytes.length, dbMeta);
             writeBytesToFile(path + "dbMeta", dbMetaBytes);
@@ -530,11 +550,14 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             // StorageService.instance.groupCountDownMap = (Map<String, CountDownLatch>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupCountDownMap")));
             StorageService.instance.groupAccessNumMap = (Map<String, Integer>) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "groupAccessNumMap")));
             // StorageService.instance.db = (DbImpl) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "db")));
-            StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
+            if(Paths.get(path + "dbMeta").toFile().exists())
+            {
+                StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
+                logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
     }
 
     

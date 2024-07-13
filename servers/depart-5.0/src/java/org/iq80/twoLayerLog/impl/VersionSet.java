@@ -16,6 +16,8 @@ import org.iq80.twoLayerLog.util.Slice;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -55,20 +58,20 @@ public class VersionSet
 
     private final AtomicLong nextFileNumber = new AtomicLong(2);
     private long manifestFileNumber = 1;
-    private Version current;
+    private transient Version current;
     private long lastSequence;
     private long logNumber;
     private long prevLogNumber;
 
-    private final Map<Version, Object> activeVersions = new MapMaker().weakKeys().makeMap();
+    public transient Map<Version, Object> activeVersions = new ConcurrentHashMap<>(); // test
     private final File databaseDir;
     private final TableCache tableCache;
-    private final InternalKeyComparator internalKeyComparator;
+    public final InternalKeyComparator internalKeyComparator;
     //public final List<FileMetaData> files;
     public List<Long> filesID;
 
-    private LogWriter descriptorLog;
-    private final Map<Integer, InternalKey> compactPointers = new TreeMap<>();
+    public LogWriter descriptorLog;
+    public final Map<Integer, InternalKey> compactPointers = new TreeMap<>();
 
     public VersionSet(File databaseDir, TableCache tableCache, InternalKeyComparator internalKeyComparator, List<Long> filesID)
             throws IOException
@@ -125,6 +128,22 @@ public class VersionSet
         Set<Version> versions = activeVersions.keySet();
         // TODO:
         // log("DB closed with "+versions.size()+" open snapshots. This could mean your application has a resource leak.");
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeObject(current);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        current = (Version) in.readObject();
+        current.setVersionSet(this);
+    }
+
+    // Setters and Getters
+    public void setCurrentVersion(Version version) {
+        this.current = version;
     }
 
     private void appendVersion(Version version)

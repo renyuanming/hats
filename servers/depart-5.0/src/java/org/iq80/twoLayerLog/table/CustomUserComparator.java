@@ -1,10 +1,12 @@
 package org.iq80.twoLayerLog.table;
 
+import java.io.Serializable;
+
 import org.iq80.twoLayerLog.DBComparator;
 import org.iq80.twoLayerLog.util.Slice;
 
 public class CustomUserComparator
-        implements UserComparator
+        implements UserComparator, Serializable
 {
     private final DBComparator comparator;
 

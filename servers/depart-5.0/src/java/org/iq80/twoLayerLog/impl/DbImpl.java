@@ -112,7 +112,7 @@ public class DbImpl
     public final DBMeta metadata;
     
     private static final Logger logger = LoggerFactory.getLogger(DbImpl.class);
-    private Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); // Serial
+    public Map<String, TableCache> groupTableCacheMap = new HashMap<String,TableCache>(); // Serial
     public Map<String, VersionSet> groupVersionSetMap = new HashMap<String,VersionSet>(); // Serial
 
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
@@ -302,20 +302,20 @@ public class DbImpl
                 // this.metadata.groupIdFileMap.put(globalLogName, databaseDir);
                 prepareVersions(versions);
             }
-            if(metadata != null)
+            else
             {
-                logger.info("rymDebug: the metadata is not null, we reload old group versions.");
-                for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
-                {
-                    String groupID = entry.getKey();
-                    File groupFile = entry.getValue();
-                    TableCache groupTableCache = new TableCache(groupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
-                    List<Long> groupFilesID = new ArrayList<Long>();
-                    VersionSet groupVersions = new VersionSet(groupFile, groupTableCache, internalKeyComparator, groupFilesID);
-                    groupTableCacheMap.put(groupID, groupTableCache);
-                    groupVersionSetMap.put(groupID, groupVersions);
-                    logger.info("rymDebug: load groupID: " + groupID);
-                }
+                // for(Entry<String, File> entry: metadata.groupIdFileMap.entrySet())
+                // {
+                //     String groupID = entry.getKey();
+                //     File groupFile = entry.getValue();
+                //     TableCache groupTableCache = new TableCache(groupFile, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
+                //     List<Long> groupFilesID = new ArrayList<Long>();
+                //     VersionSet groupVersions = new VersionSet(groupFile, groupTableCache, internalKeyComparator, groupFilesID);
+                //     groupTableCacheMap.put(groupID, groupTableCache);
+                //     groupVersionSetMap.put(groupID, groupVersions);
+                // }
+                groupTableCacheMap = metadata.groupTableCacheMap;
+                groupVersionSetMap = metadata.groupVersionSetMap;
             }
 
         }
@@ -1478,10 +1478,10 @@ public class DbImpl
         SnapshotImpl snapshot;
         if (options.snapshot() != null) {
             snapshot = (SnapshotImpl) options.snapshot();
-            logger.info("###in getSnapshot, options.snapshot():"+options.snapshot());
+            // logger.info("###in getSnapshot, options.snapshot():"+options.snapshot());
         }
         else {
-            logger.info("###in getSnapshot, globalLogName:"+globalLogName);
+            // logger.info("###in getSnapshot, globalLogName:"+globalLogName);
         	VersionSet versions = groupVersionSetMap.get(globalLogName);
             if(versions == null) {
                 logger.error("rymERROR: no versions for group " + globalLogName);

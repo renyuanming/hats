@@ -10,6 +10,9 @@ import org.iq80.twoLayerLog.util.LevelIterator;
 import org.iq80.twoLayerLog.util.MergingIterator;
 import org.iq80.twoLayerLog.util.Slice;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +34,7 @@ public class Version
         implements SeekingIterable<InternalKey, Slice>, Serializable
 {
     private final AtomicInteger retained = new AtomicInteger(1);
-    private final VersionSet versionSet;
+    private transient VersionSet versionSet;
     private final Level0 level0;
     private final List<Level> levels;
 
@@ -56,6 +59,18 @@ public class Version
         }
         this.levels = builder.build();*/
 
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+    }
+
+    public void setVersionSet(VersionSet versionSet) {
+        this.versionSet = versionSet;
     }
 
     public void assertNoOverlappingFiles()
