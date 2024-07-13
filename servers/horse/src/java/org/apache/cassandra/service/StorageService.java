@@ -308,11 +308,15 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public long[][] foregroundReadCountOfEachReplicationGroup;
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", DatabaseDescriptor.getSchedulingInterval());
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("CoordinatorWriteLatency", DatabaseDescriptor.getSchedulingInterval());
+    public LatencyCalculator localReadLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
+    public AtomicBoolean isReadSlow = new AtomicBoolean(false);
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
     public RateMonitor flushRateMonitor = new RateMonitor("FlushRate");
-    public RateMonitor pendingFlushRate = new RateMonitor("PendingFlushRate");
+    // public RateMonitor pendingFlushRate = new RateMonitor("PendingFlushRate");
+    public AtomicInteger totalPendingFlushes = new AtomicInteger(0);
+    public AtomicBoolean isPendingFlushHappen = new AtomicBoolean(false);
     public RateMonitor compactionRateMonitor = new RateMonitor("CompactionRate");
-    public RateMonitor pendingCompactionRate = new RateMonitor("PendingCompactionRate");
+    // public RateMonitor pendingCompactionRate = new RateMonitor("PendingCompactionRate");
     public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
     public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
     public AtomicLong readRequestInFlight = new AtomicLong(0);

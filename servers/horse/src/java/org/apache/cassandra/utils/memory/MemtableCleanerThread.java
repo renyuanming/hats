@@ -82,7 +82,9 @@ public class MemtableCleanerThread<P extends MemtablePool> implements Interrupti
             else
             {
                 int numPendingTasks = this.numPendingTasks.incrementAndGet();
-                StorageService.instance.pendingFlushRate.record(numPendingTasks);
+                // StorageService.instance.pendingFlushRate.record(numPendingTasks);
+                StorageService.instance.totalPendingFlushes.incrementAndGet();
+                StorageService.instance.isPendingFlushHappen.set(true);
 
                 if (logger.isTraceEnabled())
                     logger.trace("Invoking cleaner with {} tasks pending", numPendingTasks);
@@ -94,6 +96,7 @@ public class MemtableCleanerThread<P extends MemtablePool> implements Interrupti
         private Boolean apply(Boolean res, Throwable err)
         {
             final int tasks = numPendingTasks.decrementAndGet();
+            StorageService.instance.totalPendingFlushes.decrementAndGet();
 
             // if the cleaning job was scheduled (res == true) or had an error, trigger again after decrementing the tasks
             if ((res || err != null) && pool.needsCleaning())

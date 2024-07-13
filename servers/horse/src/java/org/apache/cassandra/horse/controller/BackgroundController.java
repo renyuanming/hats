@@ -40,6 +40,8 @@ public class BackgroundController
 
     public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 80, 10, 10 });
 
+    public volatile int throttleCompactionThroughput = 10; // MB per second 
+
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
     private final ConcurrentHashMap<Integer, AtomicLong> servedThpt;
@@ -100,34 +102,50 @@ public class BackgroundController
         return false;
     }
 
+    public synchronized void increaseThrottleThpt()
+    {
+        throttleCompactionThroughput += 0.05 * DatabaseDescriptor.getCompactionThroughputMebibytesPerSec();
+    }
+
+    public synchronized void decreaseThrottleThpt()
+    {
+        throttleCompactionThroughput /= 2;
+    }
+
+    public synchronized void updateThrottleThpt()
+    {
+        // TODO
+        if(StorageService.instance.isPendingFlushHappen.get() || 
+           StorageService.instance.totalPendingFlushes.get() > 0 ||
+           StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput || 
+           StorageService.instance.isReadSlow.get())
+        {
+            decreaseThrottleThpt();
+            StorageService.instance.isPendingFlushHappen.set(false);
+            StorageService.instance.isReadSlow.set(false);
+        }
+        else
+        {
+            increaseThrottleThpt();
+        }
+    }
+
     private boolean shouldServeTask(int taskType)
     {
-        final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
-                                      StorageService.instance.localReadRateMonitor.getRateInMB() +
-                                      StorageService.instance.flushRateMonitor.getRateInMB() * 3;
-        final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
+        // final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
+        //                               StorageService.instance.localReadRateMonitor.getRateInMB() +
+        //                               StorageService.instance.flushRateMonitor.getRateInMB() * 3;
+        // final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
         final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
 
-        if(foregroundRate < 1)
-        {
-            return true;
-        }
-        // if(backgroundRate >= throttleBackgroundRate)
-        // {
-        //     return false;
-        // }
-        // else if (StorageService.instance.readRequestInFlight.get() > 0)
-        // {
-        //     return false;
-        // }
-        // else if (taskType > 0)
-        // {
-        //     return false;
-        // }
-        // else if(foregroundRate < 1)
+        // if(foregroundRate < 1)
         // {
         //     return true;
         // }
+        if(backgroundRate >= throttleCompactionThroughput)
+        {
+            return false;
+        }
 
         boolean shouldServeTaskByCount = shouldServeTaskByCount(taskType);
         boolean shouldServeTaskByThpt = shouldServeTaskByThpt(taskType);

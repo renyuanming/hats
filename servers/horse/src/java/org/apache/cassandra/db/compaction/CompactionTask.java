@@ -286,6 +286,9 @@ public class CompactionTask extends AbstractCompactionTask
 
             // update the metrics
             cfs.metric.compactionBytesWritten.inc(endsize);
+
+            // update the throttle compaction throughput
+            BackgroundController.compactionRateLimiter.updateThrottleThpt();
         }
     }
 
