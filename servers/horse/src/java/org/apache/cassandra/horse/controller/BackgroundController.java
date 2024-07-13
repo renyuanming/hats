@@ -29,6 +29,8 @@ import org.apache.cassandra.service.StorageService;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * @author renyuanming1@gmail.com
  */
@@ -36,6 +38,7 @@ import com.codahale.metrics.MetricRegistry;
 public class BackgroundController 
 {
 
+    private static final Logger logger = LoggerFactory.getLogger(BackgroundController.class);
     private static final MetricRegistry registry = new MetricRegistry();
 
     public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 80, 10, 10 });
@@ -114,10 +117,17 @@ public class BackgroundController
 
     public synchronized void updateThrottleThpt()
     {
+        logger.info("rymInfo: the throttle throughput is {}, isPendingFlushHappen {}, the total pending flushes is {}, current compaction rate is {}, is read slow happen {}",
+                    throttleCompactionThroughput, 
+                    StorageService.instance.isPendingFlushHappen.get(), 
+                    StorageService.instance.totalPendingFlushes.get(), 
+                    StorageService.instance.compactionRateMonitor.getRateInMB(), 
+                    StorageService.instance.isReadSlow.get());
         // TODO
         if(StorageService.instance.isPendingFlushHappen.get() || 
            StorageService.instance.totalPendingFlushes.get() > 0 ||
            StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput || 
+           StorageService.instance.compactionRateMonitor.getRateInMB() >= DatabaseDescriptor.getCompactionThroughputMebibytesPerSecAsInt() ||
            StorageService.instance.isReadSlow.get())
         {
             decreaseThrottleThpt();
