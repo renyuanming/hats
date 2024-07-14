@@ -1993,10 +1993,10 @@ public class StorageProxy implements StorageProxyMBean
                 command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 StorageService.instance.readLatencyCalculator.record(latency);
                 
-                if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
-                {
-                    StorageService.instance.isReadSlow.set(true);
-                }
+                // if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
+                // {
+                //     StorageService.instance.isReadSlow.set(true);
+                // }
             }
             else
             {
@@ -2061,10 +2061,10 @@ public class StorageProxy implements StorageProxyMBean
                 {
                     command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                     StorageService.instance.readLatencyCalculator.record(latency);
-                    if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
-                    {
-                        StorageService.instance.isReadSlow.set(true);
-                    }
+                    // if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
+                    // {
+                    //     StorageService.instance.isReadSlow.set(true);
+                    // }
                 }
                 else
                 {
