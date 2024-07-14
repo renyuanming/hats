@@ -1029,7 +1029,7 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
 
     private void maybeWarn(ResultSetBuilder result, QueryOptions options)
     {
-        StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
+        // StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
         if (!options.isReadThresholdsEnabled())
             return;
         ColumnFamilyStore store = cfs();
@@ -1048,7 +1048,7 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
 
     private void maybeFail(ResultSetBuilder result, QueryOptions options)
     {
-        StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
+        // StorageService.instance.coordinatorReadRateMonitor.record(result.getSize());
         if (!options.isReadThresholdsEnabled())
             return;
         if (result.shouldReject(options.getCoordinatorReadSizeAbortThresholdBytes()))

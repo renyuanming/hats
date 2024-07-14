@@ -1269,7 +1269,7 @@ public class StorageProxy implements StorageProxyMBean
                         store.metric.coordinatorWriteLatency.update(latency, TimeUnit.NANOSECONDS);
                         if(store.name.contains("usertable"))
                         {
-                            StorageService.instance.writeLatencyCalculator.record(latency/1000);
+                            StorageService.instance.writeLatencyCalculator.record(latency);
                         }
                     });
         }
@@ -1991,7 +1991,12 @@ public class StorageProxy implements StorageProxyMBean
             if(command.metadata().name.contains("usertable"))
             {
                 command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                StorageService.instance.readLatencyCalculator.record(latency/1000);
+                StorageService.instance.readLatencyCalculator.record(latency);
+                
+                if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
+                {
+                    StorageService.instance.isReadSlow.set(true);
+                }
             }
             else
             {
@@ -2055,7 +2060,11 @@ public class StorageProxy implements StorageProxyMBean
                 if(command.metadata().name.contains("usertable"))
                 {
                     command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                    StorageService.instance.readLatencyCalculator.record(latency/1000);
+                    StorageService.instance.readLatencyCalculator.record(latency);
+                    if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
+                    {
+                        StorageService.instance.isReadSlow.set(true);
+                    }
                 }
                 else
                 {

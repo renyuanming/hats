@@ -654,8 +654,8 @@ public abstract class ReadCommand extends AbstractReadQuery
     {
         DataStorageSpec.LongBytesBound warnThreshold = DatabaseDescriptor.getLocalReadSizeWarnThreshold();
         DataStorageSpec.LongBytesBound failThreshold = DatabaseDescriptor.getLocalReadSizeFailThreshold();
-        // if (!shouldTrackSize(warnThreshold, failThreshold))
-        //     return iterator;
+        if (!shouldTrackSize(warnThreshold, failThreshold))
+            return iterator;
         final long warnBytes = warnThreshold == null ? -1 : warnThreshold.toBytes();
         final long failBytes = failThreshold == null ? -1 : failThreshold.toBytes();
         class QuerySizeTracking extends Transformation<UnfilteredRowIterator>
@@ -718,7 +718,7 @@ public abstract class ReadCommand extends AbstractReadQuery
             protected void onClose()
             {
                 // StorageService.instance.localReadRateMonitor.record(sizeInBytes);
-                StorageService.instance.coordinatorReadRateMonitor.record(sizeInBytes);
+                // StorageService.instance.coordinatorReadRateMonitor.record(sizeInBytes);
                 ColumnFamilyStore cfs = Schema.instance.getColumnFamilyStoreInstance(metadata().id);
                 if (cfs != null)
                     cfs.metric.localReadSize.update(sizeInBytes);

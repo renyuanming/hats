@@ -359,7 +359,7 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
                 boolean intersects = intersects(sstable);
                 boolean hasPartitionLevelDeletions = hasPartitionLevelDeletions(sstable);
                 boolean hasRequiredStatics = hasRequiredStatics(sstable);
-                StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
+                // StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
                 if (!intersects && !hasPartitionLevelDeletions && !hasRequiredStatics)
                     continue;
 

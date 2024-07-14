@@ -339,10 +339,16 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (mean > maxLatency)
                 maxLatency = mean;
 
-        // HORSE: update the sample latency
+            // HORSE: update the sample latency
             newSampleLatency.put(entry.getKey(), mean);
             if (mean < minLatency)
                 minLatency = mean;
+            
+            if(entry.getKey().getAddress().equals(StorageService.instance.localIP))
+            {
+                double newReadLatencyThreshold = entry.getValue().getMean() + entry.getValue().getStdDev();
+                StorageService.instance.readLatencyThreshold.set(newReadLatencyThreshold);
+            }
         }
         ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
         ////////////////////////////////////////////////////////

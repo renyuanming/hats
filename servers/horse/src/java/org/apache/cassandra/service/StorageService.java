@@ -301,14 +301,15 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     // Get the read count of each replica group before replica selection
     public ConcurrentHashMap<InetAddress, AtomicLong> totalReadCntOfEachReplica = new ConcurrentHashMap<InetAddress, AtomicLong>();
     public ReplicaRequestCounter readCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval() * 1000);
-    public ReplicaRequestCounter writeCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval() * 1000);
+    // public ReplicaRequestCounter writeCounterOfEachReplica = new ReplicaRequestCounter(DatabaseDescriptor.getSchedulingInterval() * 1000);
     public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
     public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
     public long[][] foregroundReadCountOfEachReplicationGroup;
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", DatabaseDescriptor.getSchedulingInterval());
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("CoordinatorWriteLatency", DatabaseDescriptor.getSchedulingInterval());
-    public LatencyCalculator localReadLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
+    // public LatencyCalculator localReadLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
+    public AtomicDouble readLatencyThreshold = new AtomicDouble(0.0);
     public AtomicBoolean isReadSlow = new AtomicBoolean(false);
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
     public RateMonitor flushRateMonitor = new RateMonitor("FlushRate");
@@ -317,8 +318,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicBoolean isPendingFlushHappen = new AtomicBoolean(false);
     public RateMonitor compactionRateMonitor = new RateMonitor("CompactionRate");
     // public RateMonitor pendingCompactionRate = new RateMonitor("PendingCompactionRate");
-    public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
-    public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
+    // public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
+    // public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
     public AtomicLong readRequestInFlight = new AtomicLong(0);
     public AtomicLong getEndpointCost = new AtomicLong(0);
     public InetAddress localIP = FBUtilities.getJustBroadcastAddress();

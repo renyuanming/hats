@@ -196,7 +196,7 @@ public class LocalStates implements Serializable {
         }
 
         public void record(long latency) {
-            this.timer.update(latency, TimeUnit.MICROSECONDS);
+            this.timer.update(latency, TimeUnit.NANOSECONDS);
         }
 
         public double getStdDev() {

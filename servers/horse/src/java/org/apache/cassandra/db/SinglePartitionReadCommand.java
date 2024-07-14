@@ -475,14 +475,14 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
     protected void recordLatency(TableMetrics metric, long latencyNanos)
     {
         metric.readLatency.addNano(latencyNanos);
-        if (metadata().keyspace.equals("ycsb"))
-        {
-            StorageService.instance.localReadLatencyCalculator.record(latencyNanos / 1000);
-            // if(StorageService.instance.localReadLatencyCalculator.getWindowMean() + StorageService.instance.localReadLatencyCalculator.getStdDev() > latencyNanos / 1000)
-            // {
-            //     StorageService.instance.isReadSlow.set(true);
-            // }
-        }
+        // if (metadata().keyspace.equals("ycsb"))
+        // {
+        //     StorageService.instance.localReadLatencyCalculator.record(latencyNanos / 1000);
+        //     if(StorageService.instance.localReadLatencyCalculator.getWindowMean() + StorageService.instance.localReadLatencyCalculator.getStdDev() > latencyNanos / 1000)
+        //     {
+        //         StorageService.instance.isReadSlow.set(true);
+        //     }
+        // }
         
     }
 
@@ -770,7 +770,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                     inputCollector.markInconclusive();
                     break;
                 }
-                StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
+                // StorageService.instance.localReadRateMonitor.record(sstable.bytesOnDisk());
                 boolean intersects = intersects(sstable);
                 boolean hasRequiredStatics = hasRequiredStatics(sstable);
                 boolean hasPartitionLevelDeletions = hasPartitionLevelDeletions(sstable);
@@ -1035,7 +1035,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                 if (iter.isEmpty())
                     continue;
 
-                StorageService.instance.localReadRateMonitor.record(iter.staticRow().dataSize());
+                // StorageService.instance.localReadRateMonitor.record(iter.staticRow().dataSize());
                 result = add(RTBoundValidator.validate(iter, RTBoundValidator.Stage.SSTABLE, false),
                              result,
                              filter,
