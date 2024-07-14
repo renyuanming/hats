@@ -117,18 +117,8 @@ public class BackgroundController
 
     public synchronized void updateThrottleThpt()
     {
-        logger.info("rymInfo: the throttle throughput is {}, isPendingFlushHappen {}, the total pending flushes is {}, current compaction rate is {}, is read slow happen {}",
-                    throttleCompactionThroughput, 
-                    StorageService.instance.isPendingFlushHappen.get(), 
-                    StorageService.instance.totalPendingFlushes.get(), 
-                    StorageService.instance.compactionRateMonitor.getRateInMB(), 
-                    StorageService.instance.isReadSlow.get());
         // TODO
-        if(StorageService.instance.isPendingFlushHappen.get() || 
-           StorageService.instance.totalPendingFlushes.get() > 0 ||
-           StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput || 
-           StorageService.instance.compactionRateMonitor.getRateInMB() >= DatabaseDescriptor.getCompactionThroughputMebibytesPerSecAsInt() ||
-           StorageService.instance.isReadSlow.get())
+        if(isBottleneck())
         {
             decreaseThrottleThpt();
             StorageService.instance.isPendingFlushHappen.set(false);
@@ -140,19 +130,33 @@ public class BackgroundController
         }
     }
 
+    private boolean isBottleneck()
+    {
+        logger.info("rymInfo: the throttle throughput is {}, isPendingFlushHappen {}, the total pending flushes is {}, current compaction rate is {}, is read slow happen {}",
+                    throttleCompactionThroughput, 
+                    StorageService.instance.isPendingFlushHappen.get(), 
+                    StorageService.instance.totalPendingFlushes.get(), 
+                    StorageService.instance.compactionRateMonitor.getRateInMB(), 
+                    StorageService.instance.isReadSlow.get());
+        return StorageService.instance.isPendingFlushHappen.get() || 
+               StorageService.instance.totalPendingFlushes.get() > 0 ||
+               StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput || 
+               StorageService.instance.compactionRateMonitor.getRateInMB() >= DatabaseDescriptor.getCompactionThroughputMebibytesPerSecAsInt() ||
+               StorageService.instance.isReadSlow.get();
+    }
+
     private boolean shouldServeTask(int taskType)
     {
         // final double foregroundRate = StorageService.instance.coordinatorReadRateMonitor.getRateInMB() +
         //                               StorageService.instance.localReadRateMonitor.getRateInMB() +
         //                               StorageService.instance.flushRateMonitor.getRateInMB() * 3;
         // final double throttleBackgroundRate = DatabaseDescriptor.getThrottleDataRate() - foregroundRate - 10;
-        final double backgroundRate = StorageService.instance.compactionRateMonitor.getRateInMB();
 
         // if(foregroundRate < 1)
         // {
         //     return true;
         // }
-        if(backgroundRate >= throttleCompactionThroughput)
+        if(isBottleneck())
         {
             return false;
         }
