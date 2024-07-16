@@ -28,7 +28,7 @@
     when: "'FAILED' in command_result.stderr"
   - name: Wait until all nodes are ready
     pause:
-      seconds: 90
+      seconds: 120
 
 
 - name: Start Cassandra Data Nodes

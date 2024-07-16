@@ -3,18 +3,18 @@
 
 . /etc/profile
 
-SCHEMES=("depart-5.0")
+SCHEMES=("mlsm" "depart-5.0")
 REPLICAS=(3)
 SSTABLE_SIZE_IN_MB=160
-KV_NUMBER=30000000
+KV_NUMBER=100000000
 FIELD_LENGTH=1000
 KEY_LENGTH=24
-REBUILD_SERVER="false"
-WAIT_TIME=600
-COMPACTION_STRATEGY=("LCS" "STCS")
+REBUILD_SERVER="true"
+WAIT_TIME=7200
+COMPACTION_STRATEGY=("LCS")
 
 JDK_VERSION="17"
-LOG_LEVEL="info"
+LOG_LEVEL="error"
 BRANCH="main"
 
 
@@ -46,7 +46,7 @@ function main {
         for rf in "${REPLICAS[@]}"; do
             for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
                 # Load data
-                load $scheme 64 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
+                load $scheme 4 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
                 # Wait for flush or compaction ready
                 flush "LoadDB" $scheme $WAIT_TIME
                 # Backup the DB and the logs
