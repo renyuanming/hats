@@ -32,6 +32,15 @@ function getToken {
 }
 
 function initConf {
+
+    realSeeds=$1
+
+    if [[ $realSeeds == "true" ]]; then
+        seeds=${SEEDS}
+    else
+        seeds=${ALL_SERVERS}
+    fi
+
     getToken ${#ServersIP[@]}
     # # Modify the the rpc_address listen_address seeds initial_token in the cassandra.yaml
     for ((i=0; i<${#ServersIP[@]}; i++)); do
@@ -46,14 +55,14 @@ function initConf {
         if [[ $SCHEME == "depart" ]] || [[ $SCHEME == "cassandra-3.11.4" ]] || [[ $SCHEME == "cassandra-5.0" ]] || [[ $SCHEME == "depart-5.0" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
-            sed -i "s/seeds:.*$/seeds: \"${SEEDS}\"/" ${conf_dir}/cassandra.yaml
+            sed -i "s/seeds:.*$/seeds: \"${seeds}\"/" ${conf_dir}/cassandra.yaml
             sed -i "s/initial_token:.*$/initial_token: ${token}/" ${conf_dir}/cassandra.yaml
             sed -i "s/num_tokens:.*$/num_tokens: ${NumTokens}/" ${conf_dir}/cassandra.yaml
         elif [[ $SCHEME == "horse" ]] || [[ $SCHEME == "mlsm" ]] || [[ $SCHEME == "c3" ]]; then
             sed -i "s/rpc_address:.*$/rpc_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/listen_address:.*$/listen_address: ${node_ip}/" ${conf_dir}/cassandra.yaml
             sed -i "s/initial_token:.*$/initial_token: ${token}/" ${conf_dir}/cassandra.yaml
-            sed -i "s/seeds:.*$/seeds: \"${SEEDS}\"/" ${conf_dir}/cassandra.yaml
+            sed -i "s/seeds:.*$/seeds: \"${seeds}\"/" ${conf_dir}/cassandra.yaml
             sed -i "s/token_ranges:.*$/token_ranges: ${TokenRanges}/" ${conf_dir}/cassandra.yaml
             sed -i "s/num_tokens:.*$/num_tokens: ${NumTokens}/" ${conf_dir}/cassandra.yaml
             sed -i "s/all_hosts:.*$/all_hosts: \"${Coordinators}\"/" ${conf_dir}/cassandra.yaml
@@ -68,17 +77,25 @@ function initConf {
     for node in "${Servers[@]}"; do
         echo "${node} ansible_host=${node}" >> ${SCRIPT_DIR}/playbook/hosts.ini
     done
-    echo "[cassandra_seeds]" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    for seed in "${Seeds[@]}"; do
-        echo "${seed} ansible_host=${seed}" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    done
-    echo "[cassandra_data_nodes]" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    for node in "${Servers[@]}"; do
-        if printf '%s\n' "${Seeds[@]}" | grep -q -P "^${node}$"; then
-            continue
-        fi
-        echo "${node} ansible_host=${node}" >> ${SCRIPT_DIR}/playbook/hosts.ini
-    done
+    if [[ $realSeeds == "true" ]]; then
+        echo "[cassandra_seeds]" >> ${SCRIPT_DIR}/playbook/hosts.ini
+        for seed in "${Seeds[@]}"; do
+            echo "${seed} ansible_host=${seed}" >> ${SCRIPT_DIR}/playbook/hosts.ini
+        done
+        echo "[cassandra_data_nodes]" >> ${SCRIPT_DIR}/playbook/hosts.ini
+        for node in "${Servers[@]}"; do
+            if printf '%s\n' "${Seeds[@]}" | grep -q -P "^${node}$"; then
+                continue
+            fi
+            echo "${node} ansible_host=${node}" >> ${SCRIPT_DIR}/playbook/hosts.ini
+        done
+    else
+        echo "[cassandra_seeds]" >> ${SCRIPT_DIR}/playbook/hosts.ini
+        for node in "${Servers[@]}"; do
+            echo "${node} ansible_host=${node}" >> ${SCRIPT_DIR}/playbook/hosts.ini
+        done
+    fi
+
     echo "[cassandra_clients]" >> ${SCRIPT_DIR}/playbook/hosts.ini
     for client in "${Clients[@]}"; do
         echo "${client} ansible_host=${client}" >> ${SCRIPT_DIR}/playbook/hosts.ini
@@ -262,6 +279,21 @@ function copyDatasetToNodes {
     sed -i "s|TARGET_DIR|${targetDir}|g" playbook-decompress.yaml 
 
     ansible-playbook -v -i hosts.ini playbook-decompress.yaml
+}
+
+function reloadSeeds {
+    targetScheme=$1
+    resetPlaybook "reloadSeeds"
+    playbook="playbook-reloadSeeds.yaml"
+
+    # antOption="-Duse.jdk11=true"
+
+    # if [ "${targetScheme}" == "depart" ] || [ "$targetScheme" == "cassandra-3.11.4" ]; then
+    antOption=""
+    # fi
+
+    sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function rebuildServer {
@@ -726,6 +758,10 @@ function runExp {
                                                     echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
 
                                                     SETTING=$(getSettingName ${motivation} ${compactionLevel})
+
+                                                    # init the configuration file, set all nodes as the seeds to support fast startup
+                                                    initConf "false"
+
                                                     # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
                                                     # startup from preload dataset
                                                     if [ "${EXP_NAME}" == "Exp-MixedReadWrite" ]; then
@@ -736,7 +772,15 @@ function runExp {
                                                         restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
                                                     fi
                                                     # fi
+                                                    # modify the seeds as the specific nodes, and reload the configuration file
+                                                    initConf "true"
+                                                    reloadSeeds ${TARGET_SCHEME}
+
                                                     run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
+
+                                                    # Set the seed nodes as all the nodes, and reload the configuration file
+                                                    initConf "false"
+                                                    reloadSeeds ${TARGET_SCHEME}
 
 
                                                     # Collect load results

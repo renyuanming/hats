@@ -16,10 +16,10 @@ elif [[ "$CLUSTER_NAME" == "1x" ]]; then
     # ClientsIP=("192.168.10.27" "192.168.10.30")
     Clients=("proj19")
     ClientsIP=("192.168.10.119")
-    # Seeds=("node11" "node12" "node18")
-    # SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.28")
-    Seeds=("node11" "node12" "node13" "node14" "node15" "node16" "node17" "node18" "node19" "node20")
-    SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.26" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30")
+    Seeds=("node11" "node12" "node18")
+    SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.28")
+    # Seeds=("node11" "node12" "node13" "node14" "node15" "node16" "node17" "node18" "node19" "node20")
+    # SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.26" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30")
     NodeIP="192.168.10.21" # Only used for start-client.sh
     UserName="ymren"
     SudoPassword="ymren"
@@ -29,8 +29,8 @@ elif [[ "$CLUSTER_NAME" == "4x" ]]; then
     ServersIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
     Clients=("node49")
     ClientsIP=("192.168.10.59")
-    Seeds=("node41" "node42" "node43" "node45")
-    SeedsIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
+    Seeds=("node41" "node42")
+    SeedsIP=("192.168.10.51" "192.168.10.52")
     NodeIP="192.168.10.51" # Only used for start-client.sh
     UserName="ymren"
     SudoPassword="898915"
@@ -57,6 +57,14 @@ for i in "${!SeedsIP[@]}"; do
     SEEDS+="${SeedsIP[i]}"
     if [ $i -ne $((${#SeedsIP[@]} - 1)) ]; then
         SEEDS+=","
+    fi
+done
+
+ALL_SERVERS=""
+for i in "${!ServersIP[@]}"; do
+    ALL_SERVERS+="${ServersIP[i]}"
+    if [ $i -ne $((${#ServersIP[@]} - 1)) ]; then
+        ALL_SERVERS+=","
     fi
 done
 
