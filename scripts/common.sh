@@ -11,6 +11,8 @@ function getToken {
     nodeNum=$1
     # Get the output of the genToken.py script
     output=$(python3 ${SCRIPT_DIR}/genToken.py ${nodeNum} ${NumTokens})
+    tokens=()
+    TokenRanges=""
     # Extract tokens from the output and add them to the array
     while read -r line; do
         if [[ $line == initial_token:* ]]; then
@@ -23,7 +25,6 @@ function getToken {
     done <<< "$output"
 
     # Construct the token ranges
-    TokenRanges=""
     for i in "${!tokens[@]}"; do
         TokenRanges+="${tokens[i]}"
         if [ $i -ne $((${#tokens[@]} - 1)) ]; then
