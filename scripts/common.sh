@@ -23,6 +23,7 @@ function getToken {
     done <<< "$output"
 
     # Construct the token ranges
+    TokenRanges=""
     for i in "${!tokens[@]}"; do
         TokenRanges+="${tokens[i]}"
         if [ $i -ne $((${#tokens[@]} - 1)) ]; then
