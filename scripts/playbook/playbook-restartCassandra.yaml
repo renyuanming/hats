@@ -41,13 +41,13 @@
       pause:
         seconds: 120
 
-- name: Restart seed nodes
+- name: Restart data nodes
   hosts: cassandra_data_nodes
   become: yes
   serial: 1
   become_user: ymren
   tasks:
-    - name: Restart seed nodes
+    - name: Restart data nodes
       shell: . /etc/profile && cd PATH_TO_SERVER && nohup bin/cassandra >logs/debug.log 2>&1 &
       register: command_result
       ignore_errors: true
