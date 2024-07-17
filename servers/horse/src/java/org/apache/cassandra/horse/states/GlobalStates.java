@@ -61,12 +61,11 @@ public class GlobalStates implements Serializable {
     public int[] versionVector; // N
     public Double[] deltaVector; // N
     public final int nodeCount;
-    public final int rf;
+    public static final int rf = DatabaseDescriptor.getReplicationFactor();
 
-    public GlobalStates(int nodeCount, int rf)
+    public GlobalStates(int nodeCount)
     {
         this.nodeCount = nodeCount;
-        this.rf = rf;
         initialization();
     }
 
@@ -75,7 +74,7 @@ public class GlobalStates implements Serializable {
         this.scoreVector = new Double[this.nodeCount];
         this.latencyVector = new Double[this.nodeCount];
         this.readCountOfEachNode = new int[this.nodeCount];
-        this.loadMatrix = new int[this.nodeCount][this.rf];
+        this.loadMatrix = new int[this.nodeCount][rf];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
         for(int i = 0; i < this.nodeCount; i++)
@@ -85,7 +84,7 @@ public class GlobalStates implements Serializable {
             this.readCountOfEachNode[i] = 0;
             this.versionVector[i] = 0;
             this.deltaVector[i] = 0.0;
-            for(int j = 0; j < this.rf; j++)
+            for(int j = 0; j < rf; j++)
             {
                 this.loadMatrix[i][j] = 0;
             }
@@ -144,11 +143,11 @@ public class GlobalStates implements Serializable {
     public static void initializeGlobalPolicy()
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
-        globalPolicy = new Double[nodeCount][3];
+        globalPolicy = new Double[nodeCount][rf];
         for(int i = 0; i < nodeCount; i++)
         {
             globalPolicy[i][0] = 1.0;
-            for(int j = 1; j < 3; j++)
+            for(int j = 1; j < rf; j++)
             {
                 globalPolicy[i][j] = 0.0;
             }
@@ -178,7 +177,7 @@ public class GlobalStates implements Serializable {
         for(int i = 0; i < policy.length; i++)
         {
             List<Double> rgPolicy = new ArrayList<Double>();
-            for(int curNodeIndex = i; curNodeIndex < i + 3; curNodeIndex++)
+            for(int curNodeIndex = i; curNodeIndex < i + rf; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(i, curNodeIndex);
                 rgPolicy.add(policy[curNodeIndex % nodeCount][replicaIndex]);

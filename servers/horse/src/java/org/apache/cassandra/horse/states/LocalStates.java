@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
@@ -58,6 +59,7 @@ public class LocalStates implements Serializable {
     public final Map<InetAddress, Integer> completedReadRequestCount;
     public final int version;
     private final static MetricRegistry registry = new MetricRegistry();
+    private final static int rf = DatabaseDescriptor.getReplicationFactor();
 
     public LocalStates(Map<InetAddress, Integer> completedReadRequestCount, double latency, int version)
     {
@@ -73,13 +75,13 @@ public class LocalStates implements Serializable {
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
 
-        for(int i = nodeIndex - 2; i <= nodeIndex + 2; i++)
+        for(int i = nodeIndex - (rf - 1); i <= nodeIndex + (rf - 1); i++)
         {
             int rgIndex = (i + nodeCount) % nodeCount;
             Map<InetAddressAndPort, Double> policyWithPort = new HashMap<>();
             List<Double> policy = new ArrayList<>();
             InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
-            for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + 3; curNodeIndex++)
+            for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + rf; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
                 policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex]);

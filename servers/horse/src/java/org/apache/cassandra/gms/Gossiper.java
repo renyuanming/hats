@@ -71,6 +71,7 @@ import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.NoPayload;
 import org.apache.cassandra.net.RequestCallback;
 import org.apache.cassandra.net.Verb;
+import org.apache.cassandra.service.CassandraDaemon;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.CassandraVersion;
 import org.apache.cassandra.utils.ExecutorUtils;
@@ -2148,9 +2149,12 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
 
         // Add the new entries
         seeds.addAll(tmp);
+        allSeeds.addAll(tmp);
         // Remove the old entries
         seeds.retainAll(tmp);
-        logger.trace("New seed node list after reload {}", seeds);
+        allSeeds.retainAll(tmp);
+        logger.info("New seed node list after reload {}", seeds);
+        CassandraDaemon.instance.activeHorse();
         return getSeeds();
     }
 

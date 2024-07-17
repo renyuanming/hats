@@ -211,9 +211,9 @@ public class Scheduler {
                     continue;
                 }
                 
-                Double[] backgroundCompactionRate = new Double[GlobalStates.globalStates.rf];
+                Double[] backgroundCompactionRate = new Double[GlobalStates.rf];
                 int nodeIndex = Gossiper.getAllHosts().indexOf(dataNode);
-                for(int j = 0; j < GlobalStates.globalStates.rf; j++)
+                for(int j = 0; j < GlobalStates.rf; j++)
                 {
 
                     // Calculate the rate limit for each replica
@@ -254,20 +254,20 @@ public class Scheduler {
             double mean = 0.0;
             double stdDev = 0.0;
 
-            for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
+            for (int k = i; k < i + GlobalStates.rf; k++)
             {
                 mean += GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
 
             }
-            mean = mean / GlobalStates.globalStates.rf;
+            mean = mean / GlobalStates.rf;
 
 
             
-            for (int k = i; k < i + GlobalStates.globalStates.rf; k++)
+            for (int k = i; k < i + GlobalStates.rf; k++)
             {
                 stdDev += Math.pow(GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount] - mean, 2);
             }
-            stdDev = Math.sqrt(stdDev / GlobalStates.globalStates.rf);
+            stdDev = Math.sqrt(stdDev / GlobalStates.rf);
 
             final double offloadThreshold = mean + stdDev;
             final double recoverThreshold = mean;
@@ -302,7 +302,7 @@ public class Scheduler {
         // }
 
         // Traverse every secondary replica node, and offload the request to the node with the lower score
-        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.globalStates.rf; i++)
+        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.rf; i++)
         {
             int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
             if(GlobalStates.globalStates.scoreVector[secondaryIndex] < recoverThreshold)
@@ -334,7 +334,7 @@ public class Scheduler {
     private static void recoverRequests(int primaryIndex, final double offloadThreshold)
     {
         // Traverse every secondary replica node, and recover the request from the node with the higher score
-        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.globalStates.rf; i++)
+        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.rf; i++)
         {
             int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
             if(GlobalStates.globalStates.scoreVector[secondaryIndex] > GlobalStates.globalStates.scoreVector[primaryIndex])
@@ -388,7 +388,7 @@ public class Scheduler {
         
         StorageService.instance.stateGatheringSignalInFlight.set(0);
 
-        GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size(), 3);
+        GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size());
         if(liveSeeds.size() == 1)
         {
             for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())

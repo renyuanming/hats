@@ -109,6 +109,7 @@ public class CassandraDaemon
     public static final String MBEAN_NAME = "org.apache.cassandra.db:type=NativeAccess";
 
     private static final Logger logger;
+    private static volatile boolean isHorseActived = false;
 
     @VisibleForTesting
     public static CassandraDaemon getInstanceForTesting()
@@ -199,7 +200,7 @@ public class CassandraDaemon
             }
         };
     
-    static final CassandraDaemon instance = new CassandraDaemon();
+    public static final CassandraDaemon instance = new CassandraDaemon();
 
     private volatile NativeTransportService nativeTransportService;
     private JMXConnectorServer jmxServer;
@@ -431,8 +432,44 @@ public class CassandraDaemon
         AuditLogManager.instance.initialize();
 
         // Horse
-        if(DatabaseDescriptor.getEnableHorse())
-        {
+        // if(DatabaseDescriptor.getEnableHorse())
+        // {
+        //     activeHorse();
+        // }
+
+        // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
+        // due to scheduling errors or race conditions
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
+
+        // schedule periodic recomputation of speculative retry thresholds
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
+                                                                DatabaseDescriptor.getReadRpcTimeout(NANOSECONDS),
+                                                                DatabaseDescriptor.getReadRpcTimeout(NANOSECONDS),
+                                                                NANOSECONDS);
+
+        initializeClientTransports();
+
+        // Ensure you've registered all caches during startup you want pre-warmed before this call -> be wary of adding
+        // init below this mark before completeSetup().
+        if (DatabaseDescriptor.getAuthCacheWarmingEnabled())
+            AuthCacheService.instance.warmCaches();
+        else
+            logger.info("Prewarming of auth caches is disabled");
+
+        PaxosState.startAutoRepairs();
+
+        completeSetup();
+    }
+    
+    public boolean getIsHorseActived()
+    {
+        return isHorseActived;
+    }
+
+    public void activeHorse()
+    {
+        if(!isHorseActived)
+        {            
             if(Gossiper.getSeedsStr().split(",").length <= 1)
             {
                 // priority election
@@ -462,30 +499,8 @@ public class CassandraDaemon
                                                                     DatabaseDescriptor.getSchedulingInitialDelay(), 
                                                                     DatabaseDescriptor.getSchedulingInterval(),
                                                                     TimeUnit.SECONDS);
+            isHorseActived = true;
         }
-
-        // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
-        // due to scheduling errors or race conditions
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
-
-        // schedule periodic recomputation of speculative retry thresholds
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
-                                                                DatabaseDescriptor.getReadRpcTimeout(NANOSECONDS),
-                                                                DatabaseDescriptor.getReadRpcTimeout(NANOSECONDS),
-                                                                NANOSECONDS);
-
-        initializeClientTransports();
-
-        // Ensure you've registered all caches during startup you want pre-warmed before this call -> be wary of adding
-        // init below this mark before completeSetup().
-        if (DatabaseDescriptor.getAuthCacheWarmingEnabled())
-            AuthCacheService.instance.warmCaches();
-        else
-            logger.info("Prewarming of auth caches is disabled");
-
-        PaxosState.startAutoRepairs();
-
-        completeSetup();
     }
 
     public void runStartupChecks()

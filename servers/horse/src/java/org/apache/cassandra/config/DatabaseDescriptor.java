@@ -5176,4 +5176,9 @@ public class DatabaseDescriptor
     {
         return conf.throttle_data_rate;
     }
+
+    public static int getReplicationFactor()
+    {
+        return conf.replication_factor;
+    }
 }
