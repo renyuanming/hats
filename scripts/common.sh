@@ -436,7 +436,7 @@ function restartCassandra {
     resetPlaybook "restartCassandra"
     playbook="playbook-restartCassandra.yaml"
 
-    echo "Restart the server with enableHorse ${enableHorse}, the throttle data rate is ${throttleDataRate} MB/s"
+    echo "Restart the server with enableHorse ${enableHorse}, motivation ${motivation}, rebuild ${rebuild}, useDirectIO ${useDirectIO}, branch ${branch}, schedulingInitialDelay ${schedulingInitialDelay}, schedulingInterval ${schedulingInterval}, statesUpdateInterval ${statesUpdateInterval}, readSensitivity ${readSensitivity}, throttleDataRate ${throttleDataRate}"
 
     # Modify playbook
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
@@ -584,7 +584,7 @@ function run {
     enableHorse=$4
     consistencyLevel=$5
 
-    echo "Run ${targetScheme} with ${dist} ${workload} ${threads} ${kvNumber}, enableAutoCompaction is ${enableAutoCompaction}, mode is ${mode}, enableAutoCompactionCFs is ${enableAutoCompactionCFs}"
+    echo "Run ${targetScheme} with distribution: ${dist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHorse: ${enableHorse} consistencyLevel: ${consistencyLevel}"
 
     resetPlaybook "run"
     playbook="playbook-run.yaml"
