@@ -2153,8 +2153,8 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
         // Remove the old entries
         seeds.retainAll(tmp);
         allSeeds.retainAll(tmp);
-        logger.info("New seed node list after reload {}", seeds);
-        CassandraDaemon.instance.activeHorse();
+        logger.info("New seed node list after reload {}, allSeeds {}", seeds, allSeeds);
+        // CassandraDaemon.instance.activeHorse();
         return getSeeds();
     }
 
