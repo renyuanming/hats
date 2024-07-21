@@ -98,6 +98,10 @@ function process_sub_directory {
         coordinator_read_latency_of_all_nodes=()
         local_write_count_of_all_nodes=()
         local_write_latency_of_all_nodes=()
+        local_scan_count_of_all_nodes=()
+        local_scan_latency_of_all_nodes=()
+        coordinator_scan_count_of_all_nodes=()
+        coordinator_scan_latency_of_all_nodes=()
 
         for node_dir in "$round_dir"node*/; do
             node_name=$(basename "$node_dir")
@@ -163,6 +167,10 @@ function process_sub_directory {
             coordinator_read_latency=$(extract_value "Coordinator read latency" "$break_down_file")
             local_write_count=$(extract_value "Local write count" "$break_down_file")
             local_write_latency=$(extract_value "Local write latency" "$break_down_file")
+            local_scan_count=$(extract_value "Local range count" "$break_down_file")
+            local_scan_latency=$(extract_value "Local range latency" "$break_down_file")
+            coordinator_scan_count=$(extract_value "Coordinator scan count" "$break_down_file")
+            coordinator_scan_latency=$(extract_value "Coordinator scan latency" "$break_down_file")
 
 
 
@@ -182,6 +190,10 @@ function process_sub_directory {
             eval "round_data[$node_name,coordinator_read_latency]+=\"$coordinator_read_latency \""
             eval "round_data[$node_name,local_write_count]+=\"$local_write_count \""
             eval "round_data[$node_name,local_write_latency]+=\"$local_write_latency \""
+            eval "round_data[$node_name,local_scan_count]+=\"$local_scan_count \""
+            eval "round_data[$node_name,local_scan_latency]+=\"$local_scan_latency \""
+            eval "round_data[$node_name,coordinator_scan_count]+=\"$coordinator_scan_count \""
+            eval "round_data[$node_name,coordinator_scan_latency]+=\"$coordinator_scan_latency \""
 
             user_time_of_all_nodes+=("$user_time")
             sys_time_of_all_nodes+=("$sys_time")
@@ -193,19 +205,26 @@ function process_sub_directory {
             coordinator_read_latency_of_all_nodes+=("$coordinator_read_latency")
             local_write_count_of_all_nodes+=("$local_write_count")
             local_write_latency_of_all_nodes+=("$local_write_latency")
+            local_scan_count_of_all_nodes+=("$local_scan_count")
+            local_scan_latency_of_all_nodes+=("$local_scan_latency")
+            coordinator_scan_count_of_all_nodes+=("$coordinator_scan_count")
+            coordinator_scan_latency_of_all_nodes+=("$coordinator_scan_latency")
         done
 
         # Get the average read latency
         # average_read_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[READ\], AverageLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         average_read_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[READ\], AverageLatency(us), " "{}" | awk -F ", " "{printf \"%.0f\", \$3}"' \;)
         echo "Average Read Latency: $average_read_latency"
+        meidan_read_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[READ\], MedianLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
+        tail_read_latency_75th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[READ\], 75thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         tail_read_latency_99th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[READ\], 99thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
+        tail_read_latency_999th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[READ\], 999thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         average_update_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[UPDATE\], AverageLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         tail_update_latency_99th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[UPDATE\], 99thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         average_scan_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[SCAN\], AverageLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         tail_scan_latency_99th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[SCAN\], 99thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
-        average_scan_latency=$(echo "scale=0; $average_scan_latency / 1000" | bc)
-        tail_scan_latency_99th=$(echo "scale=0; $tail_scan_latency_99th / 1000" | bc)
+        # average_scan_latency=$(echo "scale=0; $average_scan_latency" | bc)
+        # tail_scan_latency_99th=$(echo "scale=0; $tail_scan_latency_99th" | bc)
         average_insert_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[INSERT\], AverageLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         tail_insert_latency_99th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[INSERT\], 99thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         overall_runtime=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[OVERALL\], RunTime(ms), " "{}" | awk -F ", " "{print \$3}"' \;)
@@ -220,16 +239,25 @@ function process_sub_directory {
         # echo "Average Coordinator Read Latency: $average_coordinator_read_latency"
         average_local_write_latency=$(calculate_arithmetic_mean local_write_count_of_all_nodes[@] local_write_latency_of_all_nodes[@])
         # echo "Average Local Write Latency: $average_local_write_latency"
+
+        average_local_scan_latency=$(calculate_arithmetic_mean local_scan_count_of_all_nodes[@] local_scan_latency_of_all_nodes[@])
+        # echo "Average Local Scan Latency: $average_local_scan_latency"
+        average_coordinator_scan_latency=$(calculate_arithmetic_mean coordinator_scan_count_of_all_nodes[@] coordinator_scan_latency_of_all_nodes[@])
+
+
         # replica_selection_cost=$(bc <<< "scale=0; $average_coordinator_read_latency - $average_local_read_latency")
         replica_selection_cost=$(echo "$average_coordinator_read_latency - $average_local_read_latency" | bc)
         echo "Replica Selection Cost: $replica_selection_cost"
         # read_network_cost=$(bc <<< "$average_read_latency - $average_local_read_latency")
         echo "Average Read Latency: $average_read_latency, Average Local Read Latency: $average_local_read_latency"
-        read_network_cost=$(echo "${average_read_latency} - ${average_local_read_latency}" | bc)
+        read_network_cost=$(echo "${average_read_latency} - ${average_coordinator_read_latency}" | bc)
         echo "Read Network Cost: $read_network_cost"
 
         eval "round_data[average_read_latency]=\"$average_read_latency \""
+        eval "rount_data[median_read_latency]=\"$meidan_read_latency \""
+        eval "round_data[tail_read_latency_75th]=\"$tail_read_latency_75th \""
         eval "round_data[tail_read_latency_99th]=\"$tail_read_latency_99th \""
+        eval "round_data[tail_read_latency_999th]=\"$tail_read_latency_999th \""
         eval "round_data[average_update_latency]=\"$average_update_latency \""
         eval "round_data[tail_update_latency_99th]=\"$tail_update_latency_99th \""
         eval "round_data[average_scan_latency]=\"$average_scan_latency \""
@@ -245,11 +273,16 @@ function process_sub_directory {
         eval "round_data[average_local_read_latency]=\"$average_local_read_latency\""
         eval "round_data[average_coordinator_read_latency]=\"$average_coordinator_read_latency\""
         eval "round_data[average_local_write_latency]=\"$average_local_write_latency\""
+        eval "round_data[average_local_scan_latency]=\"$average_local_scan_latency\""
+        eval "round_data[average_coordinator_scan_latency]=\"$average_coordinator_scan_latency\""
         eval "round_data[read_network_cost]=\"$read_network_cost\""
         eval "round_data[replica_selection_cost]=\"$replica_selection_cost\""
 
         eval "overall_data[$round,average_read_latency]=\"$average_read_latency \""
+        eval "overall_data[$round,median_read_latency]=\"$meidan_read_latency \""
+        eval "overall_data[$round,tail_read_latency_75th]=\"$tail_read_latency_75th \""
         eval "overall_data[$round,tail_read_latency_99th]=\"$tail_read_latency_99th \""
+        eval "overall_data[$round,tail_read_latency_999th]=\"$tail_read_latency_999th \""
         eval "overall_data[$round,average_update_latency]=\"$average_update_latency \""
         eval "overall_data[$round,tail_update_latency_99th]=\"$tail_update_latency_99th \""
         eval "overall_data[$round,average_scan_latency]=\"$average_scan_latency \""
@@ -265,6 +298,8 @@ function process_sub_directory {
         eval "overall_data[$round,average_local_read_latency]=\"$average_local_read_latency\""
         eval "overall_data[$round,average_coordinator_read_latency]=\"$average_coordinator_read_latency\""
         eval "overall_data[$round,average_local_write_latency]=\"$average_local_write_latency\""
+        eval "overall_data[$round,average_local_scan_latency]=\"$average_local_scan_latency\""
+        eval "overall_data[$round,average_coordinator_scan_latency]=\"$average_coordinator_scan_latency\""
         eval "overall_data[$round,replica_selection_cost]=\"$replica_selection_cost\""
         eval "overall_data[$round,read_network_cost]=\"$read_network_cost\""
         eval "overall_data[$round,round]=\"$round\""
@@ -409,7 +444,7 @@ function print_overall_results() {
     # "average_read_latency" "tail_read_latency_99th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "replica_selection_cost" "read_network_cost"
     # "average_read_latency" "tail_read_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "replica_selection_cost" "read_network_cost"
     # calculate the student t distribution for 95% confidence interval
-    for key in "average_read_latency" "tail_read_latency_99th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th"; do
+    for key in "average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th"; do
         metrics=()
         for round in "${sorted_rounds[@]}"; do
             echo "Round: $round, Key: $key, value: ${data[$round,$key]}"
@@ -465,7 +500,28 @@ function output_to_res_file {
         echo -n "$mean    " >> "$AVG_READ_LATENCY_RES"
         echo -n "$t_error    " >> "$AVG_READ_LATENCY_RES"
         echo "" >> "$AVG_READ_LATENCY_RES"
+    elif [ $key == "median_read_latency" ]; then
+        echo -n "" >> "$AVG_READ_LATENCY_RES"
+        echo -n "$type    " >> "$AVG_READ_LATENCY_RES"
+        echo -n "$cl    " >> "$AVG_READ_LATENCY_RES"
+        echo -n "$mean    " >> "$AVG_READ_LATENCY_RES"
+        echo -n "$t_error    " >> "$AVG_READ_LATENCY_RES"
+        echo "" >> "$AVG_READ_LATENCY_RES"
+    elif [ $key == "tail_read_latency_75th" ]; then
+        echo -n "" >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$type    " >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$cl    " >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$mean    " >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$t_error    " >> "$TAIL_READ_LATENCY_RES"
+        echo "" >> "$TAIL_READ_LATENCY_RES"
     elif [ $key == "tail_read_latency_99th" ]; then
+        echo -n "" >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$type    " >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$cl    " >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$mean    " >> "$TAIL_READ_LATENCY_RES"
+        echo -n "$t_error    " >> "$TAIL_READ_LATENCY_RES"
+        echo "" >> "$TAIL_READ_LATENCY_RES"
+    elif [ $key == "tail_read_latency_999th" ]; then
         echo -n "" >> "$TAIL_READ_LATENCY_RES"
         echo -n "$type    " >> "$TAIL_READ_LATENCY_RES"
         echo -n "$cl    " >> "$TAIL_READ_LATENCY_RES"
@@ -577,7 +633,7 @@ function print_round_results() {
         echo -n "$node," >> "$output_file"
     done
     echo "" >> "$output_file"
-    for key in "node_name" "uptime" "user_time" "sys_time" "disk_read_io" "disk_write_io" "network_recv_io" "network_send_io" "local_read_count" "local_read_latency" "coordinator_read_count" "coordinator_read_latency" "local_write_count" "local_write_latency"; do
+    for key in "node_name" "uptime" "user_time" "sys_time" "disk_read_io" "disk_write_io" "network_recv_io" "network_send_io" "local_read_count" "local_read_latency" "coordinator_read_count" "coordinator_read_latency" "local_write_count" "local_write_latency" "local_scan_count" "local_scan_latency" "coordinator_scan_count" "coordinator_scan_latency"; do
         echo -n "$key," >> "$output_file"
         for node in "${sorted_nodes[@]}"; do
             echo -n "${data[$node,$key]}," >> "$output_file"
@@ -597,14 +653,29 @@ function print_round_results() {
     echo -n "Average Local Write Latency (us)," >> "$output_file"
     echo -n "${data[average_local_write_latency]}," >> "$output_file"
     echo "" >> "$output_file"
+    echo -n "Average Local Scan Latency (us)," >> "$output_file"
+    echo -n "${data[average_local_scan_latency]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "Average Coordinator Scan Latency (us)," >> "$output_file"
+    echo -n "${data[average_coordinator_scan_latency]}," >> "$output_file"
+    echo "" >> "$output_file"
     echo -n "Replica Selection Cost (us)," >> "$output_file"
     echo -n "${data[replica_selection_cost]}," >> "$output_file"
     echo "" >> "$output_file"
     echo -n "Read Network Cost (us)," >> "$output_file"
     echo -n "${data[read_network_cost]}," >> "$output_file"
     echo "" >> "$output_file"
+    echo -n "Median Read Latency (us)," >> "$output_file"
+    echo -n "${data[median_read_latency]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "75th Percentile Read Latency (us)," >> "$output_file"
+    echo -n "${data[tail_read_latency_75th]}," >> "$output_file"
+    echo "" >> "$output_file"
     echo -n "99th Percentile Read Latency (us)," >> "$output_file"
     echo -n "${data[tail_read_latency_99th]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "999th Percentile Read Latency (us)," >> "$output_file"
+    echo -n "${data[tail_read_latency_999th]}," >> "$output_file"
     echo "" >> "$output_file"
     echo -n "Average Update Latency (us)," >> "$output_file"
     echo -n "${data[average_update_latency]}," >> "$output_file"
