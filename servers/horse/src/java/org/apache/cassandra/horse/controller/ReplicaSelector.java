@@ -105,9 +105,9 @@ public class ReplicaSelector
         // latencyScore = Math.pow(latencyScore, 3);
         // latencyScore = 1 / (1 + Math.exp(-latencyScore));
         latencyScore = 1 - Math.exp(-latencyScore);
-        // double score = latencyScore + greedyScore;
+        double score = latencyScore * 2 + greedyScore;
         
-        return latencyScore;
+        return score;
     }
 
     public static class HighPerformanceWeightedSelector {
