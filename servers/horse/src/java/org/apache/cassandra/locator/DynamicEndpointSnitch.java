@@ -207,11 +207,12 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
         // TODO: avoid copy
         replicas = subsnitch.sortedByProximity(address, replicas);
-        HashMap<InetAddressAndPort, Double> scores;
+        HashMap<InetAddressAndPort, Double> scores = null;
         if(DatabaseDescriptor.getEnableHorse())
         {
             InetAddressAndPort replicationGroup = replicas.get(0).endpoint();
-            scores = new HashMap<>(ReplicaSelector.snitchMetrics.cachedScores.get(replicationGroup));
+            if(ReplicaSelector.snitchMetrics.cachedScores != null)
+                scores = new HashMap<>(ReplicaSelector.snitchMetrics.cachedScores.get(replicationGroup));
         }
         else
         {
@@ -222,9 +223,11 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         ArrayList<Double> subsnitchOrderedScores = new ArrayList<>(replicas.size());
         for (Replica replica : replicas)
         {
-            Double score = scores.get(replica.endpoint());
-            if (score == null)
-                score = defaultStore(replica.endpoint());
+            Double score = defaultStore(replica.endpoint());
+            if(scores != null && scores.get(replica.endpoint()) != null)
+            {
+                score = scores.get(replica.endpoint());
+            }
             subsnitchOrderedScores.add(score);
         }
 
