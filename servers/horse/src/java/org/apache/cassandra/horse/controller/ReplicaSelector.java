@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
@@ -133,6 +135,8 @@ public class ReplicaSelector
         if (score != null) {
             return score;
         }
+
+        HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("rymDebug: print the stack trace of the score function."));
     
         // Calculate score because it was not found in cache
         double newScore = calculateScore(replicationGroup, targetAddr);
