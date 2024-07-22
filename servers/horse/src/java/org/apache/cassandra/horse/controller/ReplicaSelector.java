@@ -144,7 +144,7 @@ public class ReplicaSelector
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
         double latencyScore = calculateLatencyScore(targetAddr);
     
-        return latencyScore;
+        return latencyScore + greedyScore;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
