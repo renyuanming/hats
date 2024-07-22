@@ -176,8 +176,8 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddresses)
     {
         assert address.equals(FBUtilities.getBroadcastAddressAndPort()); // we only know about ourself
-        // if(DatabaseDescriptor.getEnableHorse())
-        //     return sortedByProximityWithScore(address, unsortedAddresses);
+        if(DatabaseDescriptor.getEnableHorse())
+            return sortedByProximityWithScore(address, unsortedAddresses);
 
         return dynamicBadnessThreshold == 0
                 ? sortedByProximityWithScore(address, unsortedAddresses)
