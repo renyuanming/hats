@@ -211,7 +211,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         if(DatabaseDescriptor.getEnableHorse())
         {
             InetAddressAndPort replicationGroup = replicas.get(0).endpoint();
-            if(ReplicaSelector.snitchMetrics.cachedScores != null)
+            if(ReplicaSelector.snitchMetrics.cachedScores != null && ReplicaSelector.snitchMetrics.cachedScores.get(replicationGroup) != null)
                 scores = new HashMap<>(ReplicaSelector.snitchMetrics.cachedScores.get(replicationGroup));
         }
         else
