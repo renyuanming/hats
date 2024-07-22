@@ -60,7 +60,7 @@ public class ReplicaSelector
      private static final String ANSI_YELLOW = "\u001B[33m";
      private static final String ANSI_BLUE = "\u001B[34m";
  
-    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 0.0, 0.0);
+    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, Double.MAX_VALUE);
 
     public static class SnitchMetrics 
     {
@@ -176,9 +176,9 @@ public class ReplicaSelector
         double latencyScore = 0.0;
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            // latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
             // latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
+            // latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
             // if (latencyScore >= 1) {
             //     logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
             // }
