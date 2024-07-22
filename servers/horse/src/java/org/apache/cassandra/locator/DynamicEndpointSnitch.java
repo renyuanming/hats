@@ -279,11 +279,11 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         Double scored2 = ReplicaSelector.getScore(replicationGroup, a2.endpoint());
 
         if(scored1.equals(scored2))
-            return subsnitch.compareEndpoints(target, a1, a2);
+            return 0;
         if(scored1 < scored2)
-            return -1;
-        else
             return 1;
+        else
+            return -1;
     }
 
     public int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2)
