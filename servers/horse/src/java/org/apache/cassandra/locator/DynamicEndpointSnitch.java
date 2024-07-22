@@ -207,7 +207,17 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
         // TODO: avoid copy
         replicas = subsnitch.sortedByProximity(address, replicas);
-        HashMap<InetAddressAndPort, Double> scores = this.scores; // Make sure the score don't change in the middle of the loop below
+        HashMap<InetAddressAndPort, Double> scores;
+        if(DatabaseDescriptor.getEnableHorse())
+        {
+            InetAddressAndPort replicationGroup = replicas.get(0).endpoint();
+            scores = new HashMap<>(ReplicaSelector.snitchMetrics.cachedScores.get(replicationGroup));
+        }
+        else
+        {
+            scores = this.scores;
+        }
+        // HashMap<InetAddressAndPort, Double> scores = this.scores; // Make sure the score don't change in the middle of the loop below
                                                            // (which wouldn't really matter here but its cleaner that way).
         ArrayList<Double> subsnitchOrderedScores = new ArrayList<>(replicas.size());
         for (Replica replica : replicas)
@@ -218,20 +228,42 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             subsnitchOrderedScores.add(score);
         }
 
-        // Sort the scores and then compare them (positionally) to the scores in the subsnitch order.
-        // If any of the subsnitch-ordered scores exceed the optimal/sorted score by dynamicBadnessThreshold, use
-        // the score-sorted ordering instead of the subsnitch ordering.
-        ArrayList<Double> sortedScores = new ArrayList<>(subsnitchOrderedScores);
-        Collections.sort(sortedScores);
-
-        // only calculate this once b/c its volatile and shouldn't be modified during the loop either
-        double badnessThreshold = 1.0 + dynamicBadnessThreshold;
-        Iterator<Double> sortedScoreIterator = sortedScores.iterator();
-        for (Double subsnitchScore : subsnitchOrderedScores)
+        if(DatabaseDescriptor.getEnableHorse())
         {
-            if (subsnitchScore > (sortedScoreIterator.next() * badnessThreshold))
+            // Sort the scores and then compare them (positionally) to the scores in the subsnitch order.
+            // If any of the subsnitch-ordered scores exceed the optimal/sorted score by dynamicBadnessThreshold, use
+            // the score-sorted ordering instead of the subsnitch ordering.
+            ArrayList<Double> sortedScores = new ArrayList<>(subsnitchOrderedScores);
+            Collections.sort(sortedScores, Collections.reverseOrder());
+
+            // only calculate this once b/c its volatile and shouldn't be modified during the loop either
+            double badnessThreshold = 1 / (1.0 + dynamicBadnessThreshold);
+            Iterator<Double> sortedScoreIterator = sortedScores.iterator();
+            for (Double subsnitchScore : subsnitchOrderedScores)
             {
-                return sortedByProximityWithScore(address, replicas);
+                if (subsnitchScore < (sortedScoreIterator.next() * badnessThreshold))
+                {
+                    return sortedByProximityWithScore(address, replicas);
+                }
+            }
+        }
+        else
+        {
+            // Sort the scores and then compare them (positionally) to the scores in the subsnitch order.
+            // If any of the subsnitch-ordered scores exceed the optimal/sorted score by dynamicBadnessThreshold, use
+            // the score-sorted ordering instead of the subsnitch ordering.
+            ArrayList<Double> sortedScores = new ArrayList<>(subsnitchOrderedScores);
+            Collections.sort(sortedScores);
+
+            // only calculate this once b/c its volatile and shouldn't be modified during the loop either
+            double badnessThreshold = 1.0 + dynamicBadnessThreshold;
+            Iterator<Double> sortedScoreIterator = sortedScores.iterator();
+            for (Double subsnitchScore : subsnitchOrderedScores)
+            {
+                if (subsnitchScore > (sortedScoreIterator.next() * badnessThreshold))
+                {
+                    return sortedByProximityWithScore(address, replicas);
+                }
             }
         }
 
