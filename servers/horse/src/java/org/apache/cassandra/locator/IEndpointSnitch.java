@@ -69,7 +69,7 @@ public interface IEndpointSnitch
     /**
      * returns a new <tt>List</tt> sorted by proximity to the given endpoint
      */
-    public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C addresses);
+    public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C addresses, boolean isRangeRequest);
 
     /**
      * compares two endpoints in relation to the target endpoint, returning as Comparator.compare would

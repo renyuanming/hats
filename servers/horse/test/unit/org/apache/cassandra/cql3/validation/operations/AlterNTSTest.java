@@ -128,7 +128,7 @@ public class AlterNTSTest extends CQLTester
                     return "datacenter2";
                 return DATA_CENTER;
             }
-            public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C addresses)
+            public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C addresses, boolean isRange)
             {
                 return null;
             }

@@ -128,7 +128,7 @@ public class ReplicaSelector
     // }
 
 
-    public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) {
+    public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
         Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
     
         // Return score if already calculated
@@ -140,15 +140,16 @@ public class ReplicaSelector
         // HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("rymDebug: print the stack trace of the score function."));
     
         // Calculate score because it was not found in cache
-        double newScore = calculateScore(replicationGroup, targetAddr);
+        double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
         groupScores.put(targetAddr, newScore);
         return newScore;
     }
     
-    private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) {
+    private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
-    
+        if (isRangeRequest) 
+            return latencyScore;
         return greedyScore + latencyScore;
     }
     

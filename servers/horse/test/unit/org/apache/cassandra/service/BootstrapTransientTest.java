@@ -181,7 +181,7 @@ public class BootstrapTransientTest
     {
         DatabaseDescriptor.setTransientReplicationEnabledUnsafe(true);
 
-        EndpointsByReplica result = RangeStreamer.calculateRangesToFetchWithPreferredEndpoints((address, replicas) -> replicas,
+        EndpointsByReplica result = RangeStreamer.calculateRangesToFetchWithPreferredEndpoints((address, replicas, isRange) -> replicas,
                                                                                                simpleStrategy(tmds.left),
                                                                                                toFetch,
                                                                                                true,

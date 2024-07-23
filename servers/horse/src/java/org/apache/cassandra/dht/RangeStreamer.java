@@ -443,14 +443,21 @@ public class RangeStreamer
                                                             sourceFilters);
 
     }
+    public interface TriFunction<T, U, V, R> {
+        R apply(T t, U u, V v);
+    }
 
+    // TriFunction<InetAddressAndPort, EndpointsForRange, Boolean, EndpointsForRange> snitchGetSortedListByProximity =
+    // (address, endpoints, isRangeRequest) -> {
+    //     return 
+    // };
     /**
      * Get a map of all ranges and the source that will be cleaned up once this bootstrapped node is added for the given ranges.
      * For each range, the list should only contain a single source. This allows us to consistently migrate data without violating
      * consistency.
      **/
      public static EndpointsByReplica
-     calculateRangesToFetchWithPreferredEndpoints(BiFunction<InetAddressAndPort, EndpointsForRange, EndpointsForRange> snitchGetSortedListByProximity,
+     calculateRangesToFetchWithPreferredEndpoints(TriFunction<InetAddressAndPort, EndpointsForRange, Boolean, EndpointsForRange> snitchGetSortedListByProximity,
                                                   AbstractReplicationStrategy strat,
                                                   ReplicaCollection<?> fetchRanges,
                                                   boolean useStrictConsistency,
@@ -468,7 +475,7 @@ public class RangeStreamer
 
          Predicate<Replica> testSourceFilters = and(sourceFilters);
          Function<EndpointsForRange, EndpointsForRange> sorted =
-         endpoints -> snitchGetSortedListByProximity.apply(localAddress, endpoints);
+         endpoints -> snitchGetSortedListByProximity.apply(localAddress, endpoints, false);
 
          //This list of replicas is just candidates. With strict consistency it's going to be a narrow list.
          EndpointsByReplica.Builder rangesToFetchWithPreferredEndpoints = new EndpointsByReplica.Builder();

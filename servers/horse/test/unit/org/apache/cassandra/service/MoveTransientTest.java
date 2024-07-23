@@ -583,7 +583,7 @@ public class MoveTransientTest
     {
         DatabaseDescriptor.setTransientReplicationEnabledUnsafe(true);
 
-        EndpointsByReplica result = RangeStreamer.calculateRangesToFetchWithPreferredEndpoints((address, replicas) -> replicas.sorted((a, b) -> b.endpoint().compareTo(a.endpoint())),
+        EndpointsByReplica result = RangeStreamer.calculateRangesToFetchWithPreferredEndpoints((address, replicas, isRange) -> replicas.sorted((a, b) -> b.endpoint().compareTo(a.endpoint())),
                                                                                                simpleStrategy(tmds.left),
                                                                                                toFetch,
                                                                                                true,

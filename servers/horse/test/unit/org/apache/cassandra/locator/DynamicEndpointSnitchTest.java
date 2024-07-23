@@ -79,41 +79,41 @@ public class DynamicEndpointSnitchTest
         // first, make all hosts equal
         setScores(dsnitch, 1, hosts, 10, 10, 10);
         EndpointsForRange order = full(host1, host2, host3);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3), false));
 
         // make host1 a little worse
         setScores(dsnitch, 1, hosts, 20, 10, 10);
         order = full(host2, host3, host1);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3), false));
 
         // make host2 as bad as host1
         setScores(dsnitch, 2, hosts, 15, 20, 10);
         order = full(host3, host1, host2);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3), false));
 
         // make host3 the worst
         setScores(dsnitch, 3, hosts, 10, 10, 30);
         order = full(host1, host2, host3);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3), false));
 
         // make host3 equal to the others
         setScores(dsnitch, 5, hosts, 10, 10, 10);
         order = full(host1, host2, host3);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3), false));
 
         /// Tests CASSANDRA-6683 improvements
         // make the scores differ enough from the ideal order that we sort by score; under the old
         // dynamic snitch behavior (where we only compared neighbors), these wouldn't get sorted
         setScores(dsnitch, 20, hosts, 10, 70, 20);
         order = full(host1, host3, host2);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3), false));
 
         order = full(host4, host1, host3, host2);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3, host4)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3, host4), false));
 
 
         setScores(dsnitch, 20, hosts, 10, 10, 10);
         order = full(host4, host1, host2, host3);
-        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3, host4)));
+        Util.assertRCEquals(order, dsnitch.sortedByProximity(self, full(host1, host2, host3, host4), false));
     }
 }

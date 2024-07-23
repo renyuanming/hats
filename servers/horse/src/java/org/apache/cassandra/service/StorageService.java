@@ -3604,7 +3604,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             EndpointsForRange possibleReplicas = rangeReplicas.get(leavingReplica.range());
             logger.info("Possible replicas for newReplica {} are {}", ourReplica, possibleReplicas);
             IEndpointSnitch snitch = DatabaseDescriptor.getEndpointSnitch();
-            EndpointsForRange sortedPossibleReplicas = snitch.sortedByProximity(myAddress, possibleReplicas);
+            EndpointsForRange sortedPossibleReplicas = snitch.sortedByProximity(myAddress, possibleReplicas, false);
             logger.info("Sorted possible replicas starts as {}", sortedPossibleReplicas);
             Optional<Replica> myCurrentReplica = tryFind(possibleReplicas, replica -> replica.endpoint().equals(myAddress)).toJavaUtil();
 
@@ -5585,7 +5585,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         else
         {
             // stream to the closest peer as chosen by the snitch
-            candidates = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), candidates);
+            candidates = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), candidates, false);
             InetAddressAndPort hintsDestinationHost = candidates.get(0).endpoint();
             return tokenMetadata.getHostId(hintsDestinationHost);
         }

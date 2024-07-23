@@ -48,7 +48,7 @@ public class SimulatedSnitch extends NodeLookup
             return LOOKUP_DC.apply(endpoint);
         }
 
-        public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C addresses)
+        public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C addresses, boolean isRange)
         {
             return addresses.sorted(Comparator.comparingInt(SimulatedSnitch::asInt));
         }

@@ -116,7 +116,7 @@ public class WriteResponseHandlerTransientTest
                     return DC2;
             }
 
-            public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C unsortedAddress)
+            public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C unsortedAddress, boolean isRange)
             {
                 return unsortedAddress;
             }

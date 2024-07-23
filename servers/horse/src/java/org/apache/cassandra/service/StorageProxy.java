@@ -1791,7 +1791,7 @@ public class StorageProxy implements StorageProxyMBean
                 throw UnavailableException.create(cl, cl.blockFor(replicationStrategy), 0);
 
             // No endpoint in local DC, pick the closest endpoint according to the snitch
-            replicas = snitch.sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
+            replicas = snitch.sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, false);
             return replicas.get(0);
         }
 

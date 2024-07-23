@@ -70,7 +70,7 @@ public class DynamicEndpointSnitchLongTest
 
             EndpointsForRange result = replicas;
             for (int i = 0; i < ITERATIONS; i++)
-                result = dsnitch.sortedByProximity(self, result);
+                result = dsnitch.sortedByProximity(self, result, false);
 
             updater.stopped = true;
             updater.join();

@@ -176,18 +176,18 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     }
 
     @Override
-    public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddresses)
+    public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddresses, boolean isRangeRequest)
     {
         assert address.equals(FBUtilities.getBroadcastAddressAndPort()); // we only know about ourself
         // if(DatabaseDescriptor.getEnableHorse())
         //     return sortedByProximityWithScore(address, unsortedAddresses);
 
         return dynamicBadnessThreshold == 0
-                ? sortedByProximityWithScore(address, unsortedAddresses)
-                : sortedByProximityWithBadness(address, unsortedAddresses);
+                ? sortedByProximityWithScore(address, unsortedAddresses, isRangeRequest)
+                : sortedByProximityWithBadness(address, unsortedAddresses, isRangeRequest);
     }
 
-    private <C extends ReplicaCollection<? extends C>> C sortedByProximityWithScore(final InetAddressAndPort address, C unsortedAddresses)
+    private <C extends ReplicaCollection<? extends C>> C sortedByProximityWithScore(final InetAddressAndPort address, C unsortedAddresses, boolean isRangeRequest)
     {
         // Scores can change concurrently from a call to this method. But Collections.sort() expects
         // its comparator to be "stable", that is 2 endpoint should compare the same way for the duration
@@ -197,20 +197,20 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         if(DatabaseDescriptor.getEnableHorse())
         {
             InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
-            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
+            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup, isRangeRequest));
             // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
         }
         return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
     }
 
 
-    private <C extends ReplicaCollection<? extends C>> C sortedByProximityWithBadness(final InetAddressAndPort address, C replicas)
+    private <C extends ReplicaCollection<? extends C>> C sortedByProximityWithBadness(final InetAddressAndPort address, C replicas, boolean isRangeRequest)
     {
         if (replicas.size() < 2)
             return replicas;
 
         // TODO: avoid copy
-        replicas = subsnitch.sortedByProximity(address, replicas);
+        replicas = subsnitch.sortedByProximity(address, replicas, isRangeRequest);
         HashMap<InetAddressAndPort, Double> scores = this.scores; // Make sure the score don't change in the middle of the loop below
                                                            // (which wouldn't really matter here but its cleaner that way).
         ArrayList<Double> subsnitchOrderedScores = new ArrayList<>(replicas.size());
@@ -235,7 +235,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         {
             if (subsnitchScore > (sortedScoreIterator.next() * badnessThreshold))
             {
-                return sortedByProximityWithScore(address, replicas);
+                return sortedByProximityWithScore(address, replicas, isRangeRequest);
             }
         }
 
@@ -279,10 +279,10 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     }
     
     // [Horse]
-    private int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2, InetAddressAndPort replicationGroup)
+    private int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2, InetAddressAndPort replicationGroup, boolean isRangeRequest)
     {
-        Double scored1 = ReplicaSelector.getScore(replicationGroup, a1.endpoint());
-        Double scored2 = ReplicaSelector.getScore(replicationGroup, a2.endpoint());
+        Double scored1 = ReplicaSelector.getScore(replicationGroup, a1.endpoint(), isRangeRequest);
+        Double scored2 = ReplicaSelector.getScore(replicationGroup, a2.endpoint(), isRangeRequest);
 
         if(scored1.equals(scored2))
             return 0;

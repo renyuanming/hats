@@ -101,7 +101,7 @@ public class WriteResponseHandlerTest
                     return "datacenter2";
             }
 
-            public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C replicas)
+            public <C extends ReplicaCollection<? extends C>> C sortedByProximity(InetAddressAndPort address, C replicas, boolean isRange)
             {
                 return replicas;
             }

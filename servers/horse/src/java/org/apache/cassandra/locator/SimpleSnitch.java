@@ -38,7 +38,7 @@ public class SimpleSnitch extends AbstractEndpointSnitch
     }
 
     @Override
-    public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddress)
+    public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddress, boolean isRangeRequest)
     {
         // Optimization to avoid walking the list
         return unsortedAddress;

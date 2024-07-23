@@ -335,7 +335,7 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     {
         EndpointsForToken replicas = replicationStrategy.getNaturalReplicasForToken(token);
 
-        replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
+        replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, false);
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForTokenRead(replicationStrategy, replicas);
     }
@@ -348,7 +348,7 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     static ReplicaLayout.ForRangeRead forRangeReadLiveSorted(AbstractReplicationStrategy replicationStrategy, AbstractBounds<PartitionPosition> range)
     {
         EndpointsForRange replicas = replicationStrategy.getNaturalReplicas(range.right);
-        replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
+        replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, true);
         // logger.error("rymDebug: sorted replica list is {}, replica is {}", replicas.list, replicas);
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForRangeRead(replicationStrategy, range, replicas);
