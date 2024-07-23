@@ -349,7 +349,7 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     {
         EndpointsForRange replicas = replicationStrategy.getNaturalReplicas(range.right);
         replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
-        logger.error("rymDebug: sorted replica list is {}, replica is {}", replicas.list, replicas);
+        // logger.error("rymDebug: sorted replica list is {}, replica is {}", replicas.list, replicas);
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForRangeRead(replicationStrategy, range, replicas);
     }

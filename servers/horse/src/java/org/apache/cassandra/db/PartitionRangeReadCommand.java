@@ -44,6 +44,8 @@ import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.dht.AbstractBounds;
 import org.apache.cassandra.dht.Bounds;
 import org.apache.cassandra.exceptions.RequestExecutionException;
+import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.io.sstable.SSTableReadsListener;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
@@ -339,6 +341,7 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
         // }
 
         ColumnFamilyStore.ViewFragment view = cfs.select(View.selectLive(dataRange().keyRange()));
+        HorseUtils.printStackTace(AKLogLevels.ERROR, "Executing seq scan");
         Tracing.trace("Executing seq scan across {} sstables for {}", view.sstables.size(), dataRange().keyRange().getString(metadata().partitionKeyType));
 
         // fetch data from current memtable, historical memtables, and SSTables in the correct order.
