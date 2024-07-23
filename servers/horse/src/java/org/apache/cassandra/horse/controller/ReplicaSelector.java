@@ -60,7 +60,7 @@ public class ReplicaSelector
      private static final String ANSI_YELLOW = "\u001B[33m";
      private static final String ANSI_BLUE = "\u001B[34m";
  
-    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, Double.MAX_VALUE);
+    public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, 1);
 
     public static class SnitchMetrics 
     {
@@ -148,7 +148,7 @@ public class ReplicaSelector
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
         double latencyScore = calculateLatencyScore(targetAddr);
     
-        return greedyScore;
+        return latencyScore;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
