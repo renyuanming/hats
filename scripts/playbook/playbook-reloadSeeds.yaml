@@ -11,6 +11,3 @@
     - name: Fail the play if the previous command did not succeed
       fail: msg="the command failed"
       when: "'FAILED' in command_result.stderr"
-    - name: Wait until copy is done
-      pause:
-        seconds: 20

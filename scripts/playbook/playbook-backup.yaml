@@ -18,4 +18,4 @@
       when: "'FAILED' in command_result.stderr"
     - name: Wait until copy is done
       pause:
-        seconds: 10
+        seconds: 5
