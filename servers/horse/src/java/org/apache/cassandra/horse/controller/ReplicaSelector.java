@@ -177,8 +177,8 @@ public class ReplicaSelector
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
             // latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
+            // latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
             // if (latencyScore >= 1) {
             //     logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
             // }
@@ -188,7 +188,6 @@ public class ReplicaSelector
         // latencyScore = 1 / (1 + Math.exp(-latencyScore));
 
         // latencyScore = 1 - Math.exp(-latencyScore);
-        latencyScore = Math.exp(-latencyScore);
         return latencyScore;
     }
     
