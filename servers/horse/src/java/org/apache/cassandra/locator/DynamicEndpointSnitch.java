@@ -284,9 +284,9 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         if(scored1.equals(scored2))
             return 0;
         if(scored1 < scored2)
-            return -1;
-        else
             return 1;
+        else
+            return -1;
     }
 
     public int compareEndpoints(InetAddressAndPort target, Replica a1, Replica a2)
