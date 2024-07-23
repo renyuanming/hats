@@ -196,8 +196,6 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         final HashMap<InetAddressAndPort, Double> scores = this.scores;
         if(DatabaseDescriptor.getEnableHorse())
         {
-            if(unsortedAddresses.size() < 3)
-                logger.error("rymDebug: The number of address is less than 3, the unsorted addresses are {}", unsortedAddresses);
             InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
             return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
             // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));

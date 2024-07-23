@@ -37,6 +37,7 @@ import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -182,13 +183,21 @@ public class ReplicaSelector
             // if (latencyScore >= 1) {
             //     logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
             // }
-            logger.error("rymDebug: For rg {}, target ip {}, the max latency is {}, min latency is {}, targe node latency is {}, tar/max is {}, max/target is {}", replicationGroup, targetAddr, snitchMetrics.maxLatency, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr),
-                         snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency,
-                         snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
+            // logger.error("rymDebug: For rg {}, target ip {}, the max latency is {}, min latency is {}, targe node latency is {}, tar/max is {}, max/target is {}", replicationGroup, targetAddr, snitchMetrics.maxLatency, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr),
+            //              snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency,
+                        //  snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
         }
         else
         {
-            logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
+            // logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
+            if(targetAddr.getAddress().equals(StorageService.instance.localIP))
+            {
+                latencyScore = snitchMetrics.maxLatency / 1.0;
+            }
+            else
+            {
+                latencyScore = 1;
+            }
         }
 
         // latencyScore = Math.pow(latencyScore, 3);
