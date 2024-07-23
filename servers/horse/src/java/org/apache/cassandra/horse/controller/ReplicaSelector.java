@@ -55,11 +55,11 @@ public class ReplicaSelector
     /**
      * 1. It can periodically update the score based on the placement policy and the sampling latency
      */
-
-     private static final String ANSI_RESET = "\u001B[0m";
-     private static final String ANSI_RED = "\u001B[31m";
-     private static final String ANSI_YELLOW = "\u001B[33m";
-     private static final String ANSI_BLUE = "\u001B[34m";
+    private static Random random = new Random();
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_BLUE = "\u001B[34m";
  
     public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, 1);
 
@@ -185,19 +185,12 @@ public class ReplicaSelector
             // }
             // logger.error("rymDebug: For rg {}, target ip {}, the max latency is {}, min latency is {}, targe node latency is {}, tar/max is {}, max/target is {}", replicationGroup, targetAddr, snitchMetrics.maxLatency, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr),
             //              snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency,
-                        //  snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
+            //              snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
         }
         else
         {
             // logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
-            if(targetAddr.getAddress().equals(StorageService.instance.localIP))
-            {
-                latencyScore = snitchMetrics.maxLatency / 1.0;
-            }
-            else
-            {
-                latencyScore = 1;
-            }
+            latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
         }
 
         // latencyScore = Math.pow(latencyScore, 3);
