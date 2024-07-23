@@ -26,7 +26,11 @@ import org.apache.cassandra.db.PartitionPosition;
 import org.apache.cassandra.dht.AbstractBounds;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.gms.FailureDetector;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.function.Predicate;
@@ -42,6 +46,7 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     // the snapshot of the replication strategy that corresponds to the replica layout
     private final AbstractReplicationStrategy replicationStrategy;
 
+    private static final Logger logger = LoggerFactory.getLogger(ReplicaLayout.class);
     ReplicaLayout(AbstractReplicationStrategy replicationStrategy, E natural)
     {
         this.replicationStrategy = replicationStrategy;
@@ -344,6 +349,7 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     {
         EndpointsForRange replicas = replicationStrategy.getNaturalReplicas(range.right);
         replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas);
+        logger.error("rymDebug: sorted replica list is {}", replicas.byEndpoint);
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForRangeRead(replicationStrategy, range, replicas);
     }
