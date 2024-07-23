@@ -149,7 +149,7 @@ public class ReplicaSelector
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
     
-        return latencyScore;
+        return greedyScore + latencyScore;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
@@ -196,7 +196,7 @@ public class ReplicaSelector
         // latencyScore = Math.pow(latencyScore, 3);
         // latencyScore = 1 / (1 + Math.exp(-latencyScore));
 
-        // latencyScore = 1 - Math.exp(-latencyScore);
+        latencyScore = 1 - Math.exp(-latencyScore);
         return latencyScore;
     }
     
