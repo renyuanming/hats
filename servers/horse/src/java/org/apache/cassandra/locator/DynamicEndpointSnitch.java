@@ -30,6 +30,8 @@ import com.google.common.annotations.VisibleForTesting;
 
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Snapshot;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -56,6 +58,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     private static final double ALPHA = 0.75; // set to 0.75 to make EDS more biased to towards the newer values
     private static final int WINDOW_SIZE = 100;
 
+    private static final Logger logger = LoggerFactory.getLogger(DynamicEndpointSnitch.class);
     private volatile int dynamicUpdateInterval = DatabaseDescriptor.getDynamicUpdateInterval();
     private volatile int dynamicResetInterval = DatabaseDescriptor.getDynamicResetInterval();
     private volatile double dynamicBadnessThreshold = DatabaseDescriptor.getDynamicBadnessThreshold();
@@ -193,6 +196,8 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         final HashMap<InetAddressAndPort, Double> scores = this.scores;
         if(DatabaseDescriptor.getEnableHorse())
         {
+            if(unsortedAddresses.size() < 3)
+                logger.error("rymDebug: The number of address is less than 3, the unsorted addresses are {}", unsortedAddresses);
             InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
             return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup));
             // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));

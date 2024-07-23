@@ -186,6 +186,10 @@ public class ReplicaSelector
                          snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency,
                          snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
         }
+        else
+        {
+            logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
+        }
 
         // latencyScore = Math.pow(latencyScore, 3);
         // latencyScore = 1 / (1 + Math.exp(-latencyScore));
