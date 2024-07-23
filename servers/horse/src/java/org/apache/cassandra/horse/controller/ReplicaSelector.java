@@ -190,7 +190,7 @@ public class ReplicaSelector
         }
         else
         {
-            // logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
+            logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
             latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
         }
 
