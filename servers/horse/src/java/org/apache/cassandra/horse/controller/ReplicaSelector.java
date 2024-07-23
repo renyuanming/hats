@@ -156,15 +156,15 @@ public class ReplicaSelector
         double greedyScore = 0.0;
         if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
         {
-            if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-            {
-                greedyScore = 1.0;
-            }
-            else
-            {
-                greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
-            }
-            // greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            // if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
+            // {
+            //     greedyScore = 1.0;
+            // }
+            // else
+            // {
+            //     greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
+            // }
+            greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
         }
         return greedyScore;
     }
