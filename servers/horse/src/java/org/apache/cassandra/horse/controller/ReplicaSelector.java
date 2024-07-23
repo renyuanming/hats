@@ -146,7 +146,7 @@ public class ReplicaSelector
     
     private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) {
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
-        double latencyScore = calculateLatencyScore(targetAddr);
+        double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
     
         return latencyScore;
     }
@@ -169,7 +169,7 @@ public class ReplicaSelector
         return greedyScore;
     }
     
-    private static double calculateLatencyScore(InetAddressAndPort targetAddr) {
+    private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr) {
         // Double sampleLatency = snitchMetrics.sampleLatency.get(targetAddr);
         // return (sampleLatency != null) ? snitchMetrics.minLatency / sampleLatency : 0.0;
 
@@ -182,6 +182,9 @@ public class ReplicaSelector
             // if (latencyScore >= 1) {
             //     logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
             // }
+            logger.error("rymDebug: For rg {}, target ip {}, the max latency is {}, min latency is {}, targe node latency is {}, tar/max is {}, max/target is {}", replicationGroup, targetAddr, snitchMetrics.maxLatency, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr),
+                         snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency,
+                         snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
         }
 
         // latencyScore = Math.pow(latencyScore, 3);
