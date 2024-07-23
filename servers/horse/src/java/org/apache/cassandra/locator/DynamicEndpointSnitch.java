@@ -69,7 +69,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
     private volatile HashMap<InetAddressAndPort, Double> scores = new HashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, ExponentiallyDecayingReservoir> samples = new ConcurrentHashMap<>();
-
+    private final ConcurrentHashMap<InetAddressAndPort, Double> newSampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
     public final IEndpointSnitch subsnitch;
 
     private volatile ScheduledFuture<?> updateSchedular;
@@ -336,7 +336,6 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         // We're going to weight the latency for each host against the worst one we see, to
         // arrive at sort of a 'badness percentage' for them. First, find the worst for each:
         HashMap<InetAddressAndPort, Double> newScores = new HashMap<>();
-        ConcurrentHashMap<InetAddressAndPort, Double> newSampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
         for (Map.Entry<InetAddressAndPort, Snapshot> entry : snapshots.entrySet())
         {
             double mean = entry.getValue().getMedian();
