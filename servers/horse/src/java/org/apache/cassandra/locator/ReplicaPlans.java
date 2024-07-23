@@ -629,7 +629,7 @@ public class ReplicaPlans
         AbstractReplicationStrategy replicationStrategy = keyspace.getReplicationStrategy();
         EndpointsForRange candidates = candidatesForRead(keyspace, indexQueryPlan, consistencyLevel, ReplicaLayout.forRangeReadLiveSorted(replicationStrategy, range).natural());
         EndpointsForRange contacts = contactForRead(replicationStrategy, consistencyLevel, false, candidates);
-        logger.error("rymDebug: the sorted list of contacts is {}", contacts.endpointList());
+        // logger.error("rymDebug: the sorted list of contacts is {}", contacts.endpointList());
 
         assureSufficientLiveReplicasForRead(replicationStrategy, consistencyLevel, contacts);
         return new ReplicaPlan.ForRangeRead(keyspace, replicationStrategy, consistencyLevel, range, candidates, contacts, vnodeCount);
