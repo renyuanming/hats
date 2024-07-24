@@ -143,7 +143,7 @@ public class BackgroundController
                     StorageService.instance.isReadSlow.get());
         return StorageService.instance.isPendingFlushHappen.get() || 
                StorageService.instance.totalPendingFlushes.get() > 0 ||
-               StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput || 
+               StorageService.instance.compactionRateMonitor.getRateInMB() >= DatabaseDescriptor.getCompactionThroughputMebibytesPerSec() || 
                StorageService.instance.isReadSlow.get();
     }
 
