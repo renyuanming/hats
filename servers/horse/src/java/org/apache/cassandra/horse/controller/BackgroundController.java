@@ -158,6 +158,8 @@ public class BackgroundController
         // }
         if(isBottleneck())
         {
+            if(StorageService.instance.totalPendingFlushes.get() < 1)
+                StorageService.instance.isPendingFlushHappen.set(false);
             return false;
         }
 

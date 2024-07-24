@@ -56,10 +56,6 @@ public class ReplicaSelector
      * 1. It can periodically update the score based on the placement policy and the sampling latency
      */
     private static Random random = new Random();
-    private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_RED = "\u001B[31m";
-    private static final String ANSI_YELLOW = "\u001B[33m";
-    private static final String ANSI_BLUE = "\u001B[34m";
  
     public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, 1);
 
@@ -80,53 +76,6 @@ public class ReplicaSelector
         
     }
 
-    // public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr)
-    // {
-    //     if(snitchMetrics.cachedScores.isEmpty() || 
-    //        snitchMetrics.cachedScores.get(replicationGroup) == null ||
-    //        snitchMetrics.cachedScores.get(replicationGroup).isEmpty() || 
-    //        snitchMetrics.cachedScores.get(replicationGroup).get(targetAddr) == null)
-    //     {
-    //         double greedyScore = 0.0;
-    //         double latencyScore = 0.0;
-    //         if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
-    //         {
-    //             // if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-    //             // {
-    //             //     greedyScore = 1.0;
-    //             // }
-    //             // else
-    //             // {
-    //             //     greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
-    //             // }
-    //             greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
-    //         }
-
-    //         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
-    //         {
-    //             latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
-    //             // latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
-    //             // latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
-    //             // if (latencyScore >= 1) {
-    //             //     logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
-    //             // }
-    //         }
-
-    //         // latencyScore = Math.pow(latencyScore, 3);
-    //         // latencyScore = 1 / (1 + Math.exp(-latencyScore));
-
-    //         // latencyScore = 1 - Math.exp(-latencyScore);
-    //         double score = latencyScore + greedyScore;
-
-    //         if(snitchMetrics.cachedScores.get(replicationGroup) == null)
-    //         {
-    //             snitchMetrics.cachedScores.put(replicationGroup, new ConcurrentHashMap<InetAddressAndPort, Double>());
-    //         }
-    //         snitchMetrics.cachedScores.get(replicationGroup).put(targetAddr, latencyScore);
-    //     }
-    //     return snitchMetrics.cachedScores.get(replicationGroup).get(targetAddr);
-    // }
-
 
     public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
         Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
@@ -136,8 +85,6 @@ public class ReplicaSelector
         if (score != null) {
             return score;
         }
-
-        // HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("rymDebug: print the stack trace of the score function."));
     
         // Calculate score because it was not found in cache
         double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
@@ -158,14 +105,6 @@ public class ReplicaSelector
         double greedyScore = 0.0;
         if(LocalStates.localPolicyWithAddress.get(replicationGroup) != null)
         {
-            // if(targetAddr.equals(FBUtilities.getBroadcastAddressAndPort()))
-            // {
-            //     greedyScore = 1.0;
-            // }
-            // else
-            // {
-            //     greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
-            // }
             greedyScore = LocalStates.localPolicyWithAddress.get(replicationGroup).get(targetAddr);
         }
         return greedyScore;
@@ -181,9 +120,6 @@ public class ReplicaSelector
             // latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
             latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
             // latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
-            // if (latencyScore >= 1) {
-            //     logger.info(ANSI_RED + "rymInfo: the latency score of {} is {}, min is {}, latency is {} " + ANSI_RESET, targetAddr, latencyScore, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr));
-            // }
             // logger.error("rymDebug: For rg {}, target ip {}, the max latency is {}, min latency is {}, targe node latency is {}, tar/max is {}, max/target is {}", replicationGroup, targetAddr, snitchMetrics.maxLatency, snitchMetrics.minLatency, snitchMetrics.sampleLatency.get(targetAddr),
             //              snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency,
             //              snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr));
