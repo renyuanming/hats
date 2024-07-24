@@ -158,7 +158,8 @@ public class BackgroundController
         // {
         //     return true;
         // }
-        if(isBottleneck())
+        if(isBottleneck() || 
+           StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput)
         {
             if(StorageService.instance.totalPendingFlushes.get() < 1)
                 StorageService.instance.isPendingFlushHappen.set(false);
