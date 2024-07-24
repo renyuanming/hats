@@ -766,12 +766,12 @@ function runExp {
 
                                                     # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
                                                     # startup from preload dataset
-                                                    if [ "${EXP_NAME}" == "Exp-MixedReadWrite" ]; then
-                                                        echo "Start from backup"
-                                                        startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
-                                                    else
+                                                    if [ "${workload}" == "workloadc" ]; then
                                                         echo "Start from current data"
                                                         restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
+                                                    else
+                                                        echo "Start from backup"
+                                                        startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
                                                     fi
                                                     # fi
                                                     # modify the seeds as the specific nodes, and reload the configuration file
