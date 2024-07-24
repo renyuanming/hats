@@ -778,7 +778,11 @@ function runExp {
                                                     initConf "true"
                                                     reloadSeeds ${TARGET_SCHEME}
 
-                                                    run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${OPERATION_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
+                                                    opsNum=${OPERATION_NUMBER}
+                                                    if [ "${EXP_NAME}" == "workloade" ]; then
+                                                        opsNum=$((opsNum / 10))
+                                                    fi
+                                                    run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
 
                                                     # Set the seed nodes as all the nodes, and reload the configuration file
                                                     initConf "false"
@@ -802,4 +806,110 @@ function runExp {
             done
         done
     done
+}
+
+function exportEnv {
+    
+    scheme=$1
+    clusterName=$2
+    
+    export BACKUP_MODE="local"
+    export SCHEME=$scheme # horse or depart
+    export CLUSTER_NAME=$clusterName
+}
+
+function runPureReadExp {
+    
+    EXP_NAME=${1}
+    SCHEMES=("${!2}")
+    Workloads=("${!3}")
+    REQUEST_DISTRIBUTIONS=("${!4}")
+    REPLICAS=("${!5}")
+    THREAD_NUMBER=("${!6}")
+    MEMTABLE_SIZE=("${!7}")
+    OPERATION_NUMBER=${8}
+    KV_NUMBER=${9}
+    FIELD_LENGTH=${10}
+    KEY_LENGTH=${11}
+    KEY_LENGTHMin=${12}
+    KEY_LENGTHMax=${13}
+    ROUND_NUMBER=${14}
+    COMPACTION_LEVEL=("${!15}")
+    MOTIVATION=("${!16}")
+    MEMORY_LIMIT=${17}
+    USE_DIRECTIO=("${!18}")
+    REBUILD_SERVER=${19}
+    REBUILD_CLIENT=${20}
+    LOG_LEVEL=${21}
+    BRANCH=${22}
+    PURPOSE=${23}
+    SCHEDULING_INITIAL_DELAY=${24}
+    SCHEDULING_INTERVAL=("${!25}")
+    STATES_UPDATE_INTERVAL=${26}
+    READ_SENSISTIVITY=${27}
+    THROTLLE_DATA_RATE=("${!28}")
+    JDK_VERSION=${29}
+    SSTABLE_SIZE_IN_MB=${30}
+    COMPACTION_STRATEGY=("${!31}")
+    CONSISTENCY_LEVEL=("${!32}")
+    
+
+
+
+    for scheme in "${SCHEMES[@]}"; do
+        for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
+            exportEnv $scheme "1x"
+            loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+            runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+            cleanup $scheme
+        done
+    done
+
+}
+
+function runMixedReadWriteExp {
+
+    EXP_NAME=${1}
+    SCHEMES=("${!2}")
+    Workloads=("${!3}")
+    REQUEST_DISTRIBUTIONS=("${!4}")
+    REPLICAS=("${!5}")
+    THREAD_NUMBER=("${!6}")
+    MEMTABLE_SIZE=("${!7}")
+    OPERATION_NUMBER=${8}
+    KV_NUMBER=${9}
+    FIELD_LENGTH=${10}
+    KEY_LENGTH=${11}
+    KEY_LENGTHMin=${12}
+    KEY_LENGTHMax=${13}
+    ROUND_NUMBER=${14}
+    COMPACTION_LEVEL=("${!15}")
+    MOTIVATION=("${!16}")
+    MEMORY_LIMIT=${17}
+    USE_DIRECTIO=("${!18}")
+    REBUILD_SERVER=${19}
+    REBUILD_CLIENT=${20}
+    LOG_LEVEL=${21}
+    BRANCH=${22}
+    PURPOSE=${23}
+    SCHEDULING_INITIAL_DELAY=${24}
+    SCHEDULING_INTERVAL=("${!25}")
+    STATES_UPDATE_INTERVAL=${26}
+    READ_SENSISTIVITY=${27}
+    THROTLLE_DATA_RATE=("${!28}")
+    JDK_VERSION=${29}
+    SSTABLE_SIZE_IN_MB=${30}
+    COMPACTION_STRATEGY=("${!31}")
+    CONSISTENCY_LEVEL=("${!32}")
+    
+
+
+    for scheme in "${SCHEMES[@]}"; do
+        for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do       
+            exportEnv $scheme "1x"
+            runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+            cleanup $scheme
+        done
+    done
+
 }
