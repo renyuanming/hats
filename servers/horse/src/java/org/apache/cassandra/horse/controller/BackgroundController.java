@@ -107,7 +107,8 @@ public class BackgroundController
 
     public synchronized void increaseThrottleThpt()
     {
-        throttleCompactionThroughput += 0.05 * DatabaseDescriptor.getCompactionThroughputMebibytesPerSec();
+        if (throttleCompactionThroughput < DatabaseDescriptor.getCompactionThroughputMebibytesPerSec())
+            throttleCompactionThroughput += 0.05 * DatabaseDescriptor.getCompactionThroughputMebibytesPerSec();
     }
 
     public synchronized void decreaseThrottleThpt()
@@ -143,7 +144,6 @@ public class BackgroundController
         return StorageService.instance.isPendingFlushHappen.get() || 
                StorageService.instance.totalPendingFlushes.get() > 0 ||
                StorageService.instance.compactionRateMonitor.getRateInMB() >= throttleCompactionThroughput || 
-               StorageService.instance.compactionRateMonitor.getRateInMB() >= DatabaseDescriptor.getCompactionThroughputMebibytesPerSecAsInt() ||
                StorageService.instance.isReadSlow.get();
     }
 
@@ -167,6 +167,8 @@ public class BackgroundController
 
         boolean shouldServeTaskByCount = shouldServeTaskByCount(taskType);
         boolean shouldServeTaskByThpt = shouldServeTaskByThpt(taskType);
+
+        logger.info("rymInfo: shouldServeTaskByCount is {}, shouldServeTaskByThpt is {}", shouldServeTaskByCount, shouldServeTaskByThpt);
 
         return shouldServeTaskByCount && shouldServeTaskByThpt;
     }

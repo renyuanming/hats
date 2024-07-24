@@ -475,14 +475,15 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
     protected void recordLatency(TableMetrics metric, long latencyNanos)
     {
         metric.readLatency.addNano(latencyNanos);
-        // if (metadata().keyspace.equals("ycsb"))
-        // {
-        //     StorageService.instance.localReadLatencyCalculator.record(latencyNanos / 1000);
-        //     if(StorageService.instance.localReadLatencyCalculator.getWindowMean() + StorageService.instance.localReadLatencyCalculator.getStdDev() > latencyNanos / 1000)
-        //     {
-        //         StorageService.instance.isReadSlow.set(true);
-        //     }
-        // }
+        if (metadata().keyspace.equals("ycsb"))
+        {
+            // StorageService.instance.localReadLatencyCalculator.record(latencyNanos / 1000);
+            if(!StorageService.instance.isReadSlow.get() && 
+               StorageService.instance.readRequestInFlight.get() > 50)
+            {
+                StorageService.instance.isReadSlow.set(true);
+            }
+        }
         
     }
 
