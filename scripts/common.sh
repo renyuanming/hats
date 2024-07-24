@@ -808,20 +808,10 @@ function runExp {
     done
 }
 
-function exportEnv {
-    
-    scheme=$1
-    clusterName=$2
-    
-    export BACKUP_MODE="local"
-    export SCHEME=$scheme # horse or depart
-    export CLUSTER_NAME=$clusterName
-}
-
 function runPureReadExp {
     
     EXP_NAME=${1}
-    SCHEMES=("${!2}")
+    TARGET_SCHEME=${2}
     Workloads=("${!3}")
     REQUEST_DISTRIBUTIONS=("${!4}")
     REPLICAS=("${!5}")
@@ -852,25 +842,23 @@ function runPureReadExp {
     SSTABLE_SIZE_IN_MB=${30}
     COMPACTION_STRATEGY=("${!31}")
     CONSISTENCY_LEVEL=("${!32}")
-    
 
 
 
-    for scheme in "${SCHEMES[@]}"; do
-        for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
-            exportEnv $scheme "1x"
-            loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
-            runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
-            cleanup $scheme
-        done
+    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
+        exportEnv $TARGET_SCHEME "1x"
+        loadDataset "${EXP_NAME}" "$TARGET_SCHEME" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+        runExp "${EXP_NAME}" "$TARGET_SCHEME" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+        cleanup $TARGET_SCHEME
     done
+
 
 }
 
 function runMixedReadWriteExp {
 
     EXP_NAME=${1}
-    SCHEMES=("${!2}")
+    TARGET_SCHEME=${2}
     Workloads=("${!3}")
     REQUEST_DISTRIBUTIONS=("${!4}")
     REPLICAS=("${!5}")
@@ -904,12 +892,10 @@ function runMixedReadWriteExp {
     
 
 
-    for scheme in "${SCHEMES[@]}"; do
-        for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do       
-            exportEnv $scheme "1x"
-            runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
-            cleanup $scheme
-        done
+    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do       
+        exportEnv $TARGET_SCHEME "1x"
+        runExp "${EXP_NAME}" "$TARGET_SCHEME" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+        cleanup $TARGET_SCHEME
     done
 
 }
