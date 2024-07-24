@@ -175,7 +175,8 @@ public class BackgroundController
 
     private boolean shouldServeTaskByThpt(int taskType) 
     {
-        
+        if(StorageService.instance.compactionRateMonitor.getRateInMB() < INITIAL_THROTTLE_THPT)
+            return true;
         long currentThpt = servedThpt.get(taskType).get() * 100;
         long targetThpt = targetRatios.get(taskType) * totalServedThpt.get();
 
