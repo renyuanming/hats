@@ -37,13 +37,13 @@ import org.slf4j.LoggerFactory;
 
 public class BackgroundController 
 {
-
+    private static final int INITIAL_THROTTLE_THPT = 10;
     private static final Logger logger = LoggerFactory.getLogger(BackgroundController.class);
     private static final MetricRegistry registry = new MetricRegistry();
 
     public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 80, 10, 10 });
 
-    public volatile int throttleCompactionThroughput = 10; // MB per second 
+    public volatile int throttleCompactionThroughput = INITIAL_THROTTLE_THPT; // MB per second 
 
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;
@@ -112,7 +112,9 @@ public class BackgroundController
 
     public synchronized void decreaseThrottleThpt()
     {
-        throttleCompactionThroughput /= 2;
+        if (throttleCompactionThroughput >= INITIAL_THROTTLE_THPT) {
+            throttleCompactionThroughput /= 2;
+        }
     }
 
     public synchronized void updateThrottleThpt()
