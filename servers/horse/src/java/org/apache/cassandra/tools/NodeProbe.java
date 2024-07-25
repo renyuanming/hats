@@ -1918,6 +1918,8 @@ public class NodeProbe implements AutoCloseable
                 case "EstimatedPartitionSizeHistogram":
                 case "EstimatedPartitionCount":
                 case "KeyCacheHitRate":
+                case "RowCacheHit":
+                case "RowCacheMiss":
                 case "LiveSSTableCount":
                 case "MaxSSTableDuration":
                 case "MaxSSTableSize":
