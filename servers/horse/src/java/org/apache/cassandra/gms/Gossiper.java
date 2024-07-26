@@ -2116,14 +2116,19 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
 
         // Get the new set in the same that buildSeedsList does
         Set<InetAddressAndPort> tmp = new HashSet<>();
+        Set<InetAddressAndPort> horseTmp = new HashSet<>();
         try
         {
             for (InetAddressAndPort seed : DatabaseDescriptor.getSeeds())
             {
+                horseTmp.add(seed);
                 if (seed.equals(getBroadcastAddressAndPort()))
                     continue;
                 tmp.add(seed);
             }
+            allSeeds.addAll(horseTmp);
+            allSeeds.retainAll(horseTmp);
+            logger.info("New seed node list after reload {}, allSeeds {}", seeds, allSeeds);
         }
         // If using the SimpleSeedProvider invalid yaml added to the config since startup could
         // cause this to throw. Additionally, third party seed providers may throw exceptions.
@@ -2149,11 +2154,8 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean, 
 
         // Add the new entries
         seeds.addAll(tmp);
-        allSeeds.addAll(tmp);
         // Remove the old entries
         seeds.retainAll(tmp);
-        allSeeds.retainAll(tmp);
-        logger.info("New seed node list after reload {}, allSeeds {}", seeds, allSeeds);
         CassandraDaemon.instance.activeHorse();
         return getSeeds();
     }
