@@ -782,7 +782,13 @@ function runExp {
                                                     if [ "${workload}" == "workloade" ]; then
                                                         opsNum=$((opsNum / 10))
                                                     fi
-                                                    run ${TARGET_SCHEME} ${dist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
+                                                    requestDist=${dist}
+                                                    if [ "${workload}" == "workloadd" ]; then
+                                                        requestDist="latest"
+                                                    fi
+                                                    
+
+                                                    run ${TARGET_SCHEME} ${requestDist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
 
                                                     # Set the seed nodes as all the nodes, and reload the configuration file
                                                     initConf "false"
@@ -790,7 +796,7 @@ function runExp {
 
 
                                                     # Collect load results
-                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${dist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
+                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
 
                                                     # echo "Collect results to ${resultsDir}"
                                                     collectResults ${resultsDir}
