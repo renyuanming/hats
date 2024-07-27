@@ -1918,8 +1918,6 @@ public class NodeProbe implements AutoCloseable
                 case "EstimatedPartitionSizeHistogram":
                 case "EstimatedPartitionCount":
                 case "KeyCacheHitRate":
-                case "RowCacheHit":
-                case "RowCacheMiss":
                 case "LiveSSTableCount":
                 case "MaxSSTableDuration":
                 case "MaxSSTableSize":
@@ -1945,6 +1943,8 @@ public class NodeProbe implements AutoCloseable
                 case "WriteTotalLatency":
                 case "ReadTotalLatency":
                 case "PendingFlushes":
+                case "RowCacheHit":
+                case "RowCacheMiss":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxCounterMBean.class).getCount();
                 case "CoordinatorReadLatency":
                 case "CoordinatorScanLatency":

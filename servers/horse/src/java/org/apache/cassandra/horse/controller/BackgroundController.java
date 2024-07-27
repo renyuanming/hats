@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class BackgroundController 
 {
-    private static final int INITIAL_THROTTLE_THPT = 10;
+    private static final int INITIAL_THROTTLE_THPT = 5;
     private static final Logger logger = LoggerFactory.getLogger(BackgroundController.class);
     private static final MetricRegistry registry = new MetricRegistry();
 
