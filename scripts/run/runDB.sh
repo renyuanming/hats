@@ -37,7 +37,7 @@ sed -i "s/recordcount=.*$/recordcount=${recordcount}/" ${workload}
 sed -i "s/operationcount=.*$/operationcount=${operationcount}/" ${workload}
 sed -i "s/keylength=.*$/keylength=${key_length}/" ${workload}
 sed -i "s/fieldlength=.*$/fieldlength=${field_length}/" ${workload}
-# sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" ${workload}
+sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" ${workload}
 
 mkdir -p logs
 file_name="Run-$(date +%s)-${hostName}-${operationcount}-${field_length}-${threads}-${requestDistribution}"

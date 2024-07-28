@@ -487,7 +487,7 @@ function getResultsDir
     EXP_NAME=$3
     SETTING=$4
     workload=$5
-    dist=$6
+    requestDist=$6
     compactionLevel=$7
     threadsNum=$8
     schedulingInterval=$9
@@ -501,7 +501,7 @@ function getResultsDir
     compactionStrategy=$7
     consistencyLevel=$8
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${dist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${consistencyLevel}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${consistencyLevel}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -569,7 +569,7 @@ function load {
 function run {
 
     targetScheme=$1
-    dist=$2
+    requestDist=$2
     workload=$3
     threads=$4
     kvNumber=$5
@@ -584,7 +584,7 @@ function run {
     enableHorse=$4
     consistencyLevel=$5
 
-    echo "Run ${targetScheme} with distribution: ${dist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHorse: ${enableHorse} consistencyLevel: ${consistencyLevel}"
+    echo "Run ${targetScheme} with distribution: ${requestDist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHorse: ${enableHorse} consistencyLevel: ${consistencyLevel}"
 
     resetPlaybook "run"
     playbook="playbook-run.yaml"
@@ -599,7 +599,7 @@ function run {
     sed -i "s/\(fieldLength: \)".*"/fieldLength: ${fieldLen}/" ${playbook}
     sed -i "s/\(threads: \)".*"/threads: ${threads}/" ${playbook}
     sed -i "s/workload:.*$/workload: workloads\/${workload}/" ${playbook}
-    sed -i "s/requestDistribution:.*$/requestDistribution: ${dist}/" ${playbook}
+    sed -i "s/requestDistribution:.*$/requestDistribution: ${requestDist}/" ${playbook}
     sed -i "s/\(scheme: \)".*"/scheme: ${targetScheme}/" ${playbook}
     sed -i "s|ENABLE_AUTO_COMPACTION|${enableAutoCompaction}|g" ${playbook}
     sed -i "s/ENABL_COMPACTION_CFS/${enableAutoCompactionCFs}/g" ${playbook}
@@ -783,9 +783,9 @@ function runExp {
                                                         opsNum=$((opsNum / 10))
                                                     fi
                                                     requestDist=${dist}
-                                                    if [ "${workload}" == "workloadd" ]; then
-                                                        requestDist="latest"
-                                                    fi
+                                                    # if [ "${workload}" == "workloadd" ]; then
+                                                    #     requestDist="latest"
+                                                    # fi
                                                     
 
                                                     run ${TARGET_SCHEME} ${requestDist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
