@@ -737,70 +737,69 @@ function runExp {
             #     copyDatasetToNodes "${EXP_NAME}" "${scheme}" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "${rf}" "${compactionLevel}" "${PURPOSE}"
             #     sleep 600
             # fi
-            for round in $(seq 1 $ROUND_NUMBER); do
-                for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
-                    for workload in "${Workloads[@]}"; do
-                        for threadsNum in "${THREAD_NUMBER[@]}"; do
-                            for memtableSize in "${MEMTABLE_SIZE[@]}"; do
-                                for directIO in "${USE_DIRECTIO[@]}"; do
-                                    for motivation in "${MOTIVATION[@]}"; do
-                                        for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
-                                            for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
-                                                for consistencyLevel in "${CONSISTENCY_LEVEL[@]}"; do
-                                                    if [ "${compactionLevel}" == "zero" ]; then
-                                                        ENABLE_AUTO_COMPACTION="false"
-                                                        ENABLE_COMPACTION_CFS=""
-                                                    elif [ "${compactionLevel}" == "one" ]; then
-                                                        ENABLE_AUTO_COMPACTION="true"
-                                                        ENABLE_COMPACTION_CFS="usertable0"
-                                                    elif [ "${compactionLevel}" == "all" ]; then
-                                                        ENABLE_AUTO_COMPACTION="true"
-                                                        ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
-                                                    fi
-                                                    echo "RunDB: Start round ${round}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
+            # for round in $(seq 1 $ROUND_NUMBER); do
+            for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+                for workload in "${Workloads[@]}"; do
+                    for threadsNum in "${THREAD_NUMBER[@]}"; do
+                        for memtableSize in "${MEMTABLE_SIZE[@]}"; do
+                            for directIO in "${USE_DIRECTIO[@]}"; do
+                                for motivation in "${MOTIVATION[@]}"; do
+                                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                                            for consistencyLevel in "${CONSISTENCY_LEVEL[@]}"; do
+                                                if [ "${compactionLevel}" == "zero" ]; then
+                                                    ENABLE_AUTO_COMPACTION="false"
+                                                    ENABLE_COMPACTION_CFS=""
+                                                elif [ "${compactionLevel}" == "one" ]; then
+                                                    ENABLE_AUTO_COMPACTION="true"
+                                                    ENABLE_COMPACTION_CFS="usertable0"
+                                                elif [ "${compactionLevel}" == "all" ]; then
+                                                    ENABLE_AUTO_COMPACTION="true"
+                                                    ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
+                                                fi
+                                                echo "RunDB: Start round ${ROUND_NUMBER}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
 
-                                                    SETTING=$(getSettingName ${motivation} ${compactionLevel})
+                                                SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
-                                                    # init the configuration file, set all nodes as the seeds to support fast startup
-                                                    initConf "false"
+                                                # init the configuration file, set all nodes as the seeds to support fast startup
+                                                initConf "false"
 
-                                                    # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
-                                                    # startup from preload dataset
-                                                    if [ "${workload}" == "workloadc" ]; then
-                                                        echo "Start from current data"
-                                                        restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
-                                                    # modify the seeds as the specific nodes, and reload the configuration file
-                                                    initConf "true"
-                                                    reloadSeeds ${TARGET_SCHEME}
-                                                    else
-                                                        echo "Start from backup"
-                                                        startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
-                                                    fi
-                                                    # fi
+                                                # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
+                                                # startup from preload dataset
+                                                if [ "${workload}" == "workloadc" ]; then
+                                                    echo "Start from current data"
+                                                    restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
+                                                # modify the seeds as the specific nodes, and reload the configuration file
+                                                initConf "true"
+                                                reloadSeeds ${TARGET_SCHEME}
+                                                else
+                                                    echo "Start from backup"
+                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
+                                                fi
+                                                # fi
 
-                                                    opsNum=${OPERATION_NUMBER}
-                                                    if [ "${workload}" == "workloade" ]; then
-                                                        opsNum=$((opsNum / 10))
-                                                    fi
-                                                    requestDist=${dist}
-                                                    # if [ "${workload}" == "workloadd" ]; then
-                                                    #     requestDist="latest"
-                                                    # fi
-                                                    
+                                                opsNum=${OPERATION_NUMBER}
+                                                if [ "${workload}" == "workloade" ]; then
+                                                    opsNum=$((opsNum / 10))
+                                                fi
+                                                requestDist=${dist}
+                                                # if [ "${workload}" == "workloadd" ]; then
+                                                #     requestDist="latest"
+                                                # fi
+                                                
 
-                                                    run ${TARGET_SCHEME} ${requestDist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
+                                                run ${TARGET_SCHEME} ${requestDist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
 
-                                                    # Set the seed nodes as all the nodes, and reload the configuration file
-                                                    initConf "false"
-                                                    reloadSeeds ${TARGET_SCHEME}
+                                                # Set the seed nodes as all the nodes, and reload the configuration file
+                                                initConf "false"
+                                                reloadSeeds ${TARGET_SCHEME}
 
 
-                                                    # Collect load results
-                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${round} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
+                                                # Collect load results
+                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
 
-                                                    # echo "Collect results to ${resultsDir}"
-                                                    collectResults ${resultsDir}
-                                                done
+                                                # echo "Collect results to ${resultsDir}"
+                                                collectResults ${resultsDir}
                                             done
                                         done
                                     done

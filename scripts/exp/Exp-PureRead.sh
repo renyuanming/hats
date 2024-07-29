@@ -33,7 +33,7 @@ REBUILD_SERVER="true"
 REBUILD_CLIENT="false"
 
 # Server settings
-ROUND_NUMBER=5
+ROUNDS=5
 COMPACTION_LEVEL=("all") # zero one all
 
 # Horse
@@ -57,12 +57,13 @@ function exportEnv {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
     source "${SCRIPT_DIR}/../common.sh"
 }
-
-for scheme in "${SCHEMES[@]}"; do
-    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
-        exportEnv $scheme
-        loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
-        runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
-        cleanup $scheme
+for ROUND_NUMBER in $(seq 1 $ROUNDS); do
+    for scheme in "${SCHEMES[@]}"; do
+        for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
+            exportEnv $scheme
+            loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+            runExp "${EXP_NAME}" "$scheme" WORKLOADS[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+            cleanup $scheme
+        done
     done
 done
