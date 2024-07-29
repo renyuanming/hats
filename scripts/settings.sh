@@ -10,8 +10,8 @@ if [[ "$CLUSTER_NAME" == "" ]]; then
     echo "Please specify the CLUSTER_NAME"
     exit 1
 elif [[ "$CLUSTER_NAME" == "1x" ]]; then
-    Servers=("node11" "node12" "node13"  "node15" "node16" "node18" "node19" "node20" "node21" "node22")
-    ServersIP=("192.168.10.21" "192.168.10.22" "192.168.10.23"  "192.168.10.25" "192.168.10.26" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32")
+    Servers=("node11" "node12" "node13"  "node15" "node16" "node18" "node19" "node20")
+    ServersIP=("192.168.10.21" "192.168.10.22" "192.168.10.23"  "192.168.10.25" "192.168.10.26" "192.168.10.28" "192.168.10.29" "192.168.10.30")
     Clients=("proj18")
     ClientsIP=("192.168.10.118")
     Seeds=("node11" "node12" "node18")
