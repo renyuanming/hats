@@ -671,7 +671,7 @@ function runExp {
     
     EXP_NAME=${1}
     TARGET_SCHEME=${2}
-    Workloads=("${!3}")
+    WORKLOAD=${3}
     REQUEST_DISTRIBUTIONS=("${!4}")
     REPLICAS=("${!5}")
     THREAD_NUMBER=("${!6}")
@@ -703,7 +703,7 @@ function runExp {
     CONSISTENCY_LEVEL=("${!32}")
 
     # test the parameters
-    echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, Workloads: ${Workloads[@]}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]} consistencyLevel: ${CONSISTENCY_LEVEL[@]}, throttleDataRate: ${THROTLLE_DATA_RATE[@]}, JDK_VERSION: ${JDK_VERSION}, compaction_strategy: ${compaction_strategy}"
+    echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, Workloads: ${WORKLOAD}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]} consistencyLevel: ${CONSISTENCY_LEVEL[@]}, throttleDataRate: ${THROTLLE_DATA_RATE[@]}, JDK_VERSION: ${JDK_VERSION}, compaction_strategy: ${compaction_strategy}"
 
     ENABLE_HORSE="false"
     if [[ "${TARGET_SCHEME}" == "horse" ]]; then
@@ -739,68 +739,66 @@ function runExp {
             # fi
             # for round in $(seq 1 $ROUND_NUMBER); do
             for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
-                for workload in "${Workloads[@]}"; do
-                    for threadsNum in "${THREAD_NUMBER[@]}"; do
-                        for memtableSize in "${MEMTABLE_SIZE[@]}"; do
-                            for directIO in "${USE_DIRECTIO[@]}"; do
-                                for motivation in "${MOTIVATION[@]}"; do
-                                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
-                                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
-                                            for consistencyLevel in "${CONSISTENCY_LEVEL[@]}"; do
-                                                if [ "${compactionLevel}" == "zero" ]; then
-                                                    ENABLE_AUTO_COMPACTION="false"
-                                                    ENABLE_COMPACTION_CFS=""
-                                                elif [ "${compactionLevel}" == "one" ]; then
-                                                    ENABLE_AUTO_COMPACTION="true"
-                                                    ENABLE_COMPACTION_CFS="usertable0"
-                                                elif [ "${compactionLevel}" == "all" ]; then
-                                                    ENABLE_AUTO_COMPACTION="true"
-                                                    ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
-                                                fi
-                                                echo "RunDB: Start round ${ROUND_NUMBER}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${workload}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for memtableSize in "${MEMTABLE_SIZE[@]}"; do
+                        for directIO in "${USE_DIRECTIO[@]}"; do
+                            for motivation in "${MOTIVATION[@]}"; do
+                                for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                                    for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                                        for consistencyLevel in "${CONSISTENCY_LEVEL[@]}"; do
+                                            if [ "${compactionLevel}" == "zero" ]; then
+                                                ENABLE_AUTO_COMPACTION="false"
+                                                ENABLE_COMPACTION_CFS=""
+                                            elif [ "${compactionLevel}" == "one" ]; then
+                                                ENABLE_AUTO_COMPACTION="true"
+                                                ENABLE_COMPACTION_CFS="usertable0"
+                                            elif [ "${compactionLevel}" == "all" ]; then
+                                                ENABLE_AUTO_COMPACTION="true"
+                                                ENABLE_COMPACTION_CFS="usertable0 usertable1 usertable2"
+                                            fi
+                                            echo "RunDB: Start round ${ROUND_NUMBER}, the threads number is ${threadsNum}, sstable size is ${SSTABLE_SIZE_IN_MB}, memtable size is ${memtableSize}, rf is ${rf}, workload is ${WORKLOAD}, request distribution is ${dist} and compaction level is ${compactionLevel}, enableAutoCompaction is ${ENABLE_AUTO_COMPACTION}, throttleDataRate is ${throttleDataRate} MB/s"
 
-                                                SETTING=$(getSettingName ${motivation} ${compactionLevel})
+                                            SETTING=$(getSettingName ${motivation} ${compactionLevel})
 
-                                                # init the configuration file, set all nodes as the seeds to support fast startup
-                                                initConf "false"
+                                            # init the configuration file, set all nodes as the seeds to support fast startup
+                                            initConf "false"
 
-                                                # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
-                                                # startup from preload dataset
-                                                if [ "${workload}" == "workloadc" ]; then
-                                                    echo "Start from current data"
-                                                    restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
-                                                # modify the seeds as the specific nodes, and reload the configuration file
-                                                initConf "true"
-                                                reloadSeeds ${TARGET_SCHEME}
-                                                else
-                                                    echo "Start from backup"
-                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
-                                                fi
-                                                # fi
+                                            # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
+                                            # startup from preload dataset
+                                            if [ "${WORKLOAD}" == "workloadc" ]; then
+                                                echo "Start from current data"
+                                                restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
+                                            # modify the seeds as the specific nodes, and reload the configuration file
+                                            initConf "true"
+                                            reloadSeeds ${TARGET_SCHEME}
+                                            else
+                                                echo "Start from backup"
+                                                startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
+                                            fi
+                                            # fi
 
-                                                opsNum=${OPERATION_NUMBER}
-                                                if [ "${workload}" == "workloade" ]; then
-                                                    opsNum=$((opsNum / 10))
-                                                fi
-                                                requestDist=${dist}
-                                                # if [ "${workload}" == "workloadd" ]; then
-                                                #     requestDist="latest"
-                                                # fi
-                                                
+                                            opsNum=${OPERATION_NUMBER}
+                                            if [ "${WORKLOAD}" == "workloade" ]; then
+                                                opsNum=$((opsNum / 10))
+                                            fi
+                                            requestDist=${dist}
+                                            # if [ "${WORKLOAD}" == "workloadd" ]; then
+                                            #     requestDist="latest"
+                                            # fi
+                                            
 
-                                                run ${TARGET_SCHEME} ${requestDist} ${workload} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
+                                            run ${TARGET_SCHEME} ${requestDist} ${WORKLOAD} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
 
-                                                # Set the seed nodes as all the nodes, and reload the configuration file
-                                                initConf "false"
-                                                reloadSeeds ${TARGET_SCHEME}
+                                            # Set the seed nodes as all the nodes, and reload the configuration file
+                                            initConf "false"
+                                            reloadSeeds ${TARGET_SCHEME}
 
 
-                                                # Collect load results
-                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
+                                            # Collect load results
+                                            resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
 
-                                                # echo "Collect results to ${resultsDir}"
-                                                collectResults ${resultsDir}
-                                            done
+                                            # echo "Collect results to ${resultsDir}"
+                                            collectResults ${resultsDir}
                                         done
                                     done
                                 done
@@ -817,7 +815,7 @@ function runPureReadExp {
     
     EXP_NAME=${1}
     TARGET_SCHEME=${2}
-    Workloads=("${!3}")
+    WORKLOAD=${3}
     REQUEST_DISTRIBUTIONS=("${!4}")
     REPLICAS=("${!5}")
     THREAD_NUMBER=("${!6}")
@@ -852,7 +850,7 @@ function runPureReadExp {
 
     for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
         loadDataset "${EXP_NAME}" "$TARGET_SCHEME" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
-        runExp "${EXP_NAME}" "$TARGET_SCHEME" Workloads[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+        runExp "${EXP_NAME}" "$TARGET_SCHEME" $WORKLOAD REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
         cleanup $TARGET_SCHEME
     done
 
@@ -863,7 +861,7 @@ function runMixedReadWriteExp {
 
     EXP_NAME=${1}
     TARGET_SCHEME=${2}
-    Workloads=("${!3}")
+    WORKLOAD=${3}
     REQUEST_DISTRIBUTIONS=("${!4}")
     REPLICAS=("${!5}")
     THREAD_NUMBER=("${!6}")
@@ -897,7 +895,7 @@ function runMixedReadWriteExp {
 
 
     for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
-        runExp "${EXP_NAME}" "$TARGET_SCHEME" Workloads[@] REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+        runExp "${EXP_NAME}" "$TARGET_SCHEME" $WORKLOAD REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${FIELD_LENGTH}" "${KEY_LENGTH}" "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
         cleanup $TARGET_SCHEME
     done
 
