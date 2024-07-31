@@ -33,15 +33,6 @@ fi
 # firstCoordinator=$(echo $coordinator | cut -d ',' -f1)
 # bin/cqlsh "$firstCoordinator" -e "consistency $consistency;"
 
-if [ "$readConsistency" == "ONE" ]; then
-    writeConsistency="ALL"
-elif [ "$readConsistency" == "TWO" ]; then
-    writeConsistency="TWO"
-elif [ "$readConsistency" == "ALL" ] || [ "$readConsistency" == "THREE" ]; then
-    writeConsistency="ONE"
-else
-    echo "Unknow readConsistency $readConsistency"
-fi
 
 sed -i "s/recordcount=.*$/recordcount=${recordcount}/" ${workload}
 sed -i "s/operationcount=.*$/operationcount=${operationcount}/" ${workload}
@@ -52,4 +43,4 @@ sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" $
 mkdir -p logs
 file_name="Run-$(date +%s)-${hostName}-${operationcount}-${field_length}-${threads}-${requestDistribution}"
 
-bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.writeconsistencylevel=$writeConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
