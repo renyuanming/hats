@@ -499,9 +499,9 @@ function getResultsDir
     kvNumber=$5
     sstableSize=$6
     compactionStrategy=$7
-    consistencyLevel=$8
+    readConsistencyLevel=$8
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${consistencyLevel}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -582,9 +582,9 @@ function run {
     memoryLimit=$2
     logLevel=$3
     enableHorse=$4
-    consistencyLevel=$5
+    readConsistencyLevel=$5
 
-    echo "Run ${targetScheme} with distribution: ${requestDist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHorse: ${enableHorse} consistencyLevel: ${consistencyLevel}"
+    echo "Run ${targetScheme} with distribution: ${requestDist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHorse: ${enableHorse} readConsistencyLevel: ${readConsistencyLevel}"
 
     resetPlaybook "run"
     playbook="playbook-run.yaml"
@@ -615,7 +615,7 @@ function run {
     sed -i "s|LOG_LEVEL|${logLevel}|g" ${playbook}
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
     sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" ${playbook}
-    sed -i "s|CONSISTENCY|${consistencyLevel}|g" ${playbook}
+    sed -i "s|CONSISTENCY|${readConsistencyLevel}|g" ${playbook}
 
     if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}
@@ -703,7 +703,7 @@ function runExp {
     CONSISTENCY_LEVEL=("${!32}")
 
     # test the parameters
-    echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, Workloads: ${WORKLOAD}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]} consistencyLevel: ${CONSISTENCY_LEVEL[@]}, throttleDataRate: ${THROTLLE_DATA_RATE[@]}, JDK_VERSION: ${JDK_VERSION}, compaction_strategy: ${compaction_strategy}"
+    echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, Workloads: ${WORKLOAD}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${REPLICAS[@]}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH}, KEY_LENGTH: ${KEY_LENGTH}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]} readConsistencyLevel: ${CONSISTENCY_LEVEL[@]}, throttleDataRate: ${THROTLLE_DATA_RATE[@]}, JDK_VERSION: ${JDK_VERSION}, compaction_strategy: ${compaction_strategy}"
 
     ENABLE_HORSE="false"
     if [[ "${TARGET_SCHEME}" == "horse" ]]; then
@@ -745,7 +745,7 @@ function runExp {
                             for motivation in "${MOTIVATION[@]}"; do
                                 for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
                                     for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
-                                        for consistencyLevel in "${CONSISTENCY_LEVEL[@]}"; do
+                                        for readConsistencyLevel in "${CONSISTENCY_LEVEL[@]}"; do
                                             if [ "${compactionLevel}" == "zero" ]; then
                                                 ENABLE_AUTO_COMPACTION="false"
                                                 ENABLE_COMPACTION_CFS=""
@@ -787,7 +787,7 @@ function runExp {
                                             # fi
                                             
 
-                                            run ${TARGET_SCHEME} ${requestDist} ${WORKLOAD} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${consistencyLevel}"
+                                            run ${TARGET_SCHEME} ${requestDist} ${WORKLOAD} ${threadsNum} ${KV_NUMBER} ${opsNum} ${KEY_LENGTH} ${FIELD_LENGTH} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HORSE}" "${readConsistencyLevel}"
 
                                             # Set the seed nodes as all the nodes, and reload the configuration file
                                             initConf "false"
@@ -795,7 +795,7 @@ function runExp {
 
 
                                             # Collect load results
-                                            resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistencyLevel}) 
+                                            resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${readConsistencyLevel}) 
 
                                             # echo "Collect results to ${resultsDir}"
                                             collectResults ${resultsDir}
