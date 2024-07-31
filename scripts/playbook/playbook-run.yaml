@@ -69,7 +69,7 @@
       ignore_errors: true
     - name: Wait before the benchmark
       pause:
-        seconds: 20
+        seconds: 30
     # - name: Clear page cache
     #   shell: |
     #     nohup bash -c 'while true; do echo "SUDO_PASSWD" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"; sleep 10; done' >/dev/null 2>&1 &
