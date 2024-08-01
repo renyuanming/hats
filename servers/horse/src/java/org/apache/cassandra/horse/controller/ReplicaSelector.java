@@ -87,8 +87,7 @@ public class ReplicaSelector
         // Return score if already calculated
         Double score = groupScores.get(targetAddr);
         if (score != null) {
-            if(score >= snitchMetrics.maxScoreOfEachRG.get(replicationGroup))
-            {
+            if (score >= snitchMetrics.maxScoreOfEachRG.getOrDefault(replicationGroup, Double.MIN_VALUE)) {
                 return score;
             }
             return snitchMetrics.cachedLatencyScore.get(replicationGroup).get(targetAddr);
@@ -96,17 +95,21 @@ public class ReplicaSelector
     
         // Calculate score because it was not found in cache
         double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
+    
+        // Use compute to ensure atomicity of the update
+        snitchMetrics.maxScoreOfEachRG.compute(replicationGroup, (key, currentMax) -> {
+            if (currentMax == null) {
+                return newScore;
+            } else {
+                return Math.max(currentMax, newScore);
+            }
+        });
+    
         groupScores.put(targetAddr, newScore);
-        if(snitchMetrics.maxScoreOfEachRG.get(replicationGroup) == null)
-        {
-            snitchMetrics.maxScoreOfEachRG.put(replicationGroup, newScore);
-        }
-        else
-        {
-            snitchMetrics.maxScoreOfEachRG.put(replicationGroup, Math.max(snitchMetrics.maxScoreOfEachRG.get(replicationGroup), newScore));
-        }
+        
         return newScore;
     }
+    
     
     private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
