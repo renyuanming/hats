@@ -349,10 +349,14 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
     {
         EndpointsForToken replicas = replicationStrategy.getNaturalReplicasForToken(token);
 
-        // if(consistencyLevel != ConsistencyLevel.ALL && consistencyLevel != ConsistencyLevel.THREE)
-        // {
-        replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, false);
-        // }
+        if(consistencyLevel == ConsistencyLevel.ONE || consistencyLevel == ConsistencyLevel.LOCAL_ONE)
+        {
+            replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, false);
+        }
+        else
+        {
+            replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, true);
+        }
         
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForTokenRead(replicationStrategy, replicas);
