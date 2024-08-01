@@ -65,6 +65,8 @@ public class ReplicaSelector
         public final double minLatency;
         public final double maxLatency;
         public final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> cachedScores;
+        public final ConcurrentHashMap<InetAddressAndPort, Double> maxScoreOfEachRG;
+        public final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> cachedLatencyScore;
 
         public SnitchMetrics(ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency, double minLatency, double maxLatency) 
         {
@@ -72,6 +74,8 @@ public class ReplicaSelector
             this.minLatency = minLatency;
             this.maxLatency = maxLatency;
             this.cachedScores = new ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>>();
+            this.maxScoreOfEachRG = new ConcurrentHashMap<InetAddressAndPort, Double>();
+            this.cachedLatencyScore = new ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>>();
         }
         
     }
@@ -83,12 +87,24 @@ public class ReplicaSelector
         // Return score if already calculated
         Double score = groupScores.get(targetAddr);
         if (score != null) {
-            return score;
+            if(score >= snitchMetrics.maxScoreOfEachRG.get(replicationGroup))
+            {
+                return score;
+            }
+            return snitchMetrics.cachedLatencyScore.get(replicationGroup).get(targetAddr);
         }
     
         // Calculate score because it was not found in cache
         double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
         groupScores.put(targetAddr, newScore);
+        if(snitchMetrics.maxScoreOfEachRG.get(replicationGroup) == null)
+        {
+            snitchMetrics.maxScoreOfEachRG.put(replicationGroup, newScore);
+        }
+        else
+        {
+            snitchMetrics.maxScoreOfEachRG.put(replicationGroup, Math.max(snitchMetrics.maxScoreOfEachRG.get(replicationGroup), newScore));
+        }
         return newScore;
     }
     
@@ -134,6 +150,9 @@ public class ReplicaSelector
         // latencyScore = 1 / (1 + Math.exp(-latencyScore));
 
         latencyScore = 1 - Math.exp(-latencyScore);
+
+        snitchMetrics.cachedLatencyScore.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>()).put(targetAddr, latencyScore);
+
         return latencyScore;
     }
     

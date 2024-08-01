@@ -606,7 +606,7 @@ public class ReplicaPlans
                                                    SpeculativeRetryPolicy retry)
     {
         AbstractReplicationStrategy replicationStrategy = keyspace.getReplicationStrategy();
-        EndpointsForToken candidates = candidatesForRead(keyspace, indexQueryPlan, consistencyLevel, ReplicaLayout.forTokenReadLiveSorted(replicationStrategy, token).natural());
+        EndpointsForToken candidates = candidatesForRead(keyspace, indexQueryPlan, consistencyLevel, ReplicaLayout.forTokenReadLiveSorted(replicationStrategy, token, consistencyLevel).natural());
         EndpointsForToken contacts = contactForRead(replicationStrategy, consistencyLevel, retry.equals(AlwaysSpeculativeRetryPolicy.INSTANCE), candidates);
 
         assureSufficientLiveReplicasForRead(replicationStrategy, consistencyLevel, contacts);

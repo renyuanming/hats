@@ -21,6 +21,7 @@ package org.apache.cassandra.locator;
 import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.PartitionPosition;
 import org.apache.cassandra.dht.AbstractBounds;
@@ -336,6 +337,23 @@ public abstract class ReplicaLayout<E extends Endpoints<E>>
         EndpointsForToken replicas = replicationStrategy.getNaturalReplicasForToken(token);
 
         replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, false);
+        replicas = replicas.filter(FailureDetector.isReplicaAlive);
+        return new ReplicaLayout.ForTokenRead(replicationStrategy, replicas);
+    }
+
+    /**
+     * @return the read layout for a token - this includes only live natural replicas, i.e. those that are not pending
+     * and not marked down by the failure detector. these are reverse sorted by the badness score of the configured snitch
+     */
+    public static ReplicaLayout.ForTokenRead forTokenReadLiveSorted(AbstractReplicationStrategy replicationStrategy, Token token,  ConsistencyLevel consistencyLevel)
+    {
+        EndpointsForToken replicas = replicationStrategy.getNaturalReplicasForToken(token);
+
+        if(consistencyLevel != ConsistencyLevel.ALL && consistencyLevel != ConsistencyLevel.THREE)
+        {
+            replicas = DatabaseDescriptor.getEndpointSnitch().sortedByProximity(FBUtilities.getBroadcastAddressAndPort(), replicas, false);
+        }
+        
         replicas = replicas.filter(FailureDetector.isReplicaAlive);
         return new ReplicaLayout.ForTokenRead(replicationStrategy, replicas);
     }
