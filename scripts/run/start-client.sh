@@ -44,12 +44,16 @@ func() {
         create table usertable0 (y_id varchar primary key, field0 varchar);
         consistency all;"
 
+
+        alter_statements=""
+        for ((i=0; i<$replication_factor; i++)); do
+            alter_statements+="ALTER TABLE usertable${i} WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};"
+        done
+
         if [ "$compaction_strategy" == "LCS" ]; then
             bin/cqlsh "$coordinator" -e "
             USE ycsb;
-            ALTER TABLE usertable0 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
-            ALTER TABLE usertable1 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};
-            ALTER TABLE usertable2 WITH compaction = { 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': ${sstable_size}, 'fanout_size': ${fanout_size}};"
+            $alter_statements"
         elif [ "$compaction_strategy" == "LSTCS" ]; then
             bin/cqlsh "$coordinator" -e "
             USE ycsb;
