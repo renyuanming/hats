@@ -59,7 +59,7 @@ public class LeveledManifest
      * if we have more than MAX_COMPACTING_L0 sstables in L0, we will run a round of STCS with at most
      * cfs.getMaxCompactionThreshold() sstables.
      */
-    private static final int MAX_COMPACTING_L0 = 2;
+    private static final int MAX_COMPACTING_L0 = 8;
 
     /**
      * If we go this many rounds without compacting
