@@ -36,6 +36,7 @@ import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
+import org.apache.cassandra.utils.FBUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,9 @@ public class GlobalStates implements Serializable {
     public Double[] scoreVector; // N
     public Double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
+    // read count of each replication group
+    public int[] readCountOfEachRG; // N
+    public int[] updatingReadCountOfEachRG; // N
     public int[][] loadMatrix; // N X M
     public int[] versionVector; // N
     public Double[] deltaVector; // N
@@ -74,6 +78,8 @@ public class GlobalStates implements Serializable {
         this.scoreVector = new Double[this.nodeCount];
         this.latencyVector = new Double[this.nodeCount];
         this.readCountOfEachNode = new int[this.nodeCount];
+        this.readCountOfEachRG = new int[this.nodeCount];
+        this.updatingReadCountOfEachRG = new int[this.nodeCount];
         this.loadMatrix = new int[this.nodeCount][rf];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
@@ -82,6 +88,8 @@ public class GlobalStates implements Serializable {
             this.scoreVector[i] = 0.0;
             this.latencyVector[i] = 0.0;
             this.readCountOfEachNode[i] = 0;
+            this.readCountOfEachRG[i] = 0;
+            this.updatingReadCountOfEachRG[i] = 0;
             this.versionVector[i] = 0;
             this.deltaVector[i] = 0.0;
             for(int j = 0; j < rf; j++)
@@ -131,6 +139,31 @@ public class GlobalStates implements Serializable {
         }
         StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
         // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
+    }
+
+    public static Double[] translatePolicyForBackgroundController()
+    {
+
+        int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
+        if(nodeIndex == -1)
+        {
+            throw new IllegalStateException("The node index is -1, the node is not in the host list.");
+        }
+        int[] readCountOfEachReplica = new int[rf];
+        int totalReadCountOfTheNode = 0;
+        for(int i = 0; i < rf; i++)
+        {
+            int rgIndex = (nodeIndex - i + globalStates.nodeCount) % globalStates.nodeCount;
+            readCountOfEachReplica[i] = (int) (globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
+            totalReadCountOfTheNode += readCountOfEachReplica[i];
+        }
+        Double[] localPolicyForBackgroundController = new Double[rf];
+        for(int i = 0; i < rf; i++)
+        {
+            localPolicyForBackgroundController[i] = (double) readCountOfEachReplica[i] / totalReadCountOfTheNode;
+        }
+
+        return localPolicyForBackgroundController;
     }
 
     public static double getScore(double latency, int requestCount)

@@ -142,33 +142,11 @@ public class Scheduler {
 
                 // Step1. Gather the load statistic
                 gatheringLoadStatistic();
-                int retryCount = 0;
-                while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
-                {
-                    try {
-                        Thread.sleep(1000);
-                        retryCount++;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    if(retryCount >= 5)
-                    {
-                        logger.warn("rymWARN: we have waited for 5s, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
-                                        StorageService.instance.stateGatheringSignalInFlight.get());
-                        StorageService.instance.stateGatheringSignalInFlight.set(0);
-                        return;
-                    }
-                }
-                logger.info(ANSI_RED + "rymInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}"+ ANSI_RESET,
-                            //  GlobalStates.globalStates.latencyVector, 
-                             GlobalStates.globalStates.readCountOfEachNode, 
-                             GlobalStates.globalStates.scoreVector, 
-                             GlobalStates.globalStates.loadMatrix);
                     
                 // Step2. Calculate the placement policy if needed.
                 calculateGlobalPolicy();
 
-                // Step3. Update local Policy
+                // Step3. Update local Policy for coordinator
                 LocalStates.updateLocalPolicy();
 
                 // Step4. Acknowledge to the client driver
@@ -178,7 +156,8 @@ public class Scheduler {
                 replicateGlobalPolicy();
                 
                 // Step6. Update the policy for background task control.
-                BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
+                // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
+                BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController());
 
             }
         }
@@ -450,6 +429,47 @@ public class Scheduler {
                 signal.sendStatesGatheringSignal(follower);
             }
         }
+
+        // Wait until we get all the states
+
+        int retryCount = 0;
+        while(StorageService.instance.stateGatheringSignalInFlight.get() != 0)
+        {
+            try {
+                Thread.sleep(1000);
+                retryCount++;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if(retryCount >= 5)
+            {
+                logger.warn("rymWARN: we have waited for 5s, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
+                                StorageService.instance.stateGatheringSignalInFlight.get());
+                StorageService.instance.stateGatheringSignalInFlight.set(0);
+                return;
+            }
+        }
+
+        // update the readCountOfEachRg
+        for(int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
+        {
+            for(int j = 0; j < GlobalStates.rf; j++)
+            {
+                // int rgIndex = HorseUtils.getReplicaIndexForRGInEachNode(i, i + j);
+                int rgIndex = (i - j + GlobalStates.globalStates.nodeCount) % GlobalStates.globalStates.nodeCount;
+                GlobalStates.globalStates.updatingReadCountOfEachRG[rgIndex] += GlobalStates.globalStates.loadMatrix[i][j];
+            }
+        }
+        
+        GlobalStates.globalStates.readCountOfEachNode = Arrays.copyOf(GlobalStates.globalStates.updatingReadCountOfEachRG, GlobalStates.globalStates.nodeCount);
+        GlobalStates.globalStates.updatingReadCountOfEachRG = new int[GlobalStates.globalStates.nodeCount];
+
+        logger.info(ANSI_RED + "rymInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}"+ ANSI_RESET,
+                    //  GlobalStates.globalStates.latencyVector, 
+                     GlobalStates.globalStates.readCountOfEachNode, 
+                     GlobalStates.globalStates.scoreVector, 
+                     GlobalStates.globalStates.loadMatrix);
+
     }
 
 
