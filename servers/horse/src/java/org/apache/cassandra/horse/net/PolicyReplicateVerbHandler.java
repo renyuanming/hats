@@ -59,7 +59,8 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.getGlobalCoordinatorReadLatencyFromGossipInfo());
         
         // Update the compaction rate limiter
-        BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
+        // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
+        BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController());
     }
     
 }
