@@ -654,6 +654,19 @@ function perpareJavaEnvironment {
 
 }
 
+
+function trimSSD {
+    
+
+    resetPlaybook "trimSSD"
+
+    playbook="playbook-trimSSD.yaml"
+
+    sed -i "s|SUDO_PASSWD|${SudoPassword}|g" ${playbook}
+
+    ansible-playbook -v -i hosts.ini ${playbook}
+}
+
 function cleanup {
     scheme=$1
 
@@ -762,6 +775,9 @@ function runExp {
 
                                             # init the configuration file, set all nodes as the seeds to support fast startup
                                             initConf "false"
+
+                                            # Trim SSD before starting the server
+                                            trimSSD
 
                                             # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
                                             # startup from preload dataset

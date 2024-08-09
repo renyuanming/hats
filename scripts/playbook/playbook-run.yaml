@@ -1,4 +1,14 @@
 ---
+- name: Trim SSD
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Trim SSD
+      shell: |
+          echo "SUDO_PASSWD" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"
+      register: command_result
+      ignore_errors: true
 - name: Monitor before benchmark
   hosts: cassandra_servers
   become: yes
