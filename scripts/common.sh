@@ -785,13 +785,13 @@ function runExp {
                                                         echo "Start from current data"
                                                         restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate}
                                                     # modify the seeds as the specific nodes, and reload the configuration file
-                                                    initConf "true"
-                                                    reloadSeeds ${TARGET_SCHEME}
                                                     else
                                                         echo "Start from backup"
                                                         startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${keyLength} ${fieldLength} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
                                                     fi
                                                     # fi
+                                                    initConf "true"
+                                                    reloadSeeds ${TARGET_SCHEME}
 
                                                     opsNum=${OPERATION_NUMBER}
                                                     if [ "${WORKLOAD}" == "workloade" ]; then
