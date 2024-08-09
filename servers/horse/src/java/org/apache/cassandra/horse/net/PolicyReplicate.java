@@ -26,6 +26,7 @@ import org.apache.cassandra.net.MessageFlag;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
@@ -49,20 +50,28 @@ public class PolicyReplicate
 
     public final byte[] placementPolicyInBytes;
     private final int placementPolicyInBytesSize;
+    public final byte[] backgroundPolicyInBytes;
+    private final int backgroundPolicyInBytesSize;
     // Map<InetAddress, LocalStates> states
-    public PolicyReplicate(byte[] placementPolicyInBytes)
+    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes)
     {
         this.placementPolicyInBytes = placementPolicyInBytes;
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
+        this.backgroundPolicyInBytes = backgroundPolicyInBytes;
+        this.backgroundPolicyInBytesSize = backgroundPolicyInBytes.length;
     }
 
     public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][] placementPolicy)
     {
         byte[] placementPolicyInBytes = null;
+        byte[] backgroundPolicyInBytes = null;
+
+        Double[] backgroundPolicy = GlobalStates.translatePolicyForBackgroundController(follower);
                 
         try {
             placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) placementPolicy);
-            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes);
+            backgroundPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) backgroundPolicy);
+            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes);
             Message<PolicyReplicate> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, follower);
         } catch (Exception e) {
@@ -79,6 +88,8 @@ public class PolicyReplicate
         {
             out.writeInt(t.placementPolicyInBytesSize);
             out.write(t.placementPolicyInBytes);
+            out.writeInt(t.backgroundPolicyInBytesSize);
+            out.write(t.backgroundPolicyInBytes);
         }
 
         @Override
@@ -87,13 +98,19 @@ public class PolicyReplicate
             int placementPolicyInBytesSize = in.readInt();
             byte[] placementPolicyInBytes = new byte[placementPolicyInBytesSize];
             in.readFully(placementPolicyInBytes);
-            return new PolicyReplicate(placementPolicyInBytes);
+            int backgroundPolicyInBytesSize = in.readInt();
+            byte[] backgroundPolicyInBytes = new byte[backgroundPolicyInBytesSize];
+            in.readFully(backgroundPolicyInBytes);
+            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes);
         }
 
         @Override
         public long serializedSize(PolicyReplicate t, int version) 
         {
-            long size = t.placementPolicyInBytesSize + sizeof(t.placementPolicyInBytesSize);
+            long size = t.placementPolicyInBytesSize + 
+                        sizeof(t.placementPolicyInBytesSize) + 
+                        t.backgroundPolicyInBytesSize +
+                        sizeof(t.backgroundPolicyInBytesSize);
             return size;
         }
 

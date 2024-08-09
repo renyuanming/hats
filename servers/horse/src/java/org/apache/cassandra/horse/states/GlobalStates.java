@@ -141,10 +141,10 @@ public class GlobalStates implements Serializable {
         // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
-    public static Double[] translatePolicyForBackgroundController()
+    public static Double[] translatePolicyForBackgroundController(InetAddressAndPort targetNode)
     {
 
-        int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
+        int nodeIndex = Gossiper.getAllHosts().indexOf(targetNode);
         if(nodeIndex == -1)
         {
             throw new IllegalStateException("The node index is -1, the node is not in the host list.");

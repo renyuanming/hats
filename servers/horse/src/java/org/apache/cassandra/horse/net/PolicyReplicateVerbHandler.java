@@ -43,9 +43,11 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
     @Override
     public void doVerb(Message<PolicyReplicate> message) throws IOException {
         PolicyReplicate payload = message.payload;
-
+        Double[] backgroundPolicy = null;
         try {
             GlobalStates.globalPolicy = (Double[][]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
+            backgroundPolicy = (Double[]) ByteObjectConversion.byteArrayToObject(payload.backgroundPolicyInBytes);
+
             // Get the placement policy for local replicas
         } catch (Exception e) {
             // TODO Auto-generated catch block
@@ -60,7 +62,8 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         
         // Update the compaction rate limiter
         // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
-        BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController());
+        // BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController());
+        BackgroundController.updateLimiter(backgroundPolicy);
     }
     
 }

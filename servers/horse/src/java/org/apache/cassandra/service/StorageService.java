@@ -323,6 +323,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicLong readRequestInFlight = new AtomicLong(0);
     public AtomicLong getEndpointCost = new AtomicLong(0);
     public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
+    public InetAddressAndPort localAddressAndPort = FBUtilities.getBroadcastAddressAndPort();
 
 
 

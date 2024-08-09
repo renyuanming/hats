@@ -157,7 +157,7 @@ public class Scheduler {
                 
                 // Step6. Update the policy for background task control.
                 // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
-                BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController());
+                BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController(StorageService.instance.localAddressAndPort));
 
             }
         }
