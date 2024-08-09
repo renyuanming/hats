@@ -777,8 +777,6 @@ function runExp {
 
                                                     # init the configuration file, set all nodes as the seeds to support fast startup
                                                     initConf "false"
-                                                    # Trim SSD before starting the server
-                                                    trimSSD
                                                     # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
                                                     # startup from preload dataset
                                                     if [ "${WORKLOAD}" == "workloadc" ]; then
@@ -792,6 +790,8 @@ function runExp {
                                                         startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${keyLength} ${fieldLength} ${rf} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HORSE} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
                                                     fi
                                                     # fi
+                                                    # Trim SSD before the evaluation
+                                                    trimSSD
 
                                                     opsNum=${OPERATION_NUMBER}
                                                     if [ "${WORKLOAD}" == "workloade" ]; then

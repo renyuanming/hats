@@ -7,14 +7,15 @@
 EXP_NAME="Exp-MixedReadWrite"
 WORKLOADS=("workloada")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=20000000
+OPERATION_NUMBER=25000000
+KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
 KEY_LENGTH=24
 KEY_LENGTHMin=24
 KEY_LENGTHMax=24
 REPLICAS=(3)
-THREAD_NUMBER=(20)
+THREAD_NUMBER=(50)
 MEMTABLE_SIZE=(2048)
 MOTIVATION=("false") # true is only forward the read request to the primary lsm-tree
 MEMORY_LIMIT="12G"
@@ -22,10 +23,10 @@ USE_DIRECTIO=("false") # enable direct io for read path or not
 PURPOSE="ReadAmplification" # To prove ReadAmplification, CompactionOverhead, we select different dataset
 READ_SENSISTIVITY=0.9
 BRANCH="main"
-LOG_LEVEL="info"
+LOG_LEVEL="error"
 SSTABLE_SIZE_IN_MB=160
-COMPACTION_STRATEGY=("LCS" "STCS" "LSTCS")
-CONSISTENCY_LEVEL=("ONE" "TWO" "ALL")
+COMPACTION_STRATEGY=("LCS")
+CONSISTENCY_LEVEL=("ONE")
 
 # Debug Settings
 REBUILD_SERVER="false"
@@ -36,7 +37,7 @@ ROUNDS=5
 COMPACTION_LEVEL=("all") # zero one all
 
 # Horse
-SCHEDULING_INITIAL_DELAY=3600 # seconds
+SCHEDULING_INITIAL_DELAY=120 # seconds
 SCHEDULING_INTERVAL=(60) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 THROTLLE_DATA_RATE=(90) # MB/s
