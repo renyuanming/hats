@@ -153,8 +153,8 @@ public class GlobalStates implements Serializable {
         int totalReadCountOfTheNode = 0;
         for(int i = 0; i < rf; i++)
         {
-            int rgIndex = (nodeIndex - i + globalStates.nodeCount) % globalStates.nodeCount;
-            readCountOfEachReplica[i] = (int) (globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
+            int rgIndex = (nodeIndex - i + GlobalStates.globalStates.nodeCount) % GlobalStates.globalStates.nodeCount;
+            readCountOfEachReplica[i] = (int) (GlobalStates.globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
             totalReadCountOfTheNode += readCountOfEachReplica[i];
         }
         Double[] localPolicyForBackgroundController = new Double[rf];
