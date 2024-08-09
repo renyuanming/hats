@@ -777,7 +777,8 @@ function runExp {
 
                                                     # init the configuration file, set all nodes as the seeds to support fast startup
                                                     initConf "false"
-
+                                                    # Trim SSD before starting the server
+                                                    trimSSD
                                                     # if [ "$TARGET_SCHEME" != "depart-5.0" ]; then
                                                     # startup from preload dataset
                                                     if [ "${WORKLOAD}" == "workloadc" ]; then
