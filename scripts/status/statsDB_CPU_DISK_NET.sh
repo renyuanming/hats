@@ -10,11 +10,11 @@ function statsCPU_Disk_Network_DB {
     resultDir=$4
     pathToCodeBase=$5
     diskDevice=$6
-    networkInterface=$7
+    INTERFACE=$7
     targetScheme=$8
 
     CASSANDRA_PID=$(ps aux | grep CassandraDaemon | grep -v grep | awk '{print $2}')
-    echo "Cassandra PID: $CASSANDRA_PID"
+    echo "expName is $expName, workload is $workload, stage is $stage, resultDir is $resultDir, pathToCodeBase is $pathToCodeBase, diskDevice is $diskDevice, INTERFACE is $INTERFACE, targetScheme is $targetScheme, Cassandra PID: $CASSANDRA_PID"
 
     ## CPU
     CPU_OUTPUT_FILE="${resultDir}/${stage}_cpu_summary.txt"
@@ -38,7 +38,7 @@ function statsCPU_Disk_Network_DB {
 
     ## Network I/O
     # Network interface (change this to your interface, e.g., wlan0, ens33, etc.)
-    INTERFACE=${networkInterface}
+    # INTERFACE=${networkInterface}
 
     # File to store the results
     NET_OUTPUT_FILE="${resultDir}/${stage}_network_summary.txt"
