@@ -501,7 +501,7 @@ function getResultsDir
     compactionStrategy=$7
     local readConsistencyLevel=$8
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
 
     echo ${resultsDir}
 }
