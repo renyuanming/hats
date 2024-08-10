@@ -1262,9 +1262,15 @@ public class StorageProxy implements StorageProxyMBean
             //We could potentially pass a callback into performWrite. And add callback provision for mutateCounter or mutateAtomically (sendToHintedEndPoints)
             //However, Trade off between write metric per CF accuracy vs performance hit due to callbacks. Similar issue exists with CoordinatorReadLatency metric.
             mutations.stream()
-                     .flatMap(m -> m.getTableIds().stream().map(tableId -> Keyspace.open(m.getKeyspaceName()).getColumnFamilyStore(tableId)))
+                     .flatMap(m -> m.getPartitionUpdates().stream().map(update -> Keyspace.open(m.getKeyspaceName()).getColumnFamilyStoreByToken(m.getKeyspaceName(), update.partitionKey())))
                      .distinct()
-                     .forEach(store -> store.metric.coordinatorWriteLatency.update(latency, TimeUnit.NANOSECONDS));
+                     .forEach(store -> {
+                        store.metric.coordinatorWriteLatency.update(latency, TimeUnit.NANOSECONDS);
+                        if(store.name.contains("usertable"))
+                        {
+                            StorageService.instance.coordinatorWriteTime += latency / 1000;
+                        }
+                    });
         }
         catch (Exception ex)
         {
@@ -1984,6 +1990,7 @@ public class StorageProxy implements StorageProxyMBean
             if(command.metadata().name.contains("usertable"))
             {
                 command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                StorageService.instance.coordinatorReadTime += latency / 1000;
             }
             else
             {
@@ -2046,6 +2053,7 @@ public class StorageProxy implements StorageProxyMBean
                 if(command.metadata().name.contains("usertable"))
                 {
                     command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                    StorageService.instance.coordinatorReadTime += latency / 1000;
                 }
                 else
                 {

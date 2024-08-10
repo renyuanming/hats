@@ -1270,6 +1270,7 @@ public class StorageProxy implements StorageProxyMBean
                         if(store.name.contains("usertable"))
                         {
                             StorageService.instance.writeLatencyCalculator.record(latency);
+                            StorageService.instance.coordinatorWriteTime += latency / 1000;
                         }
                     });
         }
@@ -1992,6 +1993,7 @@ public class StorageProxy implements StorageProxyMBean
             {
                 command.getColumnFamilyStorefromMultiReplicas(metadata).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 StorageService.instance.readLatencyCalculator.record(latency);
+                StorageService.instance.coordinatorReadTime += latency / 1000;
                 
                 // if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
                 // {
@@ -2061,6 +2063,7 @@ public class StorageProxy implements StorageProxyMBean
                 {
                     command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                     StorageService.instance.readLatencyCalculator.record(latency);
+                    StorageService.instance.coordinatorReadTime += latency / 1000;
                     // if(latency >  StorageService.instance.readLatencyThreshold.get() && !StorageService.instance.isReadSlow.get())
                     // {
                     //     StorageService.instance.isReadSlow.set(true);

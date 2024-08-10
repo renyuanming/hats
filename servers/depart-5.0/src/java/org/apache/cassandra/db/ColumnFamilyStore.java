@@ -1259,6 +1259,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
 
             if (logger.isTraceEnabled())
                 logger.trace("Flush task task {}@{} finished", hashCode(), name);
+            StorageService.instance.flushTime += nanoTime() - start;
         }
 
         public Collection<SSTableReader> flushMemtable(ColumnFamilyStore cfs, Memtable memtable, boolean flushNonCf2i)
@@ -1463,6 +1464,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             Memtable mt = data.getMemtableFor(opGroup, commitLogPosition);
             UpdateTransaction indexer = newUpdateTransaction(update, context, updateIndexes, mt);
             long timeDelta = mt.put(update, indexer, opGroup);
+            StorageService.instance.memtableTime += (nanoTime() - start);
             DecoratedKey key = update.partitionKey();
             invalidateCachedPartition(key);
             metric.topWritePartitionFrequency.addSample(key.getKey(), 1);
@@ -1470,6 +1472,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
                 metric.topWritePartitionSize.addSample(key.getKey(), update.dataSize());
             StorageHook.instance.reportWrite(metadata.id, update);
             metric.writeLatency.addNano(nanoTime() - start);
+            StorageService.instance.localWriteTime += (nanoTime() - start) / 1000;
             // CASSANDRA-11117 - certain resolution paths on memtable put can result in very
             // large time deltas, either through a variety of sentinel timestamps (used for empty values, ensuring
             // a minimal write, etc). This limits the time delta to the max value the histogram

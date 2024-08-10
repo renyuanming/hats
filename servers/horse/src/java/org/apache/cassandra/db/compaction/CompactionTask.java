@@ -47,6 +47,7 @@ import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.service.ActiveRepairService;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.Refs;
@@ -289,6 +290,7 @@ public class CompactionTask extends AbstractCompactionTask
 
             // update the throttle compaction throughput
             BackgroundController.compactionRateLimiter.updateThrottleThpt();
+            StorageService.instance.compactionTime += nanoTime() - start;
         }
     }
 

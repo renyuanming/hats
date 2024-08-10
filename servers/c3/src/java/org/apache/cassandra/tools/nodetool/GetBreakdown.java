@@ -97,6 +97,9 @@ public class GetBreakdown extends NodeToolCmd
             Map<String, Double> coordinatorScanLatency = new HashMap<>();
             Map<String, Long> coordinatorWriteCount = new HashMap<>();
             Map<String, Double> coordinatorWriteLatency = new HashMap<>();
+
+            Map<String, Double> keyCacheHitRate = new HashMap<>();
+            Map<String, Double> rowCacheHitRate = new HashMap<>();
             
             
             // Get local operation latecy of each table
@@ -115,6 +118,10 @@ public class GetBreakdown extends NodeToolCmd
                 long tableCoordinatorWriteCount = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorWriteLatency")).getCount();
                 double coordinator_write_latency = ((CassandraMetricsRegistry.JmxTimerMBean) probe.getColumnFamilyMetric(keyspace, table, "CoordinatorWriteLatency")).getMean();
 
+                double keyCacheHitRateValue = ((Double) probe.getColumnFamilyMetric(keyspace, table, "KeyCacheHitRate"));
+                long rowCacheHit = ((Long) probe.getColumnFamilyMetric(keyspace, table, "RowCacheHit"));
+                long rowCacheMiss = ((Long) probe.getColumnFamilyMetric(keyspace, table, "RowCacheMiss"));
+                double rowCacheHitRateValue = (double) rowCacheHit / (rowCacheHit + rowCacheMiss);
                 
                 totalReadCount += tableReadCount;
                 totalWriteCount += tableWriteCount;
@@ -130,6 +137,9 @@ public class GetBreakdown extends NodeToolCmd
                 coordinatorReadCount.put(table, tableCoordinatorReadCount);
                 coordinatorScanCount.put(table, tableCoordinatorScanCount);
                 coordinatorWriteCount.put(table, tableCoordinatorWriteCount);
+
+                keyCacheHitRate.put(table, keyCacheHitRateValue);
+                rowCacheHitRate.put(table, rowCacheHitRateValue);
 
 
                 if(tableReadCount > 0 && !Double.isNaN(localReadLatency))
@@ -189,16 +199,17 @@ public class GetBreakdown extends NodeToolCmd
             double averageCoordiantorScanLatency = 0;
             double averageCoordiantorWriteLatency = 0;
             
-            out.println(format("%-10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s",
-            "Table", "Read", "ReadCnt", "CordRead", "CordReadCnt", "Write", "WriteCnt", "CordWrite", "CordWriteCnt", "Scan", "ScanCnt", "CordScan", "CordScanCnt"));
+            out.println(format("%-10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s",
+            "Table", "Read", "RCnt", "CorR", "CorRCnt", "Write", "WCnt", "CorW", "CorWCnt", "Scan", "SCnt", "CorS", "CorSCnt", "keyHit", "rowHit"));
             for(String table : tablesList.get(keyspace))
             { 
                 
-                out.println(format("%-10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s",
+                out.println(format("%-10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10.2f%10s%10s%10s",
                                     table, 
                                     readLatency.get(table), readCount.get(table), coordinatorReadLatency.get(table), coordinatorReadCount.get(table),
                                     writeLatency.get(table), writeCount.get(table), coordinatorWriteLatency.get(table), coordinatorWriteCount.get(table), 
-                                    rangeLatency.get(table), rangeCount.get(table), coordinatorScanLatency.get(table), coordinatorScanCount.get(table)));
+                                    rangeLatency.get(table), rangeCount.get(table), coordinatorScanLatency.get(table), coordinatorScanCount.get(table),
+                                    keyCacheHitRate.get(table), rowCacheHitRate.get(table)));
 
                 averageLocalReadLatency += readLatency.get(table) * readCount.get(table) / totalReadCount;
                 averageLocalWriteLatency += writeLatency.get(table) * writeCount.get(table) / totalWriteCount;
@@ -222,6 +233,22 @@ public class GetBreakdown extends NodeToolCmd
             out.println();
 
         }
+
+
+        Map<String, Long> operationBreakdown = probe.getBreakdownTime();
+        out.println("Operation type breakdown (ms):");
+        out.println("CoordinatorReadTime: " + operationBreakdown.get("CoordinatorReadTime"));
+        out.println("CoordinatorWriteTime: " + operationBreakdown.get("CoordinatorWriteTime"));
+        out.println("LocalReadTime: " + operationBreakdown.get("LocalReadTime"));
+        out.println("LocalWriteTime: " + operationBreakdown.get("LocalWriteTime"));
+        out.println("WriteMemTable: " + operationBreakdown.get("WriteMemTable"));
+        out.println("CommitLog: " + operationBreakdown.get("CommitLog"));
+        out.println("Flush: " + operationBreakdown.get("Flush"));
+        out.println("Compaction: " + operationBreakdown.get("Compaction"));
+        out.println("ReadCache: " + operationBreakdown.get("ReadCache"));
+        out.println("ReadMemTable: " + operationBreakdown.get("ReadMemTable"));
+        out.println("ReadSSTable: " + operationBreakdown.get("ReadSSTable"));
+        out.println();
 
         // Get messaging queuing latency
         

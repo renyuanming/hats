@@ -234,6 +234,22 @@ public class GetBreakdown extends NodeToolCmd
 
         }
 
+        Map<String, Long> operationBreakdown = probe.getBreakdownTime();
+        out.println("Operation type breakdown (ms):");
+        out.println("CoordinatorReadTime: " + operationBreakdown.get("CoordinatorReadTime"));
+        out.println("CoordinatorWriteTime: " + operationBreakdown.get("CoordinatorWriteTime"));
+        out.println("LocalReadTime: " + operationBreakdown.get("LocalReadTime"));
+        out.println("LocalWriteTime: " + operationBreakdown.get("LocalWriteTime"));
+        out.println("WriteMemTable: " + operationBreakdown.get("WriteMemTable"));
+        out.println("CommitLog: " + operationBreakdown.get("CommitLog"));
+        out.println("Flush: " + operationBreakdown.get("Flush"));
+        out.println("Compaction: " + operationBreakdown.get("Compaction"));
+        out.println("ReadCache: " + operationBreakdown.get("ReadCache"));
+        out.println("ReadMemTable: " + operationBreakdown.get("ReadMemTable"));
+        out.println("ReadSSTable: " + operationBreakdown.get("ReadSSTable"));
+        out.println();
+
+
         // Get messaging queuing latency
         
         String[] messageTypes = {"READ_RSP", "READ_REQ", "MUTATION_RSP", "MUTATION_REQ"};

@@ -454,6 +454,12 @@ public class NodeProbe implements AutoCloseable
         }
     }
 
+    // HORSE
+    public Map<String, Long> getBreakdownTime()
+    {
+        return ssProxy.getBreakdownTime();
+    }
+
     public void forceUserDefinedCompaction(String datafiles) throws IOException, ExecutionException, InterruptedException
     {
         compactionProxy.forceUserDefinedCompaction(datafiles);
@@ -1928,10 +1934,12 @@ public class NodeProbe implements AutoCloseable
                 case "WriteTotalLatency":
                 case "ReadTotalLatency":
                 case "PendingFlushes":
+                case "RowCacheHit":
+                case "RowCacheMiss":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxCounterMBean.class).getCount();
                 case "CoordinatorReadLatency":
-                case "CoordinatorWriteLatency":
                 case "CoordinatorScanLatency":
+                case "CoordinatorWriteLatency":
                 case "ReadLatency":
                 case "WriteLatency":
                 case "RangeLatency":

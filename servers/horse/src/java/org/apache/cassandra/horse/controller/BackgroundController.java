@@ -41,7 +41,7 @@ public class BackgroundController
     private static final Logger logger = LoggerFactory.getLogger(BackgroundController.class);
     private static final MetricRegistry registry = new MetricRegistry();
 
-    public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[] { 80, 10, 10 });
+    public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[DatabaseDescriptor.getReplicationFactor()]);
 
     public volatile int throttleCompactionThroughput = INITIAL_THROTTLE_THPT; // MB per second 
 
@@ -66,6 +66,13 @@ public class BackgroundController
         this.servedThpt = new ConcurrentHashMap<>();
         this.totalServedThpt = new AtomicLong(0);
         this.random = new Random();
+
+        targetRatiosArray[0] = 100;
+        for (int i = 1; i < DatabaseDescriptor.getReplicationFactor(); i++) 
+        {
+            targetRatiosArray[i] = 0;
+        }
+    
 
         for (int i = 0; i < targetRatiosArray.length; i++) 
         {

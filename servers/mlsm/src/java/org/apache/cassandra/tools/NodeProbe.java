@@ -353,6 +353,11 @@ public class NodeProbe implements AutoCloseable
     public String getRequestDistribution() {
         return ssProxy.getRequestDistribution();
     }
+    
+    public Map<String, Long> getBreakdownTime()
+    {
+        return ssProxy.getBreakdownTime();
+    }
 
     public void setHorse(String enableHorse, String step_size, String offload_threshold, String recovery_threshold) {
         ssProxy.setHorse(enableHorse, step_size, offload_threshold, recovery_threshold);
@@ -1943,10 +1948,12 @@ public class NodeProbe implements AutoCloseable
                 case "WriteTotalLatency":
                 case "ReadTotalLatency":
                 case "PendingFlushes":
+                case "RowCacheHit":
+                case "RowCacheMiss":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxCounterMBean.class).getCount();
                 case "CoordinatorReadLatency":
-                case "CoordinatorWriteLatency":
                 case "CoordinatorScanLatency":
+                case "CoordinatorWriteLatency":
                 case "ReadLatency":
                 case "WriteLatency":
                 case "RangeLatency":

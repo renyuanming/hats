@@ -85,6 +85,7 @@ import org.apache.cassandra.db.transform.RTBoundValidator.Stage;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import static org.iq80.twoLayerLog.impl.DbConstants.NUM_LEVELS;
 import static org.iq80.twoLayerLog.impl.SequenceNumber.MAX_SEQUENCE_NUMBER;
 import static org.iq80.twoLayerLog.impl.ValueType.DELETION;
@@ -1031,7 +1032,7 @@ public class DbImpl
     {
     	//duringBackgroundGC = 1;
         checkState(mutex.isHeldByCurrentThread());
-        long startTime = System.currentTimeMillis();
+        long startTime =nanoTime();
         Compaction compaction;      
         VersionSet versions = groupVersionSetMap.get(groupID);
         StorageService.instance.printInfo("in backgroundGroupGC, groupID:"+groupID);
@@ -1049,7 +1050,7 @@ public class DbImpl
             this.metadata.continueWriteGroupMap.put(groupID, 0);
         }      
         //duringBackgroundGC = 0;
-        StorageService.instance.mergeSort += System.currentTimeMillis() - startTime;
+        StorageService.instance.mergeSort += nanoTime() - startTime;
         StorageService.instance.mergeSortNum ++;
     }
 

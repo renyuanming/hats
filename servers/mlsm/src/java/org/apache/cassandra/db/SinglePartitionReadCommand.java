@@ -17,6 +17,8 @@
  */
 package org.apache.cassandra.db;
 
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -474,6 +476,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
     protected void recordLatency(TableMetrics metric, long latencyNanos)
     {
         metric.readLatency.addNano(latencyNanos);
+            StorageService.instance.localReadTime += latencyNanos / 1000;
         if (metadata().keyspace.equals("ycsb"))
         {
             // LocalStates.recordEWMALocalReadLatency(latencyNanos);
@@ -523,6 +526,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         assert cfs.isRowCacheEnabled() : String.format("Row cache is not enabled on table [%s]", cfs.name);
 
         RowCacheKey key = new RowCacheKey(metadata(), partitionKey());
+        long start = nanoTime();
 
         // Attempt a sentinel-read-cache sequence.  if a write invalidates our sentinel, we'll return our
         // (now potentially obsolete) data, but won't cache it. see CASSANDRA-3862
@@ -535,6 +539,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                 // Some other read is trying to cache the value, just do a normal non-caching read
                 Tracing.trace("Row cache miss (race)");
                 cfs.metric.rowCacheMiss.inc();
+                StorageService.instance.readCacheTime += (System.nanoTime() - start);
                 return queryMemtableAndDisk(cfs, executionController);
             }
 
@@ -545,11 +550,13 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                 Tracing.trace("Row cache hit");
                 UnfilteredRowIterator unfilteredRowIterator = clusteringIndexFilter().getUnfilteredRowIterator(columnFilter(), cachedPartition);
                 cfs.metric.updateSSTableIterated(0);
+                StorageService.instance.readCacheTime += (System.nanoTime() - start);
                 return unfilteredRowIterator;
             }
 
             cfs.metric.rowCacheHitOutOfRange.inc();
             Tracing.trace("Ignoring row cache as cached value could not satisfy query");
+            StorageService.instance.readCacheTime += (System.nanoTime() - start);
             return queryMemtableAndDisk(cfs, executionController);
         }
 
@@ -651,6 +658,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         }
 
         Tracing.trace("Fetching data but not populating cache as query does not query from the start of the partition");
+        StorageService.instance.readCacheTime += (System.nanoTime() - start);
         return queryMemtableAndDisk(cfs, executionController);
     }
 
@@ -715,6 +723,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         {
             SSTableReadMetricsCollector metricsCollector = new SSTableReadMetricsCollector();
 
+            long start = nanoTime();
             for (Memtable memtable : view.memtables)
             {
                 UnfilteredRowIterator iter = memtable.rowIterator(partitionKey(), filter.getSlices(metadata()), columnFilter(), filter.isReversed(), metricsCollector);
@@ -732,6 +741,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                                                         iter.partitionLevelDeletion().markedForDeleteAt());
             }
 
+            StorageService.instance.readMemtableTime += nanoTime() - start;
             /*
              * We can't eliminate full sstables based on the timestamp of what we've already read like
              * in collectTimeOrderedData, but we still want to eliminate sstable whose maxTimestamp < mostRecentTombstone
@@ -946,6 +956,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         ImmutableBTreePartition result = null;
         SSTableReadMetricsCollector metricsCollector = new SSTableReadMetricsCollector();
 
+        long start = nanoTime();
         Tracing.trace("Merging memtable contents");
         for (Memtable memtable : view.memtables)
         {
@@ -961,7 +972,9 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                              controller);
             }
         }
+        StorageService.instance.readMemtableTime += nanoTime() - start;
 
+        long startSST = nanoTime();
         /* add the SSTables on disk */
         view.sstables.sort(SSTableReader.maxTimestampDescending);
         // read sorted sstables
@@ -1032,6 +1045,9 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
                              controller);
             }
         }
+
+        
+        StorageService.instance.readSSTableTime += nanoTime() - startSST;
 
         cfs.metric.updateSSTableIterated(metricsCollector.getMergedSSTables());
 

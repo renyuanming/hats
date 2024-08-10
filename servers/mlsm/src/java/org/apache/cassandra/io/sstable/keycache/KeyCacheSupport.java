@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.io.sstable.keycache;
 
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import javax.annotation.Nonnull;
@@ -30,6 +32,7 @@ import org.apache.cassandra.io.sstable.AbstractRowIndexEntry;
 import org.apache.cassandra.io.sstable.format.SSTableFormat;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.service.StorageService;
 
 public interface KeyCacheSupport<T extends SSTableReader & KeyCacheSupport<T>>
 {
@@ -67,8 +70,10 @@ public interface KeyCacheSupport<T extends SSTableReader & KeyCacheSupport<T>>
      */
     default @Nullable AbstractRowIndexEntry getCachedPosition(KeyCacheKey key, boolean updateStats)
     {
+        long startTime = nanoTime();
         KeyCache keyCache = getKeyCache();
         AbstractRowIndexEntry cachedEntry = keyCache.get(key, updateStats);
+        StorageService.instance.readCacheTime += nanoTime() - startTime;
         assert cachedEntry == null || cachedEntry.getSSTableFormat() == ((T) this).descriptor.version.format;
 
         return cachedEntry;

@@ -320,7 +320,7 @@ public class CompactionTask extends AbstractCompactionTask
                         }
                         //StorageService.instance.db.mutex.unlock();
                         StorageService.instance.doingGlobalSplit = false;      
-                        StorageService.instance.mergeSort += System.currentTimeMillis() - startTime;
+                        StorageService.instance.mergeSort += nanoTime() - start;
                         StorageService.instance.db.performGroupMerge();    
 
                     }else{/////////////////////////////////////////////
@@ -405,6 +405,7 @@ public class CompactionTask extends AbstractCompactionTask
 
             // update the metrics
             cfs.metric.compactionBytesWritten.inc(endsize);
+            StorageService.instance.compactionTime += nanoTime() - start;
         }
     }
 

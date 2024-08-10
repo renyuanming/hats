@@ -326,6 +326,50 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public InetAddressAndPort localAddressAndPort = FBUtilities.getBroadcastAddressAndPort();
 
 
+    // Breakdown operation in micro seconds
+    public volatile long coordinatorReadTime = 0;
+    public volatile long coordinatorWriteTime = 0;
+    public volatile long localReadTime = 0;
+    public volatile long localWriteTime = 0;
+
+
+    // Breakdown operation in nano seconds
+    // Write path
+    public volatile long memtableTime = 0;
+    public volatile long commitLogTime = 0;
+    public volatile long flushTime = 0;
+    public volatile long compactionTime = 0;
+
+
+    // Read path
+    public volatile long readCacheTime = 0;
+    public volatile long readMemtableTime = 0;
+    public volatile long readSSTableTime = 0;
+
+    public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
+
+
+
+    public Map<String, Long> getBreakdownTime()
+    {
+        // Micro to millisecond
+        breakdownTime.put("CoordinatorReadTime", coordinatorReadTime / 1000);
+        breakdownTime.put("CoordinatorWriteTime", coordinatorWriteTime / 1000);
+        breakdownTime.put("LocalReadTime", localReadTime / 1000);
+        breakdownTime.put("LocalWriteTime", localWriteTime / 1000);
+        
+        // Nano to millisecond
+        breakdownTime.put("WriteMemTable", memtableTime / 1000000);
+        breakdownTime.put("CommitLog", commitLogTime / 1000000);
+        breakdownTime.put("Flush", flushTime / 1000000);
+        breakdownTime.put("Compaction", compactionTime / 1000000);
+        breakdownTime.put("ReadCache", readCacheTime / 1000000);
+        breakdownTime.put("ReadMemTable", readMemtableTime / 1000000);
+        breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
+        
+        return breakdownTime;
+    }
+
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
     {

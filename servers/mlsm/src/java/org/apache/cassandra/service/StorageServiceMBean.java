@@ -45,7 +45,8 @@ public interface StorageServiceMBean extends NotificationEmitter
      */
     public String getRequestDistribution();
     public void setHorse(String enableHorse, String step_size, String offload_threshold, String recovery_threshold);
-
+    public Map<String, Long> getBreakdownTime();
+    
     /**
      * Retrieve the list of live nodes in the cluster, where "liveness" is
      * determined by the failure detector of the node being queried.

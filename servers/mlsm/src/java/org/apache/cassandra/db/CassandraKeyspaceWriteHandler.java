@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.db;
 
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +28,7 @@ import org.apache.cassandra.db.commitlog.CommitLogPosition;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 
@@ -45,12 +48,13 @@ public class CassandraKeyspaceWriteHandler implements KeyspaceWriteHandler
         try
         {
             group = Keyspace.writeOrder.start();
-
+            long start = nanoTime();
             // write the mutation to the commitlog and memtables
             CommitLogPosition position = null;
             if (makeDurable)
             {
                 position = addToCommitLog(mutation);
+                StorageService.instance.commitLogTime += (nanoTime() - start);
             }
             return new CassandraWriteContext(group, position);
         }
