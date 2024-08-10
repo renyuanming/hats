@@ -27,10 +27,10 @@ elif [[ "$CLUSTER_NAME" == "1x" ]]; then
 elif [[ "$CLUSTER_NAME" == "4x" ]]; then
     Servers=("node41" "node42" "node43" "node45")
     ServersIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")
-    # Clients=("node49")
-    # ClientsIP=("192.168.10.59")
-    Clients=("proj18")
-    ClientsIP=("192.168.10.118")
+    Clients=("node49")
+    ClientsIP=("192.168.10.59")
+    # Clients=("proj18")
+    # ClientsIP=("192.168.10.118")
     Seeds=("node41" "node42")
     SeedsIP=("192.168.10.51" "192.168.10.52")
     NodeIP="192.168.10.51" # Only used for start-client.sh
@@ -81,6 +81,7 @@ PathToClient="${HOME_PATH}/${PROJECT_NAME}/client"
 PathToBackup="${HOME_PATH}/backups"
 ClientLogDir="${PathToClient}/logs/"
 NetworkInterface="enp1s0f0"
+DiskDevice="ssd"
 PathToResultDir="$PathToServer/metrics"
 PathToLogDir="$PathToServer/logs"
 
