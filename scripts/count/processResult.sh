@@ -11,6 +11,17 @@ LATENCY_TITLE_LINE="Scheme    Workload    Percentile      Latency       SD"
 RESOURCE_TITLE_LINE="Scheme    Workload    Resource      Mean        SD"
 
 # TITLE_LINE="Type        CL      Mean        SD"
+CONSISTENCY_THPT_TITLE_LINE="Type    Consistency    Thpt    SD"
+CONSISTENCY_LATENCY_TITLE_LINE="Type    Consistency    Latency    SD"
+DISTRIBUTION_THPT_TITLE_LINE="Type      Distribution    Thpt        SD"
+DISTRIBUTION_LATENCY_TITLE_LINE="Type   Distribution    Latency     SD"
+RF_THPT_TITLE_LINE="Type      RF    Thpt        SD"
+RF_LATENCY_TITLE_LINE="Type   RF    Thpt        SD"
+VALUE_THPT_TITLE_LINE="Type      ValueSize    Thpt        SD"
+VALUE_LATENCY_TITLE_LINE="Type   ValueSize    Thpt        SD"
+CLIENT_THPT_TITLE_LINE="Type      Client    Thpt        SD"
+CLIENT_LATENCY_TITLE_LINE="Type   Client    Thpt        SD"
+
 
 
 
@@ -28,27 +39,47 @@ function extract_value() {
 
 function initResultFiles() {
     run_dir=$1
+    exp_num=$2
 
     OVERALL_THPT_RES="${run_dir}/${OVERALL_THPT_RES}"
     OVERALL_LATENCY_RES="${run_dir}/${OVERALL_LATENCY_RES}"
     OVERALL_RESOURCE_RES="${run_dir}/${OVERALL_RESOURCE_RES}"
 
-    > "$OVERALL_THPT_RES" && echo "$THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
-    > "$OVERALL_LATENCY_RES" && echo "$LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
-    > "$OVERALL_RESOURCE_RES" && echo "$RESOURCE_TITLE_LINE" > "$OVERALL_RESOURCE_RES"
+    echo "the run_dir: ${run_dir}, exp_num is ${exp_num}"
+    if [ "${exp_num}" == "ycsb" ]; then
+        > "$OVERALL_THPT_RES" && echo "$THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
+        > "$OVERALL_LATENCY_RES" && echo "$LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
+        > "$OVERALL_RESOURCE_RES" && echo "$RESOURCE_TITLE_LINE" > "$OVERALL_RESOURCE_RES"
+    elif [ "${exp_num}" == "consistency" ]; then
+        > "$OVERALL_THPT_RES" && echo "$CONSISTENCY_THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
+        > "$OVERALL_LATENCY_RES" && echo "$CONSISTENCY_LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
+    elif [ "${exp_num}" == "distribution" ]; then
+        > "$OVERALL_THPT_RES" && echo "$DISTRIBUTION_THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
+        > "$OVERALL_LATENCY_RES" && echo "$DISTRIBUTION_LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
+    elif [ "${exp_num}" == "rf" ]; then
+        > "$OVERALL_THPT_RES" && echo "$RF_THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
+        > "$OVERALL_LATENCY_RES" && echo "$RF_LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
+    elif [ "${exp_num}" == "value" ]; then
+        > "$OVERALL_THPT_RES" && echo "$VALUE_THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
+        > "$OVERALL_LATENCY_RES" && echo "$VALUE_LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
+    elif [ "${exp_num}" == "client" ]; then
+        > "$OVERALL_THPT_RES" && echo "$CLIENT_THPT_TITLE_LINE" > "$OVERALL_THPT_RES"
+        > "$OVERALL_LATENCY_RES" && echo "$CLIENT_LATENCY_TITLE_LINE" > "$OVERALL_LATENCY_RES"
+    fi
 }
 
 function process_directory() {
     local run_dir=$1
+    local exp_num=$2
 
     scheme_name=$(basename "$(pwd)")
     # Initialize the output files
-    initResultFiles $run_dir
+    initResultFiles $run_dir $exp_num
 
     for exp_dir in "$run_dir"/*/; do
         echo "Processing directory: $exp_dir"
         local exp_name=$(basename "$exp_dir")
-        process_sub_directory "$exp_dir" "$exp_name" "$scheme_name"
+        process_sub_directory "$exp_dir" "$exp_name" "$scheme_name" "$exp_num"
         
     done
 
@@ -60,6 +91,7 @@ function process_sub_directory {
     local exp_dir=$1
     local exp_name=$2
     local scheme_name=$3
+    local exp_num=$4
     declare -A overall_data
 
     for round_dir in "$exp_dir"/*/; do
@@ -289,6 +321,7 @@ function process_sub_directory {
         tail_insert_latency_99th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[INSERT\], 99thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         overall_runtime=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[OVERALL\], RunTime(ms), " "{}" | awk -F ", " "{print \$3}"' \;)
         overall_throughput=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[OVERALL\], Throughput(ops/sec), " "{}" | awk -F ", " "{print \$3}"' \;)
+        overall_throughput=$(echo "scale=2; $overall_throughput / 1000" | bc) # KOPS to MOPS
         avg_user_time=$(echo "scale=0; ($(IFS=+; echo "(${user_time_of_all_nodes[*]})") / ${#user_time_of_all_nodes[@]})" | bc)
         avg_sys_time=$(echo "scale=0; ($(IFS=+; echo "(${sys_time_of_all_nodes[*]})") / ${#sys_time_of_all_nodes[@]})" | bc)
         avg_disk_read_io=$(echo "scale=0; ($(IFS=+; echo "(${disk_read_io_of_all_nodes[*]})") / ${#disk_read_io_of_all_nodes[@]})" | bc)
@@ -428,7 +461,7 @@ function process_sub_directory {
     done
 
     # Output the overall results
-    print_overall_results overall_data $exp_name $scheme_name
+    print_overall_results overall_data $exp_name $scheme_name $exp_num
 
     
 
@@ -510,10 +543,15 @@ function print_overall_results() {
     local -n data=$1
     local exp_name=$2
     local scheme_name=$3
+    local exp_num=$4
     local output_file="${exp_name}_results.csv"
 
     local workload=$(echo "$exp_name" | grep -oP '(?<=workload_)[^-\s]+')
-
+    local client=$(echo "$exp_name" | grep -oP '(?<=-clients-)\d+')
+    local distribution=$(echo "$exp_name" | grep -oP '(?<=-dist_)[^-]+')
+    local consistency=$(echo "$exp_name" | grep -oP '(?<=-consistency_)[^-]+')
+    local rf=$(echo "$exp_name" | grep -oP '(?<=-rf_)\d+')
+    local valueSize=$(echo "$exp_name" | grep -oP '(?<=-valueSize_)\d+')
 
 
 
@@ -540,8 +578,7 @@ function print_overall_results() {
     echo -n "Upper Bound," >> "$output_file"
     echo "" >> "$output_file"
 
-    # "average_read_latency" "tail_read_latency_99th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "replica_selection_cost" "read_network_cost"
-    # "average_read_latency" "tail_read_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "replica_selection_cost" "read_network_cost"
+
     OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time")
 
     # calculate the student t distribution for 95% confidence interval
@@ -552,11 +589,11 @@ function print_overall_results() {
             metrics+=("${data[$round,$key]}")
         done
 
-        mean=$(echo "scale=0; ($(IFS=+; echo "(${metrics[*]})") / ${#metrics[@]})" | bc)
+        mean=$(echo "scale=2; ($(IFS=+; echo "(${metrics[*]})") / ${#metrics[@]})" | bc)
         # echo "Mean for $key: $mean"
         standard_deviation=$(get_standard_deviation "${metrics[@]}" $mean)
         # echo "Standard Deviation for $key: $standard_deviation"
-        standard_error=$(echo "scale=0; ${standard_deviation} / sqrt(${#metrics[@]})" | bc)
+        standard_error=$(echo "scale=2; ${standard_deviation} / sqrt(${#metrics[@]})" | bc)
         # echo "Standard Error for $key: $standard_error"
 
 
@@ -564,13 +601,13 @@ function print_overall_results() {
         # echo "Degrees of Freedom for $key: $degrees_of_freedom"
         t_distribution=$(Rscript -e "qt(0.975, df=$degrees_of_freedom)" | awk '{print $2}')
         # echo "T Distribution for $key: $t_distribution"
-        t_error=$(echo "scale=0; $t_distribution * $standard_error" | bc)
+        t_error=$(echo "scale=2; $t_distribution * $standard_error" | bc)
         # echo "T Error for $key: $t_error"
 
 
-        lower_bound=$(echo "scale=0; $mean - ${t_error}" | bc)
+        lower_bound=$(echo "scale=2; $mean - ${t_error}" | bc)
         # echo "Lower Bound for $key: $lower_bound"
-        upper_bound=$(echo "scale=0; $mean + ${t_error}" | bc)
+        upper_bound=$(echo "scale=2; $mean + ${t_error}" | bc)
         # echo "Upper Bound for $key: $upper_bound"
 
         echo -n "$key," >> "$output_file"
@@ -581,7 +618,7 @@ function print_overall_results() {
 
         echo "" >> "$output_file"
 
-        output_to_res_file $key $scheme_name $workload $mean $t_error
+        output_to_res_file $key $scheme_name $workload $mean $t_error $exp_num $consistency $distribution $rf $valueSize $client
 
     done
 }
@@ -593,80 +630,337 @@ function output_to_res_file {
     workload=$3
     mean=$4
     t_error=$5
+    exp_num=$6
+    consistency=$7
+    distribution=$8
+    rf=$9
+    shift 9
+    valueSize=$1
+    client=$2
 
 
-    if [ $key == "overall_throughput" ]; then
-        echo -n "" >> "$OVERALL_THPT_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
-        echo -n "$workload    " >> "$OVERALL_THPT_RES"
-        echo -n "$mean    " >> "$OVERALL_THPT_RES"
-        echo -n "$t_error    " >> "$OVERALL_THPT_RES"
-        echo "" >> "$OVERALL_THPT_RES"
-    elif [ $key == "overall_latency_50th" ]; then
-        echo -n "" >> "$OVERALL_LATENCY_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
-        echo -n "50    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
-        echo "" >> "$OVERALL_LATENCY_RES"
-    elif [ $key == "overall_latency_75th" ]; then
-        echo -n "" >> "$OVERALL_LATENCY_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
-        echo -n "75    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
-        echo "" >> "$OVERALL_LATENCY_RES"
-    elif [ $key == "overall_latency_95th" ]; then
-        echo -n "" >> "$OVERALL_LATENCY_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
-        echo -n "95    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
-        echo "" >> "$OVERALL_LATENCY_RES"
-    elif [ $key == "overall_latency_99th" ]; then
-        echo -n "" >> "$OVERALL_LATENCY_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
-        echo -n "99    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
-        echo "" >> "$OVERALL_LATENCY_RES"
-    elif [ $key == "overall_latency_999th" ]; then
-        echo -n "" >> "$OVERALL_LATENCY_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
-        echo -n "999    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
-        echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
-        echo "" >> "$OVERALL_LATENCY_RES"
-    elif [ $key == "average_overall_cpu_time" ]; then
-        echo -n "" >> "$OVERALL_RESOURCE_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
-        echo -n "CPU    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
-        echo "" >> "$OVERALL_RESOURCE_RES"
-    elif [ $key == "average_overall_disk_io" ]; then
-        echo -n "" >> "$OVERALL_RESOURCE_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
-        echo -n "Disk    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
-        echo "" >> "$OVERALL_RESOURCE_RES"
-    elif [ $key == "average_overall_network_io" ]; then
-        echo -n "" >> "$OVERALL_RESOURCE_RES"
-        echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
-        echo -n "Network    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
-        echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
-        echo "" >> "$OVERALL_RESOURCE_RES"
+    if [ "$exp_num" = "ycsb" ]; then
+        if [ $key == "overall_throughput" ]; then
+            echo -n "" >> "$OVERALL_THPT_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
+            echo -n "$workload    " >> "$OVERALL_THPT_RES"
+            echo -n "$mean    " >> "$OVERALL_THPT_RES"
+            echo -n "$t_error    " >> "$OVERALL_THPT_RES"
+            echo "" >> "$OVERALL_THPT_RES"
+        elif [ $key == "overall_latency_50th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
+            echo -n "50    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_75th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
+            echo -n "75    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_95th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
+            echo -n "95    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
+            echo -n "99    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_999th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$workload       " >> "$OVERALL_LATENCY_RES"
+            echo -n "999    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "average_overall_cpu_time" ]; then
+            echo -n "" >> "$OVERALL_RESOURCE_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
+            echo -n "CPU    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
+            echo "" >> "$OVERALL_RESOURCE_RES"
+        elif [ $key == "average_overall_disk_io" ]; then
+            echo -n "" >> "$OVERALL_RESOURCE_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
+            echo -n "Disk    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
+            echo "" >> "$OVERALL_RESOURCE_RES"
+        elif [ $key == "average_overall_network_io" ]; then
+            echo -n "" >> "$OVERALL_RESOURCE_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
+            echo -n "Network    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
+            echo "" >> "$OVERALL_RESOURCE_RES"
+        fi
+    elif [ "$exp_num" = "consistency" ]; then
+        if [ $key == "overall_throughput" ]; then
+            echo -n "" >> "$OVERALL_THPT_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
+            echo -n "$consistency    " >> "$OVERALL_THPT_RES"
+            echo -n "$mean    " >> "$OVERALL_THPT_RES"
+            echo -n "$t_error    " >> "$OVERALL_THPT_RES"
+            echo "" >> "$OVERALL_THPT_RES"
+        elif [ $key == "overall_latency_50th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$consistency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "50    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_75th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$consistency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "75    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_95th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$consistency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "95    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$consistency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "99    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_999th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$consistency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "999    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        fi
+    
+    elif [ "$exp_num" = "distribution" ]; then
+        if [ $key == "overall_throughput" ]; then
+            echo -n "" >> "$OVERALL_THPT_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
+            echo -n "$distribution    " >> "$OVERALL_THPT_RES"
+            echo -n "$mean    " >> "$OVERALL_THPT_RES"
+            echo -n "$t_error    " >> "$OVERALL_THPT_RES"
+            echo "" >> "$OVERALL_THPT_RES"
+        elif [ $key == "overall_latency_50th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$distribution       " >> "$OVERALL_LATENCY_RES"
+            echo -n "50    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_75th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$distribution       " >> "$OVERALL_LATENCY_RES"
+            echo -n "75    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_95th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$distribution       " >> "$OVERALL_LATENCY_RES"
+            echo -n "95    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$distribution       " >> "$OVERALL_LATENCY_RES"
+            echo -n "99    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_999th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$distribution       " >> "$OVERALL_LATENCY_RES"
+            echo -n "999    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        fi
+    elif [ "$exp_num" = "rf" ]; then
+        if [ $key == "overall_throughput" ]; then
+            echo -n "" >> "$OVERALL_THPT_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
+            echo -n "$rf    " >> "$OVERALL_THPT_RES"
+            echo -n "$mean    " >> "$OVERALL_THPT_RES"
+            echo -n "$t_error    " >> "$OVERALL_THPT_RES"
+            echo "" >> "$OVERALL_THPT_RES"
+        elif [ $key == "overall_latency_50th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$rf       " >> "$OVERALL_LATENCY_RES"
+            echo -n "50    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_75th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$rf       " >> "$OVERALL_LATENCY_RES"
+            echo -n "75    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_95th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$rf       " >> "$OVERALL_LATENCY_RES"
+            echo -n "95    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$rf       " >> "$OVERALL_LATENCY_RES"
+            echo -n "99    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_999th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$rf       " >> "$OVERALL_LATENCY_RES"
+            echo -n "999    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        fi
+    elif [ "$exp_num" = "valueSize" ]; then
+        if [ $key == "overall_throughput" ]; then
+            echo -n "" >> "$OVERALL_THPT_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
+            echo -n "$valueSize    " >> "$OVERALL_THPT_RES"
+            echo -n "$mean    " >> "$OVERALL_THPT_RES"
+            echo -n "$t_error    " >> "$OVERALL_THPT_RES"
+            echo "" >> "$OVERALL_THPT_RES"
+        elif [ $key == "overall_latency_50th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$valueSize       " >> "$OVERALL_LATENCY_RES"
+            echo -n "50    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_75th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$valueSize       " >> "$OVERALL_LATENCY_RES"
+            echo -n "75    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_95th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$valueSize       " >> "$OVERALL_LATENCY_RES"
+            echo -n "95    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$valueSize       " >> "$OVERALL_LATENCY_RES"
+            echo -n "99    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_999th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$valueSize       " >> "$OVERALL_LATENCY_RES"
+            echo -n "999    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        fi
+    elif [ "$exp_num" = "client" ]; then
+                if [ $key == "overall_throughput" ]; then
+            echo -n "" >> "$OVERALL_THPT_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_THPT_RES"
+            echo -n "$client    " >> "$OVERALL_THPT_RES"
+            echo -n "$mean    " >> "$OVERALL_THPT_RES"
+            echo -n "$t_error    " >> "$OVERALL_THPT_RES"
+            echo "" >> "$OVERALL_THPT_RES"
+        elif [ $key == "overall_latency_50th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$client       " >> "$OVERALL_LATENCY_RES"
+            echo -n "50    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_75th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$client       " >> "$OVERALL_LATENCY_RES"
+            echo -n "75    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_95th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$client       " >> "$OVERALL_LATENCY_RES"
+            echo -n "95    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$client       " >> "$OVERALL_LATENCY_RES"
+            echo -n "99    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "overall_latency_999th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$client       " >> "$OVERALL_LATENCY_RES"
+            echo -n "999    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        fi
     fi
+
+     
 }
 
 # print the round results
@@ -816,12 +1110,13 @@ function print_round_results() {
 
 function main {
     local main_dir=$1
+    local exp_num=$2
     if [[ -z "$main_dir" ]]; then
-        echo "Usage: $0 <directory>"
+        echo "Usage: $0 <directory> <exp>"
         exit 1
     fi
 
-    process_directory "$main_dir"
+    process_directory "$main_dir" "$exp_num"
 }
 
-main "$1"
+main "$1" "$2"

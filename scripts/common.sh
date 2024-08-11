@@ -500,8 +500,13 @@ function getResultsDir
     sstableSize=$6
     compactionStrategy=$7
     local readConsistencyLevel=$8
+    local replication_factor=$9
+    shift 9
+    local valueSize=$1
 
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
+
+    # resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${requestDist}-clients-${threadsNum}-kvNumber_${kvNumber}-operationNumber_${operationNumber}-consistency_${readConsistencyLevel}-rf_${replication_factor}-valueSize_${valueSize}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -811,7 +816,7 @@ function runExp {
 
 
                                                     # Collect load results
-                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistency}) 
+                                                    resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HORSE} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistency} ${rf} ${fieldLength}) 
 
                                                     # echo "Collect results to ${resultsDir}"
                                                     collectResults ${resultsDir}
