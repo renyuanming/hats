@@ -506,7 +506,7 @@ function getResultsDir
 
 
     # resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/${EXP_NAME}-workload_${workload}-dist_${requestDist}-clients-${threadsNum}-kvNumber_${kvNumber}-operationNumber_${operationNumber}-consistency_${readConsistencyLevel}-rf_${replication_factor}-valueSize_${valueSize}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-schedulingInterval_${schedulingInterval}-dist_${requestDist}-clients-${threadsNum}-kvNumber_${kvNumber}-operationNumber_${operationNumber}-consistency_${readConsistencyLevel}-rf_${replication_factor}-valueSize_${valueSize}/round_${round}"
 
     echo ${resultsDir}
 }

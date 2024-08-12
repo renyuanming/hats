@@ -4,11 +4,11 @@
 . /etc/profile
 
 # Workload Settings
-EXP_NAME="Exp10-workloadChange"
+EXP_NAME="Exp9-client"
 PURE_READ_WORKLOADS=("workloadc")
 MIXED_READ_WRITE_WORKLOADS=("workloada")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=25000000
+OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)

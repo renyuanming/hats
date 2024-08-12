@@ -4,17 +4,17 @@
 . /etc/profile
 
 # Workload Settings
-EXP_NAME="Exp8-rf"
+EXP_NAME="Exp8-valueSize"
 PURE_READ_WORKLOADS=("workloadc")
 MIXED_READ_WRITE_WORKLOADS=("workloada")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=25000000
+OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
-FIELD_LENGTH=(1000)
+FIELD_LENGTH=(512 2048)
 KEY_LENGTH=(24)
 KEY_LENGTHMin=24
 KEY_LENGTHMax=24
-REPLICAS=(2 3 4)
+REPLICAS=(3)
 THREAD_NUMBER=(50)
 MEMTABLE_SIZE=(2048)
 MOTIVATION=("false") # true is only forward the read request to the primary lsm-tree
