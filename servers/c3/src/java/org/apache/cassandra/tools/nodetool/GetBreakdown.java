@@ -248,6 +248,7 @@ public class GetBreakdown extends NodeToolCmd
         out.println("ReadCache: " + operationBreakdown.get("ReadCache"));
         out.println("ReadMemTable: " + operationBreakdown.get("ReadMemTable"));
         out.println("ReadSSTable: " + operationBreakdown.get("ReadSSTable"));
+        out.println("ReadWaitTime: " + operationBreakdown.get("ReadWaitTime"));
         out.println();
 
         // Get messaging queuing latency

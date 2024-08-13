@@ -21,6 +21,7 @@ package org.apache.cassandra.c3;
 import akka.actor.UntypedActorWithStash;
 import akka.japi.Procedure;
 
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.reads.AbstractReadExecutor;
 import scala.concurrent.duration.Duration;
 
@@ -65,6 +66,7 @@ public class ReplicaGroupActor extends UntypedActorWithStash
         {
             logger.debug("C3-Debug: Received read request and push it to the replica selection scheduler.");
             long durationToWait = (long) ((AbstractReadExecutor) msg).pushRead();
+            StorageService.instance.readWaitTime += durationToWait;
 
             if (durationToWait > 0)
             {
