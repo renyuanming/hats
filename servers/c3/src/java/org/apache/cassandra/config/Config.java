@@ -202,7 +202,7 @@ public class Config
     public int available_processors = -1;
 
     // C3 parameters
-    public SelectionStrategy score_strategy = SelectionStrategy.default_strategy;
+    public SelectionStrategy score_strategy = SelectionStrategy.c3_strategy;
     public double c3_rate_limiter_max_tokens = 200;
     public long c3_rate_interval_ms = 20; //ms
 
