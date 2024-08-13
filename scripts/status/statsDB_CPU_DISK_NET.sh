@@ -13,6 +13,12 @@ function statsCPU_Disk_Network_DB {
     INTERFACE=$7
     targetScheme=$8
 
+    hostname=$(hostname)
+
+    if [[ $hostname == *"node11"* ]] || [[ $hostname == *"node15"* ]] || [[ $hostname == *"node20"* ]]; then
+        INTERFACE="eth1"
+    fi
+
     CASSANDRA_PID=$(ps aux | grep CassandraDaemon | grep -v grep | awk '{print $2}')
     echo "expName is $expName, workload is $workload, stage is $stage, resultDir is $resultDir, pathToCodeBase is $pathToCodeBase, diskDevice is $diskDevice, INTERFACE is $INTERFACE, targetScheme is $targetScheme, Cassandra PID: $CASSANDRA_PID"
 
