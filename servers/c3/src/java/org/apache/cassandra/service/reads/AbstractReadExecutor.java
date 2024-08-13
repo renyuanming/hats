@@ -91,6 +91,7 @@ public abstract class AbstractReadExecutor
     private   final int initialDataRequestCount;
     protected volatile PartitionIterator result = null;
     private List<InetAddressAndPort> sendRequestAddresses;
+    private volatile long startTellTimeNanos = nanoTime();
 
     AbstractReadExecutor(ColumnFamilyStore cfs, ReadCommand command, ReplicaPlan.ForTokenRead replicaPlan, int initialDataRequestCount, long queryStartNanoTime)
     {
@@ -508,6 +509,7 @@ public abstract class AbstractReadExecutor
     // C3 impl
     public void execute()
     {
+        this.startTellTimeNanos = nanoTime();
         ActorRef actor = MessagingService.instance().getActor(handler.replicaPlan().contacts());
         actor.tell(this, null);
     }
@@ -563,7 +565,7 @@ public abstract class AbstractReadExecutor
             this.sendRequestAddresses = newEndpointList.subList(0, originalSize);
             // handler.endpoints = this.sendRequestAddresses;
         }
-
+        StorageService.instance.actorCost += nanoTime() - this.startTellTimeNanos;
         executeAsync();
         return 0L;
     }

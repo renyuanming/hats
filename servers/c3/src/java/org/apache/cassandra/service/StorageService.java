@@ -338,6 +338,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public volatile long readMemtableTime = 0;
     public volatile long readSSTableTime = 0;
     public volatile long readWaitTime = 0;
+    public volatile long actorCost = 0;
 
     public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
 
@@ -360,6 +361,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         breakdownTime.put("ReadMemTable", readMemtableTime / 1000000);
         breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
         breakdownTime.put("ReadWaitTime", readWaitTime / 1000000);
+        breakdownTime.put("ActorCost", actorCost / 1000000);
         
         return breakdownTime;
     }
