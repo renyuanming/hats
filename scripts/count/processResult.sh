@@ -122,6 +122,7 @@ function process_sub_directory {
         read_cache_time_of_all_nodes=()
         read_memtable_time_of_all_nodes=()
         read_sstable_time_of_all_nodes=()
+        read_wait_time_of_all_nodes=()
         read_two_layer_log_time_of_all_nodes=()
         merge_sort_time_of_all_nodes=()
         overall_disk_io_of_all_nodes=()
@@ -222,6 +223,8 @@ function process_sub_directory {
             read_memtable_time=$(echo "$read_memtable_time * 1000 / $local_read_count" | bc)
             read_sstable_time=$(extract_value "ReadSSTable" "$break_down_file")
             read_sstable_time=$(echo "$read_sstable_time * 1000 / $local_read_count" | bc)
+            read_wait_time=$(extract_value "ReadWaitTime" "$break_down_file")
+            read_wait_time=$(echo "$read_wait_time * 1000 / $local_read_count" | bc)
             read_two_layer_log_time=$(extract_value "ReadTwoLayerLog" "$break_down_file")
             read_two_layer_log_time=$(echo "$read_two_layer_log_time * 1000 / $local_read_count" | bc)
             merge_sort_time=$(extract_value "MergeSort" "$break_down_file")
@@ -260,6 +263,7 @@ function process_sub_directory {
             eval "round_data[$node_name,read_cache_time]+=\"$read_cache_time \""
             eval "round_data[$node_name,read_memtable_time]+=\"$read_memtable_time \""
             eval "round_data[$node_name,read_sstable_time]+=\"$read_sstable_time \""
+            eval "round_data[$node_name,read_wait_time]+=\"$read_wait_time \""
             eval "round_data[$node_name,read_two_layer_log_time]+=\"$read_two_layer_log_time \""
             eval "round_data[$node_name,merge_sort_time]+=\"$merge_sort_time \""
 
@@ -286,6 +290,7 @@ function process_sub_directory {
             read_cache_time_of_all_nodes+=("$read_cache_time")
             read_memtable_time_of_all_nodes+=("$read_memtable_time")
             read_sstable_time_of_all_nodes+=("$read_sstable_time")
+            read_wait_time_of_all_nodes+=("$read_wait_time")
             read_two_layer_log_time_of_all_nodes+=("$read_two_layer_log_time")
             merge_sort_time_of_all_nodes+=("$merge_sort_time")
             overall_disk_io_of_all_nodes+=("$overall_disk_io")
@@ -346,6 +351,7 @@ function process_sub_directory {
         average_read_cache_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] read_cache_time_of_all_nodes[@])
         average_read_memtable_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] read_memtable_time_of_all_nodes[@])
         average_read_sstable_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] read_sstable_time_of_all_nodes[@])
+        average_read_wait_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] read_wait_time_of_all_nodes[@])
         average_read_two_layer_log_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] read_two_layer_log_time_of_all_nodes[@])
         average_merge_sort_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] merge_sort_time_of_all_nodes[@])
 
@@ -403,6 +409,7 @@ function process_sub_directory {
         eval "round_data[average_read_cache_time]=\"$average_read_cache_time\""
         eval "round_data[average_read_memtable_time]=\"$average_read_memtable_time\""
         eval "round_data[average_read_sstable_time]=\"$average_read_sstable_time\""
+        eval "round_data[average_read_wait_time]=\"$average_read_wait_time\""
         eval "round_data[average_read_two_layer_log_time]=\"$average_read_two_layer_log_time\""
         eval "round_data[average_merge_sort_time]=\"$average_merge_sort_time\""
 
@@ -450,6 +457,7 @@ function process_sub_directory {
         eval "overall_data[$round,average_read_cache_time]=\"$average_read_cache_time\""
         eval "overall_data[$round,average_read_memtable_time]=\"$average_read_memtable_time\""
         eval "overall_data[$round,average_read_sstable_time]=\"$average_read_sstable_time\""
+        eval "overall_data[$round,average_read_wait_time]=\"$average_read_wait_time\""
         eval "overall_data[$round,average_read_two_layer_log_time]=\"$average_read_two_layer_log_time\""
         eval "overall_data[$round,average_merge_sort_time]=\"$average_merge_sort_time\""
         eval "overall_data[$round,round]=\"$round\""
@@ -579,13 +587,13 @@ function print_overall_results() {
     echo "" >> "$output_file"
 
 
-    OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time")
+    OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time" "average_read_wait_time")
 
     # calculate the student t distribution for 95% confidence interval
     for key in "${OVERALL_KEYS[@]}"; do
         metrics=()
         for round in "${sorted_rounds[@]}"; do
-            echo "Round: $round, Key: $key, value: ${data[$round,$key]}"
+            # echo "Round: $round, Key: $key, value: ${data[$round,$key]}"
             metrics+=("${data[$round,$key]}")
         done
 
@@ -618,26 +626,27 @@ function print_overall_results() {
 
         echo "" >> "$output_file"
 
-        output_to_res_file $key $scheme_name $workload $mean $t_error $exp_num $consistency $distribution $rf $valueSize $client
+        output_to_res_file $key $scheme_name $workload $exp_num $consistency $distribution $rf $valueSize $client $mean $t_error
 
     done
 }
 
 
 function output_to_res_file {
-    key=$1
-    scheme_name=$2
-    workload=$3
-    mean=$4
-    t_error=$5
-    exp_num=$6
-    consistency=$7
-    distribution=$8
-    rf=$9
+    local key=$1
+    local scheme_name=$2
+    local workload=$3
+    local exp_num=$4
+    local consistency=$5
+    local distribution=$6
+    local rf=$7
+    local valueSize=$8
+    local client=$9
     shift 9
-    valueSize=$1
-    client=$2
+    local mean=$1
+    local t_error=$2
 
+    echo "Key: $key, Scheme: $scheme_name, Workload: $workload, Exp Num: $exp_num, Consistency: $consistency, Distribution: $distribution, RF: $rf, Value Size: $valueSize, Client: $client, Mean: $mean, T Error: $t_error"
 
     if [ "$exp_num" = "ycsb" ]; then
         if [ $key == "overall_throughput" ]; then
@@ -988,7 +997,7 @@ function print_round_results() {
         echo -n "$node," >> "$output_file"
     done
     echo "" >> "$output_file"
-    OUTPUT_KEY_OF_EACH_NODE=("node_name" "uptime" "user_time" "sys_time" "disk_read_io" "disk_write_io" "network_recv_io" "network_send_io" "local_read_count" "local_read_latency" "coordinator_read_count" "coordinator_read_latency" "local_write_count" "local_write_latency" "local_scan_count" "local_scan_latency" "coordinator_scan_count" "coordinator_scan_latency" "coordinator_read_time" "local_read_time" "write_memtable_time" "write_wal_time" "flush_time" "compaction_time" "read_cache_time" "read_memtable_time" "read_sstable_time" "read_two_layer_log_time" "merge_sort_time" "overall_cpu_time" "overall_disk_io" "overall_network_io")
+    OUTPUT_KEY_OF_EACH_NODE=("node_name" "uptime" "user_time" "sys_time" "disk_read_io" "disk_write_io" "network_recv_io" "network_send_io" "local_read_count" "local_read_latency" "coordinator_read_count" "coordinator_read_latency" "local_write_count" "local_write_latency" "local_scan_count" "local_scan_latency" "coordinator_scan_count" "coordinator_scan_latency" "coordinator_read_time" "local_read_time" "write_memtable_time" "write_wal_time" "flush_time" "compaction_time" "read_cache_time" "read_memtable_time" "read_sstable_time" "read_two_layer_log_time" "merge_sort_time" "overall_cpu_time" "overall_disk_io" "overall_network_io" "read_wait_time")
 
     for key in "${OUTPUT_KEY_OF_EACH_NODE[@]}"; do
         echo -n "$key," >> "$output_file"
@@ -1102,6 +1111,9 @@ function print_round_results() {
     echo "" >> "$output_file"
     echo -n "Average Overall Network I/O (MiB)," >> "$output_file"
     echo -n "${data[average_overall_network_io]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "Average Read Wait Time (us)," >> "$output_file"
+    echo -n "${data[average_read_wait_time]}," >> "$output_file"
     echo "" >> "$output_file"
     
 }
