@@ -73,27 +73,27 @@ public class RestWorkload extends CoreWorkload {
   private static final String READ_TRACE_FILE = "url.trace.read";
   private static final String READ_TRACE_FILE_DEFAULT = "readtrace.txt";
   private static final String READ_ZIPFIAN_CONSTANT = "readzipfconstant";
-  private static final String READ_ZIPFIAN_CONSTANT_DEAFULT = "0.99";
+  private static final String READ_ZIPFIAN_CONSTANT_DEAFULT = "0.90";
   private static final String READ_RECORD_COUNT_PROPERTY = "readrecordcount";
   // Insert related properties.
   private static final String INSERT_TRACE_FILE = "url.trace.insert";
   private static final String INSERT_TRACE_FILE_DEFAULT = "inserttrace.txt";
   private static final String INSERT_ZIPFIAN_CONSTANT = "insertzipfconstant";
-  private static final String INSERT_ZIPFIAN_CONSTANT_DEAFULT = "0.99";
+  private static final String INSERT_ZIPFIAN_CONSTANT_DEAFULT = "0.90";
   private static final String INSERT_SIZE_ZIPFIAN_CONSTANT = "insertsizezipfconstant";
-  private static final String INSERT_SIZE_ZIPFIAN_CONSTANT_DEAFULT = "0.99";
+  private static final String INSERT_SIZE_ZIPFIAN_CONSTANT_DEAFULT = "0.90";
   private static final String INSERT_RECORD_COUNT_PROPERTY = "insertrecordcount";
   // Delete related properties.
   private static final String DELETE_TRACE_FILE = "url.trace.delete";
   private static final String DELETE_TRACE_FILE_DEFAULT = "deletetrace.txt";
   private static final String DELETE_ZIPFIAN_CONSTANT = "deletezipfconstant";
-  private static final String DELETE_ZIPFIAN_CONSTANT_DEAFULT = "0.99";
+  private static final String DELETE_ZIPFIAN_CONSTANT_DEAFULT = "0.90";
   private static final String DELETE_RECORD_COUNT_PROPERTY = "deleterecordcount";
   // Delete related properties.
   private static final String UPDATE_TRACE_FILE = "url.trace.update";
   private static final String UPDATE_TRACE_FILE_DEFAULT = "updatetrace.txt";
   private static final String UPDATE_ZIPFIAN_CONSTANT = "updatezipfconstant";
-  private static final String UPDATE_ZIPFIAN_CONSTANT_DEAFULT = "0.99";
+  private static final String UPDATE_ZIPFIAN_CONSTANT_DEAFULT = "0.90";
   private static final String UPDATE_RECORD_COUNT_PROPERTY = "updaterecordcount";
 
   private Map<Integer, String> readUrlMap;

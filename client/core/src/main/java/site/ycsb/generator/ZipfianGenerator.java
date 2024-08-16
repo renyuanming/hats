@@ -40,7 +40,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * The algorithm used here is from "Quickly Generating Billion-Record Synthetic Databases", Jim Gray et al, SIGMOD 1994.
  */
 public class ZipfianGenerator extends NumberGenerator {
-  public static final double ZIPFIAN_CONSTANT = 0.99;
+  public static final double ZIPFIAN_CONSTANT = 0.90;
 
   /**
    * Number of items.
