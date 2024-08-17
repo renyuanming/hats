@@ -7,7 +7,7 @@
 EXP_NAME="Exp-PureRead"
 WORKLOADS=("workloadc")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=50000000
+OPERATION_NUMBER=25000000
 KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
@@ -24,16 +24,16 @@ READ_SENSISTIVITY=0.9
 BRANCH="main"
 LOG_LEVEL="info"
 SSTABLE_SIZE_IN_MB=160
-COMPACTION_STRATEGY=("LCS" "STCS" "LSTCS")
-CONSISTENCY_LEVEL=("ONE" "TWO" "ALL")
+COMPACTION_STRATEGY=("LCS")
+CONSISTENCY_LEVEL=("ONE")
 
 
 # Debug Settings
-REBUILD_SERVER="true"
+REBUILD_SERVER="false"
 REBUILD_CLIENT="false"
 
 # Server settings
-ROUNDS=5
+ROUNDS=1
 COMPACTION_LEVEL=("all") # zero one all
 
 # Horse
@@ -44,7 +44,7 @@ THROTLLE_DATA_RATE=(90) # MB/s
 
 JDK_VERSION="17"
 
-SCHEMES=("horse" "c3" "mlsm")
+SCHEMES=("mlsm")
 
 
 function exportEnv {
@@ -62,10 +62,12 @@ for ROUND_NUMBER in $(seq 1 $ROUNDS); do
     for WORKLOAD in "${WORKLOADS[@]}"; do
         for scheme in "${SCHEMES[@]}"; do
             for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do        
-                exportEnv $scheme
-                loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "3" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
-                runExp "${EXP_NAME}" "$scheme" "${WORKLOAD}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" FIELD_LENGTH[@] KEY_LENGTH[@] "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
-                cleanup $scheme
+                for rf in "${REPLICAS[@]}"; do
+                    exportEnv $scheme
+                    loadDataset "${EXP_NAME}" "$scheme" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" ${rf} "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+                    runExp "${EXP_NAME}" "$scheme" "${WORKLOAD}" REQUEST_DISTRIBUTIONS[@] ${rf} THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" FIELD_LENGTH[@] KEY_LENGTH[@] "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
+                    cleanup $scheme
+                done
             done
         done
     done
