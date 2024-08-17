@@ -1,7 +1,7 @@
 #!/bin/bash
 . /etc/profile
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-source "${SCRIPT_DIR}/../settings.sh"
+# SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+# source "${SCRIPT_DIR}/../settings.sh"
 
 function captureCPU_RAM {
     expName=$1
@@ -29,4 +29,4 @@ function captureCPU_RAM {
     done
 }
 
-captureCPU_RAM "$1" "$2"
+captureCPU_RAM "$1" "$2" "$3"
