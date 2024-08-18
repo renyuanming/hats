@@ -20,6 +20,15 @@ cd ${PathToClient} || exit
 
 echo "Running YCSB with scheme: $targetScheme"
 
+# hostName=$(hostname)
+
+if [[ $workload == "multiple" ]]; then
+    if [[ $hostName == *"proj18"* ]]; then
+        workload="workloads/workloada"
+    elif [[ $hostName == *"proj19"* ]]; then
+        workload="workloads/workloadc"
+    fi
+fi
 
 keyspace="ycsb"
 if [ "$targetScheme" == "c3" ] || [ "$targetScheme" == "horse" ] || [ "$targetScheme" == "mlsm" ]; then
