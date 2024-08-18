@@ -22,10 +22,10 @@ echo "Running YCSB with scheme: $targetScheme"
 
 # hostName=$(hostname)
 
-if [[ $workload == "multiple" ]]; then
-    if [[ $hostName == *"proj18"* ]]; then
+if [[ $workload == "workloads/multiple" ]]; then
+    if [[ $hostName == "proj18" ]]; then
         workload="workloads/workloada"
-    elif [[ $hostName == *"proj19"* ]]; then
+    elif [[ $hostName == "proj19" ]]; then
         workload="workloads/workloadc"
     fi
 fi
