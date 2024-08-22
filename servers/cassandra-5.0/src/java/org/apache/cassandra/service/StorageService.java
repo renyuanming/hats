@@ -486,12 +486,12 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
                     bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
                 }
     
-                String output = "Read Thpt: " + readThpt + "mb/s, Write Thpt: " + writeThpt + "mb/s, Flush Thpt: " + flushTpt + "mb/s, Compaction Thpt: " + compactionThpt +
-                                "mb/s, Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
-                                " KiB, Write Time: " + writeTime + " us, Write Count: " + writeCnt + ", Write Disk IO: " + writeDiskIO + 
-                                " KiB, Flush Time: " + flushWindowTime + " us, Flush Count: " + flushCnt + ", Flush Disk IO: " + flushDiskIO + 
-                                " KiB, Compaction Time: " + compactionWindowTime + " us, Compaction Count: " + compactionCnt + 
-                                ", Compaction Disk Read IO: " + compactionDiskReadIO + " KiB, Compaction Disk Write IO: " + compactionDiskWriteIO + " KiB\n";
+                String output = "Read Thpt: " + readThpt + "mb/s, Write Thpt: " + writeThpt + "mb/s, Flush Thpt: " + flushTpt + "mb/s, Compaction Thpt: " + compactionThpt + "mb/s\n";
+                                // "mb/s, Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
+                                // " KiB, Write Time: " + writeTime + " us, Write Count: " + writeCnt + ", Write Disk IO: " + writeDiskIO + 
+                                // " KiB, Flush Time: " + flushWindowTime + " us, Flush Count: " + flushCnt + ", Flush Disk IO: " + flushDiskIO + 
+                                // " KiB, Compaction Time: " + compactionWindowTime + " us, Compaction Count: " + compactionCnt + 
+                                // ", Compaction Disk Read IO: " + compactionDiskReadIO + " KiB, Compaction Disk Write IO: " + compactionDiskWriteIO + " KiB\n";
                 bufferedWriter.write(output);
     
                 bufferedWriter.close();
