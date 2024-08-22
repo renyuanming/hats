@@ -17,8 +17,12 @@
  */
 package org.apache.cassandra.service;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOError;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -55,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -193,6 +198,7 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.service.ActiveRepairService.ParentRepairStatus;
 import org.apache.cassandra.service.disk.usage.DiskUsageBroadcaster;
 import org.apache.cassandra.service.paxos.Paxos;
 import org.apache.cassandra.service.paxos.PaxosCommit;
@@ -283,6 +289,221 @@ import static org.apache.cassandra.utils.FBUtilities.now;
 public class StorageService extends NotificationBroadcasterSupport implements IEndpointStateChangeSubscriber, StorageServiceMBean
 {
     private static final Logger logger = LoggerFactory.getLogger(StorageService.class);
+
+
+
+
+
+
+
+    // HORSE measurement metrics
+    // Get the read count of each replica group before replica selection
+    public ConcurrentHashMap<InetAddress, AtomicLong> totalReadCntOfEachReplica = new ConcurrentHashMap<InetAddress, AtomicLong>();
+    public AtomicLong totalReadRequestCountBeforeReplicaSelection = new AtomicLong(0);
+    public AtomicLong localReadCountOfUsertables = new AtomicLong(0);
+    public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
+    public long[][] foregroundReadCountOfEachReplicationGroup;
+    public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
+    public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
+    public InetAddressAndPort localAddressAndPort = FBUtilities.getBroadcastAddressAndPort();
+
+
+    // Breakdown operation in micro seconds
+    public volatile long coordinatorReadTime = 0;
+    public volatile long coordinatorWriteTime = 0;
+    public volatile long localReadTime = 0;
+    public volatile long localWriteTime = 0;
+
+
+    // Breakdown operation in nano seconds
+    // Write path
+    public volatile long memtableTime = 0;
+    public volatile long commitLogTime = 0;
+    public volatile long flushTime = 0;
+    public volatile long compactionTime = 0;
+
+
+    // Read path
+    public volatile long readCacheTime = 0;
+    public volatile long readMemtableTime = 0;
+    public volatile long readSSTableTime = 0;
+
+    public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
+
+    /**
+     * Measurement for each type of task.
+     * For each type of task, we measure 
+     *  1. the time spent on each task, 
+     *  2. the number of tasks, 
+     *  3. the disk I/O usage of each task.
+     */
+    /// Read
+    public volatile long readTime = 0;  // Nano time
+    public volatile long readCnt = 0;  
+    // public volatile long readDiskIO = 0; // KiB
+
+    /// Write
+    public volatile long writeTime = 0; // Nano time
+    public volatile long writeCnt = 0;
+    public volatile long writeDiskIO = 0; // KiB Write cnt * 1KiB
+
+    /// Flush
+    public volatile long flushWindowTime = 0;  // Nano time
+    public volatile long flushCnt = 0;
+    public volatile long flushDiskIO = 0; // KiB
+
+    /// Compaction
+    public volatile long compactionWindowTime = 0; // Nano time
+    public volatile long compactionCnt = 0;
+    public volatile long compactionDiskReadIO = 0; // KiB
+    public volatile long compactionDiskWriteIO = 0; // KiB
+
+    public static volatile long previousReadBytes = 0; 
+    public static volatile long previousWriteBytes = 0;
+
+    public static long pid = ProcessHandle.current().pid();
+    public static String procIoFile="/proc/" + pid + "/io";
+    public String measurementFile = System.getProperty("user.dir") + "/metrics/measurement.txt";
+
+
+
+
+
+    public Map<String, Long> getBreakdownTime()
+    {
+        // Micro to millisecond
+        breakdownTime.put("CoordinatorReadTime", coordinatorReadTime / 1000);
+        breakdownTime.put("CoordinatorWriteTime", coordinatorWriteTime / 1000);
+        breakdownTime.put("LocalReadTime", localReadTime / 1000);
+        breakdownTime.put("LocalWriteTime", localWriteTime / 1000);
+        
+        // Nano to millisecond
+        breakdownTime.put("WriteMemTable", memtableTime / 1000000);
+        breakdownTime.put("CommitLog", commitLogTime / 1000000);
+        breakdownTime.put("Flush", flushTime / 1000000);
+        breakdownTime.put("Compaction", compactionTime / 1000000);
+        breakdownTime.put("ReadCache", readCacheTime / 1000000);
+        breakdownTime.put("ReadMemTable", readMemtableTime / 1000000);
+        breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
+        
+        return breakdownTime;
+    }
+
+
+
+    public static Runnable getMetricsFroEachTypeOfTasks()
+    {
+        return new MetricsForEachTypeOfTask();
+    }
+
+    private static class MetricsForEachTypeOfTask implements Runnable
+    {
+
+        @Override
+        public void run() {
+
+            long overallDiskReadKiB = 0;
+            long overallDiskWriteKiB = 0;
+            // Get the overall disk I/O usage first.
+            try {
+                long[] ioStats = readDiskIO(procIoFile);
+                if (ioStats != null) {
+                    long readBytes = ioStats[0];
+                    long writeBytes = ioStats[1];
+
+                    long readDelta = readBytes - previousReadBytes;
+                    long writeDelta = writeBytes - previousWriteBytes;
+
+                    overallDiskReadKiB = readDelta / 1024;
+                    overallDiskWriteKiB = writeDelta / 1024;
+
+                    // System.out.println("Disk Read: " + readKiB + " KiB, Disk Write: " + writeKiB + " KiB");
+
+                    previousReadBytes = readBytes;
+                    previousWriteBytes = writeBytes;
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            // Get the metrics for each type of tasks.
+            long readTime = instance.readTime / 1000; // nano to micro
+            long readCnt = instance.readCnt;
+            long writeTime = instance.writeTime / 1000; // nano to micro
+            long writeCnt = instance.writeCnt;
+            long writeDiskIO = writeCnt * 1; // 1KiB
+            long flushWindowTime = instance.flushWindowTime / 1000; // nano to micro
+            long flushCnt = instance.flushCnt;
+            long flushDiskIO = instance.flushDiskIO;
+            long compactionWindowTime = instance.compactionWindowTime / 1000; // nano to micro
+            long compactionCnt = instance.compactionCnt;
+            long compactionDiskReadIO = instance.compactionDiskReadIO;
+            long compactionDiskWriteIO = instance.compactionDiskWriteIO;
+
+            long readDiskIO = overallDiskReadKiB - compactionDiskReadIO;
+
+            // Reset the metrics
+            instance.readTime = 0;
+            instance.readCnt = 0;
+            instance.writeTime = 0;
+            instance.writeCnt = 0;
+            instance.writeDiskIO = 0;
+            instance.flushWindowTime = 0;
+            instance.flushCnt = 0;
+            instance.flushDiskIO = 0;
+            instance.compactionWindowTime = 0;
+            instance.compactionCnt = 0;
+            instance.compactionDiskReadIO = 0;
+            instance.compactionDiskWriteIO = 0;
+
+            // Write the metrics to the file
+            writeTheMeasurementToTheFile(instance.measurementFile, readTime, readCnt, readDiskIO, writeTime, writeCnt, writeDiskIO, flushWindowTime, flushCnt, flushDiskIO, compactionWindowTime, compactionCnt, compactionDiskReadIO, compactionDiskWriteIO);
+
+
+
+        }
+
+
+        private static void writeTheMeasurementToTheFile(String metricFile, long readTime, long readCnt, long readDiskIO, long writeTime, long writeCnt, long writeDiskIO, long flushWindowTime, long flushCnt, long flushDiskIO, long compactionWindowTime, long compactionCnt, long compactionDiskReadIO, long compactionDiskWriteIO)
+        {
+            try {
+                FileWriter fileWriter = new FileWriter(metricFile, true);
+                BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+                String output = "Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
+                                " KiB, Write Time: " + writeTime + " us, Write Count: " + writeCnt + ", Write Disk IO: " + writeDiskIO + 
+                                " KiB, Flush Time: " + flushWindowTime + " us, Flush Count: " + flushCnt + ", Flush Disk IO: " + flushDiskIO + 
+                                " KiB, Compaction Time: " + compactionWindowTime + " us, Compaction Count: " + compactionCnt + ", Compaction Disk Read IO: " + compactionDiskReadIO + " KiB, Compaction Disk Write IO: " + compactionDiskWriteIO + " KiB\n";
+                bufferedWriter.write(output);
+                bufferedWriter.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        private static long[] readDiskIO(String procIoFile) throws IOException {
+            try (BufferedReader br = new BufferedReader(new FileReader(procIoFile))) {
+                String line;
+                long readBytes = 0;
+                long writeBytes = 0;
+
+                while ((line = br.readLine()) != null) {
+                    if (line.startsWith("read_bytes:")) {
+                        readBytes = Long.parseLong(line.split("\\s+")[1]);
+                    } else if (line.startsWith("write_bytes:")) {
+                        writeBytes = Long.parseLong(line.split("\\s+")[1]);
+                    }
+                }
+                return new long[]{readBytes, writeBytes};
+            }
+        }
+
+        
+
+    }
+
 
     public static final int INDEFINITE = -1;
     public static final int RING_DELAY_MILLIS = getRingDelay(); // delay after which we assume ring has stablized

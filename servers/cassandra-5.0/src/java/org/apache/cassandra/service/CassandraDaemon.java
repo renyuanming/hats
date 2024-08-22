@@ -428,6 +428,9 @@ public class CassandraDaemon
         // due to scheduling errors or race conditions
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
 
+
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(StorageService.getMetricsFroEachTypeOfTasks(), 60, 10, TimeUnit.SECONDS);
+
         // schedule periodic recomputation of speculative retry thresholds
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
                                                                 DatabaseDescriptor.getReadRpcTimeout(NANOSECONDS),

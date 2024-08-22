@@ -96,6 +96,7 @@ public class NodeTool
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 Assassinate.class,
                 CassHelp.class,
+                GetBreakdown.class,
                 CIDRFilteringStats.class,
                 Cleanup.class,
                 ClearSnapshot.class,

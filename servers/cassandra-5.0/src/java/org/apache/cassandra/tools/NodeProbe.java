@@ -349,6 +349,13 @@ public class NodeProbe implements AutoCloseable
         return output;
     }
 
+    
+    public Map<String, Long> getBreakdownTime()
+    {
+        return ssProxy.getBreakdownTime();
+    }
+
+
     public int forceKeyspaceCleanup(int jobs, String keyspaceName, String... tables) throws IOException, ExecutionException, InterruptedException
     {
         return ssProxy.forceKeyspaceCleanup(jobs, keyspaceName, tables);
@@ -1928,11 +1935,15 @@ public class NodeProbe implements AutoCloseable
                 case "WriteTotalLatency":
                 case "ReadTotalLatency":
                 case "PendingFlushes":
+                case "RowCacheHit":
+                case "RowCacheMiss":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxCounterMBean.class).getCount();
                 case "CoordinatorReadLatency":
                 case "CoordinatorScanLatency":
+                case "CoordinatorWriteLatency":
                 case "ReadLatency":
                 case "WriteLatency":
+                case "RangeLatency":
                     return JMX.newMBeanProxy(mbeanServerConn, oName, CassandraMetricsRegistry.JmxTimerMBean.class);
                 case "LiveScannedHistogram":
                 case "SSTablesPerReadHistogram":

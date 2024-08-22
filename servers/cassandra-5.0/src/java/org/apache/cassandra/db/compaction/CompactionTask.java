@@ -46,6 +46,7 @@ import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.service.ActiveRepairService;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.Refs;
@@ -280,6 +281,13 @@ public class CompactionTask extends AbstractCompactionTask
 
             // update the metrics
             cfs.metric.compactionBytesWritten.inc(endsize);
+
+            // Update measurements
+            StorageService.instance.compactionWindowTime += durationInNano;
+            StorageService.instance.compactionCnt++;
+            StorageService.instance.compactionDiskReadIO += inputSizeBytes / 1024; // Bytes to KiB
+            StorageService.instance.compactionDiskWriteIO += endsize / 1024; // Bytes to KiB
+    
         }
     }
 
