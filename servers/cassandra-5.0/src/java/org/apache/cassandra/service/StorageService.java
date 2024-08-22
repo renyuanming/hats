@@ -476,10 +476,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
 
-                double readThpt = readCnt * 1.0 / 1024 / 10;
-                double writeThpt = writeCnt * 1.0 / 1024 / 10;
-                double flushTpt = flushDiskIO * 1.0 / 10;
-                double compactionThpt = (compactionDiskReadIO + compactionDiskWriteIO) * 1.0 / 10;
+                double readThpt = readCnt * 1.0 / 1024 / 60;
+                double writeThpt = writeCnt * 1.0 / 1024 / 60;
+                double flushTpt = flushDiskIO * 1.0 / 1024 / 60;
+                double compactionThpt = (compactionDiskReadIO + compactionDiskWriteIO) * 1.0  / 1024 / 60;
 
     
                 if (isNewFile) {

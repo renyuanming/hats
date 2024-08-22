@@ -429,7 +429,7 @@ public class CassandraDaemon
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 7, 1, TimeUnit.MINUTES);
 
 
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(StorageService.getMetricsFroEachTypeOfTasks(), 60, 10, TimeUnit.SECONDS);
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(StorageService.getMetricsFroEachTypeOfTasks(), 1, 1, TimeUnit.MINUTES);
 
         // schedule periodic recomputation of speculative retry thresholds
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
