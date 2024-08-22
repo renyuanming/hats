@@ -470,13 +470,13 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         {
             try {
                 File file = new File(metricFile);
-                boolean isNewFile = file.createNewFile();  
+                boolean isNewFile = file.toJavaIOFile().createNewFile();  
     
-                FileWriter fileWriter = new FileWriter(file, true);
+                FileWriter fileWriter = new FileWriter(file.toJavaIOFile(), true);
                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
     
                 if (isNewFile) {
-                    bufferedWriter.write("Metric File Created: " + file.getAbsolutePath() + "\n");
+                    bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
                 }
     
                 String output = "Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
