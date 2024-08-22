@@ -604,6 +604,7 @@ function run {
     sed -i "s/\(fieldLength: \)".*"/fieldLength: ${fieldLen}/" ${playbook}
     sed -i "s/\(threads: \)".*"/threads: ${threads}/" ${playbook}
     sed -i "s/workload:.*$/workload: workloads\/${workload}/" ${playbook}
+    sed -i "s|WORKLOAD|${workload}|g" ${playbook}
     sed -i "s/requestDistribution:.*$/requestDistribution: ${requestDist}/" ${playbook}
     sed -i "s/\(scheme: \)".*"/scheme: ${targetScheme}/" ${playbook}
     sed -i "s|ENABLE_AUTO_COMPACTION|${enableAutoCompaction}|g" ${playbook}
