@@ -79,7 +79,6 @@
       pause:
         seconds: 30
 
-
 - name: Disable auto compaction
   hosts: cassandra_servers
   become: yes
@@ -91,7 +90,7 @@
       register: command_result
       ignore_errors: true
 
-- name: Run benchmark and enable compaction after 10 minutes
+- name: Run benchmark and enable compaction
   hosts: cassandra_clients
   become: yes
   become_user: ymren
@@ -112,15 +111,15 @@
         enableHorse: "ENABLE_HORSE"
         hostName: "{{ inventory_hostname }}"
         consistencyLevel: "CONSISTENCY"
-      async: 7200 
+      async: 7200  # 允许runDB.sh任务运行长达2小时
       poll: 0      
       register: benchmark_async_result
 
-    - name: Wait for 7 minutes before enabling compaction
+    - name: Wait for 10 minutes before enabling compaction
       pause:
-        minutes: 7
+        minutes: 10
 
-- name: Enable auto compaction on cassandra servers
+- name: Enable auto compaction
   hosts: cassandra_servers
   become: yes
   become_user: ymren
@@ -132,8 +131,11 @@
       async: 60 
       poll: 0 
 
+- name: Wait for benchmark to finish
+  hosts: cassandra_clients
+  become: yes
+  tasks:
     - name: Wait for benchmark to finish
-      hosts: cassandra_clients
       async_status:
         jid: "{{ benchmark_async_result.ansible_job_id }}"
       register: benchmark_job_result
@@ -141,6 +143,10 @@
       retries: 360  
       delay: 10 
 
+- name: Wait for compaction to finish
+  hosts: cassandra_servers
+  become: yes
+  tasks:
     - name: Wait for compaction to finish
       async_status:
         jid: "{{ compaction_async_result.ansible_job_id }}"
@@ -149,10 +155,12 @@
       retries: 1
       delay: 10     
 
+- name: Fail the play if the benchmark command or compaction did not succeed
+  hosts: localhost
+  tasks:
     - name: Fail the play if the benchmark command or compaction did not succeed
       fail: msg="The benchmark or compaction command failed"
       when: "'FAILED' in benchmark_job_result.stderr or 'FAILED' in compaction_job_result.stderr"
-
 
 # - name: Run benchmark
 #   hosts: cassandra_clients
