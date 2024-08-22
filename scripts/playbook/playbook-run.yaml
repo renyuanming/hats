@@ -111,13 +111,13 @@
         enableHorse: "ENABLE_HORSE"
         hostName: "{{ inventory_hostname }}"
         consistencyLevel: "CONSISTENCY"
-      async: 7200  # 允许runDB.sh任务运行长达2小时
+      async: 7200
       poll: 0      
       register: benchmark_async_result
 
-    - name: Wait for 10 minutes before enabling compaction
+    - name: Wait for 7 minutes before enabling compaction
       pause:
-        minutes: 10
+        minutes: 7
 
 - name: Enable auto compaction
   hosts: cassandra_servers
@@ -134,6 +134,8 @@
 - name: Wait for benchmark to finish
   hosts: cassandra_clients
   become: yes
+  vars:
+    ansible_become_password: "ymren"
   tasks:
     - name: Wait for benchmark to finish
       async_status:
