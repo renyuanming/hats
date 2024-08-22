@@ -426,7 +426,7 @@ public class CassandraDaemon
 
         // schedule periodic background compaction task submission. this is simply a backstop against compactions stalling
         // due to scheduling errors or race conditions
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
+        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 7, 1, TimeUnit.MINUTES);
 
 
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(StorageService.getMetricsFroEachTypeOfTasks(), 60, 10, TimeUnit.SECONDS);
