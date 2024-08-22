@@ -474,12 +474,20 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     
                 FileWriter fileWriter = new FileWriter(file.toJavaIOFile(), true);
                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+
+                double readThpt = readCnt * 1.0 / 1024 / 10;
+                double writeThpt = writeCnt * 1.0 / 1024 / 10;
+                double flushTpt = flushDiskIO * 1.0 / 10;
+                double compactionThpt = (compactionDiskReadIO + compactionDiskWriteIO) * 1.0 / 10;
+
     
                 if (isNewFile) {
                     bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
                 }
     
-                String output = "Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
+                String output = "Read Thpt: " + readThpt + "mb/s, Write Thpt: " + writeThpt + "mb/s, Flush Thpt: " + flushTpt + "mb/s, Compaction Thpt: " + compactionThpt +
+                                "mb/s, Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
                                 " KiB, Write Time: " + writeTime + " us, Write Count: " + writeCnt + ", Write Disk IO: " + writeDiskIO + 
                                 " KiB, Flush Time: " + flushWindowTime + " us, Flush Count: " + flushCnt + ", Flush Disk IO: " + flushDiskIO + 
                                 " KiB, Compaction Time: " + compactionWindowTime + " us, Compaction Count: " + compactionCnt + 
