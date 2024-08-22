@@ -22,6 +22,8 @@ echo "Running YCSB with scheme: $targetScheme"
 
 # hostName=$(hostname)
 
+initial_workload=$workload
+
 if [ "$workload" == "workloads/multiple" ] || [ "$workload" == "workloads/motivation" ]; then
     if [[ $hostName == "proj18" ]]; then
         workload="workloads/workloada"
@@ -54,12 +56,11 @@ file_name="Run-$(date +%s)-${hostName}-${operationcount}-${field_length}-${threa
 
 
 
-if [[ "$workload" == "workloads/motivation" ]]; then
+if [[ "$initial_workload" == "workloads/motivation" ]]; then
     if [[ $hostName == "proj18" ]]; then
         sleep 300
         bin/ycsb run cassandra-cql -p maxexecutiontime=600 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     elif [[ $hostName == "proj19" ]]; then
-        workload="workloads/workloadc"
         bin/ycsb run cassandra-cql -p maxexecutiontime=300 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     fi
 else
