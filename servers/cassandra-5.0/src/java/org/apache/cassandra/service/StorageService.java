@@ -401,6 +401,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
         @Override
         public void run() {
+            logger.info("Get the metrics for each type of tasks.");
 
             long overallDiskReadKiB = 0;
             long overallDiskWriteKiB = 0;
@@ -468,17 +469,25 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         private static void writeTheMeasurementToTheFile(String metricFile, long readTime, long readCnt, long readDiskIO, long writeTime, long writeCnt, long writeDiskIO, long flushWindowTime, long flushCnt, long flushDiskIO, long compactionWindowTime, long compactionCnt, long compactionDiskReadIO, long compactionDiskWriteIO)
         {
             try {
-                FileWriter fileWriter = new FileWriter(metricFile, true);
+                File file = new File(metricFile);
+                boolean isNewFile = file.createNewFile();  
+    
+                FileWriter fileWriter = new FileWriter(file, true);
                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-
+    
+                if (isNewFile) {
+                    bufferedWriter.write("Metric File Created: " + file.getAbsolutePath() + "\n");
+                }
+    
                 String output = "Read Time: " + readTime + " us, Read Count: " + readCnt + ", Read Disk IO: " + readDiskIO + 
                                 " KiB, Write Time: " + writeTime + " us, Write Count: " + writeCnt + ", Write Disk IO: " + writeDiskIO + 
                                 " KiB, Flush Time: " + flushWindowTime + " us, Flush Count: " + flushCnt + ", Flush Disk IO: " + flushDiskIO + 
-                                " KiB, Compaction Time: " + compactionWindowTime + " us, Compaction Count: " + compactionCnt + ", Compaction Disk Read IO: " + compactionDiskReadIO + " KiB, Compaction Disk Write IO: " + compactionDiskWriteIO + " KiB\n";
+                                " KiB, Compaction Time: " + compactionWindowTime + " us, Compaction Count: " + compactionCnt + 
+                                ", Compaction Disk Read IO: " + compactionDiskReadIO + " KiB, Compaction Disk Write IO: " + compactionDiskWriteIO + " KiB\n";
                 bufferedWriter.write(output);
+    
                 bufferedWriter.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
