@@ -134,8 +134,7 @@
 - name: Wait for benchmark to finish
   hosts: cassandra_clients
   become: yes
-  vars:
-    ansible_become_password: "ymren"
+  become_user: ymren
   tasks:
     - name: Wait for benchmark to finish
       async_status:
@@ -148,6 +147,7 @@
 - name: Wait for compaction to finish
   hosts: cassandra_servers
   become: yes
+  become_user: ymren
   tasks:
     - name: Wait for compaction to finish
       async_status:
