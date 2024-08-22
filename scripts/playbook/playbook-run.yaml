@@ -87,7 +87,7 @@
   tasks:
     - name: Disable auto compaction
       shell: |
-        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool disableautocompaction  ycsb usertable
+        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool disableautocompaction ycsb usertable
       register: command_result
       ignore_errors: true
 
@@ -120,19 +120,20 @@
       pause:
         minutes: 7
 
-    - name: Enable auto compaction on cassandra servers
-      hosts: cassandra_servers
-      become: yes
-      become_user: ymren
-      tasks:
-        - name: Enable auto compaction
-          shell: |
-            . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb usertable
-          register: compaction_async_result
-          async: 60 
-          poll: 0 
+- name: Enable auto compaction on cassandra servers
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Enable auto compaction
+      shell: |
+        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb usertable
+      register: compaction_async_result
+      async: 60 
+      poll: 0 
 
     - name: Wait for benchmark to finish
+      hosts: cassandra_clients
       async_status:
         jid: "{{ benchmark_async_result.ansible_job_id }}"
       register: benchmark_job_result
@@ -141,21 +142,16 @@
       delay: 10 
 
     - name: Wait for compaction to finish
-      hosts: cassandra_servers
-      become: yes
-      tasks:
-        - name: Wait for compaction to finish
-          async_status:
-            jid: "{{ compaction_async_result.ansible_job_id }}"
-          register: compaction_job_result
-          until: compaction_job_result.finished
-          retries: 1
-          delay: 10     
+      async_status:
+        jid: "{{ compaction_async_result.ansible_job_id }}"
+      register: compaction_job_result
+      until: compaction_job_result.finished
+      retries: 1
+      delay: 10     
 
     - name: Fail the play if the benchmark command or compaction did not succeed
       fail: msg="The benchmark or compaction command failed"
       when: "'FAILED' in benchmark_job_result.stderr or 'FAILED' in compaction_job_result.stderr"
-
 
 
 # - name: Run benchmark
