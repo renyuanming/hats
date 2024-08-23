@@ -1269,6 +1269,9 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
                 logger.trace("Flush task task {}@{} finished", hashCode(), name);
             
             StorageService.instance.flushTime += nanoTime() - start;
+            
+            StorageService.instance.flushWindowTime += nanoTime() - start;
+            StorageService.instance.flushCnt++;
         }
 
         public Collection<SSTableReader> flushMemtable(ColumnFamilyStore cfs, Memtable memtable, boolean flushNonCf2i)
@@ -1376,6 +1379,10 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             }
             cfs.replaceFlushed(memtable, sstables);
             reclaim(memtable);
+
+            
+            StorageService.instance.flushDiskIO += totalBytesOnDisk / 1024; // Bytes to KiB
+
             cfs.compactionStrategyManager.compactionLogger.flush(sstables);
             logger.debug("Flushed to {} ({} sstables, {}), biggest {}, smallest {}",
                          sstables,
@@ -1482,6 +1489,10 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             StorageHook.instance.reportWrite(metadata.id, update);
             metric.writeLatency.addNano(nanoTime() - start);
             StorageService.instance.localWriteTime += (nanoTime() - start) / 1000;
+
+            StorageService.instance.writeTime += nanoTime() - start;
+            StorageService.instance.writeCnt++;
+
             if(this.getKeyspaceName().equals("ycsb"))
             {
                 // LocalStates.recordEWMALocalWriteLatency(nanoTime() - start);

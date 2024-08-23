@@ -67,6 +67,7 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.SchemaProvider;
 import org.apache.cassandra.service.ActiveRepairService;
 import org.apache.cassandra.service.ClientWarn;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.CassandraUInt;
 import org.apache.cassandra.utils.FBUtilities;
@@ -608,6 +609,10 @@ public abstract class ReadCommand extends AbstractReadQuery
             public void onClose()
             {
                 recordLatency(metric, nanoTime() - startTimeNanos);
+
+                
+                StorageService.instance.readTime += nanoTime() - startTimeNanos;
+                StorageService.instance.readCnt++;
 
                 metric.tombstoneScannedHistogram.update(tombstones);
                 metric.liveScannedHistogram.update(liveRows);
