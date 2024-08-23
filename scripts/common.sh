@@ -595,6 +595,15 @@ function run {
     playbook="playbook-run.yaml"
 
 
+    if [ "${workload}" == "motivation" ]; then
+        if [ "${targetScheme}" == "cassandra-5.0" ]; then
+            enableAutoCompactionCFs="usertable"
+        else
+            enableAutoCompactionCFs="usertable0 usertable1 usertable2"
+        fi
+    fi
+
+
 
     # Modify run playbook
     sed -i "s|KEYSPACE|ycsb|g" ${playbook}

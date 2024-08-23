@@ -86,7 +86,7 @@
   tasks:
     - name: Disable auto compaction
       shell: |
-        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool disableautocompaction ycsb usertable
+        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool disableautocompaction ycsb ENABL_COMPACTION_CFS
       register: command_result
       ignore_errors: true
 
@@ -126,10 +126,10 @@
   tasks:
     - name: Enable auto compaction
       shell: |
-        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb usertable
-      register: compaction_async_result
-      async: 60 
-      poll: 0 
+        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb ENABL_COMPACTION_CFS
+      register: command_result
+      ignore_errors: true
+
 
 - name: Wait for benchmark to finish
   hosts: cassandra_clients
@@ -144,18 +144,18 @@
       retries: 360  
       delay: 10 
 
-- name: Wait for compaction to finish
-  hosts: cassandra_servers
-  become: yes
-  become_user: ymren
-  tasks:
-    - name: Wait for compaction to finish
-      async_status:
-        jid: "{{ compaction_async_result.ansible_job_id }}"
-      register: compaction_job_result
-      until: compaction_job_result.finished
-      retries: 1
-      delay: 10     
+# - name: Wait for compaction to finish
+#   hosts: cassandra_servers
+#   become: yes
+#   become_user: ymren
+#   tasks:
+#     - name: Wait for compaction to finish
+#       async_status:
+#         jid: "{{ compaction_async_result.ansible_job_id }}"
+#       register: compaction_job_result
+#       until: compaction_job_result.finished
+#       retries: 1
+#       delay: 10     
 
 # - name: Fail the play if the benchmark command or compaction did not succeed
 #   hosts: localhost
