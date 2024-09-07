@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class PseudoCode {
+public class LoadBalancer {
 
     public static double[][] balanceLoad(int N, int R, int W, double[] L, double[] T, double[][] C, double[] lambda) {
 
