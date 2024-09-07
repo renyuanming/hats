@@ -56,7 +56,7 @@ public class GlobalStates implements Serializable {
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
     
     public Double[] scoreVector; // N
-    public Double[] latencyVector; // N
+    public double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
     // read count of each replication group
     public int[] readCountOfEachRG; // N
@@ -76,7 +76,7 @@ public class GlobalStates implements Serializable {
     public void initialization()
     {
         this.scoreVector = new Double[this.nodeCount];
-        this.latencyVector = new Double[this.nodeCount];
+        this.latencyVector = new double[this.nodeCount];
         this.readCountOfEachNode = new int[this.nodeCount];
         this.readCountOfEachRG = new int[this.nodeCount];
         this.updatingReadCountOfEachRG = new int[this.nodeCount];

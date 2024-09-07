@@ -90,7 +90,8 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
                 
-                double linearLatency = StorageService.instance.readLatencyCalculator.getLatencyForLocalStates();
+                double linearLatency = StorageService.instance.localReadLatencyCalculator.getLatencyForLocalStates();
+                // double linearLatency = StorageService.instance.readLatencyCalculator.getLatencyForLocalStates();
                                     //    StorageService.instance.readLatencyCalculator.getMedian() * 
                                     //    DatabaseDescriptor.getReadSensitiveFactor() +
                                     //    StorageService.instance.writeLatencyCalculator.getMedian() * 
@@ -113,8 +114,8 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 
                 logger.debug("rymDebug: foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}, Local states: {}", 
                              StorageService.instance.totalReadCntOfEachReplica, 
-                             StorageService.instance.readLatencyCalculator.getLatencyForLocalStates(),
-                             StorageService.instance.readLatencyCalculator.getCount(), 
+                             StorageService.instance.localReadLatencyCalculator.getLatencyForLocalStates(),
+                             StorageService.instance.localReadLatencyCalculator.getCount(), 
                              StorageService.instance.writeLatencyCalculator.getLatencyForLocalStates(), 
                              StorageService.instance.writeLatencyCalculator.getCount(),
                              states.toString());

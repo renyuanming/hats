@@ -80,7 +80,8 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
         else
         {
             leaderHost = PriorityElectionBootstrap.getLeader();
-            double linearLatency = StorageService.instance.readLatencyCalculator.getLatencyForLocalStates();
+            double linearLatency = StorageService.instance.localReadLatencyCalculator.getLatencyForLocalStates();
+            // double linearLatency = StorageService.instance.readLatencyCalculator.getLatencyForLocalStates();
                                 //    StorageService.instance.readLatencyCalculator.getMedian() * 
                                 //    DatabaseDescriptor.getReadSensitiveFactor() +
                                 //    StorageService.instance.writeLatencyCalculator.getMedian() * 

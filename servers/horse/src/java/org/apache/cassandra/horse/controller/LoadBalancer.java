@@ -22,11 +22,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class LoadBalancer {
 
-    public static double[][] balanceLoad(int N, int R, int W, double[] L, double[] T, double[][] C, double[] lambda) {
+    private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
+    public static Double[][] balanceLoad(int N, int R, int W, double[] L, int[][] C) 
+    {
 
-        double[][] readRatio = new double[N][R];
+        for (int i = 0; i < N; i++) {
+            L[i] = L[i] / 1000000; // convert to seconds
+        }
+        double[] T = new double[N]; // service rate of each node T_i = W / (L_i * 1e-6)
+        for (int i = 0; i < N; i++) {
+            T[i] = W / L[i];
+        }
+        
+        double[] lambda = new double[N]; // concurrency factor of each node lambda_i = C_i / T_i
+        for (int i = 0; i < N; i++) {
+            lambda[i] = C[i][0] / T[i];
+        }
+        
+        System.out.println("Service rate of each node:");
+        System.out.println(Arrays.toString(T));
+        System.out.println("Concurrency factor of each node:");
+        System.out.println(Arrays.toString(lambda));
+
+
+
+        Double[][] readRatio = new Double[N][R];
         double[] actualCountOfEachNode = new double[N];
         double[] actualCountOfEachReplicationGroup = new double[N];
 
@@ -130,13 +155,6 @@ public class LoadBalancer {
         int W = 60; // time window size, 60 seconds
 
         double[] L = {100, 105, 90, 180, 200, 85, 150, 130, 120, 115}; // average latency of each node
-        for (int i = 0; i < N; i++) {
-            L[i] = L[i] / 1000000; // convert to seconds
-        }
-        double[] T = new double[N]; // service rate of each node T_i = W / (L_i * 1e-6)
-        for (int i = 0; i < N; i++) {
-            T[i] = W / L[i];
-        }
 
         // Request count of each replication group on each node
         // double[][] C = {
@@ -152,7 +170,7 @@ public class LoadBalancer {
         //     {100000, 0, 0}
         // };
 
-        double[][] C = {
+        int[][] C = {
             {100000, 0, 0},
             {100000, 0, 0},
             {50000, 0, 0},
@@ -165,35 +183,26 @@ public class LoadBalancer {
             {100000, 0, 0}
         };
 
-        double[] lambda = new double[N]; // concurrency factor of each node lambda_i = C_i / T_i
-        for (int i = 0; i < N; i++) {
-            lambda[i] = C[i][0] / T[i];
-            // lambda[i] = 32;
-        }
 
         // print the transposed request count matrix
         System.out.println("Transposed request count matrix:");
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < N; j++) {
-                System.out.printf("%10.2f ", C[j][i]);
+                System.out.printf("%10d ", C[j][i]);
             }
             System.out.println();
         }
         // print the average latency, service rate, and concurrency factor of each node
         System.out.println("Average latency of each node:");
         System.out.println(Arrays.toString(L));
-        System.out.println("Service rate of each node:");
-        System.out.println(Arrays.toString(T));
-        System.out.println("Concurrency factor of each node:");
-        System.out.println(Arrays.toString(lambda));
 
-        double[][] readRatio = balanceLoad(N, R, W, L, T, C, lambda);
+        Double[][] readRatio = balanceLoad(N, R, W, L, C);
 
         // Print the transposed request count matrix
         System.out.println("Transposed request count matrix:");
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < N; j++) {
-                System.out.printf("%10.2f ", C[j][i]);
+                System.out.printf("%10d ", C[j][i]);
             }
             System.out.println();
         }
