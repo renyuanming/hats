@@ -480,7 +480,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         StorageService.instance.localReadTime += latencyNanos / 1000;
         if (metadata().keyspace.equals("ycsb"))
         {
-            StorageService.instance.localReadLatencyCalculator.record(latencyNanos / 1000);
+            StorageService.instance.localReadLatencyCalculator.record(latencyNanos);
             // if(!StorageService.instance.isReadSlow.get() && 
             //    StorageService.instance.readRequestInFlight.get() > 50)
             // {
