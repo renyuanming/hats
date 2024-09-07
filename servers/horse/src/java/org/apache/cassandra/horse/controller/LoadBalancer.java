@@ -33,7 +33,7 @@ public class LoadBalancer {
 
         double[] latency = new double[N]; // average latency of each node
         for (int i = 0; i < N; i++) {
-            latency[i] = latency[i] / 1000000; // convert to seconds
+            latency[i] = L[i] / 1000000; // convert to seconds
         }
         double[] T = new double[N]; // service rate of each node T_i = W / (L_i * 1e-6)
         for (int i = 0; i < N; i++) {
@@ -46,6 +46,11 @@ public class LoadBalancer {
         }
 
         double[][] count = new double[N][R];
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < R; j++) {
+                count[i][j] = C[i][j];
+            }
+        }
         
         System.out.println("Service rate of each node:");
         System.out.println(Arrays.toString(T));

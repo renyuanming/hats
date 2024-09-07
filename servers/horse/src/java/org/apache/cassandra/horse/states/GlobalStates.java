@@ -217,7 +217,7 @@ public class GlobalStates implements Serializable {
             }
             policyForClient.put(tokenList.get(i).toString(), rgPolicy);
         }
-
+        logger.info("rymInfo: The policy for client is {}, policy is {}", policyForClient, policy);
         return policyForClient;
     }
 
