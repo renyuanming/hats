@@ -31,18 +31,21 @@ public class LoadBalancer {
     public static Double[][] balanceLoad(int N, int R, int W, double[] L, int[][] C) 
     {
 
+        double[] latency = new double[N]; // average latency of each node
         for (int i = 0; i < N; i++) {
-            L[i] = L[i] / 1000000; // convert to seconds
+            latency[i] = latency[i] / 1000000; // convert to seconds
         }
         double[] T = new double[N]; // service rate of each node T_i = W / (L_i * 1e-6)
         for (int i = 0; i < N; i++) {
-            T[i] = W / L[i];
+            T[i] = W / latency[i];
         }
         
         double[] lambda = new double[N]; // concurrency factor of each node lambda_i = C_i / T_i
         for (int i = 0; i < N; i++) {
             lambda[i] = C[i][0] / T[i];
         }
+
+        double[][] count = new double[N][R];
         
         System.out.println("Service rate of each node:");
         System.out.println(Arrays.toString(T));
@@ -67,7 +70,7 @@ public class LoadBalancer {
             // Calculate the mean latency of the replication group
             double localAvgLatency = 0;
             for (int j = i; j < i + R; j++) {
-                localAvgLatency += L[j % N];
+                localAvgLatency += latency[j % N];
             }
             localAvgLatency /= R;
 
@@ -108,10 +111,10 @@ public class LoadBalancer {
 
                    
                     double adjustment = Math.min(localDelta[pos], -localDelta[neg]);
-                    adjustment = Math.min(adjustment, C[nodeIndexPos][pos]);
+                    adjustment = Math.min(adjustment, count[nodeIndexPos][pos]);
 
-                    C[nodeIndexPos][pos] -= adjustment; 
-                    C[nodeIndexNeg][neg] += adjustment; 
+                    count[nodeIndexPos][pos] -= adjustment; 
+                    count[nodeIndexNeg][neg] += adjustment; 
 
                     localDelta[pos] -= adjustment;
                     localDelta[neg] += adjustment;
@@ -129,19 +132,19 @@ public class LoadBalancer {
 
                 // update actualCountOfEachNode
                 for (int k = 0; k < R; k++) {
-                    actualCountOfEachNode[nodeIndex] += C[nodeIndex][k];
+                    actualCountOfEachNode[nodeIndex] += count[nodeIndex][k];
                 }
 
-                // update estimate latency L[i]
-                L[nodeIndex] = lambda[nodeIndex] * W / actualCountOfEachNode[nodeIndex];
-                // L[nodeIndex] =  W / actualCountOfEachNode[nodeIndex];
-                actualCountOfEachReplicationGroup[i] += C[nodeIndex][j];
+                // update estimate latency latency[i]
+                latency[nodeIndex] = lambda[nodeIndex] * W / actualCountOfEachNode[nodeIndex];
+                // latency[nodeIndex] =  W / actualCountOfEachNode[nodeIndex];
+                actualCountOfEachReplicationGroup[i] += count[nodeIndex][j];
             }
         }
         // Calculate the read ratio of each replication group
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < R; j++) {
-                readRatio[i][j] = C[i][j] / actualCountOfEachReplicationGroup[(i - j + N) % N];
+                readRatio[i][j] = count[i][j] / actualCountOfEachReplicationGroup[(i - j + N) % N];
             }
         }
 
