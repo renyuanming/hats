@@ -115,9 +115,9 @@
       poll: 0      
       register: benchmark_async_result
 
-    - name: Wait for 10 minutes before enabling compaction
-      pause:
-        minutes: 10
+    # - name: Wait for 10 minutes before enabling compaction
+    #   pause:
+    #     minutes: 10
 
 - name: Enable auto compaction
   hosts: cassandra_servers
