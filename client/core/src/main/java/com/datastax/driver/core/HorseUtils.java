@@ -95,6 +95,8 @@ public class HorseUtils
                 averageReadLatency = (entry.getValue().getCount() * 1.0 / totalReadCount) * this.readLatency.get(entry.getKey());
                 averageCoordinatorLatency = (entry.getValue().getCount() * 1.0 / totalReadCount) * this.coordinatorReadLatency.get(entry.getKey());
             }
+
+            // TODO recalculate the coordinator weight for each replication group
             this.coordinatorWeight = averageCoordinatorLatency / averageReadLatency;
 
         }
@@ -125,8 +127,8 @@ public class HorseUtils
         public double getLatencyForLocalStates()
         {
             // return get75th();
-            return getMedian();
-            // return getWindowMean();
+            // return getMedian();
+            return getWindowMean();
         }
 
         public double getMedian()
