@@ -64,10 +64,10 @@ file_name="Run-$(date +%s)-${hostName}-${operationcount}-${field_length}-${threa
 
 if [[ "$initial_workload" == "workloads/motivation" ]]; then
     if [[ $hostName == "proj18" ]]; then
-        sleep 300
-        bin/ycsb run cassandra-cql -p maxexecutiontime=600 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+        sleep 600
+        bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     elif [[ $hostName == "proj19" ]]; then
-        bin/ycsb run cassandra-cql -p maxexecutiontime=900 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+        bin/ycsb run cassandra-cql -p maxexecutiontime=1800 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     fi
 else
     echo "Running the workload ${workload}"
