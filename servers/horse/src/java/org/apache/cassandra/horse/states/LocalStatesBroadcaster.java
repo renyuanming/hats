@@ -90,8 +90,8 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 if (logger.isTraceEnabled())
                     logger.trace("Disseminating load info ...");
                 
-                double linearLatency = StorageService.instance.localReadLatencyCalculator.getLatencyForLocalStates();
-                // double linearLatency = StorageService.instance.readLatencyCalculator.getLatencyForLocalStates();
+                // double linearLatency = StorageService.instance.localReadLatencyCalculator.getLatencyForLocalStates();
+                double linearLatency = StorageService.instance.readLatencyCalculator.getLatencyForLocalStates();
                                     //    StorageService.instance.readLatencyCalculator.getMedian() * 
                                     //    DatabaseDescriptor.getReadSensitiveFactor() +
                                     //    StorageService.instance.writeLatencyCalculator.getMedian() * 
