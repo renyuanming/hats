@@ -74,16 +74,30 @@ public class LoadBalancer {
         for (int i = 0; i < N; i++) {
             // Calculate the mean latency of the replication group
             double localAvgLatency = 0;
+            double localMedianLatency = 0;
+
+            double[] subArray = new double[R];
+            int index = 0;
             for (int j = i; j < i + R; j++) {
                 localAvgLatency += latency[j % N];
+                subArray[index++] = latency[j % N];
             }
             localAvgLatency /= R;
+            Arrays.sort(subArray);
+            if (R % 2 == 0) {
+                localMedianLatency = (subArray[R / 2 - 1] + subArray[R / 2]) / 2.0;
+            } else {
+                localMedianLatency = subArray[R / 2];
+            }
+
+            double targetLocalLatency = Math.min(localAvgLatency, localMedianLatency);
+            
 
             // Calculate the estimated request count of the R nodes
             double[] localEstimateCount = new double[R];
             for (int j = i; j < i + R; j++) {
-                localEstimateCount[j - i] = lambda[j % N] * W / localAvgLatency;
-                // localEstimateCount[j - i] = W / localAvgLatency;
+                localEstimateCount[j - i] = lambda[j % N] * W / targetLocalLatency;
+                // localEstimateCount[j - i] = W / targetLocalLatency;
             }
 
             // For replication group i, update C[i][i,...,i+R-1] to minimize the difference between the estimated request count and the actual request count
