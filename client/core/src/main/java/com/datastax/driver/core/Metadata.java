@@ -331,8 +331,8 @@ public class Metadata {
                     List<Double> cordPolicy = currentStatesForClients.policy.get(tokenStr);
         
                     for(int i = 0; i < cordPolicy.size(); i++) {
-                        combinedPolicy.add(cordPolicy.get(i) * currentStatesForClients.coordinatorWeight + netPolicy.get(i) * (1 - currentStatesForClients.coordinatorWeight));
-                        // combinedPolicy.add(cordPolicy.get(i));
+                        // combinedPolicy.add(cordPolicy.get(i) * currentStatesForClients.coordinatorWeight + netPolicy.get(i) * (1 - currentStatesForClients.coordinatorWeight));
+                        combinedPolicy.add(cordPolicy.get(i));
                     }
                 }
                 else
