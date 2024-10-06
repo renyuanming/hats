@@ -231,11 +231,12 @@ public class Scheduler {
         logger.info("rymInfo: The load matrix is:");
         for (int i = 0; i < GlobalStates.rf; i++)
         {
+            StringBuilder row = new StringBuilder();  // To accumulate the row data
             for (int j = 0; j < GlobalStates.globalStates.nodeCount; j++)
             {
-                logger.info("%10d ", GlobalStates.globalStates.loadMatrix[j][i]);
+                row.append(String.format("%10d ", GlobalStates.globalStates.loadMatrix[j][i]));
             }
-            logger.info("");
+            logger.info(row.toString());  // Log the entire row at once
         }
         
         logger.info("rymInfo: the average latency of each node:");

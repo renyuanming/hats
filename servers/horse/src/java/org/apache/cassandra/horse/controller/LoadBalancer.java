@@ -171,19 +171,21 @@ public class LoadBalancer {
         // Print the transposed request count matrix
         logger.info("Transposed request count matrix:");
         for (int i = 0; i < R; i++) {
+            StringBuilder row = new StringBuilder();
             for (int j = 0; j < N; j++) {
-                logger.info("%10d ", count[j][i]);
+                row.append(String.format("%10d ", count[j][i]));  // Format as integer with width 10
             }
-            logger.info("");
+            logger.info(row.toString());  // Log the entire row at once
         }
 
         // Print the transposed read ratio matrix
         logger.info("Transposed read ratio matrix:");
         for (int i = 0; i < R; i++) {
+            StringBuilder row = new StringBuilder();
             for (int j = 0; j < N; j++) {
-                logger.info("%10.2f ", readRatio[j][i]);
+                row.append(String.format("%10.2f ", readRatio[j][i]));  // Format as float with width 10 and 2 decimal places
             }
-            logger.info("");
+            logger.info(row.toString());  // Log the entire row at once
         }
 
         return readRatio;
