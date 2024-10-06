@@ -30,7 +30,12 @@ public class LoadBalancer {
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
     public static Double[][] balanceLoad(int N, int R, int W, double[] L, int[][] C) 
     {
-
+        double[] requestCount = new double[N]; // request count of each node
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < R; j++) {
+                requestCount[i] += C[i][j];
+            }
+        }
         double[] latency = new double[N]; // average latency of each node
         for (int i = 0; i < N; i++) {
             latency[i] = L[i] / 1000000; // convert to seconds
@@ -42,8 +47,13 @@ public class LoadBalancer {
         
         double[] lambda = new double[N]; // concurrency factor of each node lambda_i = C_i / T_i
         for (int i = 0; i < N; i++) {
-            lambda[i] = C[i][0] / T[i];
+            lambda[i] = requestCount[i] / T[i];
         }
+
+        // double[] targetThpt = new double[N]; // target throughput of each node
+        // for (int i = 0; i < N; i++) {
+        //     targetThpt[i] = requestCount[i] / T[i];
+        // }
 
         double[][] count = new double[N][R];
         for (int i = 0; i < N; i++) {
@@ -99,6 +109,8 @@ public class LoadBalancer {
                 localEstimateCount[j - i] = lambda[j % N] * W / targetLocalLatency;
                 // localEstimateCount[j - i] = W / targetLocalLatency;
             }
+
+            // logger.info("rymInfo: Current node is {}, targetLocalLatency: {}, local estimate count is {}, actual count is {}", i+1, targetLocalLatency, Arrays.toString(localEstimateCount), Arrays.toString(actualCountOfEachNode));
 
             // For replication group i, update C[i][i,...,i+R-1] to minimize the difference between the estimated request count and the actual request count
             double[] localDelta = new double[R];
@@ -197,7 +209,7 @@ public class LoadBalancer {
 
         int W = 60; // time window size, 60 seconds
 
-        double[] L = {100, 105, 90, 180, 200, 85, 150, 130, 120, 115}; // average latency of each node
+        double[] L = {1142, 1693, 1754, 1140, 1189, 1973, 4085, 1474, 1917, 1067}; // average latency of each node
 
         // Request count of each replication group on each node
         // double[][] C = {
@@ -214,16 +226,16 @@ public class LoadBalancer {
         // };
 
         int[][] C = {
-            {100000, 0, 0},
-            {100000, 0, 0},
-            {50000, 0, 0},
-            {100000, 20000, 0},
-            {100000, 0, 30000},
-            {100000, 0, 0},
-            {100000, 0, 0},
-            {100000, 0, 0},
-            {100000, 0, 0},
-            {100000, 0, 0}
+            {136351, 2130, 2209},
+            {184210, 21335, 0},
+            {151762, 37900, 10744},
+            {151395, 5, 0},
+            {180295, 3, 22182},
+            {146113, 32150, 20422},
+            {106165, 6968, 9120},
+            {140929, 68745, 0},
+            {132060, 25434, 12332},
+            {157912, 17642, 0}
         };
 
 
