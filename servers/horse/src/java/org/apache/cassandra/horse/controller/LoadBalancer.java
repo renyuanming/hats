@@ -153,6 +153,25 @@ public class LoadBalancer {
             }
         }
 
+        
+        // Print the transposed request count matrix
+        logger.info("Transposed request count matrix:");
+        for (int i = 0; i < R; i++) {
+            for (int j = 0; j < N; j++) {
+                logger.info("%10d ", count[j][i]);
+            }
+            logger.info("");
+        }
+
+        // Print the transposed read ratio matrix
+        logger.info("Transposed read ratio matrix:");
+        for (int i = 0; i < R; i++) {
+            for (int j = 0; j < N; j++) {
+                logger.info("%10.2f ", readRatio[j][i]);
+            }
+            logger.info("");
+        }
+
         return readRatio;
     }
 
@@ -206,22 +225,22 @@ public class LoadBalancer {
 
         Double[][] readRatio = balanceLoad(N, R, W, L, C);
 
-        // Print the transposed request count matrix
-        System.out.println("Transposed request count matrix:");
-        for (int i = 0; i < R; i++) {
-            for (int j = 0; j < N; j++) {
-                System.out.printf("%10d ", C[j][i]);
-            }
-            System.out.println();
-        }
+        // // Print the transposed request count matrix
+        // System.out.println("Transposed request count matrix:");
+        // for (int i = 0; i < R; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         System.out.printf("%10d ", C[j][i]);
+        //     }
+        //     System.out.println();
+        // }
 
-        // Print the transposed read ratio matrix
-        System.out.println("Transposed read ratio matrix:");
-        for (int i = 0; i < R; i++) {
-            for (int j = 0; j < N; j++) {
-                System.out.printf("%10.2f ", readRatio[j][i]);
-            }
-            System.out.println();
-        }
+        // // Print the transposed read ratio matrix
+        // System.out.println("Transposed read ratio matrix:");
+        // for (int i = 0; i < R; i++) {
+        //     for (int j = 0; j < N; j++) {
+        //         System.out.printf("%10.2f ", readRatio[j][i]);
+        //     }
+        //     System.out.println();
+        // }
     }
 }

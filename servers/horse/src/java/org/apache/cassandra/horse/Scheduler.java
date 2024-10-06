@@ -226,7 +226,20 @@ public class Scheduler {
      */
     private static void calculateGlobalPolicy()
     {
-        logger.info(ANSI_YELLOW+"rymInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
+        // logger.info(ANSI_YELLOW+"rymInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
+        // print the transposed load matrix
+        logger.info("rymInfo: The load matrix is:");
+        for (int i = 0; i < GlobalStates.rf; i++)
+        {
+            for (int j = 0; j < GlobalStates.globalStates.nodeCount; j++)
+            {
+                logger.info("%10d ", GlobalStates.globalStates.loadMatrix[j][i]);
+            }
+            logger.info("");
+        }
+        
+        logger.info("rymInfo: the average latency of each node:");
+        logger.info("{}", Arrays.toString(GlobalStates.globalStates.latencyVector));
 
         GlobalStates.globalPolicy = LoadBalancer.balanceLoad(GlobalStates.globalStates.nodeCount, 
                                                              GlobalStates.rf, 
@@ -235,7 +248,7 @@ public class Scheduler {
                                                              GlobalStates.globalStates.loadMatrix);
 
 
-        logger.info(ANSI_YELLOW+"rymInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
+        // logger.info(ANSI_YELLOW+"rymInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
     }
 
 
