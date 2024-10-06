@@ -467,9 +467,17 @@ public class Metadata {
             {
                 for(int j = 0; j < rf; j++)
                 {
-                    int index = (i + j) % current.ring.size();
-                    double value = (double)result[index][j] / initialRequestCount[i];
-                    netPolicy.set(j, value);
+                    // int index = (i + j) % current.ring.size();
+                    // double value = (double)result[index][j] / initialRequestCount[i];
+                    // netPolicy.set(j, value);
+                    if(j==0)
+                    {
+                        netPolicy.set(j, 1.0);
+                    }
+                    else
+                    {
+                        netPolicy.set(j, 0.0);
+                    }
                 }
             }
             networkPolicy.put(current.ring.get(i), netPolicy);
