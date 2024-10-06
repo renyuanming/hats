@@ -173,7 +173,7 @@ public class LoadBalancer {
         for (int i = 0; i < R; i++) {
             StringBuilder row = new StringBuilder();
             for (int j = 0; j < N; j++) {
-                row.append(String.format("%10d ", count[j][i]));  // Format as integer with width 10
+                row.append(String.format("%10d ", (int) count[j][i]));  // Format as integer with width 10
             }
             logger.info(row.toString());  // Log the entire row at once
         }
