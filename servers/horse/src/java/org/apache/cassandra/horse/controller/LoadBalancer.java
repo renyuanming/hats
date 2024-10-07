@@ -224,9 +224,9 @@ public class LoadBalancer {
         }
         double[] latency = new double[N]; // average latency of each node
         for (int i = 0; i < N; i++) {
-            latency[i] = L[i] / 1000000; // convert to seconds
+            latency[i] = L[i] / 1000000; // from us to seconds
         }
-        double[] T = new double[N]; // The ideal nummmber 
+        double[] T = new double[N]; // The maximum number of requests that a physical core can handle within a time window W.
         for (int i = 0; i < N; i++) {
             T[i] = W / latency[i];
         }
@@ -236,22 +236,22 @@ public class LoadBalancer {
             lambda[i] = 4;
         }
 
-        double[] actualThpt = new double[N]; // target throughput of each node
+        double[] actualThpt = new double[N]; // The actual request count of each thread
         for (int i = 0; i < N; i++) {
             actualThpt[i] = requestCount[i] / lambda[i];
         }
 
-        double[] targetThpt = new double[N]; // target throughput of each node
+        double[] targetThpt = new double[N]; // Target request count of each thread
         for (int i = 0; i < N; i++) {
             targetThpt[i] = T[i];
         }
 
-        double[] targetCount = new double[N]; // target throughput of each node
+        double[] targetCount = new double[N]; // Target request count of each node
         for (int i = 0; i < N; i++) {
             targetCount[i] = targetThpt[i] * lambda[i];
         }
 
-        double[][] count = new double[N][R];
+        double[][] count = new double[N][R]; // The load matrix
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < R; j++) {
                 count[i][j] = C[i][j];
