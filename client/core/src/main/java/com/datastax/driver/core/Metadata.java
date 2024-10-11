@@ -66,10 +66,10 @@ public class Metadata {
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
-        if(this.cluster.getCluster().getConfiguration().getHorseOptions().isHorseEnabled())
-        {
-            policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 1, 1, TimeUnit.MINUTES);
-        }
+        // if(this.cluster.getCluster().getConfiguration().getHorseOptions().isHorseEnabled())
+        // {
+        //     policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 1, 1, TimeUnit.MINUTES);
+        // }
     }
 
     void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
@@ -314,85 +314,91 @@ public class Metadata {
 
         @Override
         public void run() {
-            final TokenMap current = tokenMap;
-            final StatesForClients currentStatesForClients = statesForClients;
-            Map<Token, List<Double>> networkPolicy = getNetworkPolicy(current);
+            updatePolicy();
+        }
+    }
 
-            printStatistic(currentStatesForClients);
+    private void updatePolicy()
+    {
 
-            for(Map.Entry<Token,  List<Double>> entry : networkPolicy.entrySet())
-            {
-                String tokenStr = entry.getKey().toString();
-                List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(entry.getKey()));
-                List<Double> netPolicy = entry.getValue();
-                List<Double> combinedPolicy = new ArrayList<>();
-                if(currentStatesForClients != null)
-                {
-                    List<Double> cordPolicy = currentStatesForClients.policy.get(tokenStr);
-        
-                    for(int i = 0; i < cordPolicy.size(); i++) {
-                        // combinedPolicy.add(cordPolicy.get(i) * currentStatesForClients.coordinatorWeight + netPolicy.get(i) * (1 - currentStatesForClients.coordinatorWeight));
-                        combinedPolicy.add(cordPolicy.get(i));
-                    }
-                }
-                else
-                {
-                    combinedPolicy.addAll(netPolicy);
-                }
-    
-                policy.put(tokenStr, combinedPolicy);
-    
-                addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
-            }
+        final TokenMap current = tokenMap;
+        final StatesForClients currentStatesForClients = statesForClients;
+        Map<Token, List<Double>> networkPolicy = getNetworkPolicy(current);
 
-            if(!Cluster.requestCountOfEachReplicationGroup.isEmpty())
-                Cluster.requestCountOfEachReplicationGroup.clear();
+        printStatistic(currentStatesForClients);
+
+        for(Map.Entry<Token,  List<Double>> entry : networkPolicy.entrySet())
+        {
+            String tokenStr = entry.getKey().toString();
+            List<Host> replicas = new ArrayList<>(current.tokenToHosts.get("ycsb").get(entry.getKey()));
+            List<Double> netPolicy = entry.getValue();
+            List<Double> combinedPolicy = new ArrayList<>();
             if(currentStatesForClients != null)
             {
-                logger.info("rymDebug: The coordinator policy is {}", currentStatesForClients.policy);
+                List<Double> cordPolicy = currentStatesForClients.policy.get(tokenStr);
+    
+                for(int i = 0; i < cordPolicy.size(); i++) {
+                    // combinedPolicy.add(cordPolicy.get(i) * currentStatesForClients.coordinatorWeight + netPolicy.get(i) * (1 - currentStatesForClients.coordinatorWeight));
+                    combinedPolicy.add(cordPolicy.get(i));
+                }
+            }
+            else
+            {
+                combinedPolicy.addAll(netPolicy);
             }
 
+            policy.put(tokenStr, combinedPolicy);
 
-            logger.info("rymInfo: The networkPolicy is {}, the new policy is {}", networkPolicy, policy);
+            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
         }
 
-        private void printStatistic(StatesForClients states)
+        if(!Cluster.requestCountOfEachReplicationGroup.isEmpty())
+            Cluster.requestCountOfEachReplicationGroup.clear();
+        if(currentStatesForClients != null)
         {
-            // print the statistics
-            String results = "";
-            for(Map.Entry<InetAddress,  HorseReplicaSelector> entry : addrToReplicaSelector.entrySet())
-            {
-                results += entry.getKey() + ": [";
-                for(Long count : entry.getValue().getSelectionCounts())
-                {
-                    // double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
-                    results += String.valueOf(count) + ",";
-                }
-                results += "];";
-            }
-
-            String fullReadLatencyStr = "";
-            for (Map.Entry<InetAddress, HorseLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
-            {
-                fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getLatencyForLocalStates() + "]  ";
-            }
-
-            if(states != null)
-            {
-                String coordinatorReadLatencyStr = "";
-                String clientToServerLatencyStr = "";
-
-                for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
-                {
-                    coordinatorReadLatencyStr += entry.getKey() + ": [" + entry.getValue() + "]  ";
-                    clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
-                }
-
-                logger.info("rymInfo: The coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
-            }
-
-            logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}, states is {}", results, fullReadLatencyStr, states);
+            logger.info("rymDebug: The coordinator policy is {}", currentStatesForClients.policy);
         }
+
+
+        logger.info("rymInfo: The networkPolicy is {}, the new policy is {}", networkPolicy, policy);
+    }
+
+    private void printStatistic(StatesForClients states)
+    {
+        // print the statistics
+        String results = "";
+        for(Map.Entry<InetAddress,  HorseReplicaSelector> entry : addrToReplicaSelector.entrySet())
+        {
+            results += entry.getKey() + ": [";
+            for(Long count : entry.getValue().getSelectionCounts())
+            {
+                // double ratio = (double)count * 1.0 / entry.getValue().totalSelections.get();
+                results += String.valueOf(count) + ",";
+            }
+            results += "];";
+        }
+
+        String fullReadLatencyStr = "";
+        for (Map.Entry<InetAddress, HorseLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
+        {
+            fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getLatencyForLocalStates() + "]  ";
+        }
+
+        if(states != null)
+        {
+            String coordinatorReadLatencyStr = "";
+            String clientToServerLatencyStr = "";
+
+            for (Map.Entry<InetAddress, Double> entry : states.coordinatorReadLatency.entrySet())
+            {
+                coordinatorReadLatencyStr += entry.getKey() + ": [" + entry.getValue() + "]  ";
+                clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
+            }
+
+            logger.info("rymInfo: The coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
+        }
+
+        logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}, states is {}", results, fullReadLatencyStr, states);
     }
 
 
@@ -400,6 +406,7 @@ public class Metadata {
     public void updateHorsePolicy(StatesForClients states)
     {
         statesForClients = states;
+        updatePolicy();
     }
 
     private Map<Token, List<Double>> getNetworkPolicy(TokenMap current)
