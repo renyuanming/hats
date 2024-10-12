@@ -97,7 +97,8 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
         if (isRangeRequest) 
             return latencyScore;
-        return greedyScore + latencyScore;
+        // return greedyScore + latencyScore;
+        return latencyScore;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
