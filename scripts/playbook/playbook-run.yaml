@@ -120,9 +120,9 @@
   become: yes
   become_user: ymren
   tasks:
-    - name: Wait for 20 minutes before enabling compaction
+    - name: Wait for 0 minutes before enabling compaction
       pause:
-        minutes: 20
+        minutes: 0
     - name: Enable auto compaction
       shell: |
         . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb ENABL_COMPACTION_CFS
