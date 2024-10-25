@@ -30,6 +30,7 @@ import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.controller.BackgroundController;
+import org.apache.cassandra.horse.controller.LoadBalancer;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
 import org.apache.cassandra.horse.net.PolicyDistribute;
@@ -225,129 +226,32 @@ public class Scheduler {
      */
     private static void calculateGlobalPolicy()
     {
-        logger.info(ANSI_YELLOW+"rymInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
-
-        for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
+        // logger.info(ANSI_YELLOW+"rymInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
+        // print the transposed load matrix
+        logger.info("rymInfo: The load matrix is:");
+        for (int i = 0; i < GlobalStates.rf; i++)
         {
-
-            double mean = 0.0;
-            double stdDev = 0.0;
-
-            for (int k = i; k < i + GlobalStates.rf; k++)
+            StringBuilder row = new StringBuilder();  // To accumulate the row data
+            for (int j = 0; j < GlobalStates.globalStates.nodeCount; j++)
             {
-                mean += GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount];
-
+                row.append(String.format("%10d ", GlobalStates.globalStates.loadMatrix[j][i]));
             }
-            mean = mean / GlobalStates.rf;
-
-
-            
-            for (int k = i; k < i + GlobalStates.rf; k++)
-            {
-                stdDev += Math.pow(GlobalStates.globalStates.scoreVector[k % GlobalStates.globalStates.nodeCount] - mean, 2);
-            }
-            stdDev = Math.sqrt(stdDev / GlobalStates.rf);
-
-            final double offloadThreshold = mean + stdDev;
-            final double recoverThreshold = mean;
-
-            if (GlobalStates.globalStates.scoreVector[i] >= offloadThreshold)
-            {
-                offloadRequests(i, recoverThreshold);
-            }
-            else if (GlobalStates.globalStates.scoreVector[i] < recoverThreshold)
-            {
-                recoverRequests(i, offloadThreshold);
-            }
-            else
-            {
-                logger.debug("rymDebug: do nothing for node {}.", i);
-            }
-        }
-        logger.info(ANSI_YELLOW+"rymInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
-    }
-
-    /**
-     * Offload the read requests for node[i], we consider which secondary replica node to be 
-     * the target node and how many requests should be offloaded.
-     * 
-     */
-    private static void offloadRequests(int primaryIndex, final double recoverThreshold)
-    {
-        // If the current node already has some requests to be offloaded, we do nothing
-        // if(GlobalStates.globalStates.deltaVector[primaryIndex] > 0)
-        // {
-        //     return;
-        // }
-
-        // Traverse every secondary replica node, and offload the request to the node with the lower score
-        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.rf; i++)
-        {
-            int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
-            if(GlobalStates.globalStates.scoreVector[secondaryIndex] < recoverThreshold)
-            {
-                
-                if(GlobalStates.globalPolicy[primaryIndex][0] <= 0.5)
-                {
-                    continue;
-                }
-
-                double stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
-                stepSize = stepSize > GlobalStates.globalPolicy[primaryIndex][0] ? GlobalStates.globalPolicy[primaryIndex][0] : stepSize;
-
-                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(primaryIndex, i);
-
-                GlobalStates.globalPolicy[primaryIndex][0] = 
-                            HorseUtils.rounding(GlobalStates.globalPolicy[primaryIndex][0] - stepSize, 2);
-                GlobalStates.globalPolicy[secondaryIndex][replicaIndex] = 
-                            HorseUtils.rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] + stepSize, 2);
-                GlobalStates.globalStates.deltaVector[replicaIndex] = 
-                            HorseUtils.rounding(GlobalStates.globalStates.deltaVector[replicaIndex] - stepSize, 2);
-                GlobalStates.globalStates.deltaVector[secondaryIndex] = 
-                            HorseUtils.rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] + stepSize, 2);
-            }
-        }
-    }
-
-    // Recover the request load
-    private static void recoverRequests(int primaryIndex, final double offloadThreshold)
-    {
-        // Traverse every secondary replica node, and recover the request from the node with the higher score
-        for(int i = primaryIndex + 1; i < primaryIndex + GlobalStates.rf; i++)
-        {
-            int secondaryIndex = i % GlobalStates.globalStates.nodeCount;
-            if(GlobalStates.globalStates.scoreVector[secondaryIndex] > GlobalStates.globalStates.scoreVector[primaryIndex])
-            {
-                int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(primaryIndex, i);
-                
-                if(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] <= 0)
-                {
-                    continue;
-                }
-                else
-                {
-                    double stepSize = getStepSize(GlobalStates.globalStates.scoreVector[primaryIndex], GlobalStates.globalStates.scoreVector[secondaryIndex]);
-                    stepSize = stepSize > GlobalStates.globalPolicy[secondaryIndex][replicaIndex] ? GlobalStates.globalPolicy[secondaryIndex][replicaIndex] : stepSize;
-
-
-                    GlobalStates.globalPolicy[primaryIndex][0] = 
-                                HorseUtils.rounding(GlobalStates.globalPolicy[primaryIndex][0] + stepSize, 2);
-                    GlobalStates.globalPolicy[secondaryIndex][replicaIndex] = 
-                                HorseUtils.rounding(GlobalStates.globalPolicy[secondaryIndex][replicaIndex] - stepSize, 2);
-                    GlobalStates.globalStates.deltaVector[primaryIndex] = 
-                                HorseUtils.rounding(GlobalStates.globalStates.deltaVector[primaryIndex] + stepSize, 2);
-                    GlobalStates.globalStates.deltaVector[secondaryIndex] = 
-                                HorseUtils.rounding(GlobalStates.globalStates.deltaVector[secondaryIndex] - stepSize, 2);
-                }
-            }
+            logger.info(row.toString());  // Log the entire row at once
         }
         
+        logger.info("rymInfo: the average latency of each node:");
+        logger.info("{}", Arrays.toString(GlobalStates.globalStates.latencyVector));
+
+        GlobalStates.globalPolicy = LoadBalancer.balanceLoad(GlobalStates.globalStates.nodeCount, 
+                                                             GlobalStates.rf, 
+                                                             DatabaseDescriptor.getSchedulingInterval(), 
+                                                             GlobalStates.globalStates.latencyVector, 
+                                                             GlobalStates.globalStates.loadMatrix);
+
+
+        // logger.info(ANSI_YELLOW+"rymInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
     }
 
-    private static double getStepSize(double primaryScore, double secondaryScore)
-    {
-        return Math.min(0.1, HorseUtils.rounding(Math.abs(Math.pow((1 - secondaryScore / primaryScore), 3)), 2));
-    }
 
     /**
     * Gather the load statistic has three cases:
@@ -494,8 +398,8 @@ public class Scheduler {
                         // StorageService.instance.pendingFlushRate.getRate(),
                         StorageService.instance.getEndpointCost.get() / 1000,
                         StorageService.instance.totalReadCntOfEachReplica, 
-                        StorageService.instance.readLatencyCalculator.getLatencyForLocalStates(),
-                        StorageService.instance.readLatencyCalculator.getCount(), 
+                        StorageService.instance.localReadLatencyCalculator.getLatencyForLocalStates(),
+                        StorageService.instance.localReadLatencyCalculator.getCount(), 
                         StorageService.instance.writeLatencyCalculator.getLatencyForLocalStates(), 
                         StorageService.instance.writeLatencyCalculator.getCount());        
         }

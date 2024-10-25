@@ -94,8 +94,18 @@ public class HorseUtils
             {
                 averageReadLatency = (entry.getValue().getCount() * 1.0 / totalReadCount) * this.readLatency.get(entry.getKey());
                 averageCoordinatorLatency = (entry.getValue().getCount() * 1.0 / totalReadCount) * this.coordinatorReadLatency.get(entry.getKey());
+            } 
+            // calculate the cov of the read latency
+            double sum = 0.0;
+            for (Map.Entry<InetAddress, HorseLatencyTracker> entry : readLatencyTrackers.entrySet())
+            {
+                sum += Math.pow(this.coordinatorReadLatency.get(entry.getKey()) - averageCoordinatorLatency, 2);
             }
+            double cov = Math.sqrt(sum / totalReadCount) / averageCoordinatorLatency;
+
+            // TODO recalculate the coordinator weight for each replication group
             this.coordinatorWeight = averageCoordinatorLatency / averageReadLatency;
+            logger.info("rymInfo: the average coordinator read latency across all nodes is {}, the cov is {}", averageCoordinatorLatency, cov);
 
         }
     }
@@ -125,8 +135,8 @@ public class HorseUtils
         public double getLatencyForLocalStates()
         {
             // return get75th();
-            return getMedian();
-            // return getWindowMean();
+            // return getMedian();
+            return getWindowMean();
         }
 
         public double getMedian()

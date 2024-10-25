@@ -308,7 +308,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public long[][] foregroundReadCountOfEachReplicationGroup;
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", DatabaseDescriptor.getSchedulingInterval());
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("CoordinatorWriteLatency", DatabaseDescriptor.getSchedulingInterval());
-    // public LatencyCalculator localReadLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
+    public LatencyCalculator localReadLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
     public AtomicDouble readLatencyThreshold = new AtomicDouble(0.0);
     public AtomicBoolean isReadSlow = new AtomicBoolean(false);
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
