@@ -114,6 +114,12 @@
       async: 7200
       poll: 0      
       register: benchmark_async_result
+
+- name: Enable auto compaction
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
     - name: Wait for 20 minutes before enabling compaction
       pause:
         minutes: 20
@@ -122,17 +128,6 @@
         . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb ENABL_COMPACTION_CFS
       register: command_result
       ignore_errors: true
-
-# - name: Enable auto compaction
-#   hosts: cassandra_servers
-#   become: yes
-#   become_user: ymren
-#   tasks:
-#     - name: Enable auto compaction
-#       shell: |
-#         . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool enableautocompaction ycsb ENABL_COMPACTION_CFS
-#       register: command_result
-#       ignore_errors: true
 
 
 - name: Wait for benchmark to finish
