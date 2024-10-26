@@ -79,16 +79,16 @@
       pause:
         seconds: 30
 
-- name: Disable auto compaction
-  hosts: cassandra_servers
-  become: yes
-  become_user: ymren
-  tasks:
-    - name: Disable auto compaction
-      shell: |
-        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool disableautocompaction ycsb ENABL_COMPACTION_CFS
-      register: command_result
-      ignore_errors: true
+# - name: Disable auto compaction
+#   hosts: cassandra_servers
+#   become: yes
+#   become_user: ymren
+#   tasks:
+#     - name: Disable auto compaction
+#       shell: |
+#         . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool disableautocompaction ycsb ENABL_COMPACTION_CFS
+#       register: command_result
+#       ignore_errors: true
 
 - name: Run benchmark and enable compaction
   hosts: cassandra_clients
