@@ -17,9 +17,11 @@
  */
 package org.apache.cassandra.service;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOError;
 import java.io.IOException;
@@ -350,6 +352,43 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
 
 
+        /**
+     * Measurement for each type of task.
+     * For each type of task, we measure 
+     *  1. the time spent on each task, 
+     *  2. the number of tasks, 
+     *  3. the disk I/O usage of each task.
+     */
+    /// Read
+    public volatile long readTime = 0;  // Nano time
+    public volatile long readCnt = 0;  
+    // public volatile long readDiskIO = 0; // KiB
+
+    /// Write
+    public volatile long writeTime = 0; // Nano time
+    public volatile long writeCnt = 0;
+    public volatile long writeDiskIO = 0; // KiB Write cnt * 1KiB
+
+    /// Flush
+    public volatile long flushWindowTime = 0;  // Nano time
+    public volatile long flushCnt = 0;
+    public volatile long flushDiskIO = 0; // KiB
+
+    /// Compaction
+    public volatile long compactionWindowTime = 0; // Nano time
+    public volatile long compactionCnt = 0;
+    public volatile long compactionDiskReadIO = 0; // KiB
+    public volatile long compactionDiskWriteIO = 0; // KiB
+
+    public static volatile long previousReadBytes = 0; 
+    public static volatile long previousWriteBytes = 0;
+
+    public static long pid = ProcessHandle.current().pid();
+    public static String procIoFile="/proc/" + pid + "/io";
+    public String measurementFile = System.getProperty("user.dir") + "/metrics/measurement.txt";
+
+
+
     public Map<String, Long> getBreakdownTime()
     {
         // Micro to millisecond
@@ -369,6 +408,133 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         
         return breakdownTime;
     }
+
+
+
+    public static Runnable getMetricsForEachTypeOfTasks()
+    {
+        return new MetricsForEachTypeOfTask();
+    }
+
+    private static class MetricsForEachTypeOfTask implements Runnable
+    {
+
+        @Override
+        public void run() {
+            logger.info("Get the metrics for each type of tasks.");
+
+            long overallDiskReadKiB = 0;
+            long overallDiskWriteKiB = 0;
+            // Get the overall disk I/O usage first.
+            try {
+                long[] ioStats = readDiskIO(procIoFile);
+                if (ioStats != null) {
+                    long readBytes = ioStats[0];
+                    long writeBytes = ioStats[1];
+
+                    long readDelta = readBytes - previousReadBytes;
+                    long writeDelta = writeBytes - previousWriteBytes;
+
+                    overallDiskReadKiB = readDelta / 1024;
+                    overallDiskWriteKiB = writeDelta / 1024;
+
+                    // System.out.println("Disk Read: " + readKiB + " KiB, Disk Write: " + writeKiB + " KiB");
+
+                    previousReadBytes = readBytes;
+                    previousWriteBytes = writeBytes;
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            // Get the metrics for each type of tasks.
+            long readTime = instance.readTime / 1000; // nano to micro
+            long readCnt = instance.readCnt;
+            long writeTime = instance.writeTime / 1000; // nano to micro
+            long writeCnt = instance.writeCnt;
+            long writeDiskIO = writeCnt * 1; // 1KiB
+            long flushWindowTime = instance.flushWindowTime / 1000; // nano to micro
+            long flushCnt = instance.flushCnt;
+            long flushDiskIO = instance.flushDiskIO;
+            long compactionWindowTime = instance.compactionWindowTime / 1000; // nano to micro
+            long compactionCnt = instance.compactionCnt;
+            long compactionDiskReadIO = instance.compactionDiskReadIO;
+            long compactionDiskWriteIO = instance.compactionDiskWriteIO;
+
+            long readDiskIO = overallDiskReadKiB - compactionDiskReadIO;
+
+            // Reset the metrics
+            instance.readTime = 0;
+            instance.readCnt = 0;
+            instance.writeTime = 0;
+            instance.writeCnt = 0;
+            instance.writeDiskIO = 0;
+            instance.flushWindowTime = 0;
+            instance.flushCnt = 0;
+            instance.flushDiskIO = 0;
+            instance.compactionWindowTime = 0;
+            instance.compactionCnt = 0;
+            instance.compactionDiskReadIO = 0;
+            instance.compactionDiskWriteIO = 0;
+
+            // Write the metrics to the file
+            writeTheMeasurementToTheFile(instance.measurementFile, readTime, readCnt, readDiskIO, writeTime, writeCnt, writeDiskIO, flushWindowTime, flushCnt, flushDiskIO, compactionWindowTime, compactionCnt, compactionDiskReadIO, compactionDiskWriteIO);
+
+
+
+        }
+
+        private static void writeTheMeasurementToTheFile(String metricFile, long readTime, long readCnt, long readDiskIO, long writeTime, long writeCnt, long writeDiskIO, long flushWindowTime, long flushCnt, long flushDiskIO, long compactionWindowTime, long compactionCnt, long compactionDiskReadIO, long compactionDiskWriteIO)
+        {
+            try {
+                File file = new File(metricFile);
+                boolean isNewFile = file.toJavaIOFile().createNewFile();  
+    
+                FileWriter fileWriter = new FileWriter(file.toJavaIOFile(), true);
+                BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+
+                double readThpt = readCnt * 1.0 / 1024 / 60;
+                double writeThpt = writeCnt * 1.0 / 1024 / 60;
+                double flushTpt = flushDiskIO * 1.0 / 1024 / 60;
+                double compactionThpt = (compactionDiskReadIO + compactionDiskWriteIO) * 1.0  / 1024 / 60;
+
+    
+                if (isNewFile) {
+                    bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
+                }
+                String output = String.format("Read Thpt: %.2f mb/s, Write Thpt: %.2f mb/s, Flush Thpt: %.2f mb/s, Compaction Thpt: %.2f mb/s%n",
+                                              readThpt, writeThpt, flushTpt, compactionThpt);
+                bufferedWriter.write(output);
+    
+                bufferedWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static long[] readDiskIO(String procIoFile) throws IOException {
+            try (BufferedReader br = new BufferedReader(new FileReader(procIoFile))) {
+                String line;
+                long readBytes = 0;
+                long writeBytes = 0;
+
+                while ((line = br.readLine()) != null) {
+                    if (line.startsWith("read_bytes:")) {
+                        readBytes = Long.parseLong(line.split("\\s+")[1]);
+                    } else if (line.startsWith("write_bytes:")) {
+                        writeBytes = Long.parseLong(line.split("\\s+")[1]);
+                    }
+                }
+                return new long[]{readBytes, writeBytes};
+            }
+        }
+
+        
+
+    }
+
 
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
