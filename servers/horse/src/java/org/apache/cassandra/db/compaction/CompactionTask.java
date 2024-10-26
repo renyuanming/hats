@@ -291,6 +291,13 @@ public class CompactionTask extends AbstractCompactionTask
             // update the throttle compaction throughput
             BackgroundController.compactionRateLimiter.updateThrottleThpt();
             StorageService.instance.compactionTime += nanoTime() - start;
+
+            
+            // Update measurements
+            StorageService.instance.compactionWindowTime += durationInNano;
+            StorageService.instance.compactionCnt++;
+            StorageService.instance.compactionDiskReadIO += inputSizeBytes / 1024; // Bytes to KiB
+            StorageService.instance.compactionDiskWriteIO += endsize / 1024; // Bytes to KiB
         }
     }
 

@@ -1379,6 +1379,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             }
             cfs.replaceFlushed(memtable, sstables);
             reclaim(memtable);
+            StorageService.instance.flushDiskIO += totalBytesOnDisk / 1024; // Bytes to KiB
             cfs.compactionStrategyManager.compactionLogger.flush(sstables);
             logger.debug("Flushed to {} ({} sstables, {}), biggest {}, smallest {}",
                          sstables,
@@ -1485,6 +1486,8 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
             StorageHook.instance.reportWrite(metadata.id, update);
             metric.writeLatency.addNano(nanoTime() - start);
             StorageService.instance.localWriteTime += (nanoTime() - start) / 1000;
+            // StorageService.instance.writeTime += nanoTime() - start;
+            StorageService.instance.writeCnt++;
             // if(this.getKeyspaceName().equals("ycsb"))
             // {
             //     StorageService.instance.writeLatencyCalculator.record((nanoTime() - start) / 1000);

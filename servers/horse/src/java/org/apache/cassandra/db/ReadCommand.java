@@ -613,6 +613,9 @@ public abstract class ReadCommand extends AbstractReadQuery
             {
                 recordLatency(metric, nanoTime() - startTimeNanos);
 
+                StorageService.instance.readTime += nanoTime() - startTimeNanos;
+                StorageService.instance.readCnt++;
+
                 metric.tombstoneScannedHistogram.update(tombstones);
                 metric.liveScannedHistogram.update(liveRows);
 
