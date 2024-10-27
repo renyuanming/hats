@@ -90,6 +90,18 @@
       register: command_result
       ignore_errors: true
 
+
+- name: Start probe
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Start probe
+      shell: |
+        . /etc/profile && [ "WORKLOAD" = "motivation" ] && cd PATH_TO_SERVER && bin/nodetool startprobe
+      register: command_result
+      ignore_errors: true
+
 - name: Run benchmark and enable compaction
   hosts: cassandra_clients
   become: yes
