@@ -448,7 +448,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             @Override
             public void run() {
                 try {
-                    String line = String.format("%.2f\n", smallLatencyCalculator.getMedian());
+                    String line = String.format("%.2f\n", largeLatencyCalculator.getMedian());
                     writeToFile(largeMeasurementFile, line);
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
