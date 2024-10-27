@@ -76,6 +76,9 @@ import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
+import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -293,6 +296,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
 
 
+    public LatencyCalculator largeLatencyCalculator = new LatencyCalculator("LargeCoordinatorReadLatency", 60);
+    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
 
 
 
@@ -366,6 +371,58 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public String measurementFile = System.getProperty("user.dir") + "/metrics/measurement.txt";
 
 
+
+    private final static MetricRegistry registry = new MetricRegistry();
+    public static class LatencyCalculator 
+    {
+        private final Timer timer;
+
+        public LatencyCalculator(String metricName, int windowInterval) {
+            this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
+            registry.register(metricName, this.timer);
+        }
+
+        public void record(long latency) {
+            this.timer.update(latency, TimeUnit.NANOSECONDS);
+        }
+
+        public double getStdDev() {
+            return this.timer.getSnapshot().getStdDev() / 1000L;
+        }
+
+        public double getWindowMean() 
+        {
+            return this.timer.getSnapshot().getMean() / 1000L;
+        }
+
+        public double getLatencyForLocalStates()
+        {
+            return getWindowMean();
+            // return get75th();
+            // return getMedian();
+            // return getWindowMean();
+        }
+
+        public double getMedian()
+        {
+            return this.timer.getSnapshot().getMedian() / 1000L;
+        }
+
+        public double get75th()
+        {
+            return this.timer.getSnapshot().get75thPercentile() / 1000L;
+        }
+
+        public double get95th()
+        {
+            return this.timer.getSnapshot().get95thPercentile() / 1000L;
+        }
+
+        public int getCount()
+        {
+            return this.timer.getSnapshot().size();
+        }
+    }
 
 
 
