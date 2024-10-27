@@ -435,7 +435,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             @Override
             public void run() {
                 try {
-                    String line = String.format("%.2f\n", smallLatencyCalculator.getWindowMean());
+                    String line = String.format("Mean is: %.2f, Median is: %.2f\n", smallLatencyCalculator.getWindowMean(), smallLatencyCalculator.getMedian());
                     writeToFile(smallMeasurementFile, line);
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
@@ -448,7 +448,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             @Override
             public void run() {
                 try {
-                    String line = String.format("%.2f\n", largeLatencyCalculator.getMedian());
+                    String line = String.format("Mean is: %.2f, Median is: %.2f\n", largeLatencyCalculator.getWindowMean(), largeLatencyCalculator.getMedian());
                     writeToFile(largeMeasurementFile, line);
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
