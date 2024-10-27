@@ -43,6 +43,7 @@ public interface StorageServiceMBean extends NotificationEmitter
 
     
     public Map<String, Long> getBreakdownTime();
+    public String startProbe();
 
     /**
      * Retrieve the list of live nodes in the cluster, where "liveness" is

@@ -97,6 +97,7 @@ public class NodeTool
                 Assassinate.class,
                 CassHelp.class,
                 GetBreakdown.class,
+                StartProbe.class,
                 CIDRFilteringStats.class,
                 Cleanup.class,
                 ClearSnapshot.class,

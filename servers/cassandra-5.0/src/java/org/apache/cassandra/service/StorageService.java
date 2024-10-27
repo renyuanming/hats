@@ -282,6 +282,7 @@ import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import static org.apache.cassandra.utils.FBUtilities.getBroadcastAddressAndPort;
 import static org.apache.cassandra.utils.FBUtilities.now;
+import static org.apache.commons.lang3.StringUtils.left;
 
 /**
  * This abstraction contains the token/identifier of this node
@@ -424,6 +425,58 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         }
     }
 
+
+    public String startProbe()
+    {
+        String smallMeasurementFile = System.getProperty("user.dir") + "/metrics/smallScale.txt";
+        String largeMeasurementFile = System.getProperty("user.dir") + "/metrics/largeScale.txt";
+
+        Runnable smallRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line = String.format("%.2f\n", smallLatencyCalculator.getWindowMean());
+                    writeToFile(smallMeasurementFile, line);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        Runnable largeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line = String.format("%.2f\n", smallLatencyCalculator.getMedian());
+                    writeToFile(largeMeasurementFile, line);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        };
+
+
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(smallRunnable, 1, 1, TimeUnit.SECONDS);
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(largeRunnable, 1, 60, TimeUnit.SECONDS);
+        return "Start the probe";
+    }
+
+    private void writeToFile(String fileName, String line) throws IOException
+    {
+        File file = new File(fileName);
+        boolean isNewFile = file.toJavaIOFile().createNewFile();  
+
+        FileWriter fileWriter = new FileWriter(file.toJavaIOFile(), true);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        if (isNewFile) {
+            bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
+        }
+
+        bufferedWriter.write(line);
+        bufferedWriter.close();
+    }
 
 
     public Map<String, Long> getBreakdownTime()

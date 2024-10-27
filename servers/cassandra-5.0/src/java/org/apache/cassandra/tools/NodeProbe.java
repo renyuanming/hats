@@ -356,6 +356,11 @@ public class NodeProbe implements AutoCloseable
     }
 
 
+    public String startProbe()
+    {
+        return ssProxy.startProbe();
+    }
+
     public int forceKeyspaceCleanup(int jobs, String keyspaceName, String... tables) throws IOException, ExecutionException, InterruptedException
     {
         return ssProxy.forceKeyspaceCleanup(jobs, keyspaceName, tables);
