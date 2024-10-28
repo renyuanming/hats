@@ -71,8 +71,8 @@ if [[ "$initial_workload" == "workloads/motivation" ]]; then
     fi
 else
     echo "Running the workload ${workload}"
-    bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
-    # bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+    # bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+    bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
 fi
 
 
