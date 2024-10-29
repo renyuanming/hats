@@ -70,9 +70,9 @@ if [[ "$initial_workload" == "workloads/motivation" ]]; then
     #     bin/ycsb run cassandra-cql -p maxexecutiontime=1800 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     # fi
     if [[ $hostName == "proj18" ]]; then
+        sleep 1200
         bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     elif [[ $hostName == "proj19" ]]; then
-        sleep 1200
         bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     fi
 else
