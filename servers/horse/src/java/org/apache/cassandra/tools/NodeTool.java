@@ -97,6 +97,7 @@ public class NodeTool
                 SetHorse.class,
                 RequestDistribution.class,
                 GetBreakdown.class,
+                StartProbe.class,
                 Assassinate.class,
                 CassHelp.class,
                 CIDRFilteringStats.class,

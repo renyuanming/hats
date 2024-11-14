@@ -305,6 +305,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public AtomicLong localReadCountOfSystemTables = new AtomicLong(0);
     public long[][] foregroundReadCountOfEachReplicationGroup;
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("LocalReadLatency", DatabaseDescriptor.getSchedulingInterval());
+    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
     public LatencyCalculator writeLatencyCalculator = new LatencyCalculator("LocalWriteLatency", DatabaseDescriptor.getSchedulingInterval());
     public AtomicInteger stateGatheringSignalInFlight = new AtomicInteger(0);
     public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
@@ -369,6 +370,61 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public static String procIoFile="/proc/" + pid + "/io";
     public String measurementFile = System.getProperty("user.dir") + "/metrics/measurement.txt";
 
+
+
+
+
+    public String startProbe()
+    {
+        String smallMeasurementFile = System.getProperty("user.dir") + "/metrics/smallScale.txt";
+        String largeMeasurementFile = System.getProperty("user.dir") + "/metrics/largeScale.txt";
+
+        Runnable smallRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line = String.format("Mean is: %.2f, Median is: %.2f\n", smallLatencyCalculator.getWindowMean(), smallLatencyCalculator.getMedian());
+                    writeToFile(smallMeasurementFile, line);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        Runnable largeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line = String.format("Mean is: %.2f, Median is: %.2f\n", readLatencyCalculator.getWindowMean(), readLatencyCalculator.getMedian());
+                    writeToFile(largeMeasurementFile, line);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        };
+
+
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(smallRunnable, 1, 1, TimeUnit.SECONDS);
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(largeRunnable, 1, 60, TimeUnit.SECONDS);
+        return "Start the probe";
+    }
+
+    private void writeToFile(String fileName, String line) throws IOException
+    {
+        File file = new File(fileName);
+        boolean isNewFile = file.toJavaIOFile().createNewFile();  
+
+        FileWriter fileWriter = new FileWriter(file.toJavaIOFile(), true);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        if (isNewFile) {
+            bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
+        }
+
+        bufferedWriter.write(line);
+        bufferedWriter.close();
+    }
 
 
 

@@ -359,6 +359,12 @@ public class NodeProbe implements AutoCloseable
         return ssProxy.getBreakdownTime();
     }
 
+    
+    public String startProbe()
+    {
+        return ssProxy.startProbe();
+    }
+
     public void setHorse(String enableHorse, String step_size, String offload_threshold, String recovery_threshold) {
         ssProxy.setHorse(enableHorse, step_size, offload_threshold, recovery_threshold);
     }
