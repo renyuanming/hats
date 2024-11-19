@@ -410,7 +410,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
 
-    private final static MetricRegistry registry = new MetricRegistry();
+    private static MetricRegistry registry = new MetricRegistry();
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
     public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
 
