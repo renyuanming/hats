@@ -460,6 +460,11 @@ public class NodeProbe implements AutoCloseable
         return ssProxy.getBreakdownTime();
     }
 
+    public String startProbe()
+    {
+        return ssProxy.startProbe();
+    }
+
     public void forceUserDefinedCompaction(String datafiles) throws IOException, ExecutionException, InterruptedException
     {
         compactionProxy.forceUserDefinedCompaction(datafiles);

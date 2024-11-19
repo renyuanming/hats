@@ -1990,6 +1990,8 @@ public class StorageProxy implements StorageProxyMBean
             if(command.metadata().name.contains("usertable"))
             {
                 command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                StorageService.instance.readLatencyCalculator.record(latency);
+                StorageService.instance.smallLatencyCalculator.record(latency);
                 StorageService.instance.coordinatorReadTime += latency / 1000;
             }
             else
@@ -2053,6 +2055,8 @@ public class StorageProxy implements StorageProxyMBean
                 if(command.metadata().name.contains("usertable"))
                 {
                     command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                    StorageService.instance.readLatencyCalculator.record(latency);
+                    StorageService.instance.smallLatencyCalculator.record(latency);
                     StorageService.instance.coordinatorReadTime += latency / 1000;
                 }
                 else

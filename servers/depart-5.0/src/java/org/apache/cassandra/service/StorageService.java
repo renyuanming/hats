@@ -17,9 +17,11 @@
  */
 package org.apache.cassandra.service;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.FileWriter;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -84,6 +86,9 @@ import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
+import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -405,6 +410,117 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
 
+    private final static MetricRegistry registry = new MetricRegistry();
+    public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
+    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
+
+
+
+    
+    public String startProbe()
+    {
+        String smallMeasurementFile = System.getProperty("user.dir") + "/metrics/smallScale.txt";
+        String largeMeasurementFile = System.getProperty("user.dir") + "/metrics/largeScale.txt";
+
+        Runnable smallRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line = String.format("Mean is: %.2f, Median is: %.2f\n", smallLatencyCalculator.getWindowMean(), smallLatencyCalculator.getMedian());
+                    writeToFile(smallMeasurementFile, line);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        Runnable largeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line = String.format("Mean is: %.2f, Median is: %.2f\n", readLatencyCalculator.getWindowMean(), readLatencyCalculator.getMedian());
+                    writeToFile(largeMeasurementFile, line);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        };
+
+
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(smallRunnable, 1, 1, TimeUnit.SECONDS);
+        ScheduledExecutors.scheduledTasks.scheduleWithFixedDelay(largeRunnable, 1, 60, TimeUnit.SECONDS);
+        return "Start the probe";
+    }
+
+    private void writeToFile(String fileName, String line) throws IOException
+    {
+        File file = new File(fileName);
+        boolean isNewFile = file.toJavaIOFile().createNewFile();  
+
+        FileWriter fileWriter = new FileWriter(file.toJavaIOFile(), true);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        if (isNewFile) {
+            bufferedWriter.write("Metric File Created: " + file.toJavaIOFile().getAbsolutePath() + "\n");
+        }
+
+        bufferedWriter.write(line);
+        bufferedWriter.close();
+    }
+
+
+    
+    public static class LatencyCalculator 
+    {
+        private final Timer timer;
+
+        public LatencyCalculator(String metricName, int windowInterval) {
+            this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
+            registry.register(metricName, this.timer);
+        }
+
+        public void record(long latency) {
+            this.timer.update(latency, TimeUnit.NANOSECONDS);
+        }
+
+        public double getStdDev() {
+            return this.timer.getSnapshot().getStdDev() / 1000L;
+        }
+
+        public double getWindowMean() 
+        {
+            return this.timer.getSnapshot().getMean() / 1000L;
+        }
+
+        public double getLatencyForLocalStates()
+        {
+            return getWindowMean();
+            // return get75th();
+            // return getMedian();
+            // return getWindowMean();
+        }
+
+        public double getMedian()
+        {
+            return this.timer.getSnapshot().getMedian() / 1000L;
+        }
+
+        public double get75th()
+        {
+            return this.timer.getSnapshot().get75thPercentile() / 1000L;
+        }
+
+        public double get95th()
+        {
+            return this.timer.getSnapshot().get95thPercentile() / 1000L;
+        }
+
+        public int getCount()
+        {
+            return this.timer.getSnapshot().size();
+        }
+    }
 
 
     public Map<String, Long> getBreakdownTime()
