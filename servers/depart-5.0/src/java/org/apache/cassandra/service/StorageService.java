@@ -410,7 +410,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
 
-    private static MetricRegistry registry = new MetricRegistry();
+    private MetricRegistry registry = new MetricRegistry();
     public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
     public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
 
@@ -477,7 +477,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
         public LatencyCalculator(String metricName, int windowInterval) {
             this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
-            registry.register(metricName, this.timer);
+            StorageService.instance.registry.register(metricName, this.timer);
         }
 
         public void record(long latency) {
