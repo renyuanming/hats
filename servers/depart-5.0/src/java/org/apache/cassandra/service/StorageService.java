@@ -309,6 +309,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 {
     private static final Logger logger = LoggerFactory.getLogger(StorageService.class);
 
+    
+    public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
+    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
+
     public static final int INDEFINITE = -1;
     public static final int RING_DELAY_MILLIS = getRingDelay(); // delay after which we assume ring has stablized
     public static final int SCHEMA_DELAY_MILLIS = getSchemaDelay();
@@ -410,9 +414,6 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
 
-    private final static MetricRegistry registry = new MetricRegistry();
-    public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
-    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
 
 
 
@@ -471,7 +472,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
 
     
-    public class LatencyCalculator 
+    private final static MetricRegistry registry = new MetricRegistry();
+    public static class LatencyCalculator 
     {
         private final Timer timer;
 
