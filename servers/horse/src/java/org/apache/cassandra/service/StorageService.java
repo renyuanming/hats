@@ -616,7 +616,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             DatabaseDescriptor.setRecoverThreshold(Double.parseDouble(recoveryThreshold));
         }
 
-        logger.info("rymInfo: Horse parameters have been set as follows: enableHorse: {}, stepSize: {}, offloadThreshold: {}, recoveryThreshold: {}", DatabaseDescriptor.getEnableHorse(), DatabaseDescriptor.getStepSize(), DatabaseDescriptor.getOffloadThreshold(), DatabaseDescriptor.getRecoverThreshold());
+        // logger.info("rymInfo: Horse parameters have been set as follows: enableHorse: {}, stepSize: {}, offloadThreshold: {}, recoveryThreshold: {}", DatabaseDescriptor.getEnableHorse(), DatabaseDescriptor.getStepSize(), DatabaseDescriptor.getOffloadThreshold(), DatabaseDescriptor.getRecoverThreshold());
     }
 
     public String getRequestDistribution() {
@@ -1546,11 +1546,11 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             Schema.instance.startSync();
             LoadBroadcaster.instance.startBroadcasting();
             DiskUsageBroadcaster.instance.startBroadcasting();
-            if(DatabaseDescriptor.getEnableHorse())
-            {
-                logger.info("rymInfo: starting broadcast the local states...");
-                LocalStatesBroadcaster.instance.startBroadcasting();
-            }
+            // if(DatabaseDescriptor.getEnableHorse())
+            // {
+            logger.info("rymInfo: starting broadcast the local states...");
+            LocalStatesBroadcaster.instance.startBroadcasting();
+            // }
             HintsService.instance.startDispatch();
             BatchlogManager.instance.start();
             startSnapshotManager();

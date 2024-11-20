@@ -179,10 +179,10 @@ public class GlobalStates implements Serializable {
         globalPolicy = new Double[nodeCount][rf];
         for(int i = 0; i < nodeCount; i++)
         {
-            globalPolicy[i][0] = 1.0;
-            for(int j = 1; j < rf; j++)
+            // globalPolicy[i][0] = 1.0;
+            for(int j = 0; j < rf; j++)
             {
-                globalPolicy[i][j] = 0.0;
+                globalPolicy[i][j] = 1.0 / rf;
             }
         }
         logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  

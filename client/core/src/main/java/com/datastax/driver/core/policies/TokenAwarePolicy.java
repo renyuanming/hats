@@ -187,7 +187,12 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
             HorseReplicaSelector selector = clusterMetadata.getSelector(primAddress);
             if(clusterMetadata.getPolicy().isEmpty() || selector == null || queryType.equals(QueryType.SCAN))
             {
-                iter = replicas.iterator();
+                if (shuffleReplicas) {
+                    Collections.shuffle(l);
+                    iter = l.iterator();
+                } else {
+                    iter = replicas.iterator();
+                }
             }
             else
             {

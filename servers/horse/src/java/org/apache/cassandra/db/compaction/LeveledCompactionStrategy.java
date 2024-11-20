@@ -165,22 +165,22 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
             }
 
             // HORSE: We decide whether perform compaction here
-            if(DatabaseDescriptor.getEnableHorse())
-            {
-                if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
-                {
-                    int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
-                    if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
-                    {
-                        logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
-                        return null;
-                    }
-                    else
-                    {
-                        logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
-                    }
-                }
-            }
+            // if(DatabaseDescriptor.getEnableHorse())
+            // {
+            //     if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
+            //     {
+            //         int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
+            //         if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
+            //         {
+            //             logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+            //             return null;
+            //         }
+            //         else
+            //         {
+            //             logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+            //         }
+            //     }
+            // }
 
             LifecycleTransaction txn = cfs.getTracker().tryModify(candidate.sstables, OperationType.COMPACTION);
             if (txn != null)

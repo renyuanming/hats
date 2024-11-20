@@ -179,8 +179,6 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
     public <C extends ReplicaCollection<? extends C>> C sortedByProximity(final InetAddressAndPort address, C unsortedAddresses, boolean isRangeRequest)
     {
         assert address.equals(FBUtilities.getBroadcastAddressAndPort()); // we only know about ourself
-        // if(DatabaseDescriptor.getEnableHorse())
-        //     return sortedByProximityWithScore(address, unsortedAddresses);
 
         return dynamicBadnessThreshold == 0
                 ? sortedByProximityWithScore(address, unsortedAddresses, isRangeRequest)
@@ -194,12 +192,12 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         // of the sort() call. As we copy the scores map on write, it is thus enough to alias the current
         // version of it during this call.
         final HashMap<InetAddressAndPort, Double> scores = this.scores;
-        if(DatabaseDescriptor.getEnableHorse() && !isRangeRequest)
-        {
-            InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
-            return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup, isRangeRequest));
-            // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
-        }
+        // if(DatabaseDescriptor.getEnableHorse() && !isRangeRequest)
+        // {
+        //     InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
+        //     return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup, isRangeRequest));
+        //     // return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
+        // }
         return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, scores));
     }
 
