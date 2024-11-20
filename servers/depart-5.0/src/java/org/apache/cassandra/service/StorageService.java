@@ -310,8 +310,6 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     private static final Logger logger = LoggerFactory.getLogger(StorageService.class);
 
     
-    public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
-    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
 
     public static final int INDEFINITE = -1;
     public static final int RING_DELAY_MILLIS = getRingDelay(); // delay after which we assume ring has stablized
@@ -417,6 +415,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
 
 
+    public LatencyCalculator readLatencyCalculator = new LatencyCalculator("CoordinatorReadLatency", 60);
+    public LatencyCalculator smallLatencyCalculator = new LatencyCalculator("SmallCoordinatorReadLatency", 1);
     
     public String startProbe()
     {
