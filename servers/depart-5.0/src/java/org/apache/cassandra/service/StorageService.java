@@ -472,11 +472,10 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
 
     
-    private final static MetricRegistry registry = new MetricRegistry();
     public static class LatencyCalculator 
     {
         private final Timer timer;
-
+        private final MetricRegistry registry = new MetricRegistry();
         public LatencyCalculator(String metricName, int windowInterval) {
             this.timer = new Timer(new SlidingTimeWindowReservoir(windowInterval, TimeUnit.SECONDS));
             registry.register(metricName, this.timer);
