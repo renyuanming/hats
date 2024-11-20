@@ -319,9 +319,13 @@ function rebuildServer {
 }
 
 function rebuildClient {
+    branch=$1
     resetPlaybook "rebuildClient"
-    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" playbook-rebuildClient.yaml
-    ansible-playbook -v -i hosts.ini playbook-rebuildClient.yaml
+
+    playbook="playbook-rebuildClient.yaml"
+    sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" ${playbook}
+    sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
 }
 
 function loadDataset {
