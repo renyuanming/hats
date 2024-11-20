@@ -756,7 +756,7 @@ function runExp {
 
     if [ "${REBUILD_CLIENT}" == "true" ]; then
         echo "Rebuild the client"
-        rebuildClient
+        rebuildClient "${BRANCH}"
     fi
 
 
