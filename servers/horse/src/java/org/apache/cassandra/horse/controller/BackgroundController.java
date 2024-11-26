@@ -43,7 +43,7 @@ public class BackgroundController
 
     public volatile static BackgroundController compactionRateLimiter = new BackgroundController(new int[DatabaseDescriptor.getReplicationFactor()]);
 
-    public volatile int throttleCompactionThroughput = INITIAL_THROTTLE_THPT; // MB per second 
+    public volatile int throttleCompactionThroughput = DatabaseDescriptor.getCompactionThroughputMebibytesPerSecAsInt(); // MB per second 
 
     private final ConcurrentHashMap<Integer, Integer> targetRatios;
     private final ConcurrentHashMap<Integer, AtomicInteger> servedCounts;

@@ -289,7 +289,7 @@ public class CompactionTask extends AbstractCompactionTask
             cfs.metric.compactionBytesWritten.inc(endsize);
 
             // update the throttle compaction throughput
-            BackgroundController.compactionRateLimiter.updateThrottleThpt();
+            // BackgroundController.compactionRateLimiter.updateThrottleThpt();
             StorageService.instance.compactionTime += nanoTime() - start;
 
             
