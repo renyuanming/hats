@@ -153,7 +153,7 @@ public abstract class AbstractReadExecutor
 
             if (null == message)
                 message = readCommand.createMessage(false);
-
+            StorageService.instance.forwardedReadRequest.incrementAndGet();
             MessagingService.instance().sendWithCallback(message, endpoint, handler);
         }
 

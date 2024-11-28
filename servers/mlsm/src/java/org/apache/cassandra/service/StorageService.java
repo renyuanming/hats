@@ -371,6 +371,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public String measurementFile = System.getProperty("user.dir") + "/metrics/measurement.txt";
 
 
+    public AtomicLong forwardedReadRequest = new AtomicLong(0);
 
 
 
@@ -446,6 +447,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         breakdownTime.put("ReadMemTable", readMemtableTime / 1000000);
         breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
         
+        // some other metrics
+        breakdownTime.put("ForwardedReadRequest", instance.forwardedReadRequest.get());
         return breakdownTime;
     }
 

@@ -340,6 +340,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public volatile long readSSTableTime = 0;
     public volatile long readWaitTime = 0;
     public volatile long actorCost = 0;
+    public AtomicLong forwardedReadRequest = new AtomicLong(0);
 
     public Map<String, Long> breakdownTime = new LinkedHashMap<String, Long>();
 
@@ -418,6 +419,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         breakdownTime.put("ReadWaitTime", readWaitTime / 1000000);
         breakdownTime.put("ActorCost", actorCost / 1000000);
         
+        // some other metrics
+        breakdownTime.put("ForwardedReadRequest", instance.forwardedReadRequest.get());
         return breakdownTime;
     }
 

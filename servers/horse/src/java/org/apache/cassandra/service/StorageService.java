@@ -324,6 +324,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     // public RateMonitor localReadRateMonitor = new RateMonitor("LocalReadRate");
     // public RateMonitor coordinatorReadRateMonitor = new RateMonitor("CoordinatorReadRate");
     public AtomicLong readRequestInFlight = new AtomicLong(0);
+    public AtomicLong forwardedReadRequest = new AtomicLong(0);
     public AtomicLong getEndpointCost = new AtomicLong(0);
     public InetAddress localIP = FBUtilities.getJustBroadcastAddress();
     public InetAddressAndPort localAddressAndPort = FBUtilities.getBroadcastAddressAndPort();
@@ -461,6 +462,9 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         breakdownTime.put("ReadCache", readCacheTime / 1000000);
         breakdownTime.put("ReadMemTable", readMemtableTime / 1000000);
         breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
+
+        // some other metrics
+        breakdownTime.put("ForwardedReadRequest", instance.forwardedReadRequest.get());
         
         return breakdownTime;
     }

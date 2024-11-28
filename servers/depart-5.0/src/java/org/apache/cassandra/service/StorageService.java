@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -394,6 +395,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public volatile long coordinatorWriteTime = 0;
     public volatile long localReadTime = 0;
     public volatile long localWriteTime = 0;
+    public AtomicLong forwardedReadRequest = new AtomicLong(0);
 
 
     // Breakdown time in nano seconds
@@ -542,6 +544,8 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
         breakdownTime.put("ReadTwoLayerLog", readTwoLayerLogTime / 1000000);
         breakdownTime.put("MergeSort", mergeSort / 1000000);
+        // some other metrics
+        breakdownTime.put("ForwardedReadRequest", instance.forwardedReadRequest.get());
         return breakdownTime;
     }
 

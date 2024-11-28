@@ -247,6 +247,7 @@ public class GetBreakdown extends NodeToolCmd
         out.println("ReadCache: " + operationBreakdown.get("ReadCache"));
         out.println("ReadMemTable: " + operationBreakdown.get("ReadMemTable"));
         out.println("ReadSSTable: " + operationBreakdown.get("ReadSSTable"));
+        out.println("ForwardedReadRequest: " + operationBreakdown.get("ForwardedReadRequest"));
         out.println();
 
 

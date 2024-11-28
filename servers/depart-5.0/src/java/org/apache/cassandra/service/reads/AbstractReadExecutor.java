@@ -42,6 +42,7 @@ import org.apache.cassandra.locator.ReplicaPlans;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageProxy.LocalReadRunnable;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.reads.repair.ReadRepair;
 import org.apache.cassandra.tracing.TraceState;
 import org.apache.cassandra.tracing.Tracing;
@@ -149,6 +150,7 @@ public abstract class AbstractReadExecutor
             if (null == message)
                 message = readCommand.createMessage(false);
 
+            StorageService.instance.forwardedReadRequest.incrementAndGet();
             MessagingService.instance().sendWithCallback(message, endpoint, handler);
         }
 

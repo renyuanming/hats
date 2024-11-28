@@ -250,6 +250,7 @@ public class GetBreakdown extends NodeToolCmd
         out.println("ReadSSTable: " + operationBreakdown.get("ReadSSTable"));
         out.println("ReadWaitTime: " + operationBreakdown.get("ReadWaitTime"));
         out.println("ActorCost: " + operationBreakdown.get("ActorCost"));
+        out.println("ForwardedReadRequest: " + operationBreakdown.get("ForwardedReadRequest"));
         out.println();
 
         // Get messaging queuing latency

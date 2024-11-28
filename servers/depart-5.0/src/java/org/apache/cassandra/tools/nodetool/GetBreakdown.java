@@ -249,6 +249,7 @@ public class GetBreakdown extends NodeToolCmd
         out.println("ReadSSTable: " + operationBreakdown.get("ReadSSTable"));
         out.println("ReadTwoLayerLog: " + operationBreakdown.get("RangeSlice"));
         out.println("MergeSort: " + operationBreakdown.get("Gossip"));
+        out.println("ForwardedReadRequest: " + operationBreakdown.get("ForwardedReadRequest"));
         out.println();
 
 
