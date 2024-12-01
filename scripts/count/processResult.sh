@@ -134,7 +134,7 @@ function process_sub_directory {
         mem_size_of_all_nodes=()
         read_network_io_of_all_nodes=()
         write_network_io_of_all_nodes=()
-
+        forward_requests_of_all_nodes=0
 
         for node_dir in "$round_dir"node*; do
             node_name=$(basename "$node_dir")
@@ -142,7 +142,7 @@ function process_sub_directory {
 
             # Get the Memory
             mem_file="$node_dir/metrics/SampleExpName_Running_memory_usage.txt"
-            mem_size=$(calculate_average_memory_usage "$mem_file")
+            # mem_size=$(calculate_average_memory_usage "$mem_file")
             
             # Get the CPU 
             cpu_file="$node_dir/metrics/After-normal-run_cpu_summary.txt"
@@ -249,6 +249,8 @@ function process_sub_directory {
             merge_sort_time=$(extract_value "MergeSort" "$break_down_file")
             merge_sort_time=$(echo "$merge_sort_time * 1000 / $local_write_count" | bc)
 
+            forwarded_requests=$(extract_value "ForwardedReadRequest" "$break_down_file")
+
 
 
             eval "round_data[$node_name,node_name]=\"$node_name\""
@@ -291,6 +293,7 @@ function process_sub_directory {
             eval "round_data[$node_name,read_wait_time]+=\"$read_wait_time \""
             eval "round_data[$node_name,read_two_layer_log_time]+=\"$read_two_layer_log_time \""
             eval "round_data[$node_name,merge_sort_time]+=\"$merge_sort_time \""
+            eval "round_data[$node_name,forwarded_requests]+=\"$forwarded_requests \""
 
             user_time_of_all_nodes+=("$user_time")
             sys_time_of_all_nodes+=("$sys_time")
@@ -321,6 +324,7 @@ function process_sub_directory {
             read_wait_time_of_all_nodes+=("$read_wait_time")
             read_two_layer_log_time_of_all_nodes+=("$read_two_layer_log_time")
             merge_sort_time_of_all_nodes+=("$merge_sort_time")
+            forward_requests_of_all_nodes=$(echo "$forward_requests_of_all_nodes + $forwarded_requests" | bc)
             overall_disk_io_of_all_nodes+=("$overall_disk_io")
             overall_network_io_of_all_nodes+=("$overall_network_io")
             overall_cpu_time_of_all_nodes+=("$overall_cpu_time")
@@ -451,6 +455,8 @@ function process_sub_directory {
         eval "round_data[average_read_wait_time]=\"$average_read_wait_time\""
         eval "round_data[average_read_two_layer_log_time]=\"$average_read_two_layer_log_time\""
         eval "round_data[average_merge_sort_time]=\"$average_merge_sort_time\""
+        eval "round_data[forward_requests_of_all_nodes]=\"$forward_requests_of_all_nodes\""
+
 
         # echo "=======================Round Data=================================="
         eval "overall_data[$round,average_read_latency]=\"$average_read_latency \""
@@ -503,6 +509,7 @@ function process_sub_directory {
         eval "overall_data[$round,average_read_wait_time]=\"$average_read_wait_time\""
         eval "overall_data[$round,average_read_two_layer_log_time]=\"$average_read_two_layer_log_time\""
         eval "overall_data[$round,average_merge_sort_time]=\"$average_merge_sort_time\""
+        eval "overall_data[$round,forward_requests_of_all_nodes]=\"$forward_requests_of_all_nodes\""
         eval "overall_data[$round,round]=\"$round\""
 
         # Output the results for each round
@@ -1095,7 +1102,7 @@ function print_round_results() {
         echo -n "$node," >> "$output_file"
     done
     echo "" >> "$output_file"
-    OUTPUT_KEY_OF_EACH_NODE=("node_name" "uptime" "user_time" "sys_time" "disk_read_io" "disk_write_io" "network_recv_io" "network_send_io" "local_read_count" "local_read_latency" "coordinator_read_count" "coordinator_read_latency" "local_write_count" "local_write_latency" "coordinator_write_count" "coordinator_write_latency" "local_scan_count" "local_scan_latency" "coordinator_scan_count" "coordinator_scan_latency" "coordinator_read_time" "local_read_time" "write_memtable_time" "write_wal_time" "flush_time" "compaction_time" "read_cache_time" "read_memtable_time" "read_sstable_time" "read_two_layer_log_time" "merge_sort_time" "overall_cpu_time" "overall_disk_io" "overall_network_io" "read_wait_time" "selection_time" "mem_size" "read_net_io" "write_net_io")
+    OUTPUT_KEY_OF_EACH_NODE=("node_name" "uptime" "user_time" "sys_time" "disk_read_io" "disk_write_io" "network_recv_io" "network_send_io" "local_read_count" "local_read_latency" "coordinator_read_count" "coordinator_read_latency" "local_write_count" "local_write_latency" "coordinator_write_count" "coordinator_write_latency" "local_scan_count" "local_scan_latency" "coordinator_scan_count" "coordinator_scan_latency" "coordinator_read_time" "local_read_time" "write_memtable_time" "write_wal_time" "flush_time" "compaction_time" "read_cache_time" "read_memtable_time" "read_sstable_time" "read_two_layer_log_time" "merge_sort_time" "forwarded_requests" "overall_cpu_time" "overall_disk_io" "overall_network_io" "read_wait_time" "selection_time" "mem_size" "read_net_io" "write_net_io")
 
     for key in "${OUTPUT_KEY_OF_EACH_NODE[@]}"; do
         echo -n "$key," >> "$output_file"
@@ -1200,6 +1207,9 @@ function print_round_results() {
     echo "" >> "$output_file"
     echo -n "Average Read SSTable Time (us)," >> "$output_file"
     echo -n "${data[average_read_sstable_time]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "Total forwarded requests," >> "$output_file"
+    echo -n "${data[forward_requests_of_all_nodes]}," >> "$output_file"
     echo "" >> "$output_file"
     echo -n "Average Read Two Layer Log Time (us)," >> "$output_file"
     echo -n "${data[average_read_two_layer_log_time]}," >> "$output_file"
