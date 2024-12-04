@@ -102,7 +102,7 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr, targetIndex);
         if (isRangeRequest) 
             return latencyScore;
-        if(GlobalStates.expectedRequestNumber[targetIndex] == 0 || latencyScore < 1)
+        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0 || latencyScore < 1)
         {
             return greedyScore + latencyScore;
         }
@@ -124,7 +124,7 @@ public class ReplicaSelector
         double latencyScore = 0.0;
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            if(GlobalStates.expectedRequestNumber[targetIndex] == 0)
+            if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
             {
                 latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
             }
