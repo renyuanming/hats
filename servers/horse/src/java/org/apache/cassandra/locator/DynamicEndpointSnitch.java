@@ -310,7 +310,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (sample == null)
                 sample = maybeNewSample;
         }
-        sample.update(unit.toMillis(latency));
+        sample.update(unit.toMicros(latency));
     }
 
     @VisibleForTesting
@@ -346,7 +346,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
                 maxLatency = mean;
 
             // HORSE: update the sample latency
-            newSampleLatency.put(entry.getKey(), mean);
+            newSampleLatency.put(entry.getKey(), entry.getValue().getMean());
             if (mean < minLatency)
                 minLatency = mean;
             

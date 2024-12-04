@@ -133,12 +133,13 @@ public class ReplicaSelector
             else
             {
                 // milli to seconds
-                double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000;
+                double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000000;
                 latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
             }            
         }
         else
         {
+            logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
             latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
         }
 

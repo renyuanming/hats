@@ -168,7 +168,7 @@ public class GlobalStates implements Serializable {
         {
             localPolicyForBackgroundController[i] = (double) readCountOfEachReplica[i] / totalReadCountOfTheNode;
         }
-
+        logger.info("rymInfo: policy for background controller {}", localPolicyForBackgroundController);
         return localPolicyForBackgroundController;
     }
 
