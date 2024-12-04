@@ -310,7 +310,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (sample == null)
                 sample = maybeNewSample;
         }
-        sample.update(unit.toMillis(latency));
+        sample.update(unit.toMicros(latency));
     }
 
     @VisibleForTesting

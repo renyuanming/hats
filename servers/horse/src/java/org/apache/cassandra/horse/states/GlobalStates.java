@@ -34,6 +34,7 @@ import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.controller.ReplicaSelector;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
@@ -55,6 +56,7 @@ public class GlobalStates implements Serializable {
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
     
+    public int[] expectedRequestNumber; // N
     public Double[] scoreVector; // N
     public double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
@@ -83,6 +85,7 @@ public class GlobalStates implements Serializable {
         this.loadMatrix = new int[this.nodeCount][rf];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
+        this.expectedRequestNumber = new int[this.nodeCount];
         for(int i = 0; i < this.nodeCount; i++)
         {
             this.scoreVector[i] = 0.0;
@@ -92,6 +95,7 @@ public class GlobalStates implements Serializable {
             this.updatingReadCountOfEachRG[i] = 0;
             this.versionVector[i] = 0;
             this.deltaVector[i] = 0.0;
+            this.expectedRequestNumber[i] = 0;
             for(int j = 0; j < rf; j++)
             {
                 this.loadMatrix[i][j] = 0;
@@ -157,6 +161,11 @@ public class GlobalStates implements Serializable {
             readCountOfEachReplica[i] = (int) (GlobalStates.globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
             totalReadCountOfTheNode += readCountOfEachReplica[i];
         }
+        if(targetNode.equals(StorageService.instance.localAddressAndPort))
+        {
+            ReplicaSelector.expectedRequestNumber = totalReadCountOfTheNode;
+        }
+        GlobalStates.globalStates.expectedRequestNumber[nodeIndex] = totalReadCountOfTheNode;
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {

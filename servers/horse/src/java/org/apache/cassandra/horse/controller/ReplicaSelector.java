@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.horse.states.LocalStates;
@@ -58,6 +59,7 @@ public class ReplicaSelector
     private static Random random = new Random();
 
     public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, 1);
+    public static int expectedRequestNumber = 0;
 
     public static class SnitchMetrics 
     {
@@ -97,7 +99,7 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
         if (isRangeRequest) 
             return latencyScore;
-        return greedyScore + latencyScore;
+        return latencyScore - expectedRequestNumber;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
@@ -111,26 +113,19 @@ public class ReplicaSelector
     }
     
     private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr) {
-        // Double sampleLatency = snitchMetrics.sampleLatency.get(targetAddr);
-        // return (sampleLatency != null) ? snitchMetrics.minLatency / sampleLatency : 0.0;
-
         double latencyScore = 0.0;
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
+            // latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            // micro to seconds
+            double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr) + 1) / 1000000;
+            latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
         }
         else
         {
-            // logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
             latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
         }
 
-        // latencyScore = Math.pow(latencyScore, 3);
-        // latencyScore = 1 / (1 + Math.exp(-latencyScore));
-
-        // latencyScore = 1 - Math.exp(-latencyScore);
         return latencyScore;
     }
     

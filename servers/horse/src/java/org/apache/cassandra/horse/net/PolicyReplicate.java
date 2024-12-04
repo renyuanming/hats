@@ -25,6 +25,7 @@ import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessageFlag;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.Verb;
+import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.io.IVersionedSerializer;
@@ -52,13 +53,15 @@ public class PolicyReplicate
     private final int placementPolicyInBytesSize;
     public final byte[] backgroundPolicyInBytes;
     private final int backgroundPolicyInBytesSize;
+    public final int expectedRequestNumber;
     // Map<InetAddress, LocalStates> states
-    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes)
+    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes, int expectedRequestNumber)
     {
         this.placementPolicyInBytes = placementPolicyInBytes;
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
         this.backgroundPolicyInBytes = backgroundPolicyInBytes;
         this.backgroundPolicyInBytesSize = backgroundPolicyInBytes.length;
+        this.expectedRequestNumber = expectedRequestNumber;
     }
 
     public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][] placementPolicy)
@@ -67,11 +70,12 @@ public class PolicyReplicate
         byte[] backgroundPolicyInBytes = null;
 
         Double[] backgroundPolicy = GlobalStates.translatePolicyForBackgroundController(follower);
+        int expectedRequestNumber = GlobalStates.globalStates.expectedRequestNumber[Gossiper.getAllHosts().indexOf(follower)];
                 
         try {
             placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) placementPolicy);
             backgroundPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) backgroundPolicy);
-            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes);
+            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumber);
             Message<PolicyReplicate> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, follower);
         } catch (Exception e) {
@@ -90,6 +94,7 @@ public class PolicyReplicate
             out.write(t.placementPolicyInBytes);
             out.writeInt(t.backgroundPolicyInBytesSize);
             out.write(t.backgroundPolicyInBytes);
+            out.write(t.expectedRequestNumber);
         }
 
         @Override
@@ -101,7 +106,8 @@ public class PolicyReplicate
             int backgroundPolicyInBytesSize = in.readInt();
             byte[] backgroundPolicyInBytes = new byte[backgroundPolicyInBytesSize];
             in.readFully(backgroundPolicyInBytes);
-            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes);
+            int expectedRequestNumber = in.readInt();
+            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumber);
         }
 
         @Override
@@ -110,7 +116,8 @@ public class PolicyReplicate
             long size = t.placementPolicyInBytesSize + 
                         sizeof(t.placementPolicyInBytesSize) + 
                         t.backgroundPolicyInBytesSize +
-                        sizeof(t.backgroundPolicyInBytesSize);
+                        sizeof(t.backgroundPolicyInBytesSize) +
+                        sizeof(t.expectedRequestNumber);
             return size;
         }
 
