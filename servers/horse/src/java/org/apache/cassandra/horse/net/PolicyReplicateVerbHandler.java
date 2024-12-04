@@ -49,6 +49,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
             GlobalStates.globalPolicy = (Double[][]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
             backgroundPolicy = (Double[]) ByteObjectConversion.byteArrayToObject(payload.backgroundPolicyInBytes);
             GlobalStates.expectedRequestNumber = (int []) ByteObjectConversion.byteArrayToObject(payload.expectedRequestNumberInBytes);
+            logger.info("rymInfo: the expected request number of each node is {}", GlobalStates.expectedRequestNumber);
             // logger.info("rymInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumber, ReplicaSelector.expectedRequestNumber);
 
             // Get the placement policy for local replicas
