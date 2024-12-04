@@ -94,7 +94,7 @@ public class PolicyReplicate
             out.write(t.placementPolicyInBytes);
             out.writeInt(t.backgroundPolicyInBytesSize);
             out.write(t.backgroundPolicyInBytes);
-            out.write(t.expectedRequestNumber);
+            out.writeInt(t.expectedRequestNumber);
         }
 
         @Override
