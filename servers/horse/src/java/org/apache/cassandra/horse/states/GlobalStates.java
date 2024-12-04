@@ -161,7 +161,7 @@ public class GlobalStates implements Serializable {
             readCountOfEachReplica[i] = (int) (GlobalStates.globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
             totalReadCountOfTheNode += readCountOfEachReplica[i];
         }
-        logger.debug("rymDebug: The read count of each replica is {}, the total read count of the node is {}", Arrays.toString(readCountOfEachReplica), totalReadCountOfTheNode);
+        logger.info("rymInfo: The read count of each replica is {}, the total read count of the node is {}", Arrays.toString(readCountOfEachReplica), totalReadCountOfTheNode);
         GlobalStates.expectedRequestNumber[nodeIndex] = totalReadCountOfTheNode;
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
