@@ -155,7 +155,7 @@ public class GlobalStates implements Serializable {
             throw new IllegalStateException("The node index is -1, the node is not in the host list.");
         }
         // int[] readCountOfEachReplica = new int[rf];
-        int totalReadCountOfTheNode = 0;
+        // int totalReadCountOfTheNode = 0;
         // for(int i = 0; i < rf; i++)
         // {
         //     int rgIndex = (nodeIndex - i + GlobalStates.globalStates.nodeCount) % GlobalStates.globalStates.nodeCount;
@@ -167,7 +167,7 @@ public class GlobalStates implements Serializable {
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {
-            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / totalReadCountOfTheNode;
+            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumber[i];
         }
         logger.info("rymInfo: policy for background controller {}", localPolicyForBackgroundController);
         return localPolicyForBackgroundController;
