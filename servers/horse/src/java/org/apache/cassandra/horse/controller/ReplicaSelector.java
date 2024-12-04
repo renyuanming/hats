@@ -34,12 +34,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
+import org.gridkit.jvmtool.GlobHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +62,6 @@ public class ReplicaSelector
     private static Random random = new Random();
 
     public static volatile SnitchMetrics snitchMetrics= new SnitchMetrics(new ConcurrentHashMap<InetAddressAndPort, Double>(), 1, 1);
-    public static int expectedRequestNumber = 0;
 
     public static class SnitchMetrics 
     {
@@ -95,16 +97,17 @@ public class ReplicaSelector
     }
     
     private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
+        int targetIndex = Gossiper.getAllHosts().indexOf(targetAddr);
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
-        double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
+        double latencyScore = calculateLatencyScore(replicationGroup, targetAddr, targetIndex);
         if (isRangeRequest) 
             return latencyScore;
-        if(expectedRequestNumber == 0 || latencyScore < 1)
+        if(GlobalStates.expectedRequestNumber[targetIndex] == 0 || latencyScore < 1)
         {
             return greedyScore + latencyScore;
         }
-        logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", expectedRequestNumber, latencyScore, latencyScore - expectedRequestNumber);
-        return latencyScore - expectedRequestNumber;
+        logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumber[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumber[targetIndex]);
+        return latencyScore - GlobalStates.expectedRequestNumber[targetIndex];
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
@@ -117,11 +120,11 @@ public class ReplicaSelector
         return greedyScore;
     }
     
-    private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr) {
+    private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr, int targetIndex) {
         double latencyScore = 0.0;
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            if(expectedRequestNumber == 0)
+            if(GlobalStates.expectedRequestNumber[targetIndex] == 0)
             {
                 latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
             }

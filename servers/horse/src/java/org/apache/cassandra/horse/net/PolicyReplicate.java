@@ -53,29 +53,32 @@ public class PolicyReplicate
     private final int placementPolicyInBytesSize;
     public final byte[] backgroundPolicyInBytes;
     private final int backgroundPolicyInBytesSize;
-    public final int expectedRequestNumber;
+    public final byte[] expectedRequestNumberInBytes;
+    public final int expectedRequestNumberInBytesSize;
     // Map<InetAddress, LocalStates> states
-    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes, int expectedRequestNumber)
+    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes, byte[] expectedRequestNumberInBytes)
     {
         this.placementPolicyInBytes = placementPolicyInBytes;
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
         this.backgroundPolicyInBytes = backgroundPolicyInBytes;
         this.backgroundPolicyInBytesSize = backgroundPolicyInBytes.length;
-        this.expectedRequestNumber = expectedRequestNumber;
+        this.expectedRequestNumberInBytes = expectedRequestNumberInBytes;
+        this.expectedRequestNumberInBytesSize = expectedRequestNumberInBytes.length;
     }
 
     public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][] placementPolicy)
     {
         byte[] placementPolicyInBytes = null;
         byte[] backgroundPolicyInBytes = null;
+        byte[] expectedRequestNumberInBytes = null;
 
         Double[] backgroundPolicy = GlobalStates.translatePolicyForBackgroundController(follower);
-        int expectedRequestNumber = GlobalStates.globalStates.expectedRequestNumber[Gossiper.getAllHosts().indexOf(follower)];
                 
         try {
             placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) placementPolicy);
             backgroundPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) backgroundPolicy);
-            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumber);
+            expectedRequestNumberInBytes = ByteObjectConversion.objectToByteArray((Serializable) GlobalStates.expectedRequestNumber);
+            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumberInBytes);
             Message<PolicyReplicate> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, follower);
         } catch (Exception e) {
@@ -94,7 +97,8 @@ public class PolicyReplicate
             out.write(t.placementPolicyInBytes);
             out.writeInt(t.backgroundPolicyInBytesSize);
             out.write(t.backgroundPolicyInBytes);
-            out.writeInt(t.expectedRequestNumber);
+            out.writeInt(t.expectedRequestNumberInBytesSize);
+            out.write(t.expectedRequestNumberInBytes);
         }
 
         @Override
@@ -106,8 +110,11 @@ public class PolicyReplicate
             int backgroundPolicyInBytesSize = in.readInt();
             byte[] backgroundPolicyInBytes = new byte[backgroundPolicyInBytesSize];
             in.readFully(backgroundPolicyInBytes);
-            int expectedRequestNumber = in.readInt();
-            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumber);
+            int expectedRequestNumberInBytesSize = in.readInt();
+            byte[] expectedRequestNumberInBytes = new byte[expectedRequestNumberInBytesSize];
+            in.readFully(expectedRequestNumberInBytes);
+
+            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumberInBytes);
         }
 
         @Override
@@ -117,7 +124,8 @@ public class PolicyReplicate
                         sizeof(t.placementPolicyInBytesSize) + 
                         t.backgroundPolicyInBytesSize +
                         sizeof(t.backgroundPolicyInBytesSize) +
-                        sizeof(t.expectedRequestNumber);
+                        t.expectedRequestNumberInBytesSize +
+                        sizeof(t.expectedRequestNumberInBytesSize);
             return size;
         }
 
