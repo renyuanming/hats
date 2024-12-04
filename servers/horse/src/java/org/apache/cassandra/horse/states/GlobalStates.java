@@ -86,7 +86,6 @@ public class GlobalStates implements Serializable {
         this.loadMatrix = new int[this.nodeCount][rf];
         this.versionVector = new int[this.nodeCount];
         this.deltaVector = new Double[this.nodeCount];
-        // this.expectedRequestNumber = new int[this.nodeCount];
         for(int i = 0; i < this.nodeCount; i++)
         {
             this.scoreVector[i] = 0.0;
@@ -96,7 +95,6 @@ public class GlobalStates implements Serializable {
             this.updatingReadCountOfEachRG[i] = 0;
             this.versionVector[i] = 0;
             this.deltaVector[i] = 0.0;
-            // this.expectedRequestNumber[i] = 0;
             for(int j = 0; j < rf; j++)
             {
                 this.loadMatrix[i][j] = 0;
@@ -154,16 +152,6 @@ public class GlobalStates implements Serializable {
         {
             throw new IllegalStateException("The node index is -1, the node is not in the host list.");
         }
-        // int[] readCountOfEachReplica = new int[rf];
-        // int totalReadCountOfTheNode = 0;
-        // for(int i = 0; i < rf; i++)
-        // {
-        //     int rgIndex = (nodeIndex - i + GlobalStates.globalStates.nodeCount) % GlobalStates.globalStates.nodeCount;
-        //     readCountOfEachReplica[i] = (int) (GlobalStates.globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
-        //     totalReadCountOfTheNode += readCountOfEachReplica[i];
-        // }
-        // logger.info("rymInfo: The read count of each replica is {}, the total read count of the node is {}", Arrays.toString(readCountOfEachReplica), totalReadCountOfTheNode);
-        // GlobalStates.expectedRequestNumber[nodeIndex] = totalReadCountOfTheNode;
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {

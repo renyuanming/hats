@@ -168,6 +168,7 @@ public class LoadBalancer {
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < R; j++) {
                     readRatio[i][j] = count[i][j] / actualCountOfEachReplicationGroup[(i - j + N) % N];
+                    GlobalStates.expectedRequestDistribution[i][j] = (int) count[i][j];
                 }
             }
 
@@ -184,7 +185,6 @@ public class LoadBalancer {
             for (int i = 0; i < R; i++) {
                 StringBuilder row = new StringBuilder();
                 for (int j = 0; j < N; j++) {
-                    GlobalStates.expectedRequestDistribution[j][i] = (int) count[j][i];
                     row.append(String.format("%10d ", (int) count[j][i]));  // Format as integer with width 10
                 }
                 logger.info(row.toString());  // Log the entire row at once
