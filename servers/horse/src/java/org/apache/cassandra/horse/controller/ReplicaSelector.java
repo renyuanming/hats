@@ -99,7 +99,7 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
         if (isRangeRequest) 
             return latencyScore;
-        if(expectedRequestNumber < 0 && latencyScore > 1)
+        if(expectedRequestNumber == 0 || latencyScore < 1)
         {
             return greedyScore + latencyScore;
         }
