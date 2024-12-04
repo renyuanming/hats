@@ -124,7 +124,8 @@ public class ReplicaSelector
         double latencyScore = 0.0;
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            logger.info("rymInfo: the expected request number is {}, the latency is {}", GlobalStates.expectedRequestNumber[targetIndex], snitchMetrics.sampleLatency.get(targetAddr));
+            if(GlobalStates.expectedRequestNumber != null)
+                logger.info("rymInfo: the expected request number is {}, the latency is {}", GlobalStates.expectedRequestNumber[targetIndex], snitchMetrics.sampleLatency.get(targetAddr));
             if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
             {
                 latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
