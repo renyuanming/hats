@@ -183,8 +183,10 @@ public class GlobalStates implements Serializable {
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
         globalPolicy = new Double[nodeCount][rf];
+        expectedRequestNumber = new int[nodeCount];
         for(int i = 0; i < nodeCount; i++)
         {
+            expectedRequestNumber[i] = 0;
             globalPolicy[i][0] = 1.0;
             for(int j = 1; j < rf; j++)
             {
