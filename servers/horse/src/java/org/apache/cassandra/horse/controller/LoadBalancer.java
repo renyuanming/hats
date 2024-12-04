@@ -22,196 +22,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.cassandra.concurrent.ExecutorFactory.Global;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoadBalancer {
 
-    // private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
-    // public static Double[][] balanceLoad(int N, int R, int W, double[] L, int[][] C) 
-    // {
-    //     double[] requestCount = new double[N]; // request count of each node
-    //     for (int i = 0; i < N; i++) {
-    //         for (int j = 0; j < R; j++) {
-    //             requestCount[i] += C[i][j];
-    //         }
-    //     }
-    //     double[] latency = new double[N]; // average latency of each node
-    //     for (int i = 0; i < N; i++) {
-    //         latency[i] = L[i] / 1000000; // convert to seconds
-    //     }
-    //     double[] T = new double[N]; // service rate of each node T_i = W / (L_i * 1e-6)
-    //     for (int i = 0; i < N; i++) {
-    //         T[i] = W / latency[i];
-    //         // T[i] = 4 / latency[i];
-    //     }
-        
-    //     double[] lambda = new double[N]; // concurrency factor of each node lambda_i = C_i / T_i
-    //     for (int i = 0; i < N; i++) {
-    //         // lambda[i] = requestCount[i] / T[i];
-    //         lambda[i] = 4;
-    //     }
 
-    //     double[] actualThpt = new double[N]; // target throughput of each node
-    //     for (int i = 0; i < N; i++) {
-    //         actualThpt[i] = requestCount[i] / 4;
-    //     }
-
-    //     double[][] count = new double[N][R];
-    //     for (int i = 0; i < N; i++) {
-    //         for (int j = 0; j < R; j++) {
-    //             count[i][j] = C[i][j];
-    //         }
-    //     }
-    //     // print the average latency, service rate, and concurrency factor of each node
-    //     System.out.println("Request count of each node:");
-    //     System.out.println(Arrays.toString(requestCount));
-    //     System.out.println("Average latency (us) of each node:");
-    //     System.out.println(Arrays.toString(L));
-    //     System.out.println("Actual thpt (ops/threads) of each node:");
-    //     System.out.println(Arrays.toString(actualThpt));
-    //     System.out.println("Target thoughput (service rate) of each node:");
-    //     System.out.println(Arrays.toString(T));
-    //     System.out.println("Concurrency factor of each node:");
-    //     System.out.println(Arrays.toString(lambda));
-
-
-
-    //     Double[][] readRatio = new Double[N][R];
-    //     double[] actualCountOfEachNode = new double[N];
-    //     double[] actualCountOfEachReplicationGroup = new double[N];
-
-    //     // initialize actualCountOfEachNode based on C
-    //     for (int i = 0; i < N; i++) {
-    //         for (int j = 0; j < R; j++) {
-    //             actualCountOfEachNode[i] += C[i][j];
-    //         }
-    //     }
-
-    //     // Traverse all nodes
-    //     for (int i = 0; i < N; i++) {
-    //         // Calculate the mean latency of the replication group
-    //         double localAvgLatency = 0;
-    //         double localMedianLatency = 0;
-
-    //         double[] subArray = new double[R];
-    //         int index = 0;
-    //         for (int j = i; j < i + R; j++) {
-    //             localAvgLatency += latency[j % N];
-    //             subArray[index++] = latency[j % N];
-    //         }
-    //         localAvgLatency /= R;
-    //         Arrays.sort(subArray);
-    //         if (R % 2 == 0) {
-    //             localMedianLatency = (subArray[R / 2 - 1] + subArray[R / 2]) / 2.0;
-    //         } else {
-    //             localMedianLatency = subArray[R / 2];
-    //         }
-
-    //         double targetLocalLatency = Math.min(localAvgLatency, localMedianLatency);
-            
-
-    //         // Calculate the estimated request count of the R nodes
-    //         double[] localEstimateCount = new double[R];
-    //         for (int j = i; j < i + R; j++) {
-    //             localEstimateCount[j - i] = lambda[j % N] * W / targetLocalLatency;
-    //             // localEstimateCount[j - i] = W / targetLocalLatency;
-    //         }
-
-    //         // logger.info("rymInfo: Current node is {}, targetLocalLatency: {}, local estimate count is {}, actual count is {}", i+1, targetLocalLatency, Arrays.toString(localEstimateCount), Arrays.toString(actualCountOfEachNode));
-    //         // logger.info("rymInfo: Current node is {}, targetLocalLatency: {}, local estimate count is {}, actual count is {}", i+1, targetLocalLatency, Arrays.toString(localEstimateCount), Arrays.toString(actualCountOfEachNode));
-
-    //         // For replication group i, update C[i][i,...,i+R-1] to minimize the difference between the estimated request count and the actual request count
-    //         double[] localDelta = new double[R];
-    //         for (int j = i; j < i + R; j++) {
-    //             localDelta[j - i] = localEstimateCount[j - i] - actualCountOfEachNode[j % N];
-    //             // localDelta[j - i] = actualCountOfEachNode[i] - localEstimateCount[j - i];
-    //         }
-
-    //         // Update the request count of the R nodes
-
-    //         // Get the indices of the nodes with positive and negative delta
-    //         List<Integer> positiveIndices = new ArrayList<>(); // overloaded nodes
-    //         List<Integer> negativeIndices = new ArrayList<>(); // light load nodes
-
-    //         for (int j = 0; j < R; j++) {
-    //             if (localDelta[j] > 0) {
-    //                 positiveIndices.add(j); // positive value: overloaded nodes
-    //             } else if (localDelta[j] < 0) {
-    //                 negativeIndices.add(j); // negative value: light load nodes
-    //             }
-    //         }
-
-    //         // move requests from overloaded nodes to light load nodes
-    //         for (int pos : positiveIndices) {
-    //             int nodeIndexPos = (i + pos) % N; 
-
-    //             for (int neg : negativeIndices) {
-    //                 int nodeIndexNeg = (i + neg) % N; 
-
-                   
-    //                 double adjustment = Math.min(localDelta[pos], -localDelta[neg]);
-    //                 adjustment = Math.min(adjustment, count[nodeIndexPos][pos]);
-
-    //                 count[nodeIndexPos][pos] -= adjustment; 
-    //                 count[nodeIndexNeg][neg] += adjustment; 
-
-    //                 localDelta[pos] -= adjustment;
-    //                 localDelta[neg] += adjustment;
-
-    //                 if (localDelta[neg] == 0) {
-    //                     break;
-    //                 }
-    //             }
-    //         }
-
-    //         // update actualCountOfEachNode
-    //         for (int j = 0; j < R; j++) {
-    //             int nodeIndex = (i + j) % N;
-    //             actualCountOfEachNode[nodeIndex] = 0;
-
-    //             // update actualCountOfEachNode
-    //             for (int k = 0; k < R; k++) {
-    //                 actualCountOfEachNode[nodeIndex] += count[nodeIndex][k];
-    //             }
-
-    //             // update estimate latency latency[i]
-    //             latency[nodeIndex] = lambda[nodeIndex] * W / actualCountOfEachNode[nodeIndex];
-    //             // latency[nodeIndex] =  W / actualCountOfEachNode[nodeIndex];
-    //             actualCountOfEachReplicationGroup[i] += count[nodeIndex][j];
-    //         }
-    //     }
-    //     // Calculate the read ratio of each replication group
-    //     for (int i = 0; i < N; i++) {
-    //         for (int j = 0; j < R; j++) {
-    //             readRatio[i][j] = count[i][j] / actualCountOfEachReplicationGroup[(i - j + N) % N];
-    //         }
-    //     }
-
-        
-    //     // Print the transposed request count matrix
-    //     logger.info("Transposed request count matrix:");
-    //     for (int i = 0; i < R; i++) {
-    //         StringBuilder row = new StringBuilder();
-    //         for (int j = 0; j < N; j++) {
-    //             row.append(String.format("%10d ", (int) count[j][i]));  // Format as integer with width 10
-    //         }
-    //         logger.info(row.toString());  // Log the entire row at once
-    //     }
-
-    //     // Print the transposed read ratio matrix
-    //     logger.info("Transposed read ratio matrix:");
-    //     for (int i = 0; i < R; i++) {
-    //         StringBuilder row = new StringBuilder();
-    //         for (int j = 0; j < N; j++) {
-    //             row.append(String.format("%10.2f ", readRatio[j][i]));  // Format as float with width 10 and 2 decimal places
-    //         }
-    //         logger.info(row.toString());  // Log the entire row at once
-    //     }
-
-    //     return readRatio;
-    // }
 
 
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
@@ -366,6 +184,7 @@ public class LoadBalancer {
             for (int i = 0; i < R; i++) {
                 StringBuilder row = new StringBuilder();
                 for (int j = 0; j < N; j++) {
+                    GlobalStates.expectedRequestDistribution[j][i] = (int) count[j][i];
                     row.append(String.format("%10d ", (int) count[j][i]));  // Format as integer with width 10
                 }
                 logger.info(row.toString());  // Log the entire row at once
