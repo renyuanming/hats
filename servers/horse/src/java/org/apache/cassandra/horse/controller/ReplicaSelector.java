@@ -99,7 +99,8 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
         if (isRangeRequest) 
             return latencyScore;
-        return latencyScore - expectedRequestNumber;
+        return (expectedRequestNumber < 0 && latencyScore > 1) ? greedyScore + latencyScore : latencyScore - expectedRequestNumber;
+        // return latencyScore - expectedRequestNumber;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
@@ -116,10 +117,16 @@ public class ReplicaSelector
         double latencyScore = 0.0;
         if(snitchMetrics.sampleLatency.containsKey(targetAddr))
         {
-            // latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // micro to seconds
-            double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr) + 1) / 1000000;
-            latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
+            if(expectedRequestNumber == 0)
+            {
+                latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            }
+            else
+            {
+                // micro to seconds
+                double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000;
+                latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
+            }            
         }
         else
         {
