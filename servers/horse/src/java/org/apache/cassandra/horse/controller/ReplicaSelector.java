@@ -99,8 +99,12 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
         if (isRangeRequest) 
             return latencyScore;
-        return (expectedRequestNumber < 0 && latencyScore > 1) ? greedyScore + latencyScore : latencyScore - expectedRequestNumber;
-        // return latencyScore - expectedRequestNumber;
+        if(expectedRequestNumber < 0 && latencyScore > 1)
+        {
+            return greedyScore + latencyScore;
+        }
+        logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", expectedRequestNumber, latencyScore, latencyScore - expectedRequestNumber);
+        return latencyScore - expectedRequestNumber;
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
