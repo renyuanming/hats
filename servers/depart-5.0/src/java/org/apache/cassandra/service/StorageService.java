@@ -528,24 +528,24 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public Map<String, Long> getBreakdownTime()
     {
-        // Micro to millisecond
-        breakdownTime.put("CoordinatorReadTime", coordinatorReadTime / 1000);
-        breakdownTime.put("CoordinatorWriteTime", coordinatorWriteTime / 1000);
-        breakdownTime.put("LocalReadTime", localReadTime / 1000);
-        breakdownTime.put("LocalWriteTime", localWriteTime / 1000);
+        // Micro to micro
+        breakdownTime.put("CoordinatorReadTime", coordinatorReadTime);
+        breakdownTime.put("CoordinatorWriteTime", coordinatorWriteTime);
+        breakdownTime.put("LocalReadTime", localReadTime);
+        breakdownTime.put("LocalWriteTime", localWriteTime);
         
-        // Nano to millisecond
-        breakdownTime.put("WriteMemTable", memtableTime / 1000000);
-        breakdownTime.put("CommitLog", commitLogTime / 1000000);
-        breakdownTime.put("Flush", flushTime / 1000000);
-        breakdownTime.put("Compaction", compactionTime / 1000000);
-        breakdownTime.put("ReadCache", readCacheTime / 1000000);
-        breakdownTime.put("ReadMemTable", readMemtableTime / 1000000);
-        breakdownTime.put("ReadSSTable", readSSTableTime / 1000000);
-        breakdownTime.put("ReadTwoLayerLog", readTwoLayerLogTime / 1000000);
-        breakdownTime.put("MergeSort", mergeSort / 1000000);
+        // Nano to micro
+        breakdownTime.put("WriteMemTable", memtableTime / 1000);
+        breakdownTime.put("CommitLog", commitLogTime / 1000);
+        breakdownTime.put("Flush", flushTime / 1000);
+        breakdownTime.put("Compaction", compactionTime / 1000);
+        breakdownTime.put("ReadCache", readCacheTime / 1000);
+        breakdownTime.put("ReadMemTable", readMemtableTime / 1000);
+        breakdownTime.put("ReadSSTable", readSSTableTime / 1000);
+
         // some other metrics
         breakdownTime.put("ForwardedReadRequest", instance.forwardedReadRequest.get());
+        
         return breakdownTime;
     }
 

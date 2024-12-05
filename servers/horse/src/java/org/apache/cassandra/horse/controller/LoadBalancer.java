@@ -31,7 +31,6 @@ public class LoadBalancer {
 
 
 
-
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
     public static Double[][] balanceLoad(int N, int R, int W, double[] L, int[][] C) 
     {
