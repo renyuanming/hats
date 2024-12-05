@@ -132,7 +132,7 @@ public class ReplicaSelector
             }
             else
             {
-                // milli to seconds
+                // micro to seconds
                 double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000000;
                 latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
             }            
