@@ -133,7 +133,7 @@ public class ReplicaSelector
             else
             {
                 logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-                latencyScore = 1 * random.nextDouble();
+                latencyScore = 0;            
             }
         }
         else
