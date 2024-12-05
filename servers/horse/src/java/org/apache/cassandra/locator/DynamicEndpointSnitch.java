@@ -314,10 +314,10 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
         // HORSE: update the ewma sample latency
         ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMicros(latency) : ewmaSamples.get(host) * 0.5 + unit.toMicros(latency) * 0.5);
-        if(newSampleLatency.get(host) == null)
-        {
-            ReplicaSelector.snitchMetrics.sampleLatency.put(host, unit.toMicros(latency) * 1.0);
-        }
+        // if(newSampleLatency.get(host) == null)
+        // {
+        //     ReplicaSelector.snitchMetrics.sampleLatency.put(host, unit.toMicros(latency) * 1.0);
+        // }
         sample.update(unit.toMicros(latency));
     }
 
