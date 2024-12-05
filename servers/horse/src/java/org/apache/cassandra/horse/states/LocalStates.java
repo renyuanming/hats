@@ -72,22 +72,9 @@ public class LocalStates implements Serializable {
 
     public static void transformToRatio()
     {
-        logger.info("rymInfo: This is the transformToRatio method");
-
-
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
-
-        for (int rgIndex= 0; rgIndex < nodeCount; rgIndex++)
-        {
-            for (int replicaIndex = 0; replicaIndex < rf; replicaIndex++)
-            {
-                int curNodeIndex = (rgIndex + replicaIndex) % nodeCount;
-                GlobalStates.expectedRequestNumberOfEachRG[rgIndex] += GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex][replicaIndex];
-            }
-        }
-        logger.info("rymInfo: the expected request number of each RG is {}", GlobalStates.expectedRequestNumberOfEachRG);
-        
+        logger.info("rymInfo: This is the transformToRatio method");
 
         for (int i = 0; i < nodeCount; i++) {
             for (int j = 0; j < rf; j++) {

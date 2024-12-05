@@ -166,11 +166,21 @@ public class GlobalStates implements Serializable {
 
     public static void updatePolicyForCurrentNode()
     {
-        // Update globalPolicy, expectedRequestNumberOfEachRG
-        LocalStates.transformToRatio();
-
+        int nodeCount = Gossiper.getAllHosts().size();
+        logger.info("rymInfo: Updating the policy for current node, the node count is {}", nodeCount);
+        // update expectedRequestNumberOfEachRG
+        for (int rgIndex= 0; rgIndex < nodeCount; rgIndex++)
+        {
+            for (int replicaIndex = 0; replicaIndex < rf; replicaIndex++)
+            {
+                int curNodeIndex = (rgIndex + replicaIndex) % nodeCount;
+                GlobalStates.expectedRequestNumberOfEachRG[rgIndex] += GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex][replicaIndex];
+            }
+        }
+        logger.info("rymInfo: the expected request number of each RG is {}", GlobalStates.expectedRequestNumberOfEachRG);
+        
         // Update expectedRequestNumberofEachNode
-        for(int i = 0; i < Gossiper.getAllHosts().size(); i++)
+        for(int i = 0; i < nodeCount; i++)
         {
             int nodeIndex = i;
             int requestCount = 0;
@@ -181,6 +191,9 @@ public class GlobalStates implements Serializable {
             GlobalStates.expectedRequestNumberofEachNode[nodeIndex] = requestCount;
 
         }
+        // Update globalPolicy
+        LocalStates.transformToRatio();
+
 
         // update background policy for rate limiting
         translatePolicyForBackgroundController(FBUtilities.getBroadcastAddressAndPort());
