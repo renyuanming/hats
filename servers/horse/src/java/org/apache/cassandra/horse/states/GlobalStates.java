@@ -20,6 +20,7 @@ package org.apache.cassandra.horse.states;
 
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,7 +158,8 @@ public class GlobalStates implements Serializable {
         {
             localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumber[i];
         }
-        logger.info("rymInfo: policy for background controller {}", localPolicyForBackgroundController);
+        logger.info("rymInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
+                    GlobalStates.expectedRequestNumber[nodeIndex], Arrays.toString(GlobalStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));
         return localPolicyForBackgroundController;
     }
 
