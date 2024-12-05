@@ -85,7 +85,8 @@ public class LocalStates implements Serializable {
             for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + rf; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
-                Double readRatio = GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex];
+                Double readRatio = GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex % nodeCount][replicaIndex] * 1.0 / GlobalStates.expectedRequestNumberOfEachRG[rgIndex];
+                // GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex];
                 policy.add(readRatio);
                 policyWithPort.put(Gossiper.getAllHosts().get(curNodeIndex % nodeCount), readRatio);
             }
