@@ -46,7 +46,9 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
     public void doVerb(Message<PolicyReplicate> message) throws IOException {
         PolicyReplicate payload = message.payload;
         try {
+            logger.info("rymInfo: Received placement policy from the leader: {}", message.from());
             GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
+            logger.info("rymInfo: Received expected states: {}", GlobalStates.expectedStates);
             // Get the local placement policy
             GlobalStates.updatePolicyForCurrentNode();
 
@@ -56,6 +58,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
             // Get the placement policy for local replicas
         } catch (Exception e) {
             // TODO Auto-generated catch block
+            logger.error("rymError: Failed to deserialize the placement policy from the received message");
             e.printStackTrace();
         }
 

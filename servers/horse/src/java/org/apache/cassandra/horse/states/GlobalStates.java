@@ -83,13 +83,13 @@ public class GlobalStates implements Serializable {
 
     public static class LoadBalancingStrategy implements Serializable {
         public volatile int termId;
-        public volatile int generation;
+        public volatile int version;
         public volatile int[][] expectedRequestDistribution; // N X M
 
-        public LoadBalancingStrategy(int termId, int generation, int[][] expectedRequestDistribution)
+        public LoadBalancingStrategy(int termId, int version, int[][] expectedRequestDistribution)
         {
             this.termId = termId;
-            this.generation = generation;
+            this.version = version;
             this.expectedRequestDistribution = expectedRequestDistribution;
         }
 
