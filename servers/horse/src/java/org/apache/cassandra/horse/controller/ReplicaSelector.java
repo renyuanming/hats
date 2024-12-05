@@ -69,41 +69,53 @@ public class ReplicaSelector
         public final ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency;
         public final double minLatency;
         public final double maxLatency;
-        // public final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> cachedScores;
+        public final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> cachedScores;
 
         public SnitchMetrics(ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency, double minLatency, double maxLatency) 
         {
             this.sampleLatency = sampleLatency;
             this.minLatency = minLatency;
             this.maxLatency = maxLatency;
-            // this.cachedScores = new ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>>();
+            this.cachedScores = new ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>>();
         }
         
     }
 
 
     public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
-        // Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
-    
-        // Return score if already calculated
-        // Double score = groupScores.get(targetAddr);
-        // if (score != null) {
-        //     return score;
-        // }
-    
-        // Calculate score because it was not found in cache
-        double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
-        // groupScores.put(targetAddr, newScore);
-        return newScore;
+        int targetIndex = Gossiper.getAllHosts().indexOf(targetAddr);
+
+        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
+        {
+            Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
+        
+
+
+            // Return score if already calculated
+            Double score = groupScores.get(targetAddr);
+            if (score != null) {
+                return score;
+            }
+        
+            // Calculate score because it was not found in cache
+            double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest, targetIndex);
+            groupScores.put(targetAddr, newScore);
+            return newScore;
+        }
+        else
+        {
+            return calculateScore(replicationGroup, targetAddr, isRangeRequest, targetIndex);
+        }
+
+
     }
     
-    private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
-        int targetIndex = Gossiper.getAllHosts().indexOf(targetAddr);
+    private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest, int targetIndex) {
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr, targetIndex);
         if (isRangeRequest) 
             return latencyScore;
-        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0 || latencyScore < 1)
+        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0 || latencyScore <= 1)
         {
             return greedyScore + latencyScore;
         }
@@ -133,7 +145,7 @@ public class ReplicaSelector
             else
             {
                 logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-                latencyScore = 0;            
+                latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
             }
         }
         else

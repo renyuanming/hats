@@ -314,10 +314,6 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
         // HORSE: update the ewma sample latency
         ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMicros(latency) : ewmaSamples.get(host) * 0.5 + unit.toMicros(latency) * 0.5);
-        // if(newSampleLatency.get(host) == null)
-        // {
-        //     ReplicaSelector.snitchMetrics.sampleLatency.put(host, unit.toMicros(latency) * 1.0);
-        // }
         sample.update(unit.toMicros(latency));
     }
 
@@ -338,8 +334,6 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         double maxLatency = 1;
         double minLatency = Double.MAX_VALUE;
 
-        double maxEwmaLatency = 1;
-        double minEwmaLatency = Double.MAX_VALUE;
 
         Map<InetAddressAndPort, Snapshot> snapshots = new HashMap<>(samples.size());
         for (Map.Entry<InetAddressAndPort, ExponentiallyDecayingReservoir> entry : samples.entrySet())
@@ -360,23 +354,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             newSampleLatency.put(entry.getKey(), mean);
             if (mean < minLatency)
                 minLatency = mean;
-
-            
-            // HORSE: update the ewma sample latency
-            double ewmaSample = ewmaSamples.get(entry.getKey());
-            if (ewmaSample > maxEwmaLatency)
-                maxEwmaLatency = ewmaSample;
-            if (ewmaSample < minEwmaLatency)
-                minEwmaLatency = ewmaSample;
-
-
-            if(entry.getKey().getAddress().equals(StorageService.instance.localIP))
-            {
-                double newReadLatencyThreshold = entry.getValue().getMean() + entry.getValue().getStdDev();
-                StorageService.instance.readLatencyThreshold.set(newReadLatencyThreshold);
-            }
         }
-        // ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(ewmaSamples, minEwmaLatency, maxEwmaLatency);
         ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
         ////////////////////////////////////////////////////////
 
