@@ -169,13 +169,16 @@ public class GlobalStates implements Serializable {
         int nodeCount = Gossiper.getAllHosts().size();
         logger.info("rymInfo: Updating the policy for current node, the node count is {}", nodeCount);
         // update expectedRequestNumberOfEachRG
-        for (int rgIndex= 0; rgIndex < nodeCount; rgIndex++)
+        for (int i= 0; i < nodeCount; i++)
         {
-            for (int replicaIndex = 0; replicaIndex < rf; replicaIndex++)
+            int requestCount = 0;
+            for (int j = 0; j < rf; j++)
             {
-                int curNodeIndex = (rgIndex + replicaIndex) % nodeCount;
-                GlobalStates.expectedRequestNumberOfEachRG[rgIndex] += GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex][replicaIndex];
+                int curNodeIndex = (i + j) % nodeCount;
+                logger.info("rymInfo: the expected request distribution is {}, rgIndex is {}, replica index is {}, curNodeIndex is {}", GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex], i, j, curNodeIndex);
+                requestCount += GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex][j];
             }
+            GlobalStates.expectedRequestNumberOfEachRG[i] = requestCount;
         }
         logger.info("rymInfo: the expected request number of each RG is {}", GlobalStates.expectedRequestNumberOfEachRG);
         
