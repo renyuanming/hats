@@ -48,7 +48,7 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         try {
             logger.info("rymInfo: Received placement policy from the leader: {}", message.from());
             GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
-            logger.info("rymInfo: Received expected states: {}", GlobalStates.expectedStates);
+            logger.info("rymInfo: Received expected states: {}, the term id is {}, version number is {}, expected distribution is {}", GlobalStates.expectedStates, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version, GlobalStates.expectedStates.expectedRequestDistribution);
             // Get the local placement policy
             GlobalStates.updatePolicyForCurrentNode();
 

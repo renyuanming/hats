@@ -72,7 +72,7 @@ public class LocalStates implements Serializable {
 
     public static void transformToRatio()
     {
-        // logger.info("rymInfo: the old local policy is {}, the local served request count is {}", localPolicy, StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica());
+        logger.info("rymInfo: This is the transformToRatio method");
 
 
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
@@ -86,12 +86,15 @@ public class LocalStates implements Serializable {
                 GlobalStates.expectedRequestNumberOfEachRG[rgIndex] += GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex][replicaIndex];
             }
         }
+        logger.info("rymInfo: the expected request number of each RG is {}", GlobalStates.expectedRequestNumberOfEachRG);
+        
 
         for (int i = 0; i < nodeCount; i++) {
             for (int j = 0; j < rf; j++) {
                 GlobalStates.globalPolicy[i][j] = GlobalStates.expectedStates.expectedRequestDistribution[i][j] * 1.0 / GlobalStates.expectedRequestNumberOfEachRG[(i - j + nodeCount) % nodeCount];
             }
         }
+        logger.info("rymInfo: this is the expected request number of each replication group {}", GlobalStates.expectedRequestNumberOfEachRG);
 
         for(int i = nodeIndex - (rf - 1); i <= nodeIndex + (rf - 1); i++)
         {
