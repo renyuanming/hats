@@ -88,8 +88,6 @@ public class ReplicaSelector
         if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
         {
             Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
-        
-
 
             // Return score if already calculated
             Double score = groupScores.get(targetAddr);
@@ -119,7 +117,7 @@ public class ReplicaSelector
         {
             return greedyScore + latencyScore;
         }
-        logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumberofEachNode[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex]);
+        // logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumberofEachNode[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex]);
         return latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex];
     }
     
