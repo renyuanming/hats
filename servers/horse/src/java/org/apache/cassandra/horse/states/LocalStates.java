@@ -76,13 +76,6 @@ public class LocalStates implements Serializable {
         int nodeCount = Gossiper.getAllHosts().size();
         logger.info("rymInfo: This is the transformToRatio method");
 
-        for (int i = 0; i < nodeCount; i++) {
-            for (int j = 0; j < rf; j++) {
-                GlobalStates.globalPolicy[i][j] = GlobalStates.expectedStates.expectedRequestDistribution[i][j] * 1.0 / GlobalStates.expectedRequestNumberOfEachRG[(i - j + nodeCount) % nodeCount];
-            }
-        }
-        logger.info("rymInfo: this is the expected request number of each replication group {}", GlobalStates.expectedRequestNumberOfEachRG);
-
         for(int i = nodeIndex - (rf - 1); i <= nodeIndex + (rf - 1); i++)
         {
             int rgIndex = (i + nodeCount) % nodeCount;
