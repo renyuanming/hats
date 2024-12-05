@@ -75,7 +75,7 @@ public class LocalStates implements Serializable {
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
         logger.info("rymInfo: This is the transformToRatio method");
-
+        GlobalStates.globalPolicy = new Double[nodeCount][rf];
         for (int i = 0; i < nodeCount; i++) 
         {
             for (int j = 0; j < rf; j++)
