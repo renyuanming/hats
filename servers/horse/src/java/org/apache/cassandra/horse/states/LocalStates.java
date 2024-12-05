@@ -76,6 +76,15 @@ public class LocalStates implements Serializable {
         int nodeCount = Gossiper.getAllHosts().size();
         logger.info("rymInfo: This is the transformToRatio method");
 
+        for (int i = 0; i < nodeCount; i++) 
+        {
+            for (int j = 0; j < rf; j++)
+            {
+                GlobalStates.globalPolicy[i][j] = GlobalStates.expectedStates.expectedRequestDistribution[i][j] * 1.0 / GlobalStates.expectedRequestNumberOfEachRG[i];
+            }
+        }
+        
+
         for(int i = nodeIndex - (rf - 1); i <= nodeIndex + (rf - 1); i++)
         {
             int rgIndex = (i + nodeCount) % nodeCount;
@@ -85,8 +94,7 @@ public class LocalStates implements Serializable {
             for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + rf; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
-                Double readRatio = GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex % nodeCount][replicaIndex] * 1.0 / GlobalStates.expectedRequestNumberOfEachRG[rgIndex];
-                // GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex];
+                Double readRatio = GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex];
                 policy.add(readRatio);
                 policyWithPort.put(Gossiper.getAllHosts().get(curNodeIndex % nodeCount), readRatio);
             }
