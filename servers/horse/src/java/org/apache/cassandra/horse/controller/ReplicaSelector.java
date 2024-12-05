@@ -85,7 +85,7 @@ public class ReplicaSelector
     public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
         int targetIndex = Gossiper.getAllHosts().indexOf(targetAddr);
 
-        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
+        if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
         {
             Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
         
@@ -115,12 +115,12 @@ public class ReplicaSelector
         double latencyScore = calculateLatencyScore(replicationGroup, targetAddr, targetIndex);
         if (isRangeRequest) 
             return latencyScore;
-        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0 || latencyScore <= 1)
+        if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0 || latencyScore <= 1)
         {
             return greedyScore + latencyScore;
         }
-        logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumber[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumber[targetIndex]);
-        return latencyScore - GlobalStates.expectedRequestNumber[targetIndex];
+        logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumberofEachNode[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex]);
+        return latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex];
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
@@ -136,7 +136,7 @@ public class ReplicaSelector
     private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr, int targetIndex) {
         double latencyScore = 0.0;
         // Use the old score function
-        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
+        if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
         {
             if(snitchMetrics.sampleLatency.containsKey(targetAddr))
             {
@@ -160,7 +160,7 @@ public class ReplicaSelector
             else
             {
                 logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-                latencyScore = GlobalStates.expectedRequestNumber[targetIndex];
+                latencyScore = GlobalStates.expectedRequestNumberofEachNode[targetIndex];
             }
         }
 

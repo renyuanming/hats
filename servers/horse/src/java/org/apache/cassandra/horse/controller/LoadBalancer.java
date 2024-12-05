@@ -23,7 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.cassandra.concurrent.ExecutorFactory.Global;
+import org.apache.cassandra.horse.Scheduler;
+import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.states.GlobalStates;
+import org.apache.cassandra.horse.states.GlobalStates.LoadBalancingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,12 +67,12 @@ public class LoadBalancer {
             targetThpt[i] = T[i];
         }
 
-        double[] targetCount = new double[N]; // Target request count of each node
+        int[] targetCount = new int[N]; // Target request count of each node
         for (int i = 0; i < N; i++) {
-            targetCount[i] = targetThpt[i] * lambda[i];
+            targetCount[i] = (int) (targetThpt[i] * lambda[i]);
         }
 
-        double[][] count = new double[N][R]; // The load matrix
+        int[][] count = new int[N][R]; // The load matrix
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < R; j++) {
                 count[i][j] = C[i][j];
@@ -96,9 +99,9 @@ public class LoadBalancer {
 
         for (int iter = 0; iter < maxIter; iter++)
         {
-            double[] actualCountOfEachNode = new double[N];
-            double[] actualCountOfEachReplicationGroup = new double[N];
-            double[] deltaVector = new double[N];
+            int[] actualCountOfEachNode = new int[N];
+            int[] actualCountOfEachReplicationGroup = new int[N];
+            int[] deltaVector = new int[N];
 
             // initialize actualCountOfEachNode based on C
             for (int i = 0; i < N; i++) {
@@ -132,7 +135,7 @@ public class LoadBalancer {
                     int nodeIndexNeg = (i + neg) % N; 
                     for (int pos : positiveIndices) {
                         int nodeIndexPos = (i + pos) % N; 
-                        double adjustment = Math.min(-deltaVector[nodeIndexNeg], deltaVector[nodeIndexPos]);
+                        int adjustment = Math.min(-deltaVector[nodeIndexNeg], deltaVector[nodeIndexPos]);
                         adjustment = Math.min(adjustment, count[nodeIndexNeg][neg]);
 
                         count[nodeIndexNeg][neg] -= adjustment; 
@@ -166,15 +169,14 @@ public class LoadBalancer {
             // Calculate the read ratio of each replication group
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < R; j++) {
-                    readRatio[i][j] = count[i][j] / actualCountOfEachReplicationGroup[(i - j + N) % N];
-                    GlobalStates.expectedRequestDistribution[i][j] = (int) count[i][j];
+                    readRatio[i][j] = count[i][j] * 1.0 / actualCountOfEachReplicationGroup[(i - j + N) % N];
                 }
             }
+            GlobalStates.expectedStates = new LoadBalancingStrategy(ElectionBootstrap.getLeaderTerm(), Scheduler.version.incrementAndGet(), count);
 
             // print the throughput of each node
             System.out.println("Throughput of each node:");
             for (int i = 0; i < N; i++) {
-                GlobalStates.expectedRequestNumber[i] = (int) actualCountOfEachNode[i];
                 System.out.printf("%10.2f ", actualCountOfEachNode[i] / lambda[i]);
             }
 
@@ -184,7 +186,7 @@ public class LoadBalancer {
             for (int i = 0; i < R; i++) {
                 StringBuilder row = new StringBuilder();
                 for (int j = 0; j < N; j++) {
-                    row.append(String.format("%10d ", (int) count[j][i]));  // Format as integer with width 10
+                    row.append(String.format("%10d ", count[j][i]));  // Format as integer with width 10
                 }
                 logger.info(row.toString());  // Log the entire row at once
             }

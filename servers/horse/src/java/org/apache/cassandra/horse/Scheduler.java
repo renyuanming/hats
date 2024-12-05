@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -33,7 +34,6 @@ import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.horse.controller.LoadBalancer;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
-import org.apache.cassandra.horse.net.PolicyDistribute;
 import org.apache.cassandra.horse.net.PolicyReplicate;
 import org.apache.cassandra.horse.net.StatesGatheringSignal;
 import org.apache.cassandra.horse.states.GlobalStates;
@@ -56,6 +56,7 @@ public class Scheduler {
     private static Boolean isPriorityElection = false;
     private static int priority = 100;
     private static Set<InetAddressAndPort> liveSeeds;
+    public static AtomicInteger version = new AtomicInteger(0);
 
 
     private static final String ANSI_RESET = "\u001B[0m";
@@ -148,18 +149,14 @@ public class Scheduler {
                 calculateGlobalPolicy();
 
                 // Step3. Update local Policy for coordinator
-                LocalStates.updateLocalPolicy();
+                GlobalStates.updatePolicyForCurrentNode();
 
                 // Step4. Acknowledge to the client driver
                 StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.globalStates.getGlobalCoordinatorReadLatency());
 
                 // Step5. Replicate the placement policy to the followers
+                // Todo: replace gossip with this naive approach
                 replicateGlobalPolicy();
-                
-                // Step6. Update the policy for background task control.
-                // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
-                BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController(StorageService.instance.localAddressAndPort));
-
             }
         }
     }
@@ -175,33 +172,7 @@ public class Scheduler {
             }
 
             // Replicate the placement policy
-            PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
-        }
-    }
-
-    // Note that we only send the partial placement policy to all the data nodes.
-    private static void distributeCompactionRate()
-    {
-        if (liveSeeds.size() > 1)
-        {
-            for (InetAddressAndPort dataNode : Gossiper.instance.getLiveMembers())
-            {
-                if(liveSeeds.contains(dataNode))
-                {
-                    continue;
-                }
-                
-                Double[] backgroundCompactionRate = new Double[GlobalStates.rf];
-                int nodeIndex = Gossiper.getAllHosts().indexOf(dataNode);
-                for(int j = 0; j < GlobalStates.rf; j++)
-                {
-
-                    // Calculate the rate limit for each replica
-                    backgroundCompactionRate[j] = GlobalStates.globalPolicy[nodeIndex][j];
-                }
-                
-                PolicyDistribute.sendPlacementPolicy(dataNode, backgroundCompactionRate);
-            }
+            PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.expectedStates);
         }
     }
 

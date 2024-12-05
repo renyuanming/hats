@@ -25,6 +25,7 @@ import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.horse.controller.ReplicaSelector;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
+import org.apache.cassandra.horse.states.GlobalStates.LoadBalancingStrategy;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.service.StorageService;
@@ -44,13 +45,13 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
     @Override
     public void doVerb(Message<PolicyReplicate> message) throws IOException {
         PolicyReplicate payload = message.payload;
-        Double[] backgroundPolicy = null;
         try {
-            GlobalStates.globalPolicy = (Double[][]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
-            backgroundPolicy = (Double[]) ByteObjectConversion.byteArrayToObject(payload.backgroundPolicyInBytes);
-            GlobalStates.expectedRequestNumber = (int []) ByteObjectConversion.byteArrayToObject(payload.expectedRequestNumberInBytes);
-            logger.info("rymInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumber, backgroundPolicy);
-            // logger.info("rymInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumber, ReplicaSelector.expectedRequestNumber);
+            GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
+            // Get the local placement policy
+            GlobalStates.updatePolicyForCurrentNode();
+
+            logger.info("rymInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumberofEachNode, LocalStates.backgroundPolicy);
+            // logger.info("rymInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumberofEachNode, ReplicaSelector.expectedRequestNumberofEachNode);
 
             // Get the placement policy for local replicas
         } catch (Exception e) {
@@ -58,16 +59,10 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
             e.printStackTrace();
         }
 
-        // Get the local placement policy
-        LocalStates.updateLocalPolicy();
 
         // Acknowledge to the client driver
         StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.getGlobalCoordinatorReadLatencyFromGossipInfo());
         
-        // Update the compaction rate limiter
-        // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
-        // BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController());
-        BackgroundController.updateLimiter(backgroundPolicy);
     }
     
 }

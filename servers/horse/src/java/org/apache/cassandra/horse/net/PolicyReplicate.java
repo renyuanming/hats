@@ -28,6 +28,7 @@ import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
 import org.apache.cassandra.horse.states.GlobalStates;
+import org.apache.cassandra.horse.states.GlobalStates.LoadBalancingStrategy;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
@@ -51,34 +52,21 @@ public class PolicyReplicate
 
     public final byte[] placementPolicyInBytes;
     private final int placementPolicyInBytesSize;
-    public final byte[] backgroundPolicyInBytes;
-    private final int backgroundPolicyInBytesSize;
-    public final byte[] expectedRequestNumberInBytes;
-    public final int expectedRequestNumberInBytesSize;
     // Map<InetAddress, LocalStates> states
-    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes, byte[] expectedRequestNumberInBytes)
+    public PolicyReplicate(byte[] placementPolicyInBytes)
     {
         this.placementPolicyInBytes = placementPolicyInBytes;
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
-        this.backgroundPolicyInBytes = backgroundPolicyInBytes;
-        this.backgroundPolicyInBytesSize = backgroundPolicyInBytes.length;
-        this.expectedRequestNumberInBytes = expectedRequestNumberInBytes;
-        this.expectedRequestNumberInBytesSize = expectedRequestNumberInBytes.length;
     }
 
-    public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][] placementPolicy)
+    public static void sendPlacementPolicy(InetAddressAndPort follower, LoadBalancingStrategy expectedStates)
     {
         byte[] placementPolicyInBytes = null;
-        byte[] backgroundPolicyInBytes = null;
-        byte[] expectedRequestNumberInBytes = null;
 
-        Double[] backgroundPolicy = GlobalStates.translatePolicyForBackgroundController(follower);
                 
         try {
-            placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) placementPolicy);
-            backgroundPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) backgroundPolicy);
-            expectedRequestNumberInBytes = ByteObjectConversion.objectToByteArray((Serializable) GlobalStates.expectedRequestNumber);
-            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumberInBytes);
+            placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) expectedStates);
+            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes);
             Message<PolicyReplicate> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, follower);
         } catch (Exception e) {
@@ -95,10 +83,6 @@ public class PolicyReplicate
         {
             out.writeInt(t.placementPolicyInBytesSize);
             out.write(t.placementPolicyInBytes);
-            out.writeInt(t.backgroundPolicyInBytesSize);
-            out.write(t.backgroundPolicyInBytes);
-            out.writeInt(t.expectedRequestNumberInBytesSize);
-            out.write(t.expectedRequestNumberInBytes);
         }
 
         @Override
@@ -107,25 +91,15 @@ public class PolicyReplicate
             int placementPolicyInBytesSize = in.readInt();
             byte[] placementPolicyInBytes = new byte[placementPolicyInBytesSize];
             in.readFully(placementPolicyInBytes);
-            int backgroundPolicyInBytesSize = in.readInt();
-            byte[] backgroundPolicyInBytes = new byte[backgroundPolicyInBytesSize];
-            in.readFully(backgroundPolicyInBytes);
-            int expectedRequestNumberInBytesSize = in.readInt();
-            byte[] expectedRequestNumberInBytes = new byte[expectedRequestNumberInBytesSize];
-            in.readFully(expectedRequestNumberInBytes);
 
-            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumberInBytes);
+            return new PolicyReplicate(placementPolicyInBytes);
         }
 
         @Override
         public long serializedSize(PolicyReplicate t, int version) 
         {
             long size = t.placementPolicyInBytesSize + 
-                        sizeof(t.placementPolicyInBytesSize) + 
-                        t.backgroundPolicyInBytesSize +
-                        sizeof(t.backgroundPolicyInBytesSize) +
-                        t.expectedRequestNumberInBytesSize +
-                        sizeof(t.expectedRequestNumberInBytesSize);
+                        sizeof(t.placementPolicyInBytesSize);
             return size;
         }
 

@@ -55,8 +55,6 @@ import org.apache.cassandra.gms.GossipShutdown;
 import org.apache.cassandra.gms.GossipShutdownVerbHandler;
 import org.apache.cassandra.hints.HintMessage;
 import org.apache.cassandra.hints.HintVerbHandler;
-import org.apache.cassandra.horse.net.PolicyDistribute;
-import org.apache.cassandra.horse.net.PolicyDistributeVerbHandler;
 import org.apache.cassandra.horse.net.PolicyReplicate;
 import org.apache.cassandra.horse.net.PolicyReplicateVerbHandler;
 import org.apache.cassandra.horse.net.StatesGathering;
@@ -138,8 +136,7 @@ public enum Verb
     STATE_GATHERING_SIGNAL_REQ (203,  P1, writeTimeout,    HORSE,             () -> StatesGatheringSignal.serializer,     () -> StatesGatheringSignalVerbHandler.instance, STATE_GATHERING_SIGNAL_RSP     ),
     POLICY_REPLICATE_RSP       (204,  P1, writeTimeout,    REQUEST_RESPONSE,  () -> NoPayload.serializer,                 () -> ResponseVerbHandler.instance                                              ),
     POLICY_REPLICATE_REQ       (205,  P1, writeTimeout,    HORSE,             () -> PolicyReplicate.serializer,           () -> PolicyReplicateVerbHandler.instance,       POLICY_REPLICATE_RSP           ),
-    POLICY_DISTRIBUTE_RSP      (206,  P1, writeTimeout,    REQUEST_RESPONSE,  () -> NoPayload.serializer,                 () -> ResponseVerbHandler.instance                                              ),
-    POLICY_DISTRIBUTE_REQ      (207,  P1, writeTimeout,    HORSE,             () -> PolicyDistribute.serializer,          () -> PolicyDistributeVerbHandler.instance,      POLICY_DISTRIBUTE_RSP          ),
+
 
     PAXOS_PREPARE_RSP      (93,  P2, writeTimeout,    REQUEST_RESPONSE,  () -> PrepareResponse.serializer,           () -> ResponseVerbHandler.instance                             ),
     PAXOS_PREPARE_REQ      (33,  P2, writeTimeout,    MUTATION,          () -> Commit.serializer,                    () -> PrepareVerbHandler.instance,         PAXOS_PREPARE_RSP   ),

@@ -43,6 +43,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jnr.constants.platform.Local;
+
 
 /**
  * @author renyuanming1@gmail.com
@@ -56,9 +58,11 @@ public class GlobalStates implements Serializable {
     public static final double OFFLOAD_THRESHOLD = DatabaseDescriptor.getOffloadThreshold();
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
+    public static LoadBalancingStrategy expectedStates = null;
     
-    public static volatile int[] expectedRequestNumber; // N
-    public static volatile int[][] expectedRequestDistribution; // N X M
+    public static volatile int[] expectedRequestNumberofEachNode; // N
+    public static volatile int[] expectedRequestNumberOfEachRG; // N
+    // public static volatile int[][] expectedRequestDistribution; // N X M
     public Double[] scoreVector; // N
     public double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
@@ -75,6 +79,20 @@ public class GlobalStates implements Serializable {
     {
         this.nodeCount = nodeCount;
         initialization();
+    }
+
+    public static class LoadBalancingStrategy implements Serializable {
+        public volatile int termId;
+        public volatile int generation;
+        public volatile int[][] expectedRequestDistribution; // N X M
+
+        public LoadBalancingStrategy(int termId, int generation, int[][] expectedRequestDistribution)
+        {
+            this.termId = termId;
+            this.generation = generation;
+            this.expectedRequestDistribution = expectedRequestDistribution;
+        }
+
     }
 
     public void initialization()
@@ -145,7 +163,31 @@ public class GlobalStates implements Serializable {
         // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
-    public static Double[] translatePolicyForBackgroundController(InetAddressAndPort targetNode)
+
+    public static void updatePolicyForCurrentNode()
+    {
+        // Update globalPolicy, expectedRequestNumberOfEachRG
+        LocalStates.transformToRatio();
+
+        // Update expectedRequestNumberofEachNode
+        for(int i = 0; i < Gossiper.getAllHosts().size(); i++)
+        {
+            int nodeIndex = i;
+            int requestCount = 0;
+            for(int j = 0; j < rf; j++)
+            {
+                requestCount += GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex][j];
+            }
+            GlobalStates.expectedRequestNumberofEachNode[nodeIndex] = requestCount;
+
+        }
+
+        // update background policy for rate limiting
+        translatePolicyForBackgroundController(FBUtilities.getBroadcastAddressAndPort());
+    }
+
+
+    public static void translatePolicyForBackgroundController(InetAddressAndPort targetNode)
     {
 
         int nodeIndex = Gossiper.getAllHosts().indexOf(targetNode);
@@ -156,11 +198,11 @@ public class GlobalStates implements Serializable {
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {
-            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumber[nodeIndex];
+            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumberofEachNode[nodeIndex];
         }
         logger.info("rymInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
-                    GlobalStates.expectedRequestNumber[nodeIndex], Arrays.toString(GlobalStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));
-        return localPolicyForBackgroundController;
+                    GlobalStates.expectedRequestNumberofEachNode[nodeIndex], Arrays.toString(GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));
+        LocalStates.backgroundPolicy = localPolicyForBackgroundController;
     }
 
     public static double getScore(double latency, int requestCount)
@@ -174,17 +216,16 @@ public class GlobalStates implements Serializable {
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
         globalPolicy = new Double[nodeCount][rf];
-        expectedRequestNumber = new int[nodeCount];
-        expectedRequestDistribution = new int[nodeCount][rf];
+        expectedRequestNumberofEachNode = new int[nodeCount];
+        expectedRequestNumberOfEachRG = new int[nodeCount];
         for(int i = 0; i < nodeCount; i++)
         {
-            expectedRequestNumber[i] = 0;
+            expectedRequestNumberofEachNode[i] = 0;
+            expectedRequestNumberOfEachRG[i] = 0;
             globalPolicy[i][0] = 1.0;
-            expectedRequestDistribution[i][0] = 0;
             for(int j = 1; j < rf; j++)
             {
                 globalPolicy[i][j] = 0.0;
-                expectedRequestDistribution[i][j] = 0;
             }
         }
         logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  

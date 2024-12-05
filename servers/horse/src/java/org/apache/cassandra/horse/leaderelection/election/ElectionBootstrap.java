@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.Set;
 
 import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.Scheduler;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,7 @@ public class ElectionBootstrap {
 
     private static final Logger logger = LoggerFactory.getLogger(ElectionBootstrap.class);
     private static ElectionNode node;
+    private static int leaderTerm = 0;
     public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
     {
         logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
@@ -61,6 +63,8 @@ public class ElectionBootstrap {
                 PeerId serverId = node.getNode().getLeaderId();
                 String ip = serverId.getIp();
                 int port = serverId.getPort();
+                leaderTerm = (int) leaderTerm;
+                Scheduler.version.set(0);
                 logger.debug("rymDebug: [ElectionBootstrap] Leader's ip is: {}, port: {}", ip, port);
                 logger.debug("rymDebug: [ElectionBootstrap] Leader start on term: {}", leaderTerm);
             }
@@ -100,6 +104,11 @@ public class ElectionBootstrap {
         PeerId serverId = node.getNode().getLeaderId();
         String ip = serverId.getIp();
         return ip;
+    }
+
+    public static int getLeaderTerm()
+    {
+        return leaderTerm;
     }
 
     public static void shutdownElection(Set<InetAddressAndPort> liveSeeds)
