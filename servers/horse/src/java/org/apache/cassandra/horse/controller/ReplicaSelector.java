@@ -69,31 +69,31 @@ public class ReplicaSelector
         public final ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency;
         public final double minLatency;
         public final double maxLatency;
-        public final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> cachedScores;
+        // public final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> cachedScores;
 
         public SnitchMetrics(ConcurrentHashMap<InetAddressAndPort, Double> sampleLatency, double minLatency, double maxLatency) 
         {
             this.sampleLatency = sampleLatency;
             this.minLatency = minLatency;
             this.maxLatency = maxLatency;
-            this.cachedScores = new ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>>();
+            // this.cachedScores = new ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>>();
         }
         
     }
 
 
     public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
-        Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
+        // Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
     
         // Return score if already calculated
-        Double score = groupScores.get(targetAddr);
-        if (score != null) {
-            return score;
-        }
+        // Double score = groupScores.get(targetAddr);
+        // if (score != null) {
+        //     return score;
+        // }
     
         // Calculate score because it was not found in cache
         double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
-        groupScores.put(targetAddr, newScore);
+        // groupScores.put(targetAddr, newScore);
         return newScore;
     }
     
@@ -142,7 +142,7 @@ public class ReplicaSelector
             if(DynamicEndpointSnitch.ewmaSamples.containsKey(targetAddr))
             {
                 // micro to seconds
-                double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000000;
+                double replicaLatency = (DynamicEndpointSnitch.ewmaSamples.get(targetAddr)) / 1000000;
                 latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
             }
             else
