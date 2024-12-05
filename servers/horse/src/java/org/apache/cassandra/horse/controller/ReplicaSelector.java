@@ -141,7 +141,7 @@ public class ReplicaSelector
         {
             logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
             if(GlobalStates.expectedRequestNumber == null)
-                latencyScore = 0;
+                latencyScore = 1;
             else
                 latencyScore = GlobalStates.expectedRequestNumber[targetIndex];
         }
