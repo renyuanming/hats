@@ -72,7 +72,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
     private volatile HashMap<InetAddressAndPort, Double> scores = new HashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, ExponentiallyDecayingReservoir> samples = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<InetAddressAndPort, Double> ewmaSamples = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<InetAddressAndPort, Double> ewmaSamples = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, Double> newSampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
     public final IEndpointSnitch subsnitch;
 
@@ -314,6 +314,10 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
         // HORSE: update the ewma sample latency
         ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMicros(latency) : ewmaSamples.get(host) * 0.5 + unit.toMicros(latency) * 0.5);
+        if(newSampleLatency.get(host) == null)
+        {
+            ReplicaSelector.snitchMetrics.sampleLatency.put(host, unit.toMicros(latency) * 1.0);
+        }
         sample.update(unit.toMicros(latency));
     }
 
@@ -353,9 +357,9 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
                 maxLatency = mean;
 
             // HORSE: update the sample latency
-            // newSampleLatency.put(entry.getKey(), mean);
-            // if (mean < minLatency)
-            //     minLatency = mean;
+            newSampleLatency.put(entry.getKey(), mean);
+            if (mean < minLatency)
+                minLatency = mean;
 
             
             // HORSE: update the ewma sample latency
@@ -366,14 +370,14 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
                 minEwmaLatency = ewmaSample;
 
 
-            // if(entry.getKey().getAddress().equals(StorageService.instance.localIP))
-            // {
-            //     double newReadLatencyThreshold = entry.getValue().getMean() + entry.getValue().getStdDev();
-            //     StorageService.instance.readLatencyThreshold.set(newReadLatencyThreshold);
-            // }
+            if(entry.getKey().getAddress().equals(StorageService.instance.localIP))
+            {
+                double newReadLatencyThreshold = entry.getValue().getMean() + entry.getValue().getStdDev();
+                StorageService.instance.readLatencyThreshold.set(newReadLatencyThreshold);
+            }
         }
-        ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(ewmaSamples, minEwmaLatency, maxEwmaLatency);
-        // ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
+        // ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(ewmaSamples, minEwmaLatency, maxEwmaLatency);
+        ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
         ////////////////////////////////////////////////////////
 
         // now make another pass to do the weighting based on the maximums we found before

@@ -39,6 +39,7 @@ import org.apache.cassandra.horse.HorseUtils;
 import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
+import org.apache.cassandra.locator.DynamicEndpointSnitch;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
@@ -122,28 +123,33 @@ public class ReplicaSelector
     
     private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr, int targetIndex) {
         double latencyScore = 0.0;
-        if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+        // Use the old score function
+        if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
         {
-            if(GlobalStates.expectedRequestNumber != null)
-                logger.info("rymInfo: the expected request number is {}, the latency is {}", GlobalStates.expectedRequestNumber[targetIndex], snitchMetrics.sampleLatency.get(targetAddr));
-            if(GlobalStates.expectedRequestNumber == null || GlobalStates.expectedRequestNumber[targetIndex] == 0)
+            if(snitchMetrics.sampleLatency.containsKey(targetAddr))
             {
                 latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
             }
             else
             {
-                // micro to seconds
-                double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000000;
-                latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
-            }            
+                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+                latencyScore = 1 * random.nextDouble();
+            }
         }
         else
         {
-            logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-            if(GlobalStates.expectedRequestNumber == null)
-                latencyScore = 1;
+            // use the new score function
+            if(DynamicEndpointSnitch.ewmaSamples.containsKey(targetAddr))
+            {
+                // micro to seconds
+                double replicaLatency = (snitchMetrics.sampleLatency.get(targetAddr)) / 1000000;
+                latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
+            }
             else
+            {
+                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
                 latencyScore = GlobalStates.expectedRequestNumber[targetIndex];
+            }
         }
 
         return latencyScore;
