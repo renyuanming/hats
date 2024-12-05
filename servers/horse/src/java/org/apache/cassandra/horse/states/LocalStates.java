@@ -94,7 +94,7 @@ public class LocalStates implements Serializable {
             localPolicy.put(rg, policy);
         }
 
-        logger.info("rymInfo: We get the global placement policy {}, the local placement policy {}, with address {}", GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
+        logger.info("rymInfo: We get the local placement policy {}, with address {}", localPolicy, localPolicyWithAddress);
     }
 
 
