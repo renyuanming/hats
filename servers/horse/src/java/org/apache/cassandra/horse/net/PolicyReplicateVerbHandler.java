@@ -22,6 +22,7 @@ import java.io.IOException;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
 import org.apache.cassandra.horse.controller.BackgroundController;
+import org.apache.cassandra.horse.controller.ReplicaSelector;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.net.IVerbHandler;
@@ -47,6 +48,9 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
         try {
             GlobalStates.globalPolicy = (Double[][]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
             backgroundPolicy = (Double[]) ByteObjectConversion.byteArrayToObject(payload.backgroundPolicyInBytes);
+            GlobalStates.expectedRequestNumber = (int []) ByteObjectConversion.byteArrayToObject(payload.expectedRequestNumberInBytes);
+            logger.info("rymInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumber, backgroundPolicy);
+            // logger.info("rymInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumber, ReplicaSelector.expectedRequestNumber);
 
             // Get the placement policy for local replicas
         } catch (Exception e) {

@@ -20,6 +20,7 @@ package org.apache.cassandra.horse.states;
 
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils;
+import org.apache.cassandra.horse.controller.ReplicaSelector;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
@@ -55,6 +57,8 @@ public class GlobalStates implements Serializable {
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
     
+    public static volatile int[] expectedRequestNumber; // N
+    public static volatile int[][] expectedRequestDistribution; // N X M
     public Double[] scoreVector; // N
     public double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
@@ -149,20 +153,13 @@ public class GlobalStates implements Serializable {
         {
             throw new IllegalStateException("The node index is -1, the node is not in the host list.");
         }
-        int[] readCountOfEachReplica = new int[rf];
-        int totalReadCountOfTheNode = 0;
-        for(int i = 0; i < rf; i++)
-        {
-            int rgIndex = (nodeIndex - i + GlobalStates.globalStates.nodeCount) % GlobalStates.globalStates.nodeCount;
-            readCountOfEachReplica[i] = (int) (GlobalStates.globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
-            totalReadCountOfTheNode += readCountOfEachReplica[i];
-        }
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {
-            localPolicyForBackgroundController[i] = (double) readCountOfEachReplica[i] / totalReadCountOfTheNode;
+            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumber[nodeIndex];
         }
-
+        logger.info("rymInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
+                    GlobalStates.expectedRequestNumber[nodeIndex], Arrays.toString(GlobalStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));
         return localPolicyForBackgroundController;
     }
 
@@ -177,12 +174,17 @@ public class GlobalStates implements Serializable {
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
         globalPolicy = new Double[nodeCount][rf];
+        expectedRequestNumber = new int[nodeCount];
+        expectedRequestDistribution = new int[nodeCount][rf];
         for(int i = 0; i < nodeCount; i++)
         {
+            expectedRequestNumber[i] = 0;
             globalPolicy[i][0] = 1.0;
+            expectedRequestDistribution[i][0] = 0;
             for(int j = 1; j < rf; j++)
             {
                 globalPolicy[i][j] = 0.0;
+                expectedRequestDistribution[i][j] = 0;
             }
         }
         logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  

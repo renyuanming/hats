@@ -25,6 +25,7 @@ import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessageFlag;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.Verb;
+import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.io.IVersionedSerializer;
@@ -52,26 +53,32 @@ public class PolicyReplicate
     private final int placementPolicyInBytesSize;
     public final byte[] backgroundPolicyInBytes;
     private final int backgroundPolicyInBytesSize;
+    public final byte[] expectedRequestNumberInBytes;
+    public final int expectedRequestNumberInBytesSize;
     // Map<InetAddress, LocalStates> states
-    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes)
+    public PolicyReplicate(byte[] placementPolicyInBytes, byte[] backgroundPolicyInBytes, byte[] expectedRequestNumberInBytes)
     {
         this.placementPolicyInBytes = placementPolicyInBytes;
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
         this.backgroundPolicyInBytes = backgroundPolicyInBytes;
         this.backgroundPolicyInBytesSize = backgroundPolicyInBytes.length;
+        this.expectedRequestNumberInBytes = expectedRequestNumberInBytes;
+        this.expectedRequestNumberInBytesSize = expectedRequestNumberInBytes.length;
     }
 
     public static void sendPlacementPolicy(InetAddressAndPort follower, Double[][] placementPolicy)
     {
         byte[] placementPolicyInBytes = null;
         byte[] backgroundPolicyInBytes = null;
+        byte[] expectedRequestNumberInBytes = null;
 
         Double[] backgroundPolicy = GlobalStates.translatePolicyForBackgroundController(follower);
                 
         try {
             placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) placementPolicy);
             backgroundPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) backgroundPolicy);
-            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes);
+            expectedRequestNumberInBytes = ByteObjectConversion.objectToByteArray((Serializable) GlobalStates.expectedRequestNumber);
+            PolicyReplicate policy = new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumberInBytes);
             Message<PolicyReplicate> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, follower);
         } catch (Exception e) {
@@ -90,6 +97,8 @@ public class PolicyReplicate
             out.write(t.placementPolicyInBytes);
             out.writeInt(t.backgroundPolicyInBytesSize);
             out.write(t.backgroundPolicyInBytes);
+            out.writeInt(t.expectedRequestNumberInBytesSize);
+            out.write(t.expectedRequestNumberInBytes);
         }
 
         @Override
@@ -101,7 +110,11 @@ public class PolicyReplicate
             int backgroundPolicyInBytesSize = in.readInt();
             byte[] backgroundPolicyInBytes = new byte[backgroundPolicyInBytesSize];
             in.readFully(backgroundPolicyInBytes);
-            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes);
+            int expectedRequestNumberInBytesSize = in.readInt();
+            byte[] expectedRequestNumberInBytes = new byte[expectedRequestNumberInBytesSize];
+            in.readFully(expectedRequestNumberInBytes);
+
+            return new PolicyReplicate(placementPolicyInBytes, backgroundPolicyInBytes, expectedRequestNumberInBytes);
         }
 
         @Override
@@ -110,7 +123,9 @@ public class PolicyReplicate
             long size = t.placementPolicyInBytesSize + 
                         sizeof(t.placementPolicyInBytesSize) + 
                         t.backgroundPolicyInBytesSize +
-                        sizeof(t.backgroundPolicyInBytesSize);
+                        sizeof(t.backgroundPolicyInBytesSize) +
+                        t.expectedRequestNumberInBytesSize +
+                        sizeof(t.expectedRequestNumberInBytesSize);
             return size;
         }
 

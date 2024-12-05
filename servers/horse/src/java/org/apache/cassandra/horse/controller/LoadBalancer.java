@@ -22,10 +22,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.cassandra.concurrent.ExecutorFactory.Global;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoadBalancer {
+
 
 
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
@@ -164,12 +167,14 @@ public class LoadBalancer {
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < R; j++) {
                     readRatio[i][j] = count[i][j] / actualCountOfEachReplicationGroup[(i - j + N) % N];
+                    GlobalStates.expectedRequestDistribution[i][j] = (int) count[i][j];
                 }
             }
 
             // print the throughput of each node
             System.out.println("Throughput of each node:");
             for (int i = 0; i < N; i++) {
+                GlobalStates.expectedRequestNumber[i] = (int) actualCountOfEachNode[i];
                 System.out.printf("%10.2f ", actualCountOfEachNode[i] / lambda[i]);
             }
 

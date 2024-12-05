@@ -311,10 +311,8 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (sample == null)
                 sample = maybeNewSample;
         }
-        sample.update(unit.toMillis(latency));
 
-        // HORSE: update the ewma sample latency
-        ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMillis(latency) : ewmaSamples.get(host) * ALPHA + unit.toMillis(latency) * (1 - ALPHA));
+        sample.update(unit.toMicros(latency));
     }
 
     @VisibleForTesting
@@ -356,6 +354,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             // newSampleLatency.put(entry.getKey(), mean);
             // if (mean < minLatency)
             //     minLatency = mean;
+
             
             // HORSE: update the ewma sample latency
             double ewmaSample = ewmaSamples.get(entry.getKey());
