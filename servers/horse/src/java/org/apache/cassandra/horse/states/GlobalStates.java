@@ -156,7 +156,7 @@ public class GlobalStates implements Serializable {
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {
-            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumber[i];
+            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumber[nodeIndex];
         }
         logger.info("rymInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
                     GlobalStates.expectedRequestNumber[nodeIndex], Arrays.toString(GlobalStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));

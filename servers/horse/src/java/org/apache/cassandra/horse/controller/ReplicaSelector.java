@@ -140,7 +140,10 @@ public class ReplicaSelector
         else
         {
             logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-            latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
+            if(GlobalStates.expectedRequestNumber == null)
+                latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
+            else
+                latencyScore = GlobalStates.expectedRequestNumber[targetIndex];
         }
 
         return latencyScore;
