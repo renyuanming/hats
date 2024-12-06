@@ -35,15 +35,10 @@ import java.util.stream.IntStream;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.Gossiper;
-import org.apache.cassandra.horse.HorseUtils;
-import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.DynamicEndpointSnitch;
 import org.apache.cassandra.locator.InetAddressAndPort;
-import org.apache.cassandra.service.StorageService;
-import org.apache.cassandra.utils.FBUtilities;
-import org.gridkit.jvmtool.GlobHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,8 +99,6 @@ public class ReplicaSelector
         {
             return calculateScore(replicationGroup, targetAddr, isRangeRequest, targetIndex);
         }
-
-
     }
     
     private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest, int targetIndex) {
