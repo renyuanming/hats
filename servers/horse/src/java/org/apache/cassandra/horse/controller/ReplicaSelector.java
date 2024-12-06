@@ -136,15 +136,19 @@ public class ReplicaSelector
         // Use the old score function
         if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
         {
-            if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+            if(targetAddr.equals(targetAddr))
             {
-                latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+                latencyScore = 1.0;
             }
-            else
-            {
-                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-                latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
-            }
+            // if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+            // {
+            //     latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            // }
+            // else
+            // {
+            //     logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+            //     latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
+            // }
         }
         else
         {

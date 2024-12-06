@@ -245,36 +245,7 @@ public class Scheduler {
         GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size());
         if(liveSeeds.size() == 1)
         {
-            for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
-            {
-                String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
-                int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
-
-                LocalStates localStates = LocalStates.fromString(localStatesStr, version);
-
-                if(localStates == null)
-                {
-                    continue;
-                }
-
-                int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
-                if (nodeIndex == -1)
-                {
-                    throw new IllegalStateException("Host not found in Gossiper");
-                }
-
-                GlobalStates.globalStates.latencyVector[nodeIndex] = localStates.latency;
-                GlobalStates.globalStates.versionVector[nodeIndex] = localStates.version;
-                GlobalStates.globalStates.readCountOfEachNode[nodeIndex] = 0;
-                for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
-                {
-                    int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
-                    GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex] = entry1.getValue();
-                    GlobalStates.globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
-                }
-                GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], 
-                                                                                         GlobalStates.globalStates.readCountOfEachNode[nodeIndex]);
-            }
+            makeSnapshotForGossipInfo();
         }
         else if (liveSeeds.size() > 1)
         {
@@ -284,6 +255,7 @@ public class Scheduler {
             {
                 if(seed.equals(FBUtilities.getBroadcastAddressAndPort()))
                 {
+                    makeSnapshotForGossipInfo();
                     continue;
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
@@ -298,6 +270,7 @@ public class Scheduler {
             {
                 if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
                 {
+                    makeSnapshotForGossipInfo();
                     continue;
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
@@ -345,6 +318,41 @@ public class Scheduler {
                      GlobalStates.globalStates.scoreVector, 
                      GlobalStates.globalStates.loadMatrix);
 
+    }
+
+
+    private static void makeSnapshotForGossipInfo()
+    {
+        for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
+        {
+            String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
+            int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
+
+            LocalStates localStates = LocalStates.fromString(localStatesStr, version);
+
+            if(localStates == null)
+            {
+                continue;
+            }
+
+            int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
+            if (nodeIndex == -1)
+            {
+                throw new IllegalStateException("Host not found in Gossiper");
+            }
+
+            GlobalStates.globalStates.latencyVector[nodeIndex] = localStates.latency;
+            GlobalStates.globalStates.versionVector[nodeIndex] = localStates.version;
+            GlobalStates.globalStates.readCountOfEachNode[nodeIndex] = 0;
+            for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
+            {
+                int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
+                GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex] = entry1.getValue();
+                GlobalStates.globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
+            }
+            GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], 
+                                                                                     GlobalStates.globalStates.readCountOfEachNode[nodeIndex]);
+        }
     }
 
 
