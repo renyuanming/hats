@@ -52,7 +52,7 @@ public class RequestNewStates
     public static void requestNewExpectedStates(InetAddressAndPort follower)
     {
         RequestNewStates policy = new RequestNewStates();
-        Message<RequestNewStates> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
+        Message<RequestNewStates> message = Message.outWithFlag(Verb.GOSSIP_STATES_ACK2_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
         MessagingService.instance().send(message, follower);
     }
 

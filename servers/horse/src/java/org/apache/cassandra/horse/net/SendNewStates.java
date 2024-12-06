@@ -65,7 +65,7 @@ public class SendNewStates
         try {
             placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) expectedStates);
             SendNewStates policy = new SendNewStates(placementPolicyInBytes);
-            Message<SendNewStates> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
+            Message<SendNewStates> message = Message.outWithFlag(Verb.GOSSIP_STATES_ACK_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
             MessagingService.instance().send(message, follower);
         } catch (Exception e) {
             e.printStackTrace();

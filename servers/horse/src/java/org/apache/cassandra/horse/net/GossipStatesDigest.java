@@ -57,7 +57,7 @@ public class GossipStatesDigest
     public static void sendStatesDisgestMessage(InetAddressAndPort target, int termId, int version)
     {
         GossipStatesDigest policy = new GossipStatesDigest(termId, version);
-        Message<GossipStatesDigest> message = Message.outWithFlag(Verb.POLICY_REPLICATE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
+        Message<GossipStatesDigest> message = Message.outWithFlag(Verb.GOSSIP_STATES_DIGEST_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
         MessagingService.instance().send(message, target);
     }
 
