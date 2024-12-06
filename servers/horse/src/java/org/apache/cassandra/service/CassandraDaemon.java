@@ -504,7 +504,7 @@ public class CassandraDaemon
             isHorseActived = true;
 
             // Start gossip
-            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.startGossipStatesRunnable(), DatabaseDescriptor.getSchedulingInitialDelay(), 5, TimeUnit.SECONDS);
+            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.startGossipStatesRunnable(), DatabaseDescriptor.getSchedulingInitialDelay(), 2, TimeUnit.SECONDS);
         }
     }
 
