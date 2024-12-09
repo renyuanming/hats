@@ -21,28 +21,37 @@ package org.apache.cassandra.horse;
 
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
+import org.apache.cassandra.gms.GossipDigestSyn;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.controller.BackgroundController;
 import org.apache.cassandra.horse.controller.LoadBalancer;
 import org.apache.cassandra.horse.leaderelection.election.ElectionBootstrap;
 import org.apache.cassandra.horse.leaderelection.priorityelection.PriorityElectionBootstrap;
-import org.apache.cassandra.horse.net.PolicyDistribute;
+import org.apache.cassandra.horse.net.GossipStatesDigest;
 import org.apache.cassandra.horse.net.PolicyReplicate;
+import org.apache.cassandra.horse.net.RequestNewStates;
 import org.apache.cassandra.horse.net.StatesGatheringSignal;
 import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.net.Message;
+import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableList;
 
 
 
@@ -56,7 +65,9 @@ public class Scheduler {
     private static Boolean isPriorityElection = false;
     private static int priority = 100;
     private static Set<InetAddressAndPort> liveSeeds;
+    public static AtomicInteger version = new AtomicInteger(0);
 
+    private static final Random random = new Random();
 
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_RED = "\u001B[31m";
@@ -148,18 +159,14 @@ public class Scheduler {
                 calculateGlobalPolicy();
 
                 // Step3. Update local Policy for coordinator
-                LocalStates.updateLocalPolicy();
+                GlobalStates.updatePolicyForCurrentNode();
 
                 // Step4. Acknowledge to the client driver
                 StorageService.instance.notifyPolicy(GlobalStates.transformPolicyForClient(), GlobalStates.globalStates.getGlobalCoordinatorReadLatency());
 
                 // Step5. Replicate the placement policy to the followers
-                replicateGlobalPolicy();
-                
-                // Step6. Update the policy for background task control.
-                // BackgroundController.updateLimiter(GlobalStates.globalPolicy[Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort())]);
-                BackgroundController.updateLimiter(GlobalStates.translatePolicyForBackgroundController(StorageService.instance.localAddressAndPort));
-
+                // Todo: replace gossip with this naive approach
+                // replicateGlobalPolicy();
             }
         }
     }
@@ -175,54 +182,12 @@ public class Scheduler {
             }
 
             // Replicate the placement policy
-            PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.globalPolicy);
-        }
-    }
-
-    // Note that we only send the partial placement policy to all the data nodes.
-    private static void distributeCompactionRate()
-    {
-        if (liveSeeds.size() > 1)
-        {
-            for (InetAddressAndPort dataNode : Gossiper.instance.getLiveMembers())
-            {
-                if(liveSeeds.contains(dataNode))
-                {
-                    continue;
-                }
-                
-                Double[] backgroundCompactionRate = new Double[GlobalStates.rf];
-                int nodeIndex = Gossiper.getAllHosts().indexOf(dataNode);
-                for(int j = 0; j < GlobalStates.rf; j++)
-                {
-
-                    // Calculate the rate limit for each replica
-                    backgroundCompactionRate[j] = GlobalStates.globalPolicy[nodeIndex][j];
-                }
-                
-                PolicyDistribute.sendPlacementPolicy(dataNode, backgroundCompactionRate);
-            }
+            PolicyReplicate.sendPlacementPolicy(follower, GlobalStates.expectedStates);
         }
     }
 
     /**
      * Calculate the placement policy.
-     * 
-     * Basic idea: To minimize the resource contention within a node, we initially place all the read 
-     * requests of each replication group to the first $RCL$ replicas. Then we greedily adjust the placement 
-     * policy of each replication group along the ring. For each node, we will compute a score based on the 
-     * number of read requests and the mean value of the read latency within a period of time. Note that the
-     * larger latency and the request count, the higher the score. We consider the following cases:
-     * 
-     * 1. If $node_i$ has a larger latency than $node_{i+1,...,i+M-1}$, we consider gently moving the load of 
-     *    $RP_i$ to $node_{i+1,...,i+M-1}$. Here we just use a very simple algorithm to adjust the placement 
-     *    policy, for example AIMD or fixed step size.
-     * 2. If $node_i$ has a smaller latency than $node_{i+1,...,i+M-1}$, we consider recovering the load of 
-     *    $RP_i$ from $node_{i+1,...,i+M-1}$.
-     * 
-     * Input: scoreVector, loadMatrix
-     * Output: placementPolicy
-     * 
      */
     private static void calculateGlobalPolicy()
     {
@@ -274,36 +239,7 @@ public class Scheduler {
         GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size());
         if(liveSeeds.size() == 1)
         {
-            for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
-            {
-                String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
-                int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
-
-                LocalStates localStates = LocalStates.fromString(localStatesStr, version);
-
-                if(localStates == null)
-                {
-                    continue;
-                }
-
-                int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
-                if (nodeIndex == -1)
-                {
-                    throw new IllegalStateException("Host not found in Gossiper");
-                }
-
-                GlobalStates.globalStates.latencyVector[nodeIndex] = localStates.latency;
-                GlobalStates.globalStates.versionVector[nodeIndex] = localStates.version;
-                GlobalStates.globalStates.readCountOfEachNode[nodeIndex] = 0;
-                for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
-                {
-                    int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
-                    GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex] = entry1.getValue();
-                    GlobalStates.globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
-                }
-                GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], 
-                                                                                         GlobalStates.globalStates.readCountOfEachNode[nodeIndex]);
-            }
+            makeSnapshotForGossipInfo();
         }
         else if (liveSeeds.size() > 1)
         {
@@ -313,6 +249,7 @@ public class Scheduler {
             {
                 if(seed.equals(FBUtilities.getBroadcastAddressAndPort()))
                 {
+                    makeSnapshotForGossipInfo();
                     continue;
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
@@ -327,6 +264,7 @@ public class Scheduler {
             {
                 if(follower.equals(FBUtilities.getBroadcastAddressAndPort()))
                 {
+                    makeSnapshotForGossipInfo();
                     continue;
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
@@ -374,6 +312,116 @@ public class Scheduler {
                      GlobalStates.globalStates.scoreVector, 
                      GlobalStates.globalStates.loadMatrix);
 
+    }
+
+
+    private static void makeSnapshotForGossipInfo()
+    {
+        for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
+        {
+            String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
+            int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
+
+            LocalStates localStates = LocalStates.fromString(localStatesStr, version);
+
+            if(localStates == null)
+            {
+                continue;
+            }
+
+            int nodeIndex = Gossiper.getAllHosts().indexOf(entry.getKey());
+            if (nodeIndex == -1)
+            {
+                throw new IllegalStateException("Host not found in Gossiper");
+            }
+
+            GlobalStates.globalStates.latencyVector[nodeIndex] = localStates.latency;
+            GlobalStates.globalStates.versionVector[nodeIndex] = localStates.version;
+            GlobalStates.globalStates.readCountOfEachNode[nodeIndex] = 0;
+            for (Map.Entry<InetAddress, Integer> entry1 : localStates.completedReadRequestCount.entrySet())
+            {
+                int replicaIndex = HorseUtils.getReplicaIndexFromGossipInfo(nodeIndex, entry1.getKey());
+                GlobalStates.globalStates.loadMatrix[nodeIndex][replicaIndex] = entry1.getValue();
+                GlobalStates.globalStates.readCountOfEachNode[nodeIndex] += entry1.getValue();
+            }
+            GlobalStates.globalStates.scoreVector[nodeIndex] = GlobalStates.getScore(GlobalStates.globalStates.latencyVector[nodeIndex], 
+                                                                                     GlobalStates.globalStates.readCountOfEachNode[nodeIndex]);
+        }
+    }
+
+
+    public static Runnable startGossipStatesRunnable()
+    {
+        return new GossipStatesRunnable();
+    }
+
+    private static class GossipStatesRunnable implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            InetAddressAndPort to = selectNodesForGossip(Gossiper.instance.getLiveMembers());
+            if(GlobalStates.expectedStates == null)
+            {
+                // request new states from a random node
+                RequestNewStates.requestNewExpectedStates(to);
+                InetAddressAndPort maybeToSeed = maybeGossipToSeed();
+                if (maybeToSeed != null) 
+                {
+                    RequestNewStates.requestNewExpectedStates(maybeToSeed);
+                }
+            }
+            else
+            {
+                logger.info("rymInfo: Gossip the new states to the node {}", to);
+                // gossip new states to a random node
+                GossipStatesDigest.sendStatesDisgestMessage(to, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version);
+                InetAddressAndPort maybeToSeed = maybeGossipToSeed();
+                if (maybeToSeed != null) 
+                {
+                    GossipStatesDigest.sendStatesDisgestMessage(maybeToSeed, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version);
+                }
+            }
+            
+        }
+    }
+
+
+    private static InetAddressAndPort selectNodesForGossip(Iterable<InetAddressAndPort> epSet)
+    {
+        List<InetAddressAndPort> endpoints = ImmutableList.copyOf(epSet);
+
+        int size = endpoints.size();
+        /* Generate a random number from 0 -> size */
+        int index = (size == 1) ? 0 : random.nextInt(size);
+        InetAddressAndPort to = endpoints.get(index);
+        return to;
+    }
+
+    private static InetAddressAndPort maybeGossipToSeed()
+    {
+        int size = Gossiper.getAllSeeds().size();
+        if (size > 0)
+        {
+            if (size == 1 && Gossiper.getAllSeeds().contains(StorageService.instance.localAddressAndPort))
+            {
+                return null;
+            }
+
+            if (Gossiper.instance.getLiveMembers().size() == 0)
+            {
+                return selectNodesForGossip(Gossiper.getAllSeeds());
+            }
+            else
+            {
+                /* Gossip with the seed with some probability. */
+                double probability = Gossiper.getAllSeeds().size() / (double) (Gossiper.instance.getLiveMembers().size() + Gossiper.instance.getUnreachableMembers().size());
+                double randDbl = random.nextDouble();
+                if (randDbl <= probability)
+                    return selectNodesForGossip(Gossiper.getAllSeeds());
+            }
+        }
+        return null;
     }
 
 

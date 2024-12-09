@@ -441,7 +441,7 @@ public class CassandraDaemon
         // due to scheduling errors or race conditions
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(ColumnFamilyStore.getBackgroundCompactionTaskSubmitter(), 5, 1, TimeUnit.MINUTES);
         
-        ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(StorageService.getMetricsForEachTypeOfTasks(), 1, 1, TimeUnit.MINUTES);
+        // ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(StorageService.getMetricsForEachTypeOfTasks(), 1, 1, TimeUnit.MINUTES);
 
         // schedule periodic recomputation of speculative retry thresholds
         ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(SPECULATION_THRESHOLD_UPDATER, 
@@ -492,7 +492,7 @@ public class CassandraDaemon
                 }
             }
 
-            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getPrintStatisticRunnable(), 10, 30, TimeUnit.SECONDS);
+            // ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getPrintStatisticRunnable(), 10, 30, TimeUnit.SECONDS);
 
             ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.getLeaderElectionRunnable(), 
                                                                     5, 2, TimeUnit.SECONDS);
@@ -502,6 +502,9 @@ public class CassandraDaemon
                                                                     DatabaseDescriptor.getSchedulingInterval(),
                                                                     TimeUnit.SECONDS);
             isHorseActived = true;
+
+            // Start gossip
+            ScheduledExecutors.optionalTasks.scheduleWithFixedDelay(Scheduler.startGossipStatesRunnable(), DatabaseDescriptor.getSchedulingInitialDelay(), 2, TimeUnit.SECONDS);
         }
     }
 

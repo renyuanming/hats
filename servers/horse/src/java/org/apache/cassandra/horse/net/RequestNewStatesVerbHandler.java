@@ -19,7 +19,7 @@ package org.apache.cassandra.horse.net;
 
 import java.io.IOException;
 
-import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.slf4j.Logger;
@@ -30,24 +30,14 @@ import org.slf4j.LoggerFactory;
  * @author renyuanming1@gmail.com
  */
 
-public class PolicyDistributeVerbHandler implements IVerbHandler<PolicyDistribute>{
+public class RequestNewStatesVerbHandler implements IVerbHandler<RequestNewStates>{
 
-    public static final PolicyDistributeVerbHandler instance = new PolicyDistributeVerbHandler();
-    private static final Logger logger = LoggerFactory.getLogger(PolicyDistributeVerbHandler.class);
+    public static final RequestNewStatesVerbHandler instance = new RequestNewStatesVerbHandler();
+    private static final Logger logger = LoggerFactory.getLogger(RequestNewStatesVerbHandler.class);
     @Override
-    public void doVerb(Message<PolicyDistribute> message) throws IOException {
-        PolicyDistribute payload = message.payload;
-
-        try {
-            Double[] policy = (Double[]) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
-            // Get the placement policy for local replicas
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        // We get the new placement policy, perform the background compaction task rate limiting
-
+    public void doVerb(Message<RequestNewStates> message) throws IOException {
+        if(GlobalStates.expectedStates!=null)
+            SendNewStates.sendNewExpectedStates(message.from(), GlobalStates.expectedStates);
     }
     
 }

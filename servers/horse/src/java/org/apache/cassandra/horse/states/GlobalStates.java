@@ -20,6 +20,7 @@ package org.apache.cassandra.horse.states;
 
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jnr.constants.platform.Local;
+
 
 /**
  * @author renyuanming1@gmail.com
@@ -54,7 +57,11 @@ public class GlobalStates implements Serializable {
     public static final double OFFLOAD_THRESHOLD = DatabaseDescriptor.getOffloadThreshold();
     public static final double RECOVER_THRESHOLD = DatabaseDescriptor.getRecoverThreshold();
     public static final double STEP_SIZE = DatabaseDescriptor.getStepSize();
+    public static LoadBalancingStrategy expectedStates = null;
     
+    public static volatile int[] expectedRequestNumberofEachNode; // N
+    public static volatile int[] expectedRequestNumberOfEachRG; // N
+    // public static volatile int[][] expectedRequestDistribution; // N X M
     public Double[] scoreVector; // N
     public double[] latencyVector; // N
     public int[] readCountOfEachNode; // N
@@ -71,6 +78,20 @@ public class GlobalStates implements Serializable {
     {
         this.nodeCount = nodeCount;
         initialization();
+    }
+
+    public static class LoadBalancingStrategy implements Serializable {
+        public volatile int termId;
+        public volatile int version;
+        public volatile int[][] expectedRequestDistribution; // N X M
+
+        public LoadBalancingStrategy(int termId, int version, int[][] expectedRequestDistribution)
+        {
+            this.termId = termId;
+            this.version = version;
+            this.expectedRequestDistribution = expectedRequestDistribution;
+        }
+
     }
 
     public void initialization()
@@ -141,7 +162,45 @@ public class GlobalStates implements Serializable {
         // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
-    public static Double[] translatePolicyForBackgroundController(InetAddressAndPort targetNode)
+
+    public static void updatePolicyForCurrentNode()
+    {
+        int nodeCount = Gossiper.getAllHosts().size();
+        GlobalStates.expectedRequestNumberOfEachRG = new int[nodeCount];
+        for (int i= 0; i < nodeCount; i++)
+        {
+            int requestCount = 0;
+            for (int j = 0; j < rf; j++)
+            {
+                int curNodeIndex = (i + j) % nodeCount;
+                requestCount += GlobalStates.expectedStates.expectedRequestDistribution[curNodeIndex][j];
+            }
+            GlobalStates.expectedRequestNumberOfEachRG[i] = requestCount;
+        }
+        
+        GlobalStates.expectedRequestNumberofEachNode = new int[nodeCount];
+        // Update expectedRequestNumberofEachNode
+        for(int i = 0; i < nodeCount; i++)
+        {
+            int nodeIndex = i;
+            int requestCount = 0;
+            for(int j = 0; j < rf; j++)
+            {
+                requestCount += GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex][j];
+            }
+            GlobalStates.expectedRequestNumberofEachNode[nodeIndex] = requestCount;
+
+        }
+        // Update globalPolicy
+        LocalStates.transformToRatio();
+
+
+        // update background policy for rate limiting
+        translatePolicyForBackgroundController(FBUtilities.getBroadcastAddressAndPort());
+    }
+
+
+    public static void translatePolicyForBackgroundController(InetAddressAndPort targetNode)
     {
 
         int nodeIndex = Gossiper.getAllHosts().indexOf(targetNode);
@@ -149,21 +208,14 @@ public class GlobalStates implements Serializable {
         {
             throw new IllegalStateException("The node index is -1, the node is not in the host list.");
         }
-        int[] readCountOfEachReplica = new int[rf];
-        int totalReadCountOfTheNode = 0;
-        for(int i = 0; i < rf; i++)
-        {
-            int rgIndex = (nodeIndex - i + GlobalStates.globalStates.nodeCount) % GlobalStates.globalStates.nodeCount;
-            readCountOfEachReplica[i] = (int) (GlobalStates.globalStates.readCountOfEachRG[rgIndex] * GlobalStates.globalPolicy[nodeIndex][i]);
-            totalReadCountOfTheNode += readCountOfEachReplica[i];
-        }
         Double[] localPolicyForBackgroundController = new Double[rf];
         for(int i = 0; i < rf; i++)
         {
-            localPolicyForBackgroundController[i] = (double) readCountOfEachReplica[i] / totalReadCountOfTheNode;
+            localPolicyForBackgroundController[i] = (double) GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumberofEachNode[nodeIndex];
         }
-
-        return localPolicyForBackgroundController;
+        logger.info("rymInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
+                    GlobalStates.expectedRequestNumberofEachNode[nodeIndex], Arrays.toString(GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));
+        LocalStates.backgroundPolicy = localPolicyForBackgroundController;
     }
 
     public static double getScore(double latency, int requestCount)
@@ -177,8 +229,12 @@ public class GlobalStates implements Serializable {
     {
         int nodeCount = StringUtils.split(DatabaseDescriptor.getAllHosts(), ',').length;
         globalPolicy = new Double[nodeCount][rf];
+        expectedRequestNumberofEachNode = new int[nodeCount];
+        expectedRequestNumberOfEachRG = new int[nodeCount];
         for(int i = 0; i < nodeCount; i++)
         {
+            expectedRequestNumberofEachNode[i] = 0;
+            expectedRequestNumberOfEachRG[i] = 0;
             globalPolicy[i][0] = 1.0;
             for(int j = 1; j < rf; j++)
             {

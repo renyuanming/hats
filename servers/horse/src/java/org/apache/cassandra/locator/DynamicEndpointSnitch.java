@@ -72,6 +72,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
     private volatile HashMap<InetAddressAndPort, Double> scores = new HashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, ExponentiallyDecayingReservoir> samples = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<InetAddressAndPort, Double> ewmaSamples = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, Double> newSampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
     public final IEndpointSnitch subsnitch;
 
@@ -310,7 +311,10 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (sample == null)
                 sample = maybeNewSample;
         }
-        sample.update(unit.toMillis(latency));
+
+        // HORSE: update the ewma sample latency
+        ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMicros(latency) : ewmaSamples.get(host) * 0.5 + unit.toMicros(latency) * 0.5);
+        sample.update(unit.toMicros(latency));
     }
 
     @VisibleForTesting
@@ -329,6 +333,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         }
         double maxLatency = 1;
         double minLatency = Double.MAX_VALUE;
+
 
         Map<InetAddressAndPort, Snapshot> snapshots = new HashMap<>(samples.size());
         for (Map.Entry<InetAddressAndPort, ExponentiallyDecayingReservoir> entry : samples.entrySet())
@@ -349,12 +354,6 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             newSampleLatency.put(entry.getKey(), mean);
             if (mean < minLatency)
                 minLatency = mean;
-            
-            // if(entry.getKey().getAddress().equals(StorageService.instance.localIP))
-            // {
-            //     double newReadLatencyThreshold = entry.getValue().getMean() + entry.getValue().getStdDev();
-            //     StorageService.instance.readLatencyThreshold.set(newReadLatencyThreshold);
-            // }
         }
         ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
         ////////////////////////////////////////////////////////

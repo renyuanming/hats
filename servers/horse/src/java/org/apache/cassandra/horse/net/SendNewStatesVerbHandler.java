@@ -19,17 +19,13 @@ package org.apache.cassandra.horse.net;
 
 import java.io.IOException;
 
-import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
-import org.apache.cassandra.horse.controller.BackgroundController;
-import org.apache.cassandra.horse.controller.ReplicaSelector;
 import org.apache.cassandra.horse.states.GlobalStates;
-import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.horse.states.GlobalStates.LoadBalancingStrategy;
+import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.service.StorageService;
-import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,22 +34,20 @@ import org.slf4j.LoggerFactory;
  * @author renyuanming1@gmail.com
  */
 
-public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>{
+public class SendNewStatesVerbHandler implements IVerbHandler<SendNewStates>{
 
-    public static final PolicyReplicateVerbHandler instance = new PolicyReplicateVerbHandler();
-    private static final Logger logger = LoggerFactory.getLogger(PolicyReplicateVerbHandler.class);
+    public static final SendNewStatesVerbHandler instance = new SendNewStatesVerbHandler();
+    private static final Logger logger = LoggerFactory.getLogger(SendNewStatesVerbHandler.class);
     @Override
-    public void doVerb(Message<PolicyReplicate> message) throws IOException {
-        PolicyReplicate payload = message.payload;
+    public void doVerb(Message<SendNewStates> message) throws IOException {
         try {
             logger.info("rymInfo: Received placement policy from the leader: {}", message.from());
-            GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
+            GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(message.payload.placementPolicyInBytes);
             logger.info("rymInfo: Received expected states: {}, the term id is {}, version number is {}, expected distribution is {}", GlobalStates.expectedStates, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version, GlobalStates.expectedStates.expectedRequestDistribution);
             // Get the local placement policy
             GlobalStates.updatePolicyForCurrentNode();
 
             logger.info("rymInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumberofEachNode, LocalStates.backgroundPolicy);
-            // logger.info("rymInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumberofEachNode, ReplicaSelector.expectedRequestNumberofEachNode);
 
             // Get the placement policy for local replicas
         } catch (Exception e) {

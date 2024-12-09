@@ -33,12 +33,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.cassandra.horse.HorseUtils;
-import org.apache.cassandra.horse.HorseUtils.AKLogLevels;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
+import org.apache.cassandra.locator.DynamicEndpointSnitch;
 import org.apache.cassandra.locator.InetAddressAndPort;
-import org.apache.cassandra.service.StorageService;
-import org.apache.cassandra.utils.FBUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,26 +78,40 @@ public class ReplicaSelector
 
 
     public static double getScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
-        Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
-    
-        // Return score if already calculated
-        Double score = groupScores.get(targetAddr);
-        if (score != null) {
-            return score;
+        int targetIndex = Gossiper.getAllHosts().indexOf(targetAddr);
+
+        if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
+        {
+            Map<InetAddressAndPort, Double> groupScores = snitchMetrics.cachedScores.computeIfAbsent(replicationGroup, k -> new ConcurrentHashMap<>());
+
+            // Return score if already calculated
+            Double score = groupScores.get(targetAddr);
+            if (score != null) {
+                return score;
+            }
+        
+            // Calculate score because it was not found in cache
+            double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest, targetIndex);
+            groupScores.put(targetAddr, newScore);
+            return newScore;
         }
-    
-        // Calculate score because it was not found in cache
-        double newScore = calculateScore(replicationGroup, targetAddr, isRangeRequest);
-        groupScores.put(targetAddr, newScore);
-        return newScore;
+        else
+        {
+            return calculateScore(replicationGroup, targetAddr, isRangeRequest, targetIndex);
+        }
     }
     
-    private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest) {
+    private static double calculateScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr, boolean isRangeRequest, int targetIndex) {
         double greedyScore = calculateGreedyScore(replicationGroup, targetAddr);
-        double latencyScore = calculateLatencyScore(replicationGroup, targetAddr);
+        double latencyScore = calculateLatencyScore(replicationGroup, targetAddr, targetIndex);
         if (isRangeRequest) 
             return latencyScore;
-        return greedyScore + latencyScore;
+        if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0 || latencyScore <= 1)
+        {
+            return greedyScore + latencyScore;
+        }
+        // logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumberofEachNode[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex]);
+        return latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex];
     }
     
     private static double calculateGreedyScore(InetAddressAndPort replicationGroup, InetAddressAndPort targetAddr) 
@@ -110,27 +124,41 @@ public class ReplicaSelector
         return greedyScore;
     }
     
-    private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr) {
-        // Double sampleLatency = snitchMetrics.sampleLatency.get(targetAddr);
-        // return (sampleLatency != null) ? snitchMetrics.minLatency / sampleLatency : 0.0;
-
+    private static double calculateLatencyScore(InetAddressAndPort replicationGroup,InetAddressAndPort targetAddr, int targetIndex) {
         double latencyScore = 0.0;
-        if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+        // Use the old score function
+        if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
         {
-            latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // latencyScore = snitchMetrics.maxLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // latencyScore = snitchMetrics.sampleLatency.get(targetAddr) / snitchMetrics.maxLatency;
+            if(targetAddr.equals(targetAddr))
+            {
+                latencyScore = 1.0;
+            }
+            // if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+            // {
+            //     latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            // }
+            // else
+            // {
+            //     logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+            //     latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
+            // }
         }
         else
         {
-            // logger.error("rymDebug: for the replication group {}, we can not get the sample latency for the replica node {}", replicationGroup, targetAddr);
-            latencyScore = 1.0 + (snitchMetrics.maxLatency - 1.0) * random.nextDouble();
+            // use the new score function
+            if(DynamicEndpointSnitch.ewmaSamples.containsKey(targetAddr))
+            {
+                // micro to seconds
+                double replicaLatency = (DynamicEndpointSnitch.ewmaSamples.get(targetAddr)) / 1000000;
+                latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
+            }
+            else
+            {
+                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+                latencyScore = GlobalStates.expectedRequestNumberofEachNode[targetIndex];
+            }
         }
 
-        // latencyScore = Math.pow(latencyScore, 3);
-        // latencyScore = 1 / (1 + Math.exp(-latencyScore));
-
-        // latencyScore = 1 - Math.exp(-latencyScore);
         return latencyScore;
     }
     

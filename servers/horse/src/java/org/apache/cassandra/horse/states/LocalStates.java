@@ -61,6 +61,8 @@ public class LocalStates implements Serializable {
     private final static MetricRegistry registry = new MetricRegistry();
     private final static int rf = DatabaseDescriptor.getReplicationFactor();
 
+    public static Double[] backgroundPolicy = new Double[rf];
+
     public LocalStates(Map<InetAddress, Integer> completedReadRequestCount, double latency, int version)
     {
         this.completedReadRequestCount = completedReadRequestCount;
@@ -68,12 +70,20 @@ public class LocalStates implements Serializable {
         this.version = version;
     }
 
-    public static void updateLocalPolicy()
+    public static void transformToRatio()
     {
-        logger.info("rymInfo: the old local policy is {}, the local served request count is {}", localPolicy, StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica());
-
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
+        logger.info("rymInfo: This is the transformToRatio method");
+        GlobalStates.globalPolicy = new Double[nodeCount][rf];
+        for (int i = 0; i < nodeCount; i++) 
+        {
+            for (int j = 0; j < rf; j++)
+            {
+                GlobalStates.globalPolicy[i][j] = GlobalStates.expectedStates.expectedRequestDistribution[i][j] * 1.0 / GlobalStates.expectedRequestNumberOfEachRG[i];
+            }
+        }
+        
 
         for(int i = nodeIndex - (rf - 1); i <= nodeIndex + (rf - 1); i++)
         {
@@ -84,16 +94,17 @@ public class LocalStates implements Serializable {
             for(int curNodeIndex = rgIndex; curNodeIndex < rgIndex + rf; curNodeIndex++)
             {
                 int replicaIndex = HorseUtils.getReplicaIndexForRGInEachNode(rgIndex, curNodeIndex);
-                policy.add(GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex]);
-                policyWithPort.put(Gossiper.getAllHosts().get(curNodeIndex % nodeCount), 
-                           GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex]);
+                Double readRatio = GlobalStates.globalPolicy[curNodeIndex % nodeCount][replicaIndex];
+                policy.add(readRatio);
+                policyWithPort.put(Gossiper.getAllHosts().get(curNodeIndex % nodeCount), readRatio);
             }
             localPolicyWithAddress.put(rg, policyWithPort);
             localPolicy.put(rg, policy);
         }
 
-        logger.info("rymInfo: We get the global placement policy {}, the local placement policy {}, with address {}", GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
+        logger.info("rymInfo: We get the globalPolicy {}, the local placement policy {}, with address {}",GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
     }
+
 
     public String toString()
     {

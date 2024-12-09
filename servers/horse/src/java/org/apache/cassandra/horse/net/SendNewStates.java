@@ -26,6 +26,7 @@ import org.apache.cassandra.net.MessageFlag;
 import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.horse.HorseUtils.ByteObjectConversion;
+import org.apache.cassandra.horse.states.GlobalStates.LoadBalancingStrategy;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
@@ -41,59 +42,62 @@ import org.slf4j.LoggerFactory;
  * @author renyuanming1@gmail.com
  */
 
-public class PolicyDistribute 
+public class SendNewStates 
 {
 
-    private static final Logger logger = LoggerFactory.getLogger(PolicyDistribute.class);
+    private static final Logger logger = LoggerFactory.getLogger(SendNewStates.class);
     public static final Serializer serializer = new Serializer();
 
     public final byte[] placementPolicyInBytes;
     private final int placementPolicyInBytesSize;
     // Map<InetAddress, LocalStates> states
-    public PolicyDistribute(byte[] placementPolicyInBytes)
+    public SendNewStates(byte[] placementPolicyInBytes)
     {
         this.placementPolicyInBytes = placementPolicyInBytes;
         this.placementPolicyInBytesSize = placementPolicyInBytes.length;
     }
 
-    public static void sendPlacementPolicy(InetAddressAndPort dataNode, Double[] placementPolicy)
+    public static void sendNewExpectedStates(InetAddressAndPort follower, LoadBalancingStrategy expectedStates)
     {
         byte[] placementPolicyInBytes = null;
+
                 
         try {
-            placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) placementPolicy);
-            PolicyDistribute policy = new PolicyDistribute(placementPolicyInBytes);
-            Message<PolicyDistribute> message = Message.outWithFlag(Verb.POLICY_DISTRIBUTE_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
-            MessagingService.instance().send(message, dataNode);
+            placementPolicyInBytes = ByteObjectConversion.objectToByteArray((Serializable) expectedStates);
+            SendNewStates policy = new SendNewStates(placementPolicyInBytes);
+            Message<SendNewStates> message = Message.outWithFlag(Verb.GOSSIP_STATES_ACK_REQ, policy, MessageFlag.CALL_BACK_ON_FAILURE);
+            MessagingService.instance().send(message, follower);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    public static final class Serializer implements IVersionedSerializer<PolicyDistribute> 
+    public static final class Serializer implements IVersionedSerializer<SendNewStates> 
     {
 
         @Override
-        public void serialize(PolicyDistribute t, DataOutputPlus out, int version) throws IOException 
+        public void serialize(SendNewStates t, DataOutputPlus out, int version) throws IOException 
         {
             out.writeInt(t.placementPolicyInBytesSize);
             out.write(t.placementPolicyInBytes);
         }
 
         @Override
-        public PolicyDistribute deserialize(DataInputPlus in, int version) throws IOException 
+        public SendNewStates deserialize(DataInputPlus in, int version) throws IOException 
         {
             int placementPolicyInBytesSize = in.readInt();
             byte[] placementPolicyInBytes = new byte[placementPolicyInBytesSize];
             in.readFully(placementPolicyInBytes);
-            return new PolicyDistribute(placementPolicyInBytes);
+
+            return new SendNewStates(placementPolicyInBytes);
         }
 
         @Override
-        public long serializedSize(PolicyDistribute t, int version) 
+        public long serializedSize(SendNewStates t, int version) 
         {
-            long size = t.placementPolicyInBytesSize + sizeof(t.placementPolicyInBytesSize);
+            long size = t.placementPolicyInBytesSize + 
+                        sizeof(t.placementPolicyInBytesSize);
             return size;
         }
 
