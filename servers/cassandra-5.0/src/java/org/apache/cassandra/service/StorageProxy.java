@@ -1985,10 +1985,7 @@ public class StorageProxy implements StorageProxyMBean
                 StorageService.instance.largeLatencyCalculator.record(latency);
                 StorageService.instance.smallLatencyCalculator.record(latency);
             }
-            else
-            {
-                Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-            }
+            Keyspace.open(metadata.keyspace).getColumnFamilyStore(metadata.name).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
         }
 
         return result;
@@ -2048,10 +2045,7 @@ public class StorageProxy implements StorageProxyMBean
                     StorageService.instance.largeLatencyCalculator.record(latency);
                     StorageService.instance.smallLatencyCalculator.record(latency);
                 }
-                else
-                {
-                    Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
-                }
+                Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
             }
         }
     }
