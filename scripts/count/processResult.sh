@@ -360,8 +360,9 @@ function process_sub_directory {
         average_insert_latency=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[INSERT\], AverageLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         tail_insert_latency_99th=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[INSERT\], 99thPercentileLatency(us), " "{}" | awk -F ", " "{print \$3}"' \;)
         overall_runtime=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[OVERALL\], RunTime(ms), " "{}" | awk -F ", " "{print \$3}"' \;)
+        overall_runtime=$(echo "scale=2; $overall_runtime / 1000" | bc) # ms to s
         overall_throughput=$(find $round_dir -name "*.log" -exec sh -c 'grep "\[OVERALL\], Throughput(ops/sec), " "{}" | awk -F ", " "{print \$3}"' \;)
-        overall_throughput=$(echo "scale=2; $overall_throughput / 1000" | bc) # KOPS to MOPS
+        overall_throughput=$(echo "scale=2; $overall_throughput / 1000" | bc) # OPS to KOPS
         avg_user_time=$(echo "scale=0; ($(IFS=+; echo "(${user_time_of_all_nodes[*]})") / ${#user_time_of_all_nodes[@]})" | bc)
         avg_sys_time=$(echo "scale=0; ($(IFS=+; echo "(${sys_time_of_all_nodes[*]})") / ${#sys_time_of_all_nodes[@]})" | bc)
         avg_disk_read_io=$(echo "scale=0; ($(IFS=+; echo "(${disk_read_io_of_all_nodes[*]})") / ${#disk_read_io_of_all_nodes[@]})" | bc)
@@ -369,6 +370,7 @@ function process_sub_directory {
         avg_overall_disk_io=$(echo "scale=0; ($(IFS=+; echo "(${overall_disk_io_of_all_nodes[*]})") / ${#overall_disk_io_of_all_nodes[@]})" | bc)
         avg_overall_network_io=$(echo "scale=0; ($(IFS=+; echo "(${overall_network_io_of_all_nodes[*]})") / ${#overall_network_io_of_all_nodes[@]})" | bc)
         avg_overall_cpu_time=$(echo "scale=0; ($(IFS=+; echo "(${overall_cpu_time_of_all_nodes[*]})") / ${#overall_cpu_time_of_all_nodes[@]})" | bc)
+        average_cpu_usage=$(echo "scale=2; $avg_overall_cpu_time * 100 / $overall_runtime" | bc)
         avg_mem_size=$(echo "scale=2; ($(IFS=+; echo "(${mem_size_of_all_nodes[*]})") / ${#mem_size_of_all_nodes[@]})" | bc)
         echo "###########################################################################################Average mem size: $avg_mem_size"
         average_local_read_latency=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] local_read_latency_of_all_nodes[@])
@@ -424,6 +426,7 @@ function process_sub_directory {
         eval "round_data[overall_latency_99th]=\"$overall_latency_99th \""
         eval "round_data[overall_latency_999th]=\"$overall_latency_999th \""
         eval "round_data[overall_runtime]=\"$overall_runtime \""
+        eval "round_data[average_cpu_usage]=\"$average_cpu_usage \""
         eval "round_data[overall_throughput]=\"$overall_throughput \""
         eval "round_data[average_user_time]=\"$avg_user_time\""
         eval "round_data[average_sys_time]=\"$avg_sys_time\""
@@ -478,6 +481,7 @@ function process_sub_directory {
         eval "overall_data[$round,overall_latency_99th]=\"$overall_latency_99th \""
         eval "overall_data[$round,overall_latency_999th]=\"$overall_latency_999th \""
         eval "overall_data[$round,overall_runtime]=\"$overall_runtime \""
+        eval "overall_data[$round,average_cpu_usage]=\"$average_cpu_usage \""
         eval "overall_data[$round,overall_throughput]=\"$overall_throughput \""
         eval "overall_data[$round,average_user_time]=\"$avg_user_time\""
         eval "overall_data[$round,average_sys_time]=\"$avg_sys_time\""
@@ -692,7 +696,7 @@ function print_overall_results() {
     echo "" >> "$output_file"
 
 
-    OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time" "average_read_wait_time" "cov_coordinator_read_time" "average_selection_time" "avg_mem_size" "average_coordinator_write_latency")
+    OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time" "average_read_wait_time" "cov_coordinator_read_time" "average_selection_time" "avg_mem_size" "average_coordinator_write_latency" "average_cpu_usage")
 
     # calculate the student t distribution for 95% confidence interval
     for key in "${OVERALL_KEYS[@]}"; do
@@ -806,6 +810,14 @@ function output_to_res_file {
             echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
             echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
             echo -n "CPU    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
+            echo "" >> "$OVERALL_RESOURCE_RES"
+        elif [ $key == "average_cpu_usage" ]; then
+            echo -n "" >> "$OVERALL_RESOURCE_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_RESOURCE_RES"
+            echo -n "$workload       " >> "$OVERALL_RESOURCE_RES"
+            echo -n "CPU usage   " >> "$OVERALL_RESOURCE_RES"
             echo -n "$mean    " >> "$OVERALL_RESOURCE_RES"
             echo -n "$t_error    " >> "$OVERALL_RESOURCE_RES"
             echo "" >> "$OVERALL_RESOURCE_RES"
@@ -1159,6 +1171,9 @@ function print_round_results() {
     echo "" >> "$output_file"
     echo -n "Overall Runtime (ms)," >> "$output_file"
     echo -n "${data[overall_runtime]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "CPU usage (%)," >> "$output_file"
+    echo -n "${data[average_cpu_usage]}," >> "$output_file"
     echo "" >> "$output_file"
     echo -n "Overall Throughput (ops/sec)," >> "$output_file"
     echo -n "${data[overall_throughput]}," >> "$output_file"
