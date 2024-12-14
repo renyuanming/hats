@@ -383,6 +383,7 @@ function process_sub_directory {
 
         average_coordinator_read_time=$(calculate_arithmetic_mean coordinator_read_count_of_all_nodes[@] coordinator_read_time_of_all_nodes[@])
         cov_coordinator_read_time=$(calculate_cov coordinator_read_time_of_all_nodes[@])
+        std_local_read_time=$(calculate_std local_read_time_of_all_nodes[@])
         average_local_read_time=$(calculate_arithmetic_mean local_read_count_of_all_nodes[@] local_read_time_of_all_nodes[@])
         average_selection_time=$(calculate_arithmetic_mean coordinator_read_count_of_all_nodes[@] selection_time_of_all_nodes[@])
         average_write_memtable_time=$(calculate_arithmetic_mean local_write_count_of_all_nodes[@] write_memtable_time_of_all_nodes[@])
@@ -443,6 +444,7 @@ function process_sub_directory {
         eval "round_data[replica_selection_cost]=\"$replica_selection_cost\""
         eval "round_data[average_coordinator_read_time]=\"$average_coordinator_read_time\""
         eval "round_data[cov_coordinator_read_time]=\"$cov_coordinator_read_time\""
+        eval "round_data[std_local_read_time]=\"$std_local_read_time\""
         eval "round_data[average_local_read_time]=\"$average_local_read_time\""
         eval "round_data[average_selection_time]=\"$average_selection_time\""
         eval "round_data[average_write_memtable_time]=\"$average_write_memtable_time\""
@@ -497,6 +499,7 @@ function process_sub_directory {
         eval "overall_data[$round,read_network_cost]=\"$read_network_cost\""
         eval "overall_data[$round,average_coordinator_read_time]=\"$average_coordinator_read_time\""
         eval "overall_data[$round,cov_coordinator_read_time]=\"$cov_coordinator_read_time\""
+        eval "overall_data[$round,std_local_read_time]=\"$std_local_read_time\""
         eval "overall_data[$round,average_local_read_time]=\"$average_local_read_time\""
         eval "overall_data[$round,average_selection_time]=\"$average_selection_time\""
         eval "overall_data[$round,average_write_memtable_time]=\"$average_write_memtable_time\""
@@ -547,6 +550,37 @@ calculate_average_memory_usage() {
         echo "$average_gib"
     fi
 }
+
+
+calculate_std() {
+    local data=("${!1}")
+    local sum=0
+    local sum_of_squares=0
+    local mean=0
+    local std_dev=0
+
+    # calculate the sum
+    for value in "${data[@]}"; do
+        sum=$(echo "$sum + $value" | bc)
+    done
+
+    # calculate the mean
+    mean=$(echo "scale=6; $sum / ${#data[@]}" | bc)
+
+    for value in "${data[@]}"; do
+        diff=$(echo "$value - $mean" | bc)
+        square=$(echo "$diff * $diff" | bc)
+        sum_of_squares=$(echo "$sum_of_squares + $square" | bc)
+    done
+
+    # calculate standard deviation
+    std_dev=$(echo "scale=6; sqrt($sum_of_squares / ${#data[@]})" | bc)
+
+    echo "$std_dev"
+
+}
+
+
 
 calculate_cov() {
     local data=("${!1}")
@@ -692,7 +726,7 @@ function print_overall_results() {
     echo "" >> "$output_file"
 
 
-    OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time" "average_read_wait_time" "cov_coordinator_read_time" "average_selection_time" "avg_mem_size" "average_coordinator_write_latency")
+    OVERALL_KEYS=("average_read_latency" "median_read_latency" "tail_read_latency_75th" "tail_read_latency_95th" "tail_read_latency_99th" "tail_read_latency_999th" "average_update_latency" "tail_update_latency_99th" "overall_runtime" "overall_throughput" "average_user_time" "average_sys_time" "average_disk_read_io" "average_disk_write_io" "average_local_read_latency" "average_coordinator_read_latency" "average_local_write_latency" "average_local_scan_latency" "average_coordinator_scan_latency" "replica_selection_cost" "read_network_cost" "average_scan_latency" "tail_scan_latency_99th" "average_insert_latency" "tail_insert_latency_99th" "average_coordinator_read_time" "average_local_read_time" "average_write_memtable_time" "average_write_wal_time" "average_flush_time" "average_compaction_time" "average_read_cache_time" "average_read_memtable_time" "average_read_sstable_time" "average_read_two_layer_log_time" "average_merge_sort_time" "overall_latency_average" "overall_latency_50th" "overall_latency_75th" "overall_latency_95th" "overall_latency_99th" "overall_latency_999th" "average_overall_disk_io" "average_overall_network_io" "average_overall_cpu_time" "average_read_wait_time" "cov_coordinator_read_time" "std_local_read_time" "average_selection_time" "avg_mem_size" "average_coordinator_write_latency")
 
     # calculate the student t distribution for 95% confidence interval
     for key in "${OVERALL_KEYS[@]}"; do
@@ -1180,6 +1214,9 @@ function print_round_results() {
     echo "" >> "$output_file"
     echo -n "CoV Coordinator Read Time," >> "$output_file"
     echo -n "${data[cov_coordinator_read_time]}," >> "$output_file"
+    echo "" >> "$output_file"
+    echo -n "Std local read time," >> "$output_file"
+    echo -n "${data[std_local_read_time]}," >> "$output_file"
     echo "" >> "$output_file"
     echo -n "Average Local Read Time (us)," >> "$output_file"
     echo -n "${data[average_local_read_time]}," >> "$output_file"
