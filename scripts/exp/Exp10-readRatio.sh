@@ -4,9 +4,9 @@
 . /etc/profile
 
 # Workload Settings
-EXP_NAME="Exp10-multiWorkload"
+EXP_NAME="Exp10-readRatio"
 PURE_READ_WORKLOADS=("workloadc")
-MIXED_READ_WRITE_WORKLOADS=("workloadr3w7" "workloadr6w4" "workloadr9w1")
+MIXED_READ_WRITE_WORKLOADS=("workloadr0w10" "workloadr2w8" "workloadr4w6" "workloadr6w4" "workloadr8w2" "workloadr10w0")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
 OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
