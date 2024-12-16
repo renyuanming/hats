@@ -355,6 +355,14 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (mean < minLatency)
                 minLatency = mean;
         }
+        for (Map.Entry<InetAddressAndPort, Double> entry : DynamicEndpointSnitch.ewmaSamples.entrySet())
+        {
+            if(!snapshots.containsKey(entry.getKey()))
+            {
+                // remove the stale entry
+                DynamicEndpointSnitch.ewmaSamples.remove(entry.getKey());
+            }
+        }
         ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);
         ////////////////////////////////////////////////////////
 
