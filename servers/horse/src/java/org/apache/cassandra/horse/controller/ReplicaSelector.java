@@ -39,6 +39,7 @@ import org.apache.cassandra.horse.states.GlobalStates;
 import org.apache.cassandra.horse.states.LocalStates;
 import org.apache.cassandra.locator.DynamicEndpointSnitch;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.service.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,27 +130,27 @@ public class ReplicaSelector
         // Use the old score function
         if(GlobalStates.expectedRequestNumberofEachNode == null || GlobalStates.expectedRequestNumberofEachNode[targetIndex] == 0)
         {
-            if(targetAddr.equals(targetAddr))
+            if(targetAddr.equals(StorageService.instance.localAddressAndPort))
             {
                 latencyScore = 1.0;
             }
-            // if(snitchMetrics.sampleLatency.containsKey(targetAddr))
-            // {
-            //     latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
-            // }
-            // else
-            // {
-            //     logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
-            //     latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
-            // }
+            else if(snitchMetrics.sampleLatency.containsKey(targetAddr))
+            {
+                latencyScore = snitchMetrics.minLatency / snitchMetrics.sampleLatency.get(targetAddr);
+            }
+            else
+            {
+                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+                latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
+            }
         }
         else
         {
             // use the new score function
-            if(DynamicEndpointSnitch.ewmaSamples.containsKey(targetAddr))
+            if(DynamicEndpointSnitch.ewmaSamples.containsKey(replicationGroup) && DynamicEndpointSnitch.ewmaSamples.get(replicationGroup).containsKey(targetAddr))
             {
                 // micro to seconds
-                double replicaLatency = (DynamicEndpointSnitch.ewmaSamples.get(targetAddr)) / 1000000;
+                double replicaLatency = (DynamicEndpointSnitch.ewmaSamples.get(replicationGroup).get(targetAddr)) / 1000000;
                 latencyScore = (4 * DatabaseDescriptor.getSchedulingInterval()) / replicaLatency;
             }
             else
