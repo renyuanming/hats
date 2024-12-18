@@ -84,32 +84,36 @@ public class DigestResolver<E extends Endpoints<E>, P extends ReplicaPlan.ForRea
 
         if (!hasTransientResponse(responses))
         {
-            // TODO: differentiate the specific key range
-            InetAddressAndPort from = dataResponse.from();
-            // Get replication group from the command.metadata
-            int tableIndex = Integer.parseInt(command.metadata().name.replaceAll("\\D+", ""));
-            int currentNodeIndex = Gossiper.getAllHosts().indexOf(StorageService.instance.localAddressAndPort);
-            int rgIndex = (currentNodeIndex - tableIndex + Gossiper.getAllHosts().size()) % Gossiper.getAllHosts().size();
-            InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
-            // nano time to micro time
-            double latency = (nanoTime() - queryStartNanoTime) / 1000;
-            if(DynamicEndpointSnitch.ewmaSamples.containsKey(rg))
+            if(command.metadata().name.contains("usertable"))
             {
-                if(DynamicEndpointSnitch.ewmaSamples.get(rg).containsKey(from))
+                // TODO: differentiate the specific key range
+                InetAddressAndPort from = dataResponse.from();
+                // Get replication group from the command.metadata
+                int tableIndex = Integer.parseInt(command.metadata().name.replaceAll("\\D+", ""));
+                int currentNodeIndex = Gossiper.getAllHosts().indexOf(StorageService.instance.localAddressAndPort);
+                int rgIndex = (currentNodeIndex - tableIndex + Gossiper.getAllHosts().size()) % Gossiper.getAllHosts().size();
+                InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
+                // nano time to micro time
+                double latency = (nanoTime() - queryStartNanoTime) / 1000;
+                if(DynamicEndpointSnitch.ewmaSamples.containsKey(rg))
                 {
-                    double newLatency = DynamicEndpointSnitch.ewmaSamples.get(rg).get(from) * 0.5 + latency * 0.5;
-                    DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, newLatency);
+                    if(DynamicEndpointSnitch.ewmaSamples.get(rg).containsKey(from))
+                    {
+                        double newLatency = DynamicEndpointSnitch.ewmaSamples.get(rg).get(from) * 0.5 + latency * 0.5;
+                        DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, newLatency);
+                    }
+                    else
+                    {
+                        DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, latency);
+                    }
                 }
                 else
                 {
+                    DynamicEndpointSnitch.ewmaSamples.put(rg, new ConcurrentHashMap<InetAddressAndPort, Double>());
                     DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, latency);
                 }
             }
-            else
-            {
-                DynamicEndpointSnitch.ewmaSamples.put(rg, new ConcurrentHashMap<InetAddressAndPort, Double>());
-                DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, latency);
-            }
+
             return UnfilteredPartitionIterators.filter(dataResponse.payload.makeIterator(command), command.nowInSec());
         }
         else
