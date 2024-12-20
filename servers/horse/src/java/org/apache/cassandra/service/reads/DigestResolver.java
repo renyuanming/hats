@@ -19,8 +19,10 @@ package org.apache.cassandra.service.reads;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.alipay.sofa.jraft.storage.Storage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -29,11 +31,14 @@ import org.apache.cassandra.db.ReadResponse;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
 import org.apache.cassandra.db.partitions.PartitionIterator;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterators;
+import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.locator.DynamicEndpointSnitch;
 import org.apache.cassandra.locator.Endpoints;
 import org.apache.cassandra.locator.Replica;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.ReplicaPlan;
 import org.apache.cassandra.net.Message;
+import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.reads.repair.NoopReadRepair;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -79,6 +84,36 @@ public class DigestResolver<E extends Endpoints<E>, P extends ReplicaPlan.ForRea
 
         if (!hasTransientResponse(responses))
         {
+            if(command.metadata().name.contains("usertable"))
+            {
+                // TODO: differentiate the specific key range
+                InetAddressAndPort from = dataResponse.from();
+                // Get replication group from the command.metadata
+                int tableIndex = Integer.parseInt(command.metadata().name.replaceAll("\\D+", ""));
+                int currentNodeIndex = Gossiper.getAllHosts().indexOf(StorageService.instance.localAddressAndPort);
+                int rgIndex = (currentNodeIndex - tableIndex + Gossiper.getAllHosts().size()) % Gossiper.getAllHosts().size();
+                InetAddressAndPort rg = Gossiper.getAllHosts().get(rgIndex);
+                // nano time to micro time
+                double latency = (nanoTime() - queryStartNanoTime) / 1000;
+                if(DynamicEndpointSnitch.ewmaSamples.containsKey(rg))
+                {
+                    if(DynamicEndpointSnitch.ewmaSamples.get(rg).containsKey(from))
+                    {
+                        double newLatency = DynamicEndpointSnitch.ewmaSamples.get(rg).get(from) * 0.5 + latency * 0.5;
+                        DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, newLatency);
+                    }
+                    else
+                    {
+                        DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, latency);
+                    }
+                }
+                else
+                {
+                    DynamicEndpointSnitch.ewmaSamples.put(rg, new ConcurrentHashMap<InetAddressAndPort, Double>());
+                    DynamicEndpointSnitch.ewmaSamples.get(rg).put(from, latency);
+                }
+            }
+
             return UnfilteredPartitionIterators.filter(dataResponse.payload.makeIterator(command), command.nowInSec());
         }
         else

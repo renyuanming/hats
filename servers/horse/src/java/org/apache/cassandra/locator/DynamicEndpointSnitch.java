@@ -72,7 +72,8 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
 
     private volatile HashMap<InetAddressAndPort, Double> scores = new HashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, ExponentiallyDecayingReservoir> samples = new ConcurrentHashMap<>();
-    public static final ConcurrentHashMap<InetAddressAndPort, Double> ewmaSamples = new ConcurrentHashMap<>();
+    // public static final ConcurrentHashMap<InetAddressAndPort, Double> ewmaSamples = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> ewmaSamples = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<InetAddressAndPort, Double> newSampleLatency = new ConcurrentHashMap<InetAddressAndPort, Double>();
     public final IEndpointSnitch subsnitch;
 
@@ -313,7 +314,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         }
 
         // HORSE: update the ewma sample latency
-        ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMicros(latency) : ewmaSamples.get(host) * 0.5 + unit.toMicros(latency) * 0.5);
+        // ewmaSamples.put(host, ewmaSamples.get(host) == null ? unit.toMicros(latency) : ewmaSamples.get(host) * 0.5 + unit.toMicros(latency) * 0.5);
         sample.update(unit.toMicros(latency));
     }
 
@@ -355,12 +356,19 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
             if (mean < minLatency)
                 minLatency = mean;
         }
-        for (Map.Entry<InetAddressAndPort, Double> entry : DynamicEndpointSnitch.ewmaSamples.entrySet())
+        for (Map.Entry<InetAddressAndPort, ConcurrentHashMap<InetAddressAndPort, Double>> entry : DynamicEndpointSnitch.ewmaSamples.entrySet())
         {
-            if(!snapshots.containsKey(entry.getKey()))
+            if(entry.getValue().isEmpty())
             {
-                // remove the stale entry
-                DynamicEndpointSnitch.ewmaSamples.remove(entry.getKey());
+                continue;
+            }
+            for(Map.Entry<InetAddressAndPort, Double> ewmaEntry : entry.getValue().entrySet())
+            {
+                if(ewmaEntry!= null && !snapshots.containsKey(ewmaEntry.getKey()))
+                {
+                    // remove the stale entry
+                    DynamicEndpointSnitch.ewmaSamples.get(entry.getKey()).remove(ewmaEntry.getKey());
+                }
             }
         }
         ReplicaSelector.snitchMetrics = new ReplicaSelector.SnitchMetrics(newSampleLatency, minLatency, maxLatency);

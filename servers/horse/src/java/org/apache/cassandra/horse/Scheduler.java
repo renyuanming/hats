@@ -319,6 +319,7 @@ public class Scheduler {
     {
         for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
         {
+            logger.info("rymInfo: the endpoint {} state is {}, foreground load is {}", entry.getKey(), entry.getValue(),  entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD));
             String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
             int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
 
