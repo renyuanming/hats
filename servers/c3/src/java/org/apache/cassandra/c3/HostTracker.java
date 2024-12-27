@@ -46,17 +46,17 @@ public class HostTracker
                                                             "  executor = \"fork-join-executor\"\n" +
                                                             "  fork-join-executor {\n" +
                                                             "    parallelism-min = 2\n" +
-                                                            "    parallelism-factor = 2.0\n" +
-                                                            "    parallelism-max = 20\n" +
+                                                            "    parallelism-factor = 6.0\n" +
+                                                            "    parallelism-max = 64\n" +
                                                             "  }\n" +
                                                             "  throughput = 10\n" +
                                                             "}\n");
 
+    private final ActorSystem actorSystem = ActorSystem.create("C3", config);
     private final ConcurrentHashMap<InetAddress, ActorRef> actors = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<InetAddress, AtomicInteger> pendingRequests = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<InetAddress, RateController> rateControllers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<InetAddress, ScoreTracker> scoreTrackers = new ConcurrentHashMap<>();
-    private final ActorSystem actorSystem = ActorSystem.create("C3", config);
 
     public ActorRef getActor(EndpointsForToken  endpoints)
     {
