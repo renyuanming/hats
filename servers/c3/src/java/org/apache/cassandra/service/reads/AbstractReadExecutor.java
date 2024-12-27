@@ -518,7 +518,7 @@ public abstract class AbstractReadExecutor
     public double pushRead()
     {
         // Block until the upstream queues look all right if we're using the c3 strategy
-        if (DatabaseDescriptor.getScoreStrategy().equals(Config.SelectionStrategy.c3_strategy))
+        if (DatabaseDescriptor.getScoreStrategy().equals(Config.SelectionStrategy.default_strategy))
         {
             Token tokenForRead = (command instanceof SinglePartitionReadCommand
                     ? ((SinglePartitionReadCommand) command).partitionKey().getToken()
