@@ -43,26 +43,21 @@ memtable_allocation_type: heap_buffers
 listen_address: 192.168.10.55
 rpc_address: 192.168.10.55
 storage_port: 7000
+all_hosts: "192.168.10.51,192.168.10.52,192.168.10.53,192.168.10.55"
+initial_token: 4611686018427387904
+token_ranges: -9223372036854775808,-4611686018427387904,0,4611686018427387904
+concurrent_schedulers: 32
 ssl_storage_port: 7001
 raft_port: 8081
 scheduling_initial_delay: 10
 scheduling_interval: 1
 raft_rpc_timeout: 1000
-read_sensitive_factor: 0.9
 state_update_interval: 10
-all_hosts: "192.168.10.51,192.168.10.52,192.168.10.53,192.168.10.55"
-initial_token: 4611686018427387904
-token_ranges: -9223372036854775808,-4611686018427387904,0,4611686018427387904
-motivation: false
-enable_direct_io_for_read_path: false
-concurrent_schedulers: 32
-step_size: 0.05
-offload_threshold: 0.5
-recover_threshold: 0.1
 enable_horse: false
-throttle_data_rate: 90
 replication_factor: 3
 
+motivation: false
+enable_direct_io_for_read_path: false
 # Triggers automatic allocation of num_tokens tokens for this node. The allocation
 # algorithm attempts to choose tokens in a way that optimizes replicated load over
 # the nodes in the datacenter for the replica factor.
