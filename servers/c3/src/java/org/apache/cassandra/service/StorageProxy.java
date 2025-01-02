@@ -2057,7 +2057,7 @@ public class StorageProxy implements StorageProxyMBean
                 // Keyspace.openAndGetStore(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                 if(command.metadata().name.contains("usertable"))
                 {
-                    // command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
+                    command.getColumnFamilyStorefromMultiReplicas(command.metadata()).metric.coordinatorReadLatency.update(latency, TimeUnit.NANOSECONDS);
                     StorageService.instance.readLatencyCalculator.record(latency/1000);
                     StorageService.instance.smallLatencyCalculator.record(latency/1000);
                     StorageService.instance.coordinatorReadTime += latency / 1000;
