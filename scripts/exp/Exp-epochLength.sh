@@ -4,7 +4,7 @@
 . /etc/profile
 
 # Workload Settings
-EXP_NAME="Exp1-ycsb"
+EXP_NAME="Exp-epochLength"
 PURE_READ_WORKLOADS=("workloadc")
 MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
