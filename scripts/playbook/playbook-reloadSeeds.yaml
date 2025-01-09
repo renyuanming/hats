@@ -2,7 +2,7 @@
 - name: Reload seeds
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Reload seeds
       shell: . /etc/profile && cd PATH_TO_SERVER && bin/nodetool reloadseeds  

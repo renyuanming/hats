@@ -2,7 +2,7 @@
 - name: Initialize the cluster
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Initialize the cluster
       command: bash PATH_TO_SCRIPTS/run/restartCassandra.sh {{ configurationFile }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHorse }} {{ throttleDataRate }}
@@ -28,7 +28,7 @@
 - name: Restart seed nodes
   hosts: cassandra_seeds
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Restart seed nodes
       shell: . /etc/profile && cd PATH_TO_SERVER && nohup bin/cassandra >logs/debug.log 2>&1 &
@@ -45,7 +45,7 @@
   hosts: cassandra_data_nodes
   become: yes
   serial: 1
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Restart data nodes
       shell: . /etc/profile && cd PATH_TO_SERVER && nohup bin/cassandra >logs/debug.log 2>&1 &

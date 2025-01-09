@@ -2,7 +2,7 @@
 - name: Decompress dataset
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Decompress dataset
       shell: . /etc/profile && cd TARGET_DIR && tar -xzf {{ inventory_hostname }}.tar.gz -C DECOMPRESS_DIR && rm -rf {{ inventory_hostname }}.tar.gz

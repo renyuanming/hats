@@ -2,7 +2,7 @@
 - name: Start Cassandra Seeds
   hosts: cassandra_seeds
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
   - name: Execute script start-server.sh
     shell: |
@@ -34,7 +34,7 @@
 - name: Start Cassandra Data Nodes
   hosts: cassandra_data_nodes
   become: true
-  become_user: ymren
+  become_user: hats
   serial: 1
   tasks:
   - name: Execute script start-server.sh
@@ -66,7 +66,7 @@
 - name: Setup log levels
   hosts:  cassandra_servers
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
   - name: Setup log levels
     shell: |
@@ -78,7 +78,7 @@
 - name: Prepare keyspace and tables for evaluation
   hosts: cassandra_clients
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
   - name: Execute script start-client.sh
     shell: bash PATH_TO_SCRIPTS/run/start-client.sh {{ coordinator }} {{ sstable_size_in_mb }} {{ fanout_size }} {{ file_dir }} {{ replication_factor }} {{ mode }} {{ compaction_strategy }}
@@ -102,7 +102,7 @@
 - name: Load data
   hosts: cassandra_clients
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
   - name: Execute script load.sh
     shell: | 
@@ -135,7 +135,7 @@
 - name: Get write stall metrics
   hosts:  cassandra_servers
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
   - name: Get write stall metrics
     shell: |
@@ -147,7 +147,7 @@
 - name: Backup Logs
   hosts: cassandra_servers
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: copy logs
       shell: bash PATH_TO_SCRIPTS/run/copyLogs.sh {{ record_count }} {{ operation_count }} {{ threads }} {{ workload }} {{ expName }} {{ keyspace }} {{ resultDir }}
