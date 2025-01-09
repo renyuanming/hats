@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class HorseUtils {
@@ -89,7 +89,7 @@ public class HorseUtils {
 
     public static void forceDelete(File path) {
         try {
-            logger.debug("rymDebug: Deleting file {}", path);
+            logger.debug("HATSDebug: Deleting file {}", path);
             FileUtils.forceDelete(path);
         } catch (final IOException e) {
             logger.error("Fail to delete file {}.", path);

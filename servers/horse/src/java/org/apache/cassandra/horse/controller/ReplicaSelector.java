@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
 */
 
 public class ReplicaSelector 
@@ -111,7 +111,7 @@ public class ReplicaSelector
         {
             return greedyScore + latencyScore;
         }
-        // logger.info("rymInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumberofEachNode[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex]);
+        // logger.info("HATSInfo: the expected request number is {}, the latency score is {}, the score is {}", GlobalStates.expectedRequestNumberofEachNode[targetIndex], latencyScore, latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex]);
         return latencyScore - GlobalStates.expectedRequestNumberofEachNode[targetIndex];
     }
     
@@ -140,7 +140,7 @@ public class ReplicaSelector
             }
             else
             {
-                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+                logger.info("HATSInfo: sample latency does not contain: {}", targetAddr);
                 latencyScore = 1.0 + (snitchMetrics.maxLatency/1000 - 1.0) * random.nextDouble();
             }
         }
@@ -155,7 +155,7 @@ public class ReplicaSelector
             }
             else
             {
-                logger.info("rymInfo: sample latency does not contain: {}", targetAddr);
+                logger.info("HATSInfo: sample latency does not contain: {}", targetAddr);
                 latencyScore = GlobalStates.expectedRequestNumberofEachNode[targetIndex];
             }
         }

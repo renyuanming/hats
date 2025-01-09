@@ -91,7 +91,7 @@ public final class ThreadLocalByteBufferHolder
             FileUtils.clean(buffer);
             // if(buffer.isDirect() && useDirectIO)
             // {
-            //     logger.debug("rymERROR: We want the useDirectIO: {}, but we get a buffer type: {}", useDirectIO, bufferType);
+            //     logger.debug("HATSERROR: We want the useDirectIO: {}, but we get a buffer type: {}", useDirectIO, bufferType);
             // }
             // We allocate a buffer that is BLOCK_SIZE larger than the requested size to allow for the buffer to be aligned
             buffer = useDirectIO ? 

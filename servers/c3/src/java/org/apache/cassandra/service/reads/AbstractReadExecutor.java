@@ -153,7 +153,7 @@ public abstract class AbstractReadExecutor
         Message<ReadCommand> message = null;
         // if(readCommand.metadata().name.contains("usertable"))
         // {
-        //     logger.info("rymInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
+        //     logger.info("HATSInfo: Making requests to replicas. The replicas are: {}, sendRequestAddresses: {}, size is {},  replica plan is {}, consistency level is {}", replicas, sendRequestAddresses, sendRequestAddresses.size(), this.replicaPlan().contacts().endpointList(), this.replicaPlan().consistencyLevel());
 
         //     for(InetAddressAndPort endpoint : sendRequestAddresses) 
         //     {

@@ -51,7 +51,7 @@ final class ColumnMetadataVersionComparator implements Comparator<ColumnMetadata
     {
         // if(!v1.ksName.equals(v2.ksName) || !v1.cfName.equals(v2.cfName) || !v1.name.equals(v2.name))
         // {
-        //     logger.error("rymERROR: v1.ksName: {}, v2.ksName: {}, v1.cfName: {}, v2.cfName: {}, v1.name: {}, v2.name: {}", v1.ksName, v2.ksName, v1.cfName, v2.cfName, v1.name, v2.name);
+        //     logger.error("HATSERROR: v1.ksName: {}, v2.ksName: {}, v1.cfName: {}, v2.cfName: {}, v1.name: {}, v2.name: {}", v1.ksName, v2.ksName, v1.cfName, v2.cfName, v1.name, v2.name);
         // }
         assert v1.ksName.equals(v2.ksName)
             //    && v1.cfName.equals(v2.cfName)

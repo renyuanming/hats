@@ -156,7 +156,7 @@ public abstract class AbstractClientService implements ClientService {
             return false;
         } catch (final RemotingException e) {
             LOG.error("Fail to connect {}, remoting exception: {}.", endpoint, e.getMessage());
-            HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: Fail to connect %s", endpoint));
+            HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("HATSERROR: Fail to connect %s", endpoint));
             return false;
         }
     }

@@ -67,7 +67,7 @@ public class Scheduler {
             // Step1. Start a new leader election scheme if needed
             if (!getIsPriorityElection() && liveSeeds.size() <= 1)
             {
-                logger.debug("rymDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
+                logger.debug("HATSDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
 
                 setIsPriorityElection(true);
                 ElectionBootstrap.shutdownElection(liveSeeds);
@@ -85,7 +85,7 @@ public class Scheduler {
             }
             // else
             // {
-            //     logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
+            //     logger.debug("HATSDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
             // }
 
         }
@@ -128,7 +128,7 @@ public class Scheduler {
 
             if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
             {
-                logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+                logger.debug("HATSDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
                 // Step1. Gather the load statistic
                 gatheringLoadStatistic();
@@ -149,7 +149,7 @@ public class Scheduler {
                         return;
                     }
                 }
-                logger.info("rymInfo: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
+                logger.info("HATSInfo: we now have the global states, the version vector is {}, latency vector is {}, request count vector is {}, score vector is {}, the load matrix is {}", 
                              GlobalStates.globalStates.versionVector, 
                              GlobalStates.globalStates.latencyVector, 
                              GlobalStates.globalStates.readCountOfEachNode, 
@@ -271,7 +271,7 @@ public class Scheduler {
      */
     private static void calculateGlobalPolicy()
     {
-        logger.info("rymInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.globalPolicy));
+        logger.info("HATSInfo: Calculating placement policy, the old value is {}", Arrays.deepToString(GlobalStates.globalPolicy));
 
         for (int i = 0; i < GlobalStates.globalStates.nodeCount; i++)
         {
@@ -305,10 +305,10 @@ public class Scheduler {
             }
             else // do nothing
             {
-                logger.debug("rymDebug");
+                logger.debug("HATSDebug");
             }
         }
-        logger.info("rymInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.globalPolicy));
+        logger.info("HATSInfo: The new placement policy is {}", Arrays.deepToString(GlobalStates.globalPolicy));
     }
 
     /**
@@ -441,7 +441,7 @@ public class Scheduler {
         {
             throw new IllegalStateException("This method should be called by the leader node.");
         }
-        // logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+        // logger.debug("HATSDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
         GlobalStates.globalStates = new GlobalStates(Gossiper.getAllHosts().size(), 3);
         if(liveSeeds.size() == 1)

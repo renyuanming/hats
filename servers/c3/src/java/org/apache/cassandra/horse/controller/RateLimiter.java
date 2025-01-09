@@ -29,7 +29,7 @@ import org.apache.cassandra.service.StorageService;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class RateLimiter 

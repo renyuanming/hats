@@ -356,11 +356,11 @@ public class Metadata {
             Cluster.requestCountOfEachReplicationGroup.clear();
         if(currentStatesForClients != null)
         {
-            logger.info("rymDebug: The coordinator policy is {}", currentStatesForClients.policy);
+            logger.info("HATSInfo: The coordinator policy is {}", currentStatesForClients.policy);
         }
 
 
-        logger.info("rymInfo: The networkPolicy is {}, the new policy is {}", networkPolicy, policy);
+        logger.info("HATSInfo: The networkPolicy is {}, the new policy is {}", networkPolicy, policy);
     }
 
     private void printStatistic(StatesForClients states)
@@ -395,10 +395,10 @@ public class Metadata {
                 clientToServerLatencyStr += entry.getKey() + ": [" + String.valueOf(states.readLatency.get(entry.getKey()) - entry.getValue()) + "]  ";
             }
 
-            logger.info("rymInfo: The coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
+            logger.info("HATSInfo: The coordinator read latency is {}, the read network cost is {}, the coordinator weight is {}", coordinatorReadLatencyStr, clientToServerLatencyStr, states.coordinatorWeight);
         }
 
-        logger.info("rymInfo: The request distribution under old policy is {}, the full read latency is {}, states is {}", results, fullReadLatencyStr, states);
+        logger.info("HATSInfo: The request distribution under old policy is {}, the full read latency is {}, states is {}", results, fullReadLatencyStr, states);
     }
 
 
@@ -421,7 +421,7 @@ public class Metadata {
         }
         averageReadCount = totalReadCount / current.ring.size();
         
-        // logger.info("rymInfo: check the token ring is {}", current.ring);
+        // logger.info("HATSInfo: check the token ring is {}", current.ring);
 
         Long[] requestCount = new Long[current.ring.size()];
         for(int i = 0; i < current.ring.size(); i++)
@@ -433,7 +433,7 @@ public class Metadata {
         long threshold = (long) (averageReadCount * 1.00);
         int rf = 3;
         long[][] result = new long[current.ring.size()][3];
-        logger.info("rymInfo: The total request count is {}, the average read count is {}, the threshold is {}", totalReadCount, averageReadCount, threshold);
+        logger.info("HATSInfo: The total request count is {}, the average read count is {}, the threshold is {}", totalReadCount, averageReadCount, threshold);
 
         Long initialRequestCount[] = new Long[current.ring.size()];
         for (int i = 0; i < current.ring.size(); i++) {
@@ -489,7 +489,7 @@ public class Metadata {
             }
             networkPolicy.put(current.ring.get(i), netPolicy);
         }
-        logger.info("rymInfo: The result is {}, the initial request count is {}, the request count is {}", result, initialRequestCount, requestCount);
+        logger.info("HATSInfo: The result is {}, the initial request count is {}, the request count is {}", result, initialRequestCount, requestCount);
         return networkPolicy;
     }
 

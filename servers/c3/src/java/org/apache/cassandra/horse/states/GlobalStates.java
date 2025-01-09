@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class GlobalStates implements Serializable {
@@ -92,10 +92,10 @@ public class GlobalStates implements Serializable {
     {
         if(gatheredStates.size() != this.nodeCount)
         {
-            logger.debug("rymDebug: the gathered states number is not equal to the node count.");
+            logger.debug("HATSDebug: the gathered states number is not equal to the node count.");
         }
 
-        // logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
+        // logger.info("HATSInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
 
         for (Map.Entry<InetAddress, LocalStates> entry : gatheredStates.entrySet())
         {
@@ -127,7 +127,7 @@ public class GlobalStates implements Serializable {
             }
         }
         StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
-        // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
+        // logger.info("HATSInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
     public static double getScore(double latency, int requestCount)
@@ -149,7 +149,7 @@ public class GlobalStates implements Serializable {
                 globalPolicy[i][j] = 0.0;
             }
         }
-        logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
+        logger.debug("HATSDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
                      Arrays.deepToString(globalPolicy), 
                      Gossiper.getAllHosts().size(), 
                      StringUtils.split(DatabaseDescriptor.getAllHosts(), ','));

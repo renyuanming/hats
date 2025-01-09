@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGatheringSignal>{
@@ -65,7 +65,7 @@ public class StatesGatheringSignalVerbHandler implements IVerbHandler<StatesGath
             {
                 if(entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD) == null)
                 {
-                    logger.info("rymInfo: No foreground load state for {}.", entry.getKey().getAddress());
+                    logger.info("HATSInfo: No foreground load state for {}.", entry.getKey().getAddress());
                     continue;
                 }
                 String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;

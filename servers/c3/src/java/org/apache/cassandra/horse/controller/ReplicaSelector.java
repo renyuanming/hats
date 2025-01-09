@@ -38,7 +38,7 @@ import org.apache.cassandra.utils.FBUtilities;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class ReplicaSelector 

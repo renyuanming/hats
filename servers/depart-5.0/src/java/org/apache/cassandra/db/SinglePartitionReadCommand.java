@@ -527,7 +527,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         //logger.debug("in queryStorage");
         UnfilteredRowIterator partition = null;
         Token tk = this.partitionKey().getToken();
-        // logger.info("rymInfo: queryLocalRegion, the db instance is {}", StorageService.instance.db);
+        // logger.info("HATSInfo: queryLocalRegion, the db instance is {}", StorageService.instance.db);
         long start = nanoTime();
         if(StorageService.instance.db!=null){
             //byte[] value = null;
@@ -562,7 +562,7 @@ public class SinglePartitionReadCommand extends ReadCommand implements SinglePar
         }
         else
         {
-            logger.error("rymERROR: StorageService.instance.db is null in queryLocalRegion!");
+            logger.error("HATSERROR: StorageService.instance.db is null in queryLocalRegion!");
         }
         StorageService.instance.readTwoLayerLogTime += (nanoTime() - start);
         StorageService.instance.readSSTableTime += nanoTime() - start;

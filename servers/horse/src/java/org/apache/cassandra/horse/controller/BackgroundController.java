@@ -32,7 +32,7 @@ import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class BackgroundController 
@@ -142,7 +142,7 @@ public class BackgroundController
 
     private boolean isBottleneck()
     {
-        logger.info("rymInfo: the throttle throughput is {}, isPendingFlushHappen {}, the total pending flushes is {}, current compaction rate is {}, is read slow happen {}",
+        logger.info("HATSInfo: the throttle throughput is {}, isPendingFlushHappen {}, the total pending flushes is {}, current compaction rate is {}, is read slow happen {}",
                     throttleCompactionThroughput, 
                     StorageService.instance.isPendingFlushHappen.get(), 
                     StorageService.instance.totalPendingFlushes.get(), 
@@ -174,7 +174,7 @@ public class BackgroundController
         boolean shouldServeTaskByCount = shouldServeTaskByCount(taskType);
         boolean shouldServeTaskByThpt = shouldServeTaskByThpt(taskType);
 
-        logger.info("rymInfo: shouldServeTaskByCount is {}, shouldServeTaskByThpt is {}", shouldServeTaskByCount, shouldServeTaskByThpt);
+        logger.info("HATSInfo: shouldServeTaskByCount is {}, shouldServeTaskByThpt is {}", shouldServeTaskByCount, shouldServeTaskByThpt);
 
         return shouldServeTaskByCount && shouldServeTaskByThpt;
     }

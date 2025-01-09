@@ -46,7 +46,7 @@ import jnr.constants.platform.Local;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class GlobalStates implements Serializable {
@@ -124,10 +124,10 @@ public class GlobalStates implements Serializable {
     {
         if(gatheredStates.size() != this.nodeCount)
         {
-            logger.debug("rymDebug: the gathered states number is not equal to the node count.");
+            logger.debug("HATSDebug: the gathered states number is not equal to the node count.");
         }
 
-        // logger.info("rymInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
+        // logger.info("HATSInfo: Received new states from {}, we start to merge it to the global states, the stateGatheringSignalInFlight is {}, gatheredStates is {}", from, StorageService.instance.stateGatheringSignalInFlight, gatheredStates);
 
         for (Map.Entry<InetAddress, LocalStates> entry : gatheredStates.entrySet())
         {
@@ -159,7 +159,7 @@ public class GlobalStates implements Serializable {
             }
         }
         StorageService.instance.stateGatheringSignalInFlight.decrementAndGet();
-        // logger.info("rymInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
+        // logger.info("HATSInfo: Received new states from {}, we merged it to the global states, the stateGatheringSignalInFlight is {}", from, StorageService.instance.stateGatheringSignalInFlight);
     }
 
 
@@ -213,7 +213,7 @@ public class GlobalStates implements Serializable {
         {
             localPolicyForBackgroundController[i] = (double) GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex][i] / GlobalStates.expectedRequestNumberofEachNode[nodeIndex];
         }
-        logger.info("rymInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
+        logger.info("HATSInfo: the request count of the node is {}, the expected request distribution current node is {}, policy for background controller {}", 
                     GlobalStates.expectedRequestNumberofEachNode[nodeIndex], Arrays.toString(GlobalStates.expectedStates.expectedRequestDistribution[nodeIndex]), Arrays.toString(localPolicyForBackgroundController));
         LocalStates.backgroundPolicy = localPolicyForBackgroundController;
     }
@@ -241,7 +241,7 @@ public class GlobalStates implements Serializable {
                 globalPolicy[i][j] = 0.0;
             }
         }
-        logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
+        logger.debug("HATSDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
                      Arrays.deepToString(globalPolicy), 
                      Gossiper.getAllHosts().size(), 
                      StringUtils.split(DatabaseDescriptor.getAllHosts(), ','));
@@ -258,9 +258,9 @@ public class GlobalStates implements Serializable {
         }
 
         List<Long> tokenList = new ArrayList<Long>(Gossiper.getTokenRanges());
-        // logger.info("rymInfo: The token list before sorting is {}", tokenList);
+        // logger.info("HATSInfo: The token list before sorting is {}", tokenList);
         Collections.sort(tokenList);
-        // logger.info("rymInfo: The token list after sorting is {}", tokenList);
+        // logger.info("HATSInfo: The token list after sorting is {}", tokenList);
         int nodeCount = tokenList.size();
 
         for(int i = 0; i < policy.length; i++)
@@ -273,7 +273,7 @@ public class GlobalStates implements Serializable {
             }
             policyForClient.put(tokenList.get(i).toString(), rgPolicy);
         }
-        logger.info("rymInfo: The policy for client is {}, policy is {}", policyForClient, policy);
+        logger.info("HATSInfo: The policy for client is {}, policy is {}", policyForClient, policy);
         return policyForClient;
     }
 
@@ -294,7 +294,7 @@ public class GlobalStates implements Serializable {
         Map<InetAddress, Double> coordinatorReadLatency = new HashMap<>();
 
         if(this.latencyVector.length != Gossiper.getAllHosts().size())
-            throw new IllegalStateException(String.format("rymERROR: the latency vector length %s is not equal to the host vector length %s", this.latencyVector.length, Gossiper.getAllHosts().size()));
+            throw new IllegalStateException(String.format("HATSERROR: the latency vector length %s is not equal to the host vector length %s", this.latencyVector.length, Gossiper.getAllHosts().size()));
 
         for(int i = 0; i < this.latencyVector.length; i++)
         {

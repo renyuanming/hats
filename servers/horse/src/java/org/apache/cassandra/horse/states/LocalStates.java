@@ -47,7 +47,7 @@ import com.codahale.metrics.Timer;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class LocalStates implements Serializable {
@@ -74,7 +74,7 @@ public class LocalStates implements Serializable {
     {
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
-        logger.info("rymInfo: This is the transformToRatio method");
+        logger.info("HATSInfo: This is the transformToRatio method");
         GlobalStates.globalPolicy = new Double[nodeCount][rf];
         for (int i = 0; i < nodeCount; i++) 
         {
@@ -102,7 +102,7 @@ public class LocalStates implements Serializable {
             localPolicy.put(rg, policy);
         }
 
-        logger.info("rymInfo: We get the globalPolicy {}, the local placement policy {}, with address {}",GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
+        logger.info("HATSInfo: We get the globalPolicy {}, the local placement policy {}, with address {}",GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
     }
 
 
@@ -123,7 +123,7 @@ public class LocalStates implements Serializable {
         String[] metrics = str.split(" \\| ");
         if (metrics.length != 3)
         {
-            throw new IllegalArgumentException(String.format("rymERROR: wrong parsing for the string %s", str));
+            throw new IllegalArgumentException(String.format("HATSERROR: wrong parsing for the string %s", str));
         }
 
         double latency = Double.parseDouble(metrics[0].split("=")[1].trim());
@@ -150,7 +150,7 @@ public class LocalStates implements Serializable {
             }
         }
 
-        logger.debug("rymDebug: the load str is {}, the parsed latency is {}, the requests are {}, the version is {}", str, latency, completedReadRequestCount, version);
+        logger.debug("HATSDebug: the load str is {}, the parsed latency is {}, the requests are {}, the version is {}", str, latency, completedReadRequestCount, version);
 
         return new LocalStates(completedReadRequestCount, latency, version);
     }

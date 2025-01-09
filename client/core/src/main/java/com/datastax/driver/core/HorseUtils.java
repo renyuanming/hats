@@ -105,7 +105,7 @@ public class HorseUtils
 
             // TODO recalculate the coordinator weight for each replication group
             this.coordinatorWeight = averageCoordinatorLatency / averageReadLatency;
-            logger.info("rymInfo: the average coordinator read latency across all nodes is {}, the cov is {}", averageCoordinatorLatency, cov);
+            logger.info("HATSInfo: the average coordinator read latency across all nodes is {}, the cov is {}", averageCoordinatorLatency, cov);
 
         }
     }

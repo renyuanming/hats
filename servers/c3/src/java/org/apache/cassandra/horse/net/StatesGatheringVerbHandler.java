@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class StatesGatheringVerbHandler implements IVerbHandler<StatesGathering>{
@@ -41,7 +41,7 @@ public class StatesGatheringVerbHandler implements IVerbHandler<StatesGathering>
     @SuppressWarnings("unchecked")
     @Override
     public void doVerb(Message<StatesGathering> message) throws IOException {
-        logger.info( "rymInfo: Received states from follower: {}.", message.from());
+        logger.info( "HATSInfo: Received states from follower: {}.", message.from());
         StatesGathering states = message.payload;
         Map<InetAddress, LocalStates> gatheredStates;
         try {

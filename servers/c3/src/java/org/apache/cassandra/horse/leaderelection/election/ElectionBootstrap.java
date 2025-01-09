@@ -40,7 +40,7 @@ public class ElectionBootstrap {
     private static ElectionNode node;
     public static void initElection(String dataPath, String groupId, String serverIdStr, String initialConfStr)
     {
-        logger.info("rymInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
+        logger.info("HATSInfo: Starting election with dataPath: {}, groupId: {}, serverIdStr: {}, initialConfStr: {}",
                     dataPath, groupId, serverIdStr, initialConfStr);
         File dataPathFile = new File(dataPath);
         if(dataPathFile.exists())
@@ -61,13 +61,13 @@ public class ElectionBootstrap {
                 PeerId serverId = node.getNode().getLeaderId();
                 String ip = serverId.getIp();
                 int port = serverId.getPort();
-                logger.debug("rymDebug: [ElectionBootstrap] Leader's ip is: {}, port: {}", ip, port);
-                logger.debug("rymDebug: [ElectionBootstrap] Leader start on term: {}", leaderTerm);
+                logger.debug("HATSDebug: [ElectionBootstrap] Leader's ip is: {}, port: {}", ip, port);
+                logger.debug("HATSDebug: [ElectionBootstrap] Leader start on term: {}", leaderTerm);
             }
 
             @Override
             public void onLeaderStop(long leaderTerm) {
-                logger.debug("rymDebug: [ElectionBootstrap] Leader stop on term: {}", leaderTerm);
+                logger.debug("HATSDebug: [ElectionBootstrap] Leader stop on term: {}", leaderTerm);
             }
         });
         node.init(electionOpts);
@@ -80,7 +80,7 @@ public class ElectionBootstrap {
             return node.isLeader();
         }
         
-        logger.debug("rymDebug: Election node is not initialized");
+        logger.debug("HATSDebug: Election node is not initialized");
         return false;
     }
 
@@ -91,7 +91,7 @@ public class ElectionBootstrap {
             return node.isStarted();
         }
         
-        logger.debug("rymDebug: Election node is not initialized");
+        logger.debug("HATSDebug: Election node is not initialized");
         return false;
     }
 
@@ -110,7 +110,7 @@ public class ElectionBootstrap {
         }
         else
         {
-            logger.debug("rymDebug: Election node is not initialized");
+            logger.debug("HATSDebug: Election node is not initialized");
         }
     }
 

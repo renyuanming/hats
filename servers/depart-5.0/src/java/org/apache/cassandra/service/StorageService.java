@@ -635,7 +635,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public static class ByteObjectConversion {
         public static byte[] objectToByteArray(Object obj) throws IOException {
-            logger.debug("rymDebug: start to transform");
+            logger.debug("HATSDebug: start to transform");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(obj);
@@ -665,7 +665,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             }
         }
         try {
-            // logger.info("rymDebug: This is persistentInMemoryData, the groupCountDownMap instance is {}", StorageService.instance.groupCountDownMap);
+            // logger.info("HATSInfo: This is persistentInMemoryData, the groupCountDownMap instance is {}", StorageService.instance.groupCountDownMap);
             // if(!StorageService.instance.groupCountDownMap.isEmpty())
             // {
             //     writeBytesToFile(path + "groupCountDownMap", ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupCountDownMap));
@@ -673,35 +673,35 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             if(!StorageService.instance.groupAccessNumMap.isEmpty())
             {
                 byte[] groupAccessNumMapBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.groupAccessNumMap);
-                logger.info("rymDebug: groupAccessNumMapBytes length:{}, the groupAccessNumMap instance is {}", groupAccessNumMapBytes.length, StorageService.instance.groupAccessNumMap);
+                logger.info("HATSInfo: groupAccessNumMapBytes length:{}, the groupAccessNumMap instance is {}", groupAccessNumMapBytes.length, StorageService.instance.groupAccessNumMap);
                 writeBytesToFile(path + "groupAccessNumMap", groupAccessNumMapBytes);
             }
             // byte[] dbBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db);
-            // logger.info("rymDebug: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
+            // logger.info("HATSInfo: dbBytes length:{}, the db instance is {}", dbBytes.length, StorageService.instance.db);
             // writeBytesToFile(path + "db", dbBytes);
             byte[] tableCacheBytes = ByteObjectConversion.objectToByteArray((Serializable) StorageService.instance.db.groupTableCacheMap);
-            logger.info("rymDebug: tableCacheBytes length:{}, the tableCache instance is {}", tableCacheBytes.length, StorageService.instance.db.groupTableCacheMap);
+            logger.info("HATSInfo: tableCacheBytes length:{}, the tableCache instance is {}", tableCacheBytes.length, StorageService.instance.db.groupTableCacheMap);
 
 
             byte[] internalKeyComparatorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
-            logger.info("rymDebug: internalKeyComparatorBytes length:{}, the internalKeyComparator instance is {}", internalKeyComparatorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
+            logger.info("HATSInfo: internalKeyComparatorBytes length:{}, the internalKeyComparator instance is {}", internalKeyComparatorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").internalKeyComparator);
             byte[] compactPointersBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
-            logger.info("rymDebug: compactPointersBytes length:{}, the compactPointers instance is {}", compactPointersBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
+            logger.info("HATSInfo: compactPointersBytes length:{}, the compactPointers instance is {}", compactPointersBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").compactPointers);
             byte[] descriptorBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
-            logger.info("rymDebug: descriptorBytes length:{}, the descriptor instance is {}", descriptorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
+            logger.info("HATSInfo: descriptorBytes length:{}, the descriptor instance is {}", descriptorBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").descriptorLog);
             // byte[] activeVersionBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
-            // logger.info("rymDebug: activeVersionBytes length:{}, the activeVersion instance is {}", activeVersionBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
+            // logger.info("HATSInfo: activeVersionBytes length:{}, the activeVersion instance is {}", activeVersionBytes.length, StorageService.instance.db.groupVersionSetMap.get("globalLog").activeVersions);
 
 
 
              byte[] versionSetBytes = ByteObjectConversion.objectToByteArray(StorageService.instance.db.groupVersionSetMap);
-            logger.info("rymDebug: versionSetBytes length:{}, the versionSet instance is {}", versionSetBytes.length, StorageService.instance.db.groupVersionSetMap);
+            logger.info("HATSInfo: versionSetBytes length:{}, the versionSet instance is {}", versionSetBytes.length, StorageService.instance.db.groupVersionSetMap);
 
             DBMeta dbMeta = StorageService.instance.db.metadata;
             dbMeta.groupTableCacheMap = StorageService.instance.db.groupTableCacheMap;
             dbMeta.groupVersionSetMap = StorageService.instance.db.groupVersionSetMap;
             byte[] dbMetaBytes = ByteObjectConversion.objectToByteArray((Serializable) dbMeta);
-            logger.info("rymDebug: dbMetaBytes length:{}, the dbMeta instance is {}", dbMetaBytes.length, dbMeta);
+            logger.info("HATSInfo: dbMetaBytes length:{}, the dbMeta instance is {}", dbMetaBytes.length, dbMeta);
             writeBytesToFile(path + "dbMeta", dbMetaBytes);
 
 
@@ -719,7 +719,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             if(Paths.get(path + "dbMeta").toFile().exists())
             {
                 StorageService.instance.dbMeta = (DBMeta) ByteObjectConversion.byteArrayToObject(Files.readAllBytes(Paths.get(path + "dbMeta")));
-                logger.info("rymDebug: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
+                logger.info("HATSInfo: load the metadata successfully! The dbMeta.groupIdFileMap is {}", StorageService.instance.dbMeta.groupIdFileMap);
             }
         } catch (Exception e) {
             e.printStackTrace();

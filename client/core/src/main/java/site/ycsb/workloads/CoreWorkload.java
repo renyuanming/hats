@@ -702,7 +702,7 @@ public class CoreWorkload extends Workload {
   public void doTransactionRead(DB db) {
     // choose a random key
     long keynum = nextKeynum();
-    // logger.info("rymDebug: keynum: {}", keynum);
+    // logger.info("HATSInfo: keynum: {}", keynum);
     String keyname = buildKeyName(keynum);
 
     HashSet<String> fields = null;

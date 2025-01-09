@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class PolicyDistributeVerbHandler implements IVerbHandler<PolicyDistribute>{

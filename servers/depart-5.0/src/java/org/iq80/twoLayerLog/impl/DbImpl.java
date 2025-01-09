@@ -292,7 +292,7 @@ public class DbImpl
 
             if(metadata == null)
             {
-                logger.info("rymDebug: the metadata is null, we generate new group versions.");
+                logger.info("HATSInfo: the metadata is null, we generate new group versions.");
                 TableCache tableCache = new TableCache(databaseDir, tableCacheSize, new InternalUserComparator(internalKeyComparator), options.verifyChecksums());
 
                 //List<FileMetaData> files = new ArrayList<FileMetaData>();
@@ -342,7 +342,7 @@ public class DbImpl
             }
         }, 5, 60, TimeUnit.SECONDS);//30
         */
-        logger.info("{}", new Exception("rymDebug: Invoke the DbImpl constructor"));
+        logger.info("{}", new Exception("HATSInfo: Invoke the DbImpl constructor"));
     }
 
     private void prepareVersions(VersionSet versions) throws IOException
@@ -1485,7 +1485,7 @@ public class DbImpl
             // logger.info("###in getSnapshot, globalLogName:"+globalLogName);
         	VersionSet versions = groupVersionSetMap.get(globalLogName);
             if(versions == null) {
-                logger.error("rymERROR: no versions for group " + globalLogName);
+                logger.error("HATSERROR: no versions for group " + globalLogName);
             }
             snapshot = new SnapshotImpl(versions.getCurrent(), versions.getLastSequence());
             snapshot.close(); // To avoid holding the snapshot active..

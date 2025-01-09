@@ -241,12 +241,12 @@ public class CompactionManager implements CompactionManagerMBean, ICompactionMan
         //         int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
         //         if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
         //         {
-        //             logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+        //             logger.info("HATSInfo: we drop a compaction task for {}", cfs.name);
         //             return Collections.emptyList();
         //         }
         //         else
         //         {
-        //             logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+        //             logger.info("HATSInfo: we serve a compaction task for {}", cfs.name);
         //         }
         //     }
         // }

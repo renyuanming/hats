@@ -599,7 +599,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
     public void setHorse(String enableHorse, String stepSize, String offloadThreshold, String recoveryThreshold) 
     {
-        logger.info("rymInfo: Setting Horse parameters");
+        logger.info("HATSInfo: Setting Horse parameters");
         if(!enableHorse.isEmpty())
         {
             DatabaseDescriptor.setEnableHorse(Boolean.parseBoolean(enableHorse));
@@ -620,7 +620,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             DatabaseDescriptor.setRecoverThreshold(Double.parseDouble(recoveryThreshold));
         }
 
-        logger.info("rymInfo: Horse parameters have been set as follows: enableHorse: {}, stepSize: {}, offloadThreshold: {}, recoveryThreshold: {}", DatabaseDescriptor.getEnableHorse(), DatabaseDescriptor.getStepSize(), DatabaseDescriptor.getOffloadThreshold(), DatabaseDescriptor.getRecoverThreshold());
+        logger.info("HATSInfo: Horse parameters have been set as follows: enableHorse: {}, stepSize: {}, offloadThreshold: {}, recoveryThreshold: {}", DatabaseDescriptor.getEnableHorse(), DatabaseDescriptor.getStepSize(), DatabaseDescriptor.getOffloadThreshold(), DatabaseDescriptor.getRecoverThreshold());
     }
 
     public String getRequestDistribution() {
@@ -1552,7 +1552,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             DiskUsageBroadcaster.instance.startBroadcasting();
             if(DatabaseDescriptor.getEnableHorse())
             {
-                logger.info("rymInfo: starting broadcast the local states...");
+                logger.info("HATSInfo: starting broadcast the local states...");
                 LocalStatesBroadcaster.instance.startBroadcasting();
             }
             HintsService.instance.startDispatch();

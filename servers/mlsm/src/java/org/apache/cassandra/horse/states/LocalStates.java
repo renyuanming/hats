@@ -66,7 +66,7 @@ public class LocalStates implements Serializable {
 
     public static void updateLocalPolicy()
     {
-        logger.info("rymInfo: the old local policy is {}, the local served request count is {}", localPolicy, StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica());
+        logger.info("HATSInfo: the old local policy is {}, the local served request count is {}", localPolicy, StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica());
 
         int nodeIndex = Gossiper.getAllHosts().indexOf(FBUtilities.getBroadcastAddressAndPort());
         int nodeCount = Gossiper.getAllHosts().size();
@@ -88,7 +88,7 @@ public class LocalStates implements Serializable {
             localPolicy.put(rg, policy);
         }
 
-        logger.info("rymInfo: We get the global placement policy {}, the local placement policy {}, with address {}", GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
+        logger.info("HATSInfo: We get the global placement policy {}, the local placement policy {}, with address {}", GlobalStates.globalPolicy, localPolicy, localPolicyWithAddress);
     }
 
     public String toString()
@@ -108,7 +108,7 @@ public class LocalStates implements Serializable {
         String[] metrics = str.split(" \\| ");
         if (metrics.length != 3)
         {
-            throw new IllegalArgumentException(String.format("rymERROR: wrong parsing for the string %s", str));
+            throw new IllegalArgumentException(String.format("HATSERROR: wrong parsing for the string %s", str));
         }
 
         double latency = Double.parseDouble(metrics[0].split("=")[1].trim());
@@ -130,7 +130,7 @@ public class LocalStates implements Serializable {
             }
         }
 
-        logger.debug("rymDebug: the load str is {}, the parsed latency is {}, the requests are {}, the version is {}", str, latency, completedReadRequestCount, version);
+        logger.debug("HATSDebug: the load str is {}, the parsed latency is {}, the requests are {}, the version is {}", str, latency, completedReadRequestCount, version);
 
         return new LocalStates(completedReadRequestCount, latency, version);
     }

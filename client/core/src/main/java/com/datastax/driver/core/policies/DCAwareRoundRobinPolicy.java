@@ -86,7 +86,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             logger.info("Using provided data-center name '{}' for DCAwareRoundRobinPolicy", localDc);
 
         this.configuration = cluster.getConfiguration();
-        // HorseUtils.printStackTace(HorseLogLevels.INFO, String.format("rymInfo: DCAwareRoundRobinPolicy.init() called with hosts %s", hosts));
+        // HorseUtils.printStackTace(HorseLogLevels.INFO, String.format("HATSInfo: DCAwareRoundRobinPolicy.init() called with hosts %s", hosts));
 
         ArrayList<String> notInLocalDC = new ArrayList<String>();
 

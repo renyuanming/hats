@@ -231,7 +231,7 @@ public class CassandraCQLClient extends DB {
         String shuffleReplicas = getProperties().getProperty(SHUFFLE_REPLICAS);
         if (shuffleReplicas != null) {
           cluster.getConfiguration().getHorseOptions().setShuffleReplicas(Boolean.valueOf(shuffleReplicas));
-          logger.info("rymInfo: Shuffle replicas is set to {}", shuffleReplicas);
+          logger.info("HATSInfo: Shuffle replicas is set to {}", shuffleReplicas);
         }
 
         Metadata metadata = cluster.getMetadata();
@@ -340,8 +340,8 @@ public class CassandraCQLClient extends DB {
         return Status.NOT_FOUND;
       }
 
-      // System.err.println("rymDebug: The tried node list is " + rs.getExecutionInfo().getTriedHosts() + ", queried node is " + rs.getExecutionInfo().getQueriedHost());
-      // logger.error("rymDebug: The tried node list is {}, queried node is {}", rs.getExecutionInfo().getTriedHosts(), rs.getExecutionInfo().getQueriedHost());
+      // System.err.println("HATSInfo: The tried node list is " + rs.getExecutionInfo().getTriedHosts() + ", queried node is " + rs.getExecutionInfo().getQueriedHost());
+      // logger.error("HATSInfo: The tried node list is {}, queried node is {}", rs.getExecutionInfo().getTriedHosts(), rs.getExecutionInfo().getQueriedHost());
 
 
       // Should be only 1 row

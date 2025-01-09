@@ -172,12 +172,12 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
                     int lsmIndex = cfs.name.matches(".*\\d+$") ? Integer.parseInt(cfs.name.replaceAll("\\D+", "")) : -1;
                     if(!BackgroundController.compactionRateLimiter.receiveTask(lsmIndex))
                     {
-                        logger.info("rymInfo: we drop a compaction task for {}", cfs.name);
+                        logger.info("HATSInfo: we drop a compaction task for {}", cfs.name);
                         return null;
                     }
                     else
                     {
-                        logger.info("rymInfo: we serve a compaction task for {}", cfs.name);
+                        logger.info("HATSInfo: we serve a compaction task for {}", cfs.name);
                     }
                 }
             }

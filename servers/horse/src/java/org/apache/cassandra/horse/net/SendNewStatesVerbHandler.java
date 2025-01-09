@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class SendNewStatesVerbHandler implements IVerbHandler<SendNewStates>{
@@ -41,13 +41,13 @@ public class SendNewStatesVerbHandler implements IVerbHandler<SendNewStates>{
     @Override
     public void doVerb(Message<SendNewStates> message) throws IOException {
         try {
-            logger.info("rymInfo: Received placement policy from the leader: {}", message.from());
+            logger.info("HATSInfo: Received placement policy from the leader: {}", message.from());
             GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(message.payload.placementPolicyInBytes);
-            logger.info("rymInfo: Received expected states: {}, the term id is {}, version number is {}, expected distribution is {}", GlobalStates.expectedStates, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version, GlobalStates.expectedStates.expectedRequestDistribution);
+            logger.info("HATSInfo: Received expected states: {}, the term id is {}, version number is {}, expected distribution is {}", GlobalStates.expectedStates, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version, GlobalStates.expectedStates.expectedRequestDistribution);
             // Get the local placement policy
             GlobalStates.updatePolicyForCurrentNode();
 
-            logger.info("rymInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumberofEachNode, LocalStates.backgroundPolicy);
+            logger.info("HATSInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumberofEachNode, LocalStates.backgroundPolicy);
 
             // Get the placement policy for local replicas
         } catch (Exception e) {

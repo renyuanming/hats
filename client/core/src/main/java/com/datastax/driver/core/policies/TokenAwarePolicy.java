@@ -173,7 +173,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         final Iterator<Host> iter;
 
-        // logger.info("rymInfo: We get the statement is {}, query type is {}, enable horse is {}, the expression is {}", statement, queryType, enableHorse, enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)));
+        // logger.info("HATSInfo: We get the statement is {}, query type is {}, enable horse is {}, the expression is {}", statement, queryType, enableHorse, enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)));
 
         List<Host> l = Lists.newArrayList(replicas);
         InetAddress primAddress = l.get(0).getAddress();
@@ -191,7 +191,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
             }
             else
             {
-                // logger.info("rymDebug: We select the replica based on the policy");
+                // logger.info("HATSInfo: We select the replica based on the policy");
                 Host target = selector.selectTarget();
                 if(l.indexOf(target) > 0)
                 {

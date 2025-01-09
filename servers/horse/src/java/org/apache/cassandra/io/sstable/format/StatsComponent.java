@@ -66,7 +66,7 @@ public class StatsComponent
         }
         catch (IOException e)
         {
-            HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("rymERROR: load file %s ERROR: %s", descriptor.fileFor(Components.STATS), e));
+            HorseUtils.printStackTace(AKLogLevels.ERROR, String.format("HATSERROR: load file %s ERROR: %s", descriptor.fileFor(Components.STATS), e));
             throw new CorruptSSTableException(e, descriptor.fileFor(Components.STATS));
         }
 

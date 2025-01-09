@@ -56,7 +56,7 @@ import com.google.common.collect.ImmutableList;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class Scheduler {
@@ -89,7 +89,7 @@ public class Scheduler {
             // Step1. Start a new leader election scheme if needed
             if (!getIsPriorityElection() && liveSeeds.size() <= 1)
             {
-                logger.debug("rymDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
+                logger.debug("HATSDebug: no more than 1 seed node is alive, we need to change the election scheme. Lived seed node is {}, live members are: {}", liveSeeds, Gossiper.instance.getLiveMembers());
 
                 setIsPriorityElection(true);
                 ElectionBootstrap.shutdownElection(liveSeeds);
@@ -107,7 +107,7 @@ public class Scheduler {
             }
             // else
             // {
-            //     logger.debug("rymDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
+            //     logger.debug("HATSDebug: isPriorityElection: {}, seenAnySeed: {}, liveMembers: {}, seed nodes are: {}", getIsPriorityElection(), Gossiper.instance.seenAnySeed(), Gossiper.instance.getLiveMembers(), Gossiper.instance.getSeeds());
             // }
 
         }
@@ -150,7 +150,7 @@ public class Scheduler {
 
             if (ElectionBootstrap.isLeader() || PriorityElectionBootstrap.isLeader())
             {
-                logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+                logger.debug("HATSDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
                 // Step1. Gather the load statistic
                 gatheringLoadStatistic();
@@ -191,9 +191,9 @@ public class Scheduler {
      */
     private static void calculateGlobalPolicy()
     {
-        // logger.info(ANSI_YELLOW+"rymInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
+        // logger.info(ANSI_YELLOW+"HATSInfo: Calculating placement policy, the old value is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
         // print the transposed load matrix
-        logger.info("rymInfo: The load matrix is:");
+        logger.info("HATSInfo: The load matrix is:");
         for (int i = 0; i < GlobalStates.rf; i++)
         {
             StringBuilder row = new StringBuilder();  // To accumulate the row data
@@ -204,7 +204,7 @@ public class Scheduler {
             logger.info(row.toString());  // Log the entire row at once
         }
         
-        logger.info("rymInfo: the average latency of each node:");
+        logger.info("HATSInfo: the average latency of each node:");
         logger.info("{}", Arrays.toString(GlobalStates.globalStates.latencyVector));
 
         GlobalStates.globalPolicy = LoadBalancer.balanceLoad(GlobalStates.globalStates.nodeCount, 
@@ -214,7 +214,7 @@ public class Scheduler {
                                                              GlobalStates.globalStates.loadMatrix);
 
 
-        // logger.info(ANSI_YELLOW+"rymInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
+        // logger.info(ANSI_YELLOW+"HATSInfo: The new placement policy is {}"+ ANSI_RESET, Arrays.deepToString(GlobalStates.globalPolicy));
     }
 
 
@@ -231,7 +231,7 @@ public class Scheduler {
         {
             throw new IllegalStateException("This method should be called by the leader node.");
         }
-        // logger.debug("rymDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
+        // logger.debug("HATSDebug: Node {} is the leader. Start the scheduler.", FBUtilities.getBroadcastAddressAndPort());
 
         
         StorageService.instance.stateGatheringSignalInFlight.set(0);
@@ -243,7 +243,7 @@ public class Scheduler {
         }
         else if (liveSeeds.size() > 1)
         {
-            logger.info("rymInfo: Gathering the load statistic from the seed nodes {}", liveSeeds);
+            logger.info("HATSInfo: Gathering the load statistic from the seed nodes {}", liveSeeds);
             StatesGatheringSignal signal = new StatesGatheringSignal(true);
             for(InetAddressAndPort seed : liveSeeds)
             {
@@ -254,7 +254,7 @@ public class Scheduler {
                 }
                 StorageService.instance.stateGatheringSignalInFlight.incrementAndGet();
                 signal.sendStatesGatheringSignal(seed);
-                logger.info("rymInfo: send the signal to the seed node {}, the stateGatheringSignalInFlight is {}", seed, StorageService.instance.stateGatheringSignalInFlight.get());
+                logger.info("HATSInfo: send the signal to the seed node {}, the stateGatheringSignalInFlight is {}", seed, StorageService.instance.stateGatheringSignalInFlight.get());
             }
         }
         else
@@ -306,7 +306,7 @@ public class Scheduler {
         GlobalStates.globalStates.readCountOfEachNode = Arrays.copyOf(GlobalStates.globalStates.updatingReadCountOfEachRG, GlobalStates.globalStates.nodeCount);
         GlobalStates.globalStates.updatingReadCountOfEachRG = new int[GlobalStates.globalStates.nodeCount];
 
-        logger.info(ANSI_RED + "rymInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}"+ ANSI_RESET,
+        logger.info(ANSI_RED + "HATSInfo: we now have the global states, request count vector is {}, score vector is {}, the load matrix is {}"+ ANSI_RESET,
                     //  GlobalStates.globalStates.latencyVector, 
                      GlobalStates.globalStates.readCountOfEachNode, 
                      GlobalStates.globalStates.scoreVector, 
@@ -319,7 +319,7 @@ public class Scheduler {
     {
         for (Map.Entry<InetAddressAndPort, EndpointState> entry : Gossiper.instance.endpointStateMap.entrySet())
         {
-            logger.info("rymInfo: the endpoint {} state is {}, foreground load is {}", entry.getKey(), entry.getValue(),  entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD));
+            logger.info("HATSInfo: the endpoint {} state is {}, foreground load is {}", entry.getKey(), entry.getValue(),  entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD));
             String localStatesStr = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).value;
             int version = entry.getValue().getApplicationState(ApplicationState.FOREGROUND_LOAD).version;
 
@@ -374,7 +374,7 @@ public class Scheduler {
             }
             else
             {
-                logger.info("rymInfo: Gossip the new states to the node {}", to);
+                logger.info("HATSInfo: Gossip the new states to the node {}", to);
                 // gossip new states to a random node
                 GossipStatesDigest.sendStatesDisgestMessage(to, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version);
                 InetAddressAndPort maybeToSeed = maybeGossipToSeed();
@@ -438,7 +438,7 @@ public class Scheduler {
 
         @Override
         public void run() {
-            logger.info("rymInfo: The Flush rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}, the get endpoint cost is {} us, foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}", 
+            logger.info("HATSInfo: The Flush rate is {} mb/s, the compaction rate is {} mb/s, read request in flight is {}, the get endpoint cost is {} us, foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}", 
                         StorageService.instance.flushRateMonitor.getRateInMB() * 3,
                         // StorageService.instance.coordinatorReadRateMonitor.getRateInMB(),
                         // StorageService.instance.localReadRateMonitor.getRateInMB(),

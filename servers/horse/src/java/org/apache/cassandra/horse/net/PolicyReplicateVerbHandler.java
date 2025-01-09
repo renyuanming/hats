@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author renyuanming1@gmail.com
+ * @author anonymous@gmail.com
  */
 
 public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>{
@@ -46,14 +46,14 @@ public class PolicyReplicateVerbHandler implements IVerbHandler<PolicyReplicate>
     public void doVerb(Message<PolicyReplicate> message) throws IOException {
         PolicyReplicate payload = message.payload;
         try {
-            logger.info("rymInfo: Received placement policy from the leader: {}", message.from());
+            logger.info("HATSInfo: Received placement policy from the leader: {}", message.from());
             GlobalStates.expectedStates = (LoadBalancingStrategy) ByteObjectConversion.byteArrayToObject(payload.placementPolicyInBytes);
-            logger.info("rymInfo: Received expected states: {}, the term id is {}, version number is {}, expected distribution is {}", GlobalStates.expectedStates, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version, GlobalStates.expectedStates.expectedRequestDistribution);
+            logger.info("HATSInfo: Received expected states: {}, the term id is {}, version number is {}, expected distribution is {}", GlobalStates.expectedStates, GlobalStates.expectedStates.termId, GlobalStates.expectedStates.version, GlobalStates.expectedStates.expectedRequestDistribution);
             // Get the local placement policy
             GlobalStates.updatePolicyForCurrentNode();
 
-            logger.info("rymInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumberofEachNode, LocalStates.backgroundPolicy);
-            // logger.info("rymInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumberofEachNode, ReplicaSelector.expectedRequestNumberofEachNode);
+            logger.info("HATSInfo: the expected request number of each node is {}, the background policy is {}", GlobalStates.expectedRequestNumberofEachNode, LocalStates.backgroundPolicy);
+            // logger.info("HATSInfo: Received expected request number: {}, and the expected request number is {}", payload.expectedRequestNumberofEachNode, ReplicaSelector.expectedRequestNumberofEachNode);
 
             // Get the placement policy for local replicas
         } catch (Exception e) {

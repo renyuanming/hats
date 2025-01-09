@@ -450,7 +450,7 @@ public class CassandraDaemon
         //         }
         //         else
         //         {
-        //             logger.debug("rymDebug: This node is not a seed node, no need to start election");
+        //             logger.debug("HATSDebug: This node is not a seed node, no need to start election");
         //         }
         //     }
             

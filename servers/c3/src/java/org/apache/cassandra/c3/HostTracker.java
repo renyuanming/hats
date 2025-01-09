@@ -173,7 +173,7 @@ public class HostTracker
         }
         // else
         // {
-        //     logger.info("rymInfo: PendingJob count is null for Endpoint: {}", message.from().getAddress());
+        //     logger.info("HATSInfo: PendingJob count is null for Endpoint: {}", message.from().getAddress());
         // }
         logger.trace("Decrementing pendingJob count Endpoint: {}, Count: {} ", message.from().getAddress(), count);
 
@@ -185,7 +185,7 @@ public class HostTracker
         double serviceTimeInMillis = serviceTime / 1000000.0;
 
         double latencyInMillis = latency / 1000000.0;
-        // logger.info("rymInfo: QueueSize: {}, ServiceTime: {}, Latency: {}", queueSize, serviceTimeInMillis, latencyInMillis);
+        // logger.info("HATSInfo: QueueSize: {}, ServiceTime: {}, Latency: {}", queueSize, serviceTimeInMillis, latencyInMillis);
         // assert serviceTimeInMillis < latencyInMillis;
         ScoreTracker scoreTracker = getScoreTracker(message.from().getAddress());
         scoreTracker.updateNodeScore(queueSize, serviceTimeInMillis, latencyInMillis);

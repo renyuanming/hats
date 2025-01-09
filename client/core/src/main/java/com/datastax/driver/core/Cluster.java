@@ -2358,7 +2358,7 @@ public class Cluster implements Closeable {
                         @SuppressWarnings("unchecked")
                         final Map<InetAddress, Double> coordinatorReadLatency = (Map<InetAddress, Double>) ByteObjectConversion.byteArrayToObject(readLatencyInBytes);
                         final StatesForClients states = new StatesForClients(policy, coordinatorReadLatency, readLatencyTracker);
-                        logger.info("rymDebug: Get the policy change event {}, the state is {}",event.toString(), states);
+                        logger.info("HATSInfo: Get the policy change event {}, the state is {}",event.toString(), states);
                         manager.metadata.updateHorsePolicy(states);
                     } catch (Exception e) {
                         e.printStackTrace();

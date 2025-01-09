@@ -283,7 +283,7 @@ public class Keyspace
         if(index != -1)
             replicaUUID = globalNodeIDtoCFIDMap.get(index);
         else
-            throw new IllegalStateException(String.format("rym-ERROR: getColumnFamilyStoreByRingPosition the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
+            throw new IllegalStateException(String.format("HATSERROR: getColumnFamilyStoreByRingPosition the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
         
 
         if(columnFamilyStores!=null && replicaUUID!=null){
@@ -303,7 +303,7 @@ public class Keyspace
         if(index != -1)
             replicaUUID = globalNodeIDtoCFIDMap.get(index);
         else
-            throw new IllegalStateException(String.format("rym-ERROR: getColumnFamilyStoreByToken the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
+            throw new IllegalStateException(String.format("HATSERROR: getColumnFamilyStoreByToken the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
         
         if(columnFamilyStores!=null && replicaUUID!=null){
             ColumnFamilyStore cfs = columnFamilyStores.get(replicaUUID);
@@ -739,7 +739,7 @@ public class Keyspace
         if(index != -1)
             replicaUUID = globalNodeIDtoCFIDMap.get(index);
         else
-            throw new IllegalStateException(String.format("rym-ERROR: the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
+            throw new IllegalStateException(String.format("HATSERROR: the local address (%s) is not belong to the replica nodes (%s)", StorageService.instance.localIP, eps));
         
         
         return columnFamilyStores.get(replicaUUID);

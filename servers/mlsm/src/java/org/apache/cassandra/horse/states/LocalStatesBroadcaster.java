@@ -99,13 +99,13 @@ public class LocalStatesBroadcaster implements IEndpointStateChangeSubscriber
                 }
                 else
                 {
-                    logger.debug("rymDebug: the local endpoint state is null, all the states are: {}", 
+                    logger.debug("HATSDebug: the local endpoint state is null, all the states are: {}", 
                                  Gossiper.instance.endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()));
                 }
                 LocalStates states = new LocalStates(StorageService.instance.readCounterOfEachReplica.getCompletedRequestsOfEachReplica(), 
                                                      linearLatency, version);
                 
-                logger.debug("rymDebug: foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}, Local states: {}", 
+                logger.debug("HATSDebug: foreground load {}, local read latency: {}, local read count: {}, local write latency: {}, local write count: {}, Local states: {}", 
                              StorageService.instance.totalReadCntOfEachReplica, 
                              StorageService.instance.readLatencyCalculator.getWindowMean(),
                              StorageService.instance.readLatencyCalculator.getCount(), 

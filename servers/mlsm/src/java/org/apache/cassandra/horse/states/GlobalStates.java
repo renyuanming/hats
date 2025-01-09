@@ -87,7 +87,7 @@ public class GlobalStates implements Serializable {
     {
         if(gatheredStates.size() != this.nodeCount)
         {
-            logger.debug("rymDebug: the gathered states number is not equal to the node count.");
+            logger.debug("HATSDebug: the gathered states number is not equal to the node count.");
         }
 
         for (Map.Entry<InetAddress, LocalStates> entry : gatheredStates.entrySet())
@@ -142,7 +142,7 @@ public class GlobalStates implements Serializable {
                 globalPolicy[i][j][0] = 0.0;
             }
         }
-        logger.debug("rymDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
+        logger.debug("HATSDebug: Initialize the placement policy as {}, the host count is {}, host count in configuration file {}",  
                      Arrays.deepToString(globalPolicy), 
                      Gossiper.getAllHosts().size(), 
                      StringUtils.split(DatabaseDescriptor.getAllHosts(), ','));
