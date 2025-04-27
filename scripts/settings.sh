@@ -18,21 +18,21 @@ elif [[ "$CLUSTER_NAME" == "1x" ]]; then
     # ServersIP=("192.168.10.21" "192.168.10.22" "192.168.10.23"  "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32")
     # Servers=("node12" "node13" "node14" "node15" "node17" "node18" "node19" "node20" "node21" "node22")
     # ServersIP=("192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32")
-    # Servers=("node11" "node12" "node13" "node15" "node17" "node18" "node19" "node20" "node21" "node22")
-    # ServersIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32")
-    Servers=("node12" "node13" "node15" "node17" "node18" "node19" "node20" "node21" "node22" "node39")
-    ServersIP=("192.168.10.22" "192.168.10.23" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32" "192.168.10.49")
+    Servers=("node11" "node12" "node13" "node15" "node17" "node18" "node19" "node20" "node21" "node22")
+    ServersIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32")
+    # Servers=("node12" "node13" "node15" "node17" "node18" "node19" "node20" "node21" "node22" "node39")
+    # ServersIP=("192.168.10.22" "192.168.10.23" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32" "192.168.10.49")
     # Clients=("proj18" "proj19")
     # ClientsIP=("192.168.10.118" "192.168.10.119")
     Clients=("proj18")
     ClientsIP=("192.168.10.118")
-    Seeds=("node18" "node21" "node22")
-    SeedsIP=("192.168.10.28" "192.168.10.31" "192.168.10.32")
+    Seeds=("node13" "node21" "node22")
+    SeedsIP=("192.168.10.23" "192.168.10.31" "192.168.10.32")
     # Seeds=("node11" "node12" "node13" "node14" "node15" "node16" "node17" "node18" "node19" "node20")
     # SeedsIP=("192.168.10.21" "192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.26" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30")
     NodeIP="192.168.10.31" # Only used for start-client.sh
-    UserName="hats"
-    SudoPassword="hats"
+    UserName="ymren"
+    SudoPassword="ymren"
     HOME_PATH="/mnt/ssd"
 elif [[ "$CLUSTER_NAME" == "4x" ]]; then
     Servers=("node41" "node42" "node43" "node45")
@@ -44,9 +44,9 @@ elif [[ "$CLUSTER_NAME" == "4x" ]]; then
     Seeds=("node41" "node42")
     SeedsIP=("192.168.10.51" "192.168.10.52")
     NodeIP="192.168.10.51" # Only used for start-client.sh
-    UserName="hats"
-    SudoPassword="hats"
-    HOME_PATH="/home/hats"
+    UserName="ymren"
+    SudoPassword="ymren"
+    HOME_PATH="/home/ymren"
 else
     echo "Invalid cluster name $CLUSTER_NAME"
     exit 1
@@ -98,7 +98,7 @@ PathToLogDir="$PathToServer/logs"
 if [[ "$SCHEME" == "" || "$BACKUP_MODE" == "" ]]; then
     echo "Please specify the SCHEME and BACKUP_MODE"
 elif [ "$BACKUP_MODE" == "local" ]; then
-    PathToBackup="/home/hats/backups"
+    PathToBackup="/home/ymren/backups"
 elif [ "$BACKUP_MODE" == "remote" ]; then
     echo "Do nothing"
 else

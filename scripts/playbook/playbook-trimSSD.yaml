@@ -2,7 +2,7 @@
 - name: Trim SSD
   hosts: cassandra_servers
   become: yes
-  become_user: hats
+  become_user: ymren
   tasks:
     - name: Trim SSD
       shell: . /etc/profile && echo "SUDO_PASSWD" | sudo -S sh -c "fstrim -v /mnt/ssd"

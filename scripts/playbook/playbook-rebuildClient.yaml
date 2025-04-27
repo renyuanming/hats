@@ -2,7 +2,7 @@
 - name: Rebuild the client
   hosts: cassandra_clients
   become: yes
-  become_user: hats
+  become_user: ymren
   tasks:
     - name: Rebuild the client
       shell: . /etc/profile && cd PATH_TO_CLIENT && git checkout BRANCH_NAME && git pull origin BRANCH_NAME && mvn -pl cassandra -am clean package -U -Dcheckstyle.skip

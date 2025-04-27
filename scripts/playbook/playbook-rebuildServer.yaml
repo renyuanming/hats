@@ -2,7 +2,7 @@
 - name: Rebuild the cluster
   hosts: cassandra_servers
   become: yes
-  become_user: hats
+  become_user: ymren
   tasks:
     - name: Rebuild the cluster
       shell: . /etc/profile && cd PATH_TO_SERVER && git checkout BRANCH_NAME && git pull origin BRANCH_NAME && ant clean && ant ANT_OPTION
