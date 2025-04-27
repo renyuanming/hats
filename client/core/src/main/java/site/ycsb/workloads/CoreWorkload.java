@@ -19,7 +19,6 @@ package site.ycsb.workloads;
 
 import site.ycsb.*;
 import site.ycsb.generator.*;
-import site.ycsb.generator.UniformLongGenerator;
 import site.ycsb.measurements.Measurements;
 
 import java.io.IOException;
@@ -372,6 +371,8 @@ public class CoreWorkload extends Workload {
       fieldlengthgenerator = new UniformLongGenerator(minfieldlength, fieldlength);
     } else if (fieldlengthdistribution.compareTo("zipfian") == 0) {
       fieldlengthgenerator = new ZipfianGenerator(minfieldlength, fieldlength);
+    }  else if (fieldlengthdistribution.compareTo("pareto")==0) {
+      fieldlengthgenerator = new ParetoLongGenerator(minfieldlength, fieldlength, 25.45, 0, 0.2615);
     } else if (fieldlengthdistribution.compareTo("histogram") == 0) {
       try {
         fieldlengthgenerator = new HistogramGenerator(fieldlengthhistogram);
@@ -493,7 +494,10 @@ public class CoreWorkload extends Workload {
           Double.parseDouble(p.getProperty(HOTSPOT_OPN_FRACTION, HOTSPOT_OPN_FRACTION_DEFAULT));
       keychooser = new HotspotIntegerGenerator(insertstart, insertstart + insertcount - 1,
           hotsetfraction, hotopnfraction);
-    } else {
+    } else if (requestdistrib.equals("mixgraph")) {
+      keychooser = new MixgraphGenerator(insertcount);
+    } 
+    else {
       throw new WorkloadException("Unknown request distribution \"" + requestdistrib + "\"");
     }
 
@@ -503,6 +507,8 @@ public class CoreWorkload extends Workload {
       scanlength = new UniformLongGenerator(minscanlength, maxscanlength);
     } else if (scanlengthdistrib.compareTo("zipfian") == 0) {
       scanlength = new ZipfianGenerator(minscanlength, maxscanlength);
+    } else if (scanlengthdistrib.compareTo("pareto") == 0) {
+      scanlength = new ParetoLongGenerator(minscanlength, maxscanlength, 14.236, 0, 2.517);
     } else {
       throw new WorkloadException(
           "Distribution \"" + scanlengthdistrib + "\" not allowed for scan length");
