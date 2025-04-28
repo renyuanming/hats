@@ -192,10 +192,10 @@ public class MixgraphGenerator extends NumberGenerator {
     //   Random rand_key = new Random(key_seed);
     //   key_offset = rand_key.nextLong() % keyrange_set_.get((int) keyrange_id).keyrange_keys;
     // }
-    if (keyrange_id < 0 || key_offset < 0) {
-      System.out.println("keyrange_id: " + keyrange_id + " key_offset: " + key_offset);
-    }
-    System.out.println("keyrange_id: " + keyrange_id);
+    // if (keyrange_id < 0 || key_offset < 0) {
+    //   System.out.println("keyrange_id: " + keyrange_id + " key_offset: " + key_offset);
+    // }
+    // System.out.println("keyrange_id: " + keyrange_id);
 
     ret = KEYRANGE_SIZE * keyrange_id + key_offset;
     return ret;
