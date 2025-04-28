@@ -41,8 +41,8 @@ recordcount=50000000
 # required to be set.
 # The number of operations to use during the run phase.
 operationcount=100000000
-
-zeropadding=44 # The key size is 48 bytes, which includes 'user+44 bytes padding'
+# The key size is 48 bytes, which includes 'user+44 bytes padding'
+zeropadding=44
 
 requestdistribution=mixgraph
 scanlengthdistribution=pareto

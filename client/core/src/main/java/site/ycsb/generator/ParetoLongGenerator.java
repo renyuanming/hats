@@ -47,7 +47,8 @@ public class ParetoLongGenerator extends NumberGenerator {
 
   @Override
   public Long nextValue() {
-    double u = ThreadLocalRandom.current().nextDouble(0, 1);
+    // double u = ThreadLocalRandom.current().nextDouble(0, 1);
+    double u = ThreadLocalRandom.current().nextDouble(Double.MIN_VALUE, 1.0);
     double paretoValue;
     final double epsilon = 1e-9;
     if (Math.abs(k) < epsilon) {
@@ -55,19 +56,20 @@ public class ParetoLongGenerator extends NumberGenerator {
     } else {
         paretoValue = theta + sigma * (Math.pow(u, -k) - 1.0) / k;
     }
+
+    if (sigma == 25.45) {
+        paretoValue *= 10;
+    }
+
     long result = (long) paretoValue + lb;
     // setLastValue(result);
-    if (result < lb || result > ub) {
-      // If the generated value is out of bounds, we need to adjust it
-      // to fit within the specified range.
-      result = Math.max(lb, Math.min(ub, result));
-    }
+    result = Math.max(lb, Math.min(ub, result));
     return result;
   }
 
   public static void main(String[] args) {    
     ParetoLongGenerator gen = new ParetoLongGenerator(1000, 2000, 25.45, 0, 0.2615);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000000; i++) {
       System.out.println(gen.nextValue());
     }
   }

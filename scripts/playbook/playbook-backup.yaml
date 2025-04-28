@@ -2,7 +2,7 @@
 - name: Backup data file for startup
   hosts: cassandra_servers
   become: yes
-  become_user: hats
+  become_user: ymren
   tasks:
     - name: Copy files
       command: bash PATH_TO_SCRIPTS/run/copyDB.sh {{ projectBaseDir }} {{ sourceFileDir }} {{ targetFileDir }} {{ configureFileDir }}
