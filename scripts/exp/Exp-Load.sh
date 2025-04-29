@@ -4,6 +4,7 @@
 . /etc/profile
 
 SCHEMES=("mlsm" "depart-5.0")
+CLUSTER_NAMES=("1x" "2x" "3x")
 REPLICAS=(3)
 SSTABLE_SIZE_IN_MB=160
 KV_NUMBER=100000000
@@ -20,11 +21,12 @@ BRANCH="main"
 
 function exportEnv {
     
-    scheme=$1
+    local scheme=$1
+    local cluster_name=$2
 
     export BACKUP_MODE="local"
     export SCHEME=$scheme # horse or depart
-    export CLUSTER_NAME="1x"
+    export CLUSTER_NAME="$cluster_name"
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
     source "${SCRIPT_DIR}/../common.sh"
     initConf "false"
@@ -34,23 +36,25 @@ function exportEnv {
 function main {
 
     for scheme in "${SCHEMES[@]}"; do
-        echo "Load data for ${scheme}"
-        exportEnv $scheme
-        perpareJavaEnvironment "${scheme}" "${JDK_VERSION}"
-        
-        if [ "${REBUILD_SERVER}" == "true" ]; then
-            echo "Rebuild the server"
-            rebuildServer "${BRANCH}" "${scheme}"
-        fi
+        for cluster_name in "${CLUSTER_NAMES[@]}"; do
+            echo "Load data for ${scheme}"
+            exportEnv $scheme $cluster_name
+            perpareJavaEnvironment "${scheme}" "${JDK_VERSION}"
+            
+            if [ "${REBUILD_SERVER}" == "true" ]; then
+                echo "Rebuild the server"
+                rebuildServer "${BRANCH}" "${scheme}"
+            fi
 
-        for rf in "${REPLICAS[@]}"; do
-            for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
-                # Load data
-                load $scheme 4 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
-                # Wait for flush or compaction ready
-                flush "LoadDB" $scheme $WAIT_TIME
-                # Backup the DB and the logs
-                backup "LoadDB" $scheme ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} "${SSTABLE_SIZE_IN_MB}" ${compaction_strategy}
+            for rf in "${REPLICAS[@]}"; do
+                for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                    # Load data
+                    load $scheme 4 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_template" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
+                    # Wait for flush or compaction ready
+                    flush "LoadDB" $scheme $WAIT_TIME
+                    # Backup the DB and the logs
+                    backup "LoadDB" $scheme ${KV_NUMBER} ${KEY_LENGTH} ${FIELD_LENGTH} ${rf} "${SSTABLE_SIZE_IN_MB}" ${compaction_strategy}
+                done
             done
         done
     done
