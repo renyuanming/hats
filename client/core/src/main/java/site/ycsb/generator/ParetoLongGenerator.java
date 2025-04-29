@@ -68,7 +68,7 @@ public class ParetoLongGenerator extends NumberGenerator {
   }
 
   public static void main(String[] args) {    
-    ParetoLongGenerator gen = new ParetoLongGenerator(1000, 2000, 25.45, 0, 0.2615);
+    ParetoLongGenerator gen = new ParetoLongGenerator(500, 1000, 25.45, 0, 0.2615);
     for (int i = 0; i < 1000000; i++) {
       System.out.println(gen.nextValue());
     }
