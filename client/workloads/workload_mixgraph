@@ -63,8 +63,8 @@ insertstart=0
 fieldcount=1
 
 # The size of each field (in bytes)
-minfieldlength=1000
-fieldlength=2000
+minfieldlength=500
+fieldlength=1000
 
 # Should read all fields
 readallfields=true
