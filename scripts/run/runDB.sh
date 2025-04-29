@@ -54,7 +54,7 @@ fi
 sed -i "s/recordcount=.*$/recordcount=${recordcount}/" ${workload}
 sed -i "s/operationcount=.*$/operationcount=${operationcount}/" ${workload}
 sed -i "s/keylength=.*$/keylength=${key_length}/" ${workload}
-sed -i "s/fieldlength=.*$/fieldlength=${field_length}/" ${workload}
+sed -i "s/\<fieldlength=.*/fieldlength=${field_length}/" $workload
 sed -i "s/requestdistribution=.*$/requestdistribution=${requestDistribution}/" ${workload}
 
 mkdir -p logs
