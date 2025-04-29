@@ -46,6 +46,14 @@ function main {
                 rebuildServer "${BRANCH}" "${scheme}"
             fi
 
+            if [ "${cluster_name}" == "1x" ]; then
+                KV_NUMBER=100000000
+            elif [ "${cluster_name}" == "2x" ]; then
+                KV_NUMBER=150000000
+            elif [ "${cluster_name}" == "3x" ]; then
+                KV_NUMBER=200000000
+            fi
+            
             for rf in "${REPLICAS[@]}"; do
                 for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
                     # Load data
