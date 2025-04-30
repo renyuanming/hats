@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-import site.ycsb.Utils;
-
 /**
  * A generator of a zipfian distribution. It produces a sequence of items, such that some items are more popular than
  * others, according to a zipfian distribution. When you construct an instance of this class, you specify the number
@@ -58,7 +56,7 @@ public class MixgraphGenerator extends NumberGenerator {
   private static final double KEYRANGE_DIST_B = -2.917;
   private static final double KEYRANGE_DIST_C = 0.0164;
   private static final double KEYRANGE_DIST_D = -0.08082;
-  private static int KEYRANGE_NUM = 10000000;
+  private static int MAX_SSTABLE_NUM = 10000000; // Based on the FAST'20 paper
   private static long KEYRANGE_SIZE = 0;
   private static long KEYRANGE_RAND_MAX = 0;
   private List<KeyRangeUnit> keyrange_set_ = new ArrayList<>();
@@ -83,13 +81,13 @@ public class MixgraphGenerator extends NumberGenerator {
     long amplify = 0;
     long keyrange_start = 0;
 
-    if (KEYRANGE_NUM <= 0) {
-      KEYRANGE_NUM = 1;
+    if (MAX_SSTABLE_NUM <= 0) {
+      MAX_SSTABLE_NUM = 1;
     }
-    KEYRANGE_SIZE = itemcount / KEYRANGE_NUM;
+    KEYRANGE_SIZE = itemcount / MAX_SSTABLE_NUM;
 
     // Calculate the key-range shares size based on the input parameters
-    for (long pfx = KEYRANGE_NUM; pfx >= 1; pfx--) {
+    for (long pfx = MAX_SSTABLE_NUM; pfx >= 1; pfx--) {
       // Step 1. Calculate the probability that this key range will be
       // accessed in a query. It is based on the two-term expoential
       // distribution
@@ -137,8 +135,8 @@ public class MixgraphGenerator extends NumberGenerator {
     // the shuffle results are the same.
     Random rand_loca = new Random(KEYRANGE_RAND_MAX);
 
-    for (int i = 0; i < KEYRANGE_NUM; i++) {
-      int pos = rand_loca.nextInt(KEYRANGE_NUM);
+    for (int i = 0; i < MAX_SSTABLE_NUM; i++) {
+      int pos = rand_loca.nextInt(MAX_SSTABLE_NUM);
       assert (i >= 0 && i < keyrange_set_.size() && pos >= 0 && pos < keyrange_set_.size());
       KeyRangeUnit temp = keyrange_set_.get(i);
       // System.out.println("i: " + i + " pos: " + pos + " temp: " + temp.keyrange_access);
