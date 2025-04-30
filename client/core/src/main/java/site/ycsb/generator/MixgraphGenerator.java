@@ -58,7 +58,7 @@ public class MixgraphGenerator extends NumberGenerator {
   private static final double KEYRANGE_DIST_B = -2.917;
   private static final double KEYRANGE_DIST_C = 0.0164;
   private static final double KEYRANGE_DIST_D = -0.08082;
-  private static int KEYRANGE_NUM = 10000;
+  private static int KEYRANGE_NUM = 10000000;
   private static long KEYRANGE_SIZE = 0;
   private static long KEYRANGE_RAND_MAX = 0;
   private List<KeyRangeUnit> keyrange_set_ = new ArrayList<>();
@@ -202,9 +202,9 @@ public class MixgraphGenerator extends NumberGenerator {
   }
 
   public static void main(String[] args) {
-    MixgraphGenerator gen = new MixgraphGenerator(10000);
+    MixgraphGenerator gen = new MixgraphGenerator(100000000);
 
-    for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < 10000; i++) {
       System.out.println("" + gen.nextValue());
     }
   }
