@@ -36,6 +36,32 @@ elif [[ "$CLUSTER_NAME" == "1x" ]]; then
     UserName="ymren"
     SudoPassword="ymren"
     HOME_PATH="/mnt/ssd"
+elif [[ "$CLUSTER_NAME" == "2x" ]]; then
+    Servers=("node12" "node13" "node14" "node15" "node17" "node18" "node19" "node20" "node21" "node22" "node40" "node41" "node42" "node43" "node44")
+    ServersIP=("192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32" "192.168.10.50" "192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.54")
+    # Clients=("proj18" "proj19")
+    # ClientsIP=("192.168.10.118" "192.168.10.119")
+    Clients=("proj18")
+    ClientsIP=("192.168.10.118")
+    Seeds=("node13" "node21" "node22")
+    SeedsIP=("192.168.10.23" "192.168.10.31" "192.168.10.32")
+    NodeIP="192.168.10.31" # Only used for start-client.sh
+    UserName="ymren"
+    SudoPassword="ymren"
+    HOME_PATH="/mnt/ssd"
+elif [[ "$CLUSTER_NAME" == "3x" ]]; then
+    Servers=("node12" "node13" "node14" "node15" "node17" "node18" "node19" "node20" "node21" "node22" "node40" "node41" "node42" "node43" "node44" "node45" "node46" "node47" "node48" "node50")
+    ServersIP=("192.168.10.22" "192.168.10.23" "192.168.10.24" "192.168.10.25" "192.168.10.27" "192.168.10.28" "192.168.10.29" "192.168.10.30" "192.168.10.31" "192.168.10.32" "192.168.10.50" "192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.54" "192.168.10.55" "192.168.10.56" "192.168.10.57" "192.168.10.58" "192.168.10.60")
+    # Clients=("proj18" "proj19")
+    # ClientsIP=("192.168.10.118" "192.168.10.119")
+    Clients=("proj18")
+    ClientsIP=("192.168.10.118")
+    Seeds=("node13" "node21" "node22")
+    SeedsIP=("192.168.10.23" "192.168.10.31" "192.168.10.32")
+    NodeIP="192.168.10.31" # Only used for start-client.sh
+    UserName="ymren"
+    SudoPassword="ymren"
+    HOME_PATH="/mnt/ssd"
 elif [[ "$CLUSTER_NAME" == "4x" ]]; then
     Servers=("node41" "node42" "node43" "node45")
     ServersIP=("192.168.10.51" "192.168.10.52" "192.168.10.53" "192.168.10.55")

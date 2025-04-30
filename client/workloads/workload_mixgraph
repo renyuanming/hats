@@ -63,8 +63,8 @@ insertstart=0
 fieldcount=1
 
 # The size of each field (in bytes)
-minfieldlength=1000
-fieldlength=2000
+minfieldlength=500
+fieldlength=1000
 
 # Should read all fields
 readallfields=true
@@ -152,7 +152,7 @@ measurementtype=histogram
 # measurement.trackjvm = false
 
 # The range of latencies to track in the histogram (milliseconds)
-histogram.buckets=1000
+histogram.buckets=10000000
 
 # Granularity for time series (in milliseconds)
 timeseries.granularity=1000
