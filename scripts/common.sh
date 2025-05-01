@@ -174,7 +174,7 @@ function flush {
         sed -i "s|NODETOOL_OPTION||g" ${playbook}
     fi
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function backup {
@@ -200,7 +200,7 @@ function backup {
     sed -i "s|PATH_TO_BACKUP|${PathToBackup}|g" ${playbook}
     sed -i "s/Scheme/${targetScheme}/g" ${playbook}
     sed -i "s/DATAPATH/${expName}-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-SSTableSize-${sstableSize}-CompactionStrategy-${compactionStrategy}/g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function getSettingName() {
@@ -295,7 +295,7 @@ function reloadSeeds {
     # fi
 
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function rebuildServer {
@@ -315,7 +315,7 @@ function rebuildServer {
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
     sed -i "s|ANT_OPTION|${antOption}|g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function rebuildClient {
@@ -325,7 +325,7 @@ function rebuildClient {
     playbook="playbook-rebuildClient.yaml"
     sed -i "s|PATH_TO_CLIENT|${PathToClient}|g" ${playbook}
     sed -i "s|BRANCH_NAME|${branch}|g" ${playbook}
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function loadDataset {
@@ -350,7 +350,7 @@ function loadDataset {
     sed -i "s/Scheme/${targetScheme}/g" ${playbook}
     sed -i "s/DATAPATH/LoadDB-kvNumber-${kvNumber}-KeySize-${keylength}-ValueSize-${fieldlength}-RF-${rf}-SSTableSize-${sstableSize}-CompactionStrategy-${compactionStrategy}/g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function startFromBackup {
@@ -417,7 +417,7 @@ function startFromBackup {
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
     
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function restartCassandra {
@@ -458,7 +458,7 @@ function restartCassandra {
     sed -i "s|ENABLE_HORSE|${enableHorse}|g" ${playbook}
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function collectResults {
@@ -567,7 +567,7 @@ function load {
     fi
 
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 
     ## Collect load results
     resultsDir="/home/${UserName}/Results/Load-threads_${threads}-sstSize_${sstableSize}-memSize_${memtableSize}-rf_${rf}-workload_${workload}-compactionStrategy_${compaction_strategy}"
@@ -643,7 +643,7 @@ function run {
     fi
     
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function perpareJavaEnvironment {
@@ -669,7 +669,7 @@ function perpareJavaEnvironment {
     sed -i "s|SUDO_PASSWD|${SudoPassword}|g" playbook-prepareJavaEnv.yaml
     sed -i "s|JAVA_VERSION|${javaVersion}|g" playbook-prepareJavaEnv.yaml
 
-    ansible-playbook -v -i hosts.ini playbook-prepareJavaEnv.yaml
+    ansible-playbook -v -i hosts.ini playbook-prepareJavaEnv.yaml -f 100
 
 }
 
@@ -683,7 +683,7 @@ function trimSSD {
 
     sed -i "s|SUDO_PASSWD|${SudoPassword}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
 
 function cleanup {
@@ -694,7 +694,7 @@ function cleanup {
 
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
 
-    ansible-playbook -v -i hosts.ini ${playbook} -f ${ServerNumber}
+    ansible-playbook -v -i hosts.ini ${playbook} -f 100
 
 }
 
