@@ -1106,6 +1106,50 @@ function output_to_res_file {
             echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
             echo "" >> "$OVERALL_LATENCY_RES"
         fi
+    elif [ "$exp_num" = "zippydb" ]; then
+        if [ $key == "average_read_latency" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "average_read       " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "tail_read_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "tail_read_latency_99th       " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "average_update_latency" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "average_update_latency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "tail_update_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "tail_update_latency_99th       " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "average_scan_latency" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "average_scan_latency       " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        elif [ $key == "tail_scan_latency_99th" ]; then
+            echo -n "" >> "$OVERALL_LATENCY_RES"
+            echo -n "$scheme_name    " >> "$OVERALL_LATENCY_RES"
+            echo -n "tail_scan_latency_99th       " >> "$OVERALL_LATENCY_RES"
+            echo -n "$mean    " >> "$OVERALL_LATENCY_RES"
+            echo -n "$t_error    " >> "$OVERALL_LATENCY_RES"
+            echo "" >> "$OVERALL_LATENCY_RES"
+        fi
     fi
 
      
