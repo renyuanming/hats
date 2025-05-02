@@ -35,8 +35,8 @@ function exportEnv {
 
 function main {
 
-    for scheme in "${SCHEMES[@]}"; do
-        for cluster_name in "${CLUSTER_NAMES[@]}"; do
+    for cluster_name in "${CLUSTER_NAMES[@]}"; do
+        for scheme in "${SCHEMES[@]}"; do
             echo "Load data for ${scheme}"
             exportEnv $scheme $cluster_name
             perpareJavaEnvironment "${scheme}" "${JDK_VERSION}"
