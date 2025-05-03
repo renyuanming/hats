@@ -15,8 +15,8 @@
 # limitations under the License.
 
 
-kill -9 $(ps aux | grep CassandraDaemon| grep -v grep | awk 'NR == 1'  | awk {'print $2'})
-kill -9 $(ps aux | grep CassandraDaemon| grep -v grep | awk 'NR == 1'  | awk {'print $2'})
+pkill -9 -f CassandraDaemon || true
+
 func() {
 
 
@@ -49,6 +49,13 @@ func() {
 
     # nohup bin/cassandra &> logs/debug.log &
     nohup bin/cassandra > logs/debug.log 2>&1 &
+
+    timeout 60 bash -c 'until nc -z localhost 9042; do sleep 1; done' || {
+        echo "Cassandra failed to start within 60 seconds"
+        exit 1
+    }
+
+    echo "Cassandra started successfully"
 
 }
 
