@@ -28,7 +28,8 @@ func() {
 
     sleep 10
 
-    kill -9 $(ps aux | grep CassandraDaemon | grep -v grep | awk 'NR == 1' | awk {'print $2'})
+    pkill -9 -f CassandraDaemon || true
+
 
     cp -r "${sourceDataDir}" "${targetDataDir}"
     cp -r "${configureFilePath}" "${targetDataDir}"

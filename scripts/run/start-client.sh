@@ -16,7 +16,8 @@
 
 . /etc/profile
 
-kill -9 $(ps aux | grep ycsb | grep -v grep | awk 'NR == 1'  | awk {'print $2'})
+pkill -9 -f CassandraDaemon || true
+
 func() {
     coordinator=$1
     sstable_size=$2

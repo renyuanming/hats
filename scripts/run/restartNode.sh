@@ -21,7 +21,8 @@ function restartNode {
 
     echo "Restart the node with configure file ${configureFilePath}, source data dir ${sourceDataDir}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, the pass word is ${passWd}, rebuild is ${rebuild}, use direct io is ${useDirectIO}, branch is ${branch}, scheduling initial delay is ${schedulingInitialDelay}, scheduling interval is ${schedulingInterval}, states update interval is ${statesUpdateInterval}, read sensitivity is ${readSensitivity}"
 
-    kill -9 $(ps aux | grep CassandraDaemon | grep -v grep | awk 'NR == 1' | awk {'print $2'})
+    pkill -9 -f CassandraDaemon || true
+
 
 
     cd "${projectBaseDir}" || exit

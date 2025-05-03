@@ -20,7 +20,8 @@ function restartCassandra {
 
     echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, enable horse ${enableHorse}"
 
-    kill -9 $(ps aux | grep CassandraDaemon | grep -v grep | awk 'NR == 1' | awk {'print $2'})
+    pkill -9 -f CassandraDaemon || true
+
 
 
     cd "${projectBaseDir}" || exit
