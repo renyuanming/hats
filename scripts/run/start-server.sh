@@ -47,7 +47,9 @@ func() {
     sed -i "s/internode_application_receive_queue_reserve_endpoint_capacity:.*$/internode_application_receive_queue_reserve_endpoint_capacity: ${internode_application_receive_queue_reserve_endpoint_capacity}/" conf/cassandra.yaml
     sed -i "s/internode_application_receive_queue_reserve_global_capacity:.*$/internode_application_receive_queue_reserve_global_capacity: ${internode_application_receive_queue_reserve_global_capacity}/" conf/cassandra.yaml
 
-    nohup bin/cassandra &> logs/debug.log &
+    # nohup bin/cassandra &> logs/debug.log &
+    nohup bin/cassandra > logs/debug.log 2>&1 &
+
 }
 
 func #"$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15"
