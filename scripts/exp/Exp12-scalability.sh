@@ -37,12 +37,12 @@ ROUNDS=1
 COMPACTION_LEVEL=("all") # zero one all
 
 # Horse
-SCHEDULING_INITIAL_DELAY=120 # seconds
+SCHEDULING_INITIAL_DELAY=300 # seconds
 SCHEDULING_INTERVAL=(60) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 THROTLLE_DATA_RATE=(90) # MB/s
 
-CLUSTER_NAMES=("1x" "2x" "3x")
+CLUSTER_NAMES=("2x" "3x")
 JDK_VERSION="17"
 
 SCHEMES=("horse" "depart-5.0" "c3" "mlsm")
@@ -59,9 +59,23 @@ function exportEnv {
     source "${SCRIPT_DIR}/../common.sh"
 }
 
-for cluster_name in "${CLUSTER_NAMES[@]}"; do
+for ROUND_NUMBER in $(seq 1 $ROUNDS); do
+    for cluster_name in "${CLUSTER_NAMES[@]}"; do
 
-    for ROUND_NUMBER in $(seq 1 $ROUNDS); do
+        if [ "$cluster_name" == "1x" ]; then
+            THREAD_NUMBER=(50)
+            OPERATION_NUMBER=25000000
+            KV_NUMBER=100000000
+        elif [ "$cluster_name" == "2x" ]; then
+            THREAD_NUMBER=(75)
+            OPERATION_NUMBER=37500000
+            KV_NUMBER=150000000
+        elif [ "$cluster_name" == "3x" ]; then
+            THREAD_NUMBER=(100)
+            OPERATION_NUMBER=50000000
+            KV_NUMBER=200000000
+        fi
+
         for WORKLOAD in "${PURE_READ_WORKLOADS[@]}"; do
             for scheme in "${SCHEMES[@]}"; do
                 exportEnv "${scheme}" $cluster_name
@@ -70,10 +84,8 @@ for cluster_name in "${CLUSTER_NAMES[@]}"; do
 
             done
         done
-    done
 
 
-    for ROUND_NUMBER in $(seq 1 $ROUNDS); do
         for WORKLOAD in "${MIXED_READ_WRITE_WORKLOADS[@]}"; do
             for scheme in "${SCHEMES[@]}"; do
                 exportEnv "${scheme}" $cluster_name
@@ -82,5 +94,6 @@ for cluster_name in "${CLUSTER_NAMES[@]}"; do
 
             done
         done
+
     done
 done
