@@ -93,8 +93,7 @@
   become_user: ymren
   tasks:
     - name: Clear page cache
-      shell: |
-          echo "SUDO_PASSWD" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"
+      shell: . /etc/profile && echo "SUDO_PASSWD" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"
       register: command_result
       ignore_errors: true
     - name: Wait before the benchmark
