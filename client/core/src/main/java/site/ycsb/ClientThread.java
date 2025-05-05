@@ -17,11 +17,12 @@
 
 package site.ycsb;
 
-import site.ycsb.measurements.Measurements;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.LockSupport;
+
+import site.ycsb.measurements.Measurements;
 
 /**
  * A thread for executing transactions or data inserts to the database.
@@ -47,8 +48,8 @@ public class ClientThread implements Runnable {
 
   
   // --- New variables for dynamic rate limiting ---
-  private boolean dynamicRateLimiterEnabled;
-  private long dynamicRateIntervalNanos;
+  private boolean dynamicRateLimiterEnabled = false;
+  private long dynamicRateIntervalNanos = 5000000000L; // 5000ms
   private long lastRateAdjustmentTimeNanos;
   private double sineNoiseFactor = 0;
   // --- End of new variables ---
@@ -201,10 +202,6 @@ public class ClientThread implements Runnable {
     return todo < 0 ? 0 : todo;
   }
 
-
-
-
-
   /**
    * Dynamically adjusts the target operations per millisecond based on elapsed time,
    * simulating a sine wave pattern with optional noise, similar to the C++ reference code.
@@ -231,10 +228,16 @@ public class ClientThread implements Runnable {
       double noisyRate = addNoise(sineRate);
 
       // Ensure rate is not negative
-      noisyRate = Math.max(0.0, noisyRate);
+      noisyRate = Math.max(0.0, noisyRate / 1000.0); // Convert to ops/ms
 
       // 3. Update the thread's target rate
-      this.targetOpsPerMs = noisyRate;
+      if (insert) {
+        // For inserts, we want to set the target rate directly
+        this.targetOpsPerMs = noisyRate * 0.15;
+      } else {
+        // For transactions, we want to adjust the target rate based on the current rate
+        this.targetOpsPerMs = noisyRate * 0.85;
+      }
       if (this.targetOpsPerMs > 1e-9) { // Avoid division by zero or near-zero
           this.targetOpsTickNs = (long) (1_000_000.0 / this.targetOpsPerMs);
       } else {
