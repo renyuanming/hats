@@ -45,6 +45,15 @@ public class ClientThread implements Runnable {
   private long targetOpsTickNs;
   private final Measurements measurements;
 
+  
+  // --- New variables for dynamic rate limiting ---
+  private boolean dynamicRateLimiterEnabled;
+  private long dynamicRateIntervalNanos;
+  private long lastRateAdjustmentTimeNanos;
+  private double sineNoiseFactor = 0;
+  // --- End of new variables ---
+
+
   /**
    * Constructor.
    *
@@ -125,6 +134,9 @@ public class ClientThread implements Runnable {
 
           opsdone++;
 
+          // --- Adjust rate dynamically ---
+          adjustRateDynamically(startTimeNanos, false);
+          // --- End of rate adjustment ---
           throttleNanos(startTimeNanos);
         }
       } else {
@@ -137,7 +149,9 @@ public class ClientThread implements Runnable {
           }
 
           opsdone++;
-
+          // --- Adjust rate dynamically ---
+          adjustRateDynamically(startTimeNanos, true);
+          // --- End of rate adjustment ---
           throttleNanos(startTimeNanos);
         }
       }
@@ -166,13 +180,16 @@ public class ClientThread implements Runnable {
     }
   }
 
+
   private void throttleNanos(long startTimeNanos) {
     //throttle the operations
-    if (targetOpsPerMs > 0) {
+    if (targetOpsPerMs > 0 && targetOpsTickNs != Long.MAX_VALUE) { // Check if throttling is active
       // delay until next tick
       long deadline = startTimeNanos + opsdone * targetOpsTickNs;
       sleepUntil(deadline);
       measurements.setIntendedStartTimeNs(deadline);
+    } else {
+       measurements.setIntendedStartTimeNs(0); // No specific intended start time if not throttling
     }
   }
 
@@ -182,5 +199,68 @@ public class ClientThread implements Runnable {
   int getOpsTodo() {
     int todo = opcount - opsdone;
     return todo < 0 ? 0 : todo;
+  }
+
+
+
+
+
+  /**
+   * Dynamically adjusts the target operations per millisecond based on elapsed time,
+   * simulating a sine wave pattern with optional noise, similar to the C++ reference code.
+   *
+   * @param threadStartTimeNanos The time the main loop of this thread started, in nanoseconds.
+   */
+  private void adjustRateDynamically(long threadStartTimeNanos, boolean insert) {
+    if (!dynamicRateLimiterEnabled) {
+      return; // Do nothing if the feature is disabled
+    }
+
+    long nowNanos = System.nanoTime();
+    long nanosSinceLastAdjustment = nowNanos - lastRateAdjustmentTimeNanos;
+
+    // Check if the adjustment interval has passed
+    if (nanosSinceLastAdjustment > dynamicRateIntervalNanos) {
+      double nanosSinceStart = (double)(nowNanos - threadStartTimeNanos);
+      double secondsSinceStart = nanosSinceStart / 1_000_000_000.0;
+
+      // 1. Calculate the target rate based on the sine wave formula
+      double sineRate = calculateSineRate(secondsSinceStart);
+
+      // 2. Add noise to the calculated rate
+      double noisyRate = addNoise(sineRate);
+
+      // Ensure rate is not negative
+      noisyRate = Math.max(0.0, noisyRate);
+
+      // 3. Update the thread's target rate
+      this.targetOpsPerMs = noisyRate;
+      if (this.targetOpsPerMs > 1e-9) { // Avoid division by zero or near-zero
+          this.targetOpsTickNs = (long) (1_000_000.0 / this.targetOpsPerMs);
+      } else {
+          // If rate is effectively zero, set ticks to max to stop throttling
+          this.targetOpsPerMs = 0.0;
+          this.targetOpsTickNs = Long.MAX_VALUE;
+      }
+
+      // 4. Reset the timer for the next adjustment
+      this.lastRateAdjustmentTimeNanos = nowNanos;
+
+    }
+  }
+
+  // F(x) = A * sin(B * x + C) + D.
+  private double calculateSineRate(double x) {
+    return 147.9 * Math.sin(8.3*10e-5 * x) + 50000;
+  }
+
+  private double addNoise(double origin) {
+    int band_int = 147;
+    double delta = (ThreadLocalRandom.current().nextInt(band_int) - band_int / 2) * sineNoiseFactor;
+    if (origin + delta < 0) {
+      return origin;
+    } else {
+      return (origin + delta);
+    }
   }
 }
