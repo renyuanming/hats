@@ -48,7 +48,7 @@ public class ClientThread implements Runnable {
 
   
   // --- New variables for dynamic rate limiting ---
-  private boolean dynamicRateLimiterEnabled = false;
+  private boolean dynamicRateLimiterEnabled = true;
   private long dynamicRateIntervalNanos = 5000000000L; // 5000ms
   private long lastRateAdjustmentTimeNanos;
   private double sineNoiseFactor = 0;
