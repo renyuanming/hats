@@ -33,7 +33,7 @@ func() {
     cd ${file_dir}
     echo "Mode is $mode, file_dir is $file_dir, coordinator is $coordinator, record_count is $record_count, key_length is $key_length, field_length is $field_length, threads is $threads, workload is $workload, expName is $expName, replication_factor is $replication_factor"
     keyspace=""
-    if [ "$mode" == "mlsm" ] || [ "$mode" == "horse" ]; then
+    if [ "$mode" == "mlsm" ] || [ "$mode" == "hats" ]; then
         keyspace="ycsb"
         sed -i "s/table=.*$/table=usertable0/" ${workload}
     else

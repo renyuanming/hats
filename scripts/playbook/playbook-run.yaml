@@ -117,7 +117,7 @@
   become_user: hats
   tasks:
     - name: Execute runDB.sh asynchronously
-      shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ hostName }} {{ consistencyLevel }}
+      shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHats }} {{ hostName }} {{ consistencyLevel }}
       vars:
         coordinator: "COORDINATORS"
         recordNumber: 10000000
@@ -129,7 +129,7 @@
         requestDistribution: "uniform"
         PathToClient: "PATH_TO_CLIENT"
         scheme: "normal"
-        enableHorse: "ENABLE_HORSE"
+        enableHats: "ENABLE_HATS"
         hostName: "{{ inventory_hostname }}"
         consistencyLevel: "CONSISTENCY"
       async: 7200
@@ -205,7 +205,7 @@
 #   become_user: hats
 #   tasks:
 #     - name: Execute runDB.sh
-#       shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ hostName }} {{ consistencyLevel }}
+#       shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHats }} {{ hostName }} {{ consistencyLevel }}
 #       vars:
 #         coordinator: "COORDINATORS"
 #         recordNumber: 10000000
@@ -217,7 +217,7 @@
 #         requestDistribution: "uniform"
 #         PathToClient: "PATH_TO_CLIENT"
 #         scheme: "normal"
-#         enableHorse: "ENABLE_HORSE"
+#         enableHats: "ENABLE_HATS"
 #         hostName: "{{ inventory_hostname }}"
 #         consistencyLevel: "CONSISTENCY"
 #       register: command_result

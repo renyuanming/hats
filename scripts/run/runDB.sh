@@ -12,7 +12,7 @@ PathToClient=$8
 coordinator=$9
 shift 9
 targetScheme=$1
-enableHorse=$2
+enableHats=$2
 hostName=$3
 readConsistency=$4
 
@@ -39,7 +39,7 @@ elif [ "$workload" == "workloads/motivation" ]; then
 fi
 
 keyspace="ycsb"
-if [ "$targetScheme" == "c3" ] || [ "$targetScheme" == "horse" ] || [ "$targetScheme" == "mlsm" ]; then
+if [ "$targetScheme" == "c3" ] || [ "$targetScheme" == "hats" ] || [ "$targetScheme" == "mlsm" ]; then
     sed -i "s/table=.*$/table=usertable0/" ${workload}
 elif [ "$targetScheme" == "cassandra-5.0" ] || [ "$targetScheme" == "depart" ] || [ "$targetScheme" == "cassandra-3.11.4" ] || [ "$targetScheme" == "depart-5.0" ]; then
     sed -i "s/table=.*$/table=usertable/" ${workload}
@@ -65,19 +65,19 @@ file_name="Run-$(date +%s)-${hostName}-${operationcount}-${field_length}-${threa
 if [[ "$initial_workload" == "workloads/motivation" ]]; then
     # if [[ $hostName == "proj18" ]]; then
     #     sleep 600
-    #     bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+    #     bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.hats="${enableHats}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     # elif [[ $hostName == "proj19" ]]; then
-    #     bin/ycsb run cassandra-cql -p maxexecutiontime=1800 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+    #     bin/ycsb run cassandra-cql -p maxexecutiontime=1800 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.hats="${enableHats}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     # fi
     if [[ $hostName == "proj18" ]]; then
         sleep 1200
-        bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+        bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.hats="${enableHats}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     elif [[ $hostName == "proj19" ]]; then
-        bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+        bin/ycsb run cassandra-cql -p maxexecutiontime=1200 -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false"  -p enable.hats="${enableHats}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
     fi
 else
     echo "Running the workload ${workload}"
-    bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
-    # bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.horse="${enableHorse}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+    bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.hats="${enableHats}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
+    # bin/ycsb run cassandra-cql -p hosts=${coordinator} -p cassandra.readconsistencylevel=$readConsistency -p cassandra.keyspace=${keyspace} -p cassandra.tracing="false" -p enable.hats="${enableHats}" -threads $threads -s -P ${workload} > logs/${file_name}.log 2>&1
 fi
 

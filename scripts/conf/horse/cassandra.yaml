@@ -53,7 +53,7 @@ scheduling_initial_delay: 10
 scheduling_interval: 1
 raft_rpc_timeout: 1000
 state_update_interval: 10
-enable_horse: false
+enable_hats: false
 replication_factor: 3
 
 motivation: false

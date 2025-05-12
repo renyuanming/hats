@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.HorseUtils.HorseLatencyTracker;
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.HatsLatencyTracker;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.datastax.driver.core.RequestHandler.SpeculativeExecution;
 import com.datastax.driver.core.Responses.Result.SetKeyspace;
 import com.datastax.driver.core.exceptions.*;
@@ -1029,8 +1029,8 @@ class Connection {
                 tryTerminate(false);
         }
 
-        // HORSE TODO
-        private void updateTracker(ConcurrentHashMap<InetAddress, HorseLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
+        // HATS TODO
+        private void updateTracker(ConcurrentHashMap<InetAddress, HatsLatencyTracker> trackers, InetAddress address, long latency, QueryType queryType)
         {
             if(trackers.containsKey(address) && trackers.get(address) != null)
             {

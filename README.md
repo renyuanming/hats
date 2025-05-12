@@ -101,7 +101,7 @@ The HATS prototype requires to configure the cluster information before running.
 cluster_name: 'HATS Cluster'
 
 # HATS settings
-enable_horse: false # The knob to enable the HATS scheduling framework.
+enable_hats: false # The knob to enable the HATS scheduling framework.
 concurrent_schedulers: 32 # The size of the thread pool for the HATS's scheduler.
 
 # Manual settings to achieve a balanced workload across different nodes.

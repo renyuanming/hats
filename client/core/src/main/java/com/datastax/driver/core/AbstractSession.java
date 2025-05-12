@@ -63,9 +63,9 @@ public abstract class AbstractSession implements Session {
         return executeAsync(statement).getUninterruptibly();
     }
 
-    // HORSE
+    // HATS
     @Override
-    public ResultSet execute(Statement statement, HorseUtils.QueryType queryType) {
+    public ResultSet execute(Statement statement, HatsUtils.QueryType queryType) {
         return executeAsync(statement, queryType).getUninterruptibly();
     }
 

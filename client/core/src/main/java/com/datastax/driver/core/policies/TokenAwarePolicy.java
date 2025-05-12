@@ -16,8 +16,8 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.HatsReplicaSelector;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 
@@ -57,7 +57,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     private static final Logger logger = LoggerFactory.getLogger(TokenAwarePolicy.class);
     private final LoadBalancingPolicy childPolicy;
     private boolean shuffleReplicas;
-    private volatile boolean enableHorse;
+    private volatile boolean enableHats;
     private volatile Metadata clusterMetadata;
     private volatile ProtocolVersion protocolVersion;
     private volatile CodecRegistry codecRegistry;
@@ -100,8 +100,8 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         clusterMetadata = cluster.getMetadata();
         protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         codecRegistry = cluster.getConfiguration().getCodecRegistry();
-        enableHorse = cluster.getConfiguration().getHorseOptions().isHorseEnabled();
-        shuffleReplicas = cluster.getConfiguration().getHorseOptions().isShuffleReplicas();
+        enableHats = cluster.getConfiguration().getHatsOptions().isHatsEnabled();
+        shuffleReplicas = cluster.getConfiguration().getHatsOptions().isShuffleReplicas();
         childPolicy.init(cluster, hosts);
     }
 
@@ -173,7 +173,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         final Iterator<Host> iter;
 
-        // logger.info("HATSInfo: We get the statement is {}, query type is {}, enable horse is {}, the expression is {}", statement, queryType, enableHorse, enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)));
+        // logger.info("HATSInfo: We get the statement is {}, query type is {}, enable hats is {}, the expression is {}", statement, queryType, enableHats, enableHats && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)));
 
         List<Host> l = Lists.newArrayList(replicas);
         InetAddress primAddress = l.get(0).getAddress();
@@ -182,9 +182,9 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
             clusterMetadata.recordReadRequestCount(primAddress);
         }
 
-        if(enableHorse && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)))
+        if(enableHats && (queryType.equals(QueryType.READ)  || queryType.equals(QueryType.SCAN)))
         {
-            HorseReplicaSelector selector = clusterMetadata.getSelector(primAddress);
+            HatsReplicaSelector selector = clusterMetadata.getSelector(primAddress);
             if(clusterMetadata.getPolicy().isEmpty() || selector == null || queryType.equals(QueryType.SCAN))
             {
                 iter = replicas.iterator();

@@ -16,7 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

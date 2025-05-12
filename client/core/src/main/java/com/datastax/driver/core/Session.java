@@ -182,7 +182,7 @@ public interface Session extends Closeable {
      */
     ResultSet execute(Statement statement);
 
-    ResultSet execute(Statement statement, HorseUtils.QueryType queryType);
+    ResultSet execute(Statement statement, HatsUtils.QueryType queryType);
     /**
      * Executes the provided query asynchronously.
      * <p/>
@@ -245,7 +245,7 @@ public interface Session extends Closeable {
      */
     ResultSetFuture executeAsync(Statement statement);
 
-    ResultSetFuture executeAsync(Statement statement, HorseUtils.QueryType queryType);
+    ResultSetFuture executeAsync(Statement statement, HatsUtils.QueryType queryType);
 
     /**
      * Prepares the provided query string.

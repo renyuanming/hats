@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.util.concurrent.Futures;

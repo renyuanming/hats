@@ -16,7 +16,7 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Timer;
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
@@ -101,7 +101,7 @@ class RequestHandler {
         startNewExecution();
     }
 
-    // HORSE
+    // HATS
     void sendRequest(QueryType queryType) {
         startNewExecution(queryType);
     }
@@ -130,7 +130,7 @@ class RequestHandler {
         execution.sendRequest();
     }
 
-    // HORSE
+    // HATS
     private void startNewExecution(QueryType queryType) {
         if (isDone.get())
             return;

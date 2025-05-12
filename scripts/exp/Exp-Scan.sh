@@ -34,7 +34,7 @@ REBUILD_CLIENT="false"
 ROUNDS=1
 COMPACTION_LEVEL=("all") # zero one all
 
-# Horse
+# Hats
 SCHEDULING_INITIAL_DELAY=600 # seconds
 SCHEDULING_INTERVAL=(60) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
@@ -42,7 +42,7 @@ THROTLLE_DATA_RATE=(90) # MB/s
 
 JDK_VERSION="17"
 
-SCHEMES=("horse" "depart-5.0")
+SCHEMES=("hats" "depart-5.0")
 
 
 function exportEnv {
@@ -50,7 +50,7 @@ function exportEnv {
     scheme=$1
 
     export BACKUP_MODE="local"
-    export SCHEME=$scheme # horse or depart
+    export SCHEME=$scheme # hats or depart
     export CLUSTER_NAME="1x"
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
     source "${SCRIPT_DIR}/../common.sh"

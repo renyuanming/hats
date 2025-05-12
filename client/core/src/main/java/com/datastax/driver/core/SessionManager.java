@@ -148,9 +148,9 @@ class SessionManager extends AbstractSession {
         }
     }
 
-    // HORSE
+    // HATS
     @Override
-    public ResultSetFuture executeAsync(final Statement statement, final HorseUtils.QueryType queryType) {
+    public ResultSetFuture executeAsync(final Statement statement, final HatsUtils.QueryType queryType) {
         if (isInit) {
             DefaultResultSetFuture future = new DefaultResultSetFuture(this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
             new RequestHandler(this, future, statement, queryType).sendRequest(queryType);
@@ -642,7 +642,7 @@ class SessionManager extends AbstractSession {
      * This method will find a suitable node to connect to using the
      * {@link LoadBalancingPolicy} and handle host failover.
      */
-    void execute(final RequestHandler.Callback callback, final Statement statement, final HorseUtils.QueryType queryType) {
+    void execute(final RequestHandler.Callback callback, final Statement statement, final HatsUtils.QueryType queryType) {
         if (isInit)
             new RequestHandler(this, callback, statement, queryType).sendRequest(queryType);
         else

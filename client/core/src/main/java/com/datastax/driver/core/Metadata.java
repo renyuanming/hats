@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.HorseUtils.HorseLatencyTracker;
-import com.datastax.driver.core.HorseUtils.HorseReplicaSelector;
-import com.datastax.driver.core.HorseUtils.StatesForClients;
+import com.datastax.driver.core.HatsUtils.HatsLatencyTracker;
+import com.datastax.driver.core.HatsUtils.HatsReplicaSelector;
+import com.datastax.driver.core.HatsUtils.StatesForClients;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -52,9 +52,9 @@ public class Metadata {
     final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     volatile TokenMap tokenMap;
 
-    // Horse
+    // Hats
     volatile Map<String, List<Double>>  policy = new HashMap<>();
-    volatile ConcurrentHashMap<InetAddress, HorseReplicaSelector> addrToReplicaSelector = new ConcurrentHashMap<InetAddress, HorseReplicaSelector>();
+    volatile ConcurrentHashMap<InetAddress, HatsReplicaSelector> addrToReplicaSelector = new ConcurrentHashMap<InetAddress, HatsReplicaSelector>();
     ScheduledExecutorService policyUpdateService = Executors.newScheduledThreadPool(1);
     volatile StatesForClients statesForClients = null;
     
@@ -66,7 +66,7 @@ public class Metadata {
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
-        // if(this.cluster.getCluster().getConfiguration().getHorseOptions().isHorseEnabled())
+        // if(this.cluster.getCluster().getConfiguration().getHatsOptions().isHatsEnabled())
         // {
         //     policyUpdateService.scheduleWithFixedDelay(new PolicyUpdater(), 1, 1, TimeUnit.MINUTES);
         // }
@@ -282,7 +282,7 @@ public class Metadata {
         }
     }
 
-    public HorseReplicaSelector getSelector(InetAddress primAddress)
+    public HatsReplicaSelector getSelector(InetAddress primAddress)
     {
         return addrToReplicaSelector.get(primAddress);
     }
@@ -349,7 +349,7 @@ public class Metadata {
 
             policy.put(tokenStr, combinedPolicy);
 
-            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HorseReplicaSelector(replicas, combinedPolicy));
+            addrToReplicaSelector.put(replicas.get(0).getAddress(), new HatsReplicaSelector(replicas, combinedPolicy));
         }
 
         if(!Cluster.requestCountOfEachReplicationGroup.isEmpty())
@@ -367,7 +367,7 @@ public class Metadata {
     {
         // print the statistics
         String results = "";
-        for(Map.Entry<InetAddress,  HorseReplicaSelector> entry : addrToReplicaSelector.entrySet())
+        for(Map.Entry<InetAddress,  HatsReplicaSelector> entry : addrToReplicaSelector.entrySet())
         {
             results += entry.getKey() + ": [";
             for(Long count : entry.getValue().getSelectionCounts())
@@ -379,7 +379,7 @@ public class Metadata {
         }
 
         String fullReadLatencyStr = "";
-        for (Map.Entry<InetAddress, HorseLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
+        for (Map.Entry<InetAddress, HatsLatencyTracker> entry : Cluster.readLatencyTracker.entrySet())
         {
             fullReadLatencyStr += entry.getKey() + ": [" + entry.getValue().getLatencyForLocalStates() + "]  ";
         }
@@ -403,7 +403,7 @@ public class Metadata {
 
 
     // TODO
-    public void updateHorsePolicy(StatesForClients states)
+    public void updateHatsPolicy(StatesForClients states)
     {
         statesForClients = states;
         updatePolicy();

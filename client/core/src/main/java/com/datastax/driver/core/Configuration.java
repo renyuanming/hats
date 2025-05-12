@@ -53,7 +53,7 @@ public class Configuration {
     private final QueryOptions queryOptions;
     private final NettyOptions nettyOptions;
     private final CodecRegistry codecRegistry;
-    private final HorseOptions horseOptions;
+    private final HatsOptions hatsOptions;
 
     private Configuration(Policies policies,
                           ProtocolOptions protocolOptions,
@@ -63,7 +63,7 @@ public class Configuration {
                           QueryOptions queryOptions,
                           NettyOptions nettyOptions,
                           CodecRegistry codecRegistry,
-                          HorseOptions horseOptions) {
+                          HatsOptions hatsOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
@@ -72,7 +72,7 @@ public class Configuration {
         this.queryOptions = queryOptions;
         this.nettyOptions = nettyOptions;
         this.codecRegistry = codecRegistry;
-        this.horseOptions = horseOptions;
+        this.hatsOptions = hatsOptions;
     }
 
     /**
@@ -90,7 +90,7 @@ public class Configuration {
                 toCopy.getQueryOptions(),
                 toCopy.getNettyOptions(),
                 toCopy.getCodecRegistry(),
-                toCopy.getHorseOptions()
+                toCopy.getHatsOptions()
         );
     }
 
@@ -181,12 +181,12 @@ public class Configuration {
     }
 
     /**
-     * Returns the {@link HorseOptions} instance for this configuration.
+     * Returns the {@link HatsOptions} instance for this configuration.
      *
-     * @return the {@link HorseOptions} instance for this configuration.
+     * @return the {@link HatsOptions} instance for this configuration.
      */
-    public HorseOptions getHorseOptions() {
-        return horseOptions;
+    public HatsOptions getHatsOptions() {
+        return hatsOptions;
     }
 
     /**
@@ -201,7 +201,7 @@ public class Configuration {
         private QueryOptions queryOptions;
         private NettyOptions nettyOptions;
         private CodecRegistry codecRegistry;
-        private HorseOptions horseOptions;
+        private HatsOptions hatsOptions;
 
         /**
          * Sets the policies for this cluster.
@@ -313,7 +313,7 @@ public class Configuration {
                     queryOptions != null ? queryOptions : new QueryOptions(),
                     nettyOptions != null ? nettyOptions : NettyOptions.DEFAULT_INSTANCE,
                     codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE,
-                    horseOptions != null ? horseOptions : new HorseOptions());
+                    hatsOptions != null ? hatsOptions : new HatsOptions());
         }
     }
 }

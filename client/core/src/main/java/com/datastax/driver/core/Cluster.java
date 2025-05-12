@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.HorseUtils.ByteObjectConversion;
-import com.datastax.driver.core.HorseUtils.HorseLatencyTracker;
-import com.datastax.driver.core.HorseUtils.StatesForClients;
+import com.datastax.driver.core.HatsUtils.ByteObjectConversion;
+import com.datastax.driver.core.HatsUtils.HatsLatencyTracker;
+import com.datastax.driver.core.HatsUtils.StatesForClients;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
@@ -86,9 +86,9 @@ public class Cluster implements Closeable {
 
     private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
 
-    public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> readLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
-    public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> writeLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
-    public static ConcurrentHashMap<InetAddress, HorseLatencyTracker> scanLatencyTracker = new ConcurrentHashMap<InetAddress, HorseLatencyTracker>();
+    public static ConcurrentHashMap<InetAddress, HatsLatencyTracker> readLatencyTracker = new ConcurrentHashMap<InetAddress, HatsLatencyTracker>();
+    public static ConcurrentHashMap<InetAddress, HatsLatencyTracker> writeLatencyTracker = new ConcurrentHashMap<InetAddress, HatsLatencyTracker>();
+    public static ConcurrentHashMap<InetAddress, HatsLatencyTracker> scanLatencyTracker = new ConcurrentHashMap<InetAddress, HatsLatencyTracker>();
     public static ConcurrentHashMap<InetAddress, AtomicLong> requestCountOfEachReplicationGroup = new ConcurrentHashMap<InetAddress, AtomicLong>();
 
     final Manager manager;
@@ -1416,7 +1416,7 @@ public class Cluster implements Closeable {
 
             for(Host host : allHosts)
             {
-                readLatencyTracker.put(host.getAddress(), new HorseLatencyTracker("ReadLatency-"+host.getAddress().getHostName(), 60));
+                readLatencyTracker.put(host.getAddress(), new HatsLatencyTracker("ReadLatency-"+host.getAddress().getHostName(), 60));
             }
 
             // At this stage, metadata.allHosts() only contains the contact points, that's what we want to pass to LBP.init().
@@ -2317,7 +2317,7 @@ public class Cluster implements Closeable {
                         case NEW_NODE:
                             submitNodeRefresh(tpAddr, HostEvent.ADDED);
                             if(Cluster.readLatencyTracker.get(tpAddr.getAddress()) == null) {
-                                HorseLatencyTracker tracker = new HorseLatencyTracker("ReadLatencyTracker", 60);
+                                HatsLatencyTracker tracker = new HatsLatencyTracker("ReadLatencyTracker", 60);
                                 Cluster.readLatencyTracker.putIfAbsent(tpAddr.getAddress(), tracker);
                             }
                             break;
@@ -2338,7 +2338,7 @@ public class Cluster implements Closeable {
                         case UP:
                             submitNodeRefresh(stAddr, HostEvent.UP);
                             if(Cluster.readLatencyTracker.get(stAddr.getAddress()) == null) {
-                                HorseLatencyTracker tracker = new HorseLatencyTracker("ReadLatencyTracker", 60);
+                                HatsLatencyTracker tracker = new HatsLatencyTracker("ReadLatencyTracker", 60);
                                 Cluster.readLatencyTracker.putIfAbsent(stAddr.getAddress(), tracker);
                             }
                             break;
@@ -2353,13 +2353,13 @@ public class Cluster implements Closeable {
                     byte[] readLatencyInBytes = plc.readLatencyInBytes;
                     try {
                         @SuppressWarnings("unchecked")
-                        // HORSE  de/serialize the states
+                        // HATS  de/serialize the states
                         final Map<String, List<Double>> policy = (Map<String, List<Double>> ) ByteObjectConversion.byteArrayToObject(newPolicyInBytes);
                         @SuppressWarnings("unchecked")
                         final Map<InetAddress, Double> coordinatorReadLatency = (Map<InetAddress, Double>) ByteObjectConversion.byteArrayToObject(readLatencyInBytes);
                         final StatesForClients states = new StatesForClients(policy, coordinatorReadLatency, readLatencyTracker);
                         logger.info("HATSInfo: Get the policy change event {}, the state is {}",event.toString(), states);
-                        manager.metadata.updateHorsePolicy(states);
+                        manager.metadata.updateHatsPolicy(states);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

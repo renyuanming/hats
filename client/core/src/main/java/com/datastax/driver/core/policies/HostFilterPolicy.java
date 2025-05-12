@@ -16,7 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;

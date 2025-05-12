@@ -2,8 +2,8 @@
 
 # CLUSTER_NAME=""
 # BACKUP_MODE="" # local remote
-# SCHEME="" # depart or horse
-PROJECT_NAME="Horse"
+# SCHEME="" # depart or hats
+PROJECT_NAME="Hats"
 HOME_PATH=""
 echo "Load the settings.sh, CLUSTER_NAME is ${CLUSTER_NAME}, BACKUP_MODE is ${BACKUP_MODE}, SCHEME is ${SCHEME}"
 if [[ "$CLUSTER_NAME" == "" ]]; then

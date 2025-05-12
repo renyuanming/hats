@@ -26,7 +26,7 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.HorseUtils.QueryType;
+import com.datastax.driver.core.HatsUtils.QueryType;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.querybuilder.Insert;
@@ -96,7 +96,7 @@ public class CassandraCQLClient extends DB {
   public static final String PORT_PROPERTY = "port";
   public static final String PORT_PROPERTY_DEFAULT = "9042";
 
-  public static final String ENABLE_HORSE = "enable.horse";
+  public static final String ENABLE_HATS = "enable.hats";
   public static final String SHUFFLE_REPLICAS = "shuffle.replicas";
 
   public static final String READ_CONSISTENCY_LEVEL_PROPERTY =
@@ -223,14 +223,14 @@ public class CassandraCQLClient extends DB {
               .setReadTimeoutMillis(Integer.valueOf(readTimoutMillis));
         }
 
-        String enableHorse = getProperties().getProperty(ENABLE_HORSE);
-        if (enableHorse != null) {
-          cluster.getConfiguration().getHorseOptions().setHorse(Boolean.valueOf(enableHorse));
+        String enableHats = getProperties().getProperty(ENABLE_HATS);
+        if (enableHats != null) {
+          cluster.getConfiguration().getHatsOptions().setHats(Boolean.valueOf(enableHats));
         }
 
         String shuffleReplicas = getProperties().getProperty(SHUFFLE_REPLICAS);
         if (shuffleReplicas != null) {
-          cluster.getConfiguration().getHorseOptions().setShuffleReplicas(Boolean.valueOf(shuffleReplicas));
+          cluster.getConfiguration().getHatsOptions().setShuffleReplicas(Boolean.valueOf(shuffleReplicas));
           logger.info("HATSInfo: Shuffle replicas is set to {}", shuffleReplicas);
         }
 

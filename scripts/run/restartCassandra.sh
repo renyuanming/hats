@@ -15,10 +15,10 @@ function restartCassandra {
     shift 9
     statesUpdateInterval=$1
     readSensitivity=$2
-    enableHorse=$3
+    enableHats=$3
     throttleDataRate=$4
 
-    echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, enable horse ${enableHorse}"
+    echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, enable hats ${enableHats}"
 
     pkill -9 -f CassandraDaemon || true
 
@@ -40,8 +40,8 @@ function restartCassandra {
     sed -i "s/state_update_interval:.*$/state_update_interval: "${statesUpdateInterval}"/" conf/cassandra.yaml
     sed -i "s/read_sensitive_factor:.*$/read_sensitive_factor: "${readSensitivity}"/" conf/cassandra.yaml
 
-    if [ "${enableHorse}" == "true" ]; then
-        sed -i "s/enable_horse:.*$/enable_horse: "${enableHorse}"/" conf/cassandra.yaml
+    if [ "${enableHats}" == "true" ]; then
+        sed -i "s/enable_hats:.*$/enable_hats: "${enableHats}"/" conf/cassandra.yaml
         sed -i "s/throttle_data_rate:.*$/throttle_data_rate: "${throttleDataRate}"/" conf/cassandra.yaml
     fi
 
