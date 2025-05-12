@@ -107,7 +107,7 @@ public class HorseUtils {
         }
         catch (Exception e)
         {
-            logger.error("rymError: rounding error for value {}", value);
+            logger.error("hatsERROR: rounding error for value {}", value);
             return value;
         }
     }

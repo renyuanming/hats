@@ -5440,7 +5440,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
             replicaNodes.add(allHosts.get(i % allHosts.size()));
         }
 
-        // logger.debug("rym-Debug: token is ({}), replica nodes are ({}), all hosts are ({}), token ranges are ({})", 
+        // logger.debug("hatsDebug: token is ({}), replica nodes are ({}), all hosts are ({}), token ranges are ({})", 
         //              token, replicaNodes, allHosts, Gossiper.getTokenRanges());
 
         return replicaNodes;

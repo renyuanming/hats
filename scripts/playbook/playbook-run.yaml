@@ -2,7 +2,7 @@
 - name: Start Memory Monitor
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   gather_facts: false
   tasks:
     - name: Memory Monitor
@@ -21,7 +21,7 @@
 - name: Monitor before benchmark
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Monitor
       shell: |
@@ -45,7 +45,7 @@
 - name: Enable auto compaction
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Enable auto compaction
       shell: |
@@ -57,7 +57,7 @@
 # - name: Disable auto compaction
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Disable auto compaction
 #       shell: |
@@ -68,7 +68,7 @@
 # - name: Disable auto compaction
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Disable auto compaction
 #       shell: |
@@ -79,7 +79,7 @@
 - name: Setup log levels
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Setup log levels
       shell: |
@@ -90,7 +90,7 @@
 - name: Page cache management
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Clear page cache
       shell: . /etc/profile && echo "SUDO_PASSWD" | sudo -S sh -c "echo 1 > /proc/sys/vm/drop_caches"
@@ -103,7 +103,7 @@
 # - name: Start probe
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Start probe
 #       shell: |
@@ -114,7 +114,7 @@
 - name: Run benchmark and enable compaction
   hosts: cassandra_clients
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Execute runDB.sh asynchronously
       shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ hostName }} {{ consistencyLevel }}
@@ -139,7 +139,7 @@
 # - name: Enable auto compaction
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Wait for 10 minutes before enabling compaction
 #       pause:
@@ -154,7 +154,7 @@
 # - name: Enable auto compaction
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Wait for 10 minutes before enabling compaction
 #       pause:
@@ -169,7 +169,7 @@
 - name: Wait for benchmark to finish
   hosts: cassandra_clients
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Wait for benchmark to finish
       async_status:
@@ -182,7 +182,7 @@
 # - name: Wait for compaction to finish
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Wait for compaction to finish
 #       async_status:
@@ -202,7 +202,7 @@
 # - name: Run benchmark
 #   hosts: cassandra_clients
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: Execute runDB.sh
 #       shell: bash PATH_TO_SCRIPTS/run/runDB.sh {{ recordNumber }} {{ operationNumber }} {{ keyLength }} {{ fieldLength }} {{ threads }} {{ workload }} {{ requestDistribution }} {{ PathToClient }} {{ coordinator }} {{ scheme }} {{ enableHorse }} {{ hostName }} {{ consistencyLevel }}
@@ -232,7 +232,7 @@
 # - name: Get write stall metrics
 #   hosts:  cassandra_servers
 #   become: true
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #   - name: Get write stall metrics
 #     shell: |
@@ -243,7 +243,7 @@
 - name: Get request distribution
   hosts:  cassandra_servers
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
   - name: Get request distribution
     shell: |
@@ -256,7 +256,7 @@
 - name: Stop Memory Monitor
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   gather_facts: false
   tasks:
     - name: Memory Monitor
@@ -268,7 +268,7 @@
 - name: Monitor after benchmark
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Monitor
       shell: |
@@ -291,7 +291,7 @@
 # - name: kill page cache flusher
 #   hosts: cassandra_servers
 #   become: yes
-#   become_user: ymren
+#   become_user: hats
 #   tasks:
 #     - name: kill page cache flusher
 #       shell: |
@@ -302,7 +302,7 @@
 - name: Backup Logs
   hosts: cassandra_servers
   become: true
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: copy logs
       shell: bash PATH_TO_SCRIPTS/run/copyLogs.sh {{ record_count }} {{ operation_count }} {{ threads }} {{ workload }} {{ expName }} {{ keyspace }} {{ resultDir }} {{ logDir }}

@@ -2,7 +2,7 @@
 - name: Force flush and compaction
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Force flush
       shell: |

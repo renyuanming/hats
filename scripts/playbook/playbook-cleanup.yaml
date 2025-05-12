@@ -2,7 +2,7 @@
 - name: Clean the datasets
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Clean the datasets
       shell: . /etc/profile && cd PATH_TO_SERVER && rm -rf data

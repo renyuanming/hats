@@ -143,7 +143,7 @@ public class Scheduler {
                     }
                     if(retryCount > 10)
                     {
-                        logger.warn("rymWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
+                        logger.warn("hatsWARN: we have waited for 100ms, but we still have {} states gathering signal in flight, so we stop this scheduling.", 
                                         StorageService.instance.stateGatheringSignalInFlight.get());
                         StorageService.instance.stateGatheringSignalInFlight.set(0);
                         return;

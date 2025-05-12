@@ -260,7 +260,7 @@ public class QueryProcessor implements QueryHandler
             CreateTableStatement tableStatement = (CreateTableStatement) statement;
             String ks = tableStatement.keyspace();
             String tn = tableStatement.tableName.substring(0, tableStatement.tableName.length() - 1);
-            logger.debug("rym-Debug: create table-> the table name is {}, the keyspace name is {}", tn, ks);
+            logger.debug("hatsDebug: create table-> the table name is {}, the keyspace name is {}", tn, ks);
             if(ks.equals("ycsb")) {
                 if(options.getConsistency() == ConsistencyLevel.NODE_LOCAL) {
                 } else {
@@ -272,7 +272,7 @@ public class QueryProcessor implements QueryHandler
                     }
                 }
             } else {
-                // logger.debug("rym-Debug: this CreateTableStatement is not belong to ycsb, it belongs to {}", ks);
+                // logger.debug("hatsDebug: this CreateTableStatement is not belong to ycsb, it belongs to {}", ks);
             }
         }
 

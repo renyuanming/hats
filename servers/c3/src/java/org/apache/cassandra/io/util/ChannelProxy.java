@@ -259,8 +259,8 @@ public final class ChannelProxy extends SharedCloseableImpl
     public static void main(String[] args) throws IOException {
 		boolean directIO = false;
 		int bufferSize =  (1<<30); // 4gb
-		String inputFile = "/home/rym/test/testfile";
-		String outputFile = "/home/rym/test/outputfile";
+		String inputFile = "/home/hats/test/testfile";
+		String outputFile = "/home/hats/test/outputfile";
 
 		if(directIO) 
 		{			

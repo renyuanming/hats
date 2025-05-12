@@ -2,7 +2,7 @@
 - name: Load the dataset from backup
   hosts: cassandra_servers
   become: yes
-  become_user: ymren
+  become_user: hats
   tasks:
     - name: Load the dataset from backup
       shell: |

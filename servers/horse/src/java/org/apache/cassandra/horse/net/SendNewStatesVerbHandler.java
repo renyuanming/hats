@@ -52,7 +52,7 @@ public class SendNewStatesVerbHandler implements IVerbHandler<SendNewStates>{
             // Get the placement policy for local replicas
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            logger.error("rymError: Failed to deserialize the placement policy from the received message");
+            logger.error("hatsERROR: Failed to deserialize the placement policy from the received message");
             e.printStackTrace();
         }
 

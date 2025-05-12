@@ -134,7 +134,7 @@ public class GlobalStates implements Serializable {
             int nodeIndex = Gossiper.getAllHosts().indexOf(InetAddressAndPort.getByAddress(entry.getKey()));
             if(nodeIndex == -1)
             {
-                logger.error("rymError: The node index is -1, the node is not in the host list.");
+                logger.error("hatsERROR: The node index is -1, the node is not in the host list.");
             }
 
             if(entry.getValue().version >= this.versionVector[nodeIndex])
