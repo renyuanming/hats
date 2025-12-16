@@ -144,7 +144,7 @@ public class Config
     public double step_size = 0.05;
     public double offload_threshold = 0.5;
     public double recover_threshold = 0.1;
-    public boolean enable_horse = true;
+    public boolean enable_hats = true;
 
 
 

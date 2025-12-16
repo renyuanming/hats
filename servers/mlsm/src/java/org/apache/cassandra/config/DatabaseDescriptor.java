@@ -5159,11 +5159,11 @@ public class DatabaseDescriptor
 
     public static boolean getEnableHorse()
     {
-        return conf.enable_horse;
+        return conf.enable_hats;
     }
 
-    public static void setEnableHorse(boolean enable_horse)
+    public static void setEnableHorse(boolean enable_hats)
     {
-        conf.enable_horse = enable_horse;
+        conf.enable_hats = enable_hats;
     }
 }

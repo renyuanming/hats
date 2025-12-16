@@ -59,7 +59,7 @@ concurrent_schedulers: 32
 step_size: 0.05
 offload_threshold: 0.5
 recover_threshold: 0.1
-enable_horse: false
+enable_hats: false
 throttle_data_rate: 90
 
 # Triggers automatic allocation of num_tokens tokens for this node. The allocation

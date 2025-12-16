@@ -29,7 +29,7 @@ import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
 public class SetHorse extends NodeToolCmd
 {
 
-    @Option(title = "enable_horse", name = {"-e", "--enable"}, description = "Use --enable to decide whether enable the horse or not")
+    @Option(title = "enable_hats", name = {"-e", "--enable"}, description = "Use --enable to decide whether enable the horse or not")
     private String enableHorse = EMPTY;
 
     // step_size double
