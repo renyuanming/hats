@@ -1,0 +1,1 @@
+# Get the results for Exp#1 (Effectiveness of each technique)

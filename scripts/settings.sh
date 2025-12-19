@@ -5,7 +5,7 @@
 # SCHEME="" # depart or hats
 PROJECT_NAME="hats"
 HOME_PATH=""
-echo "Load the settings.sh, CLUSTER_NAME is ${CLUSTER_NAME}, BACKUP_MODE is ${BACKUP_MODE}, SCHEME is ${SCHEME}"
+# echo "Load the settings.sh, CLUSTER_NAME is ${CLUSTER_NAME}, BACKUP_MODE is ${BACKUP_MODE}, SCHEME is ${SCHEME}"
 if [[ "$CLUSTER_NAME" == "" ]]; then
     echo "Please specify the CLUSTER_NAME"
     exit 1
@@ -27,7 +27,7 @@ elif [[ "$CLUSTER_NAME" == "1x" ]]; then
     # Clients=("proj18" "proj19")
     # ClientsIP=("192.168.10.118" "192.168.10.119")
     Clients=("proj18")
-    ClientsIP=("192.168.10.118")
+    ClientsIP=("192.168.50.18")
     Seeds=("node13" "node21" "node22")
     SeedsIP=("192.168.10.23" "192.168.10.31" "192.168.10.32")
     # Seeds=("node11" "node12" "node13" "node14" "node15" "node16" "node17" "node18" "node19" "node20")
@@ -112,7 +112,7 @@ done
 
 AllNodes=("${Servers[@]}")
 AllNodes+=("${Clients[@]}")
-echo "All nodes list is ${AllNodes}"
+# echo "All nodes list is ${AllNodes}"
 
 NumTokens=1
 PathToServer="${HOME_PATH}/${PROJECT_NAME}/servers/$SCHEME"

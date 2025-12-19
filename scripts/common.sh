@@ -698,6 +698,756 @@ function cleanup {
 
 }
 
+function latency_balance {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 创建汇总结果目录
+    local summary_dir="/home/${UserName}/Results-${CLUSTER_NAME}-${EXP_NAME}-Summary"
+    mkdir -p "${summary_dir}"
+    local summary_file="${summary_dir}/latency_balance_${TARGET_SCHEME}.txt"
+    
+    # 添加表头
+    printf "%-15s %-15s %-20s\n" "Scheme" "Workload" "Avg CoV" | tee "${summary_file}"
+    printf "%s\n" "------------------------------------------------" | tee -a "${summary_file}"
+
+    # 遍历所有workload
+    for workload in "${ALL_WORKLOADS[@]}"; do
+        
+        # 存储当前workload所有配置的CoV值
+        declare -a all_covs=()
+        
+        # 遍历配置
+        for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+            for rf in "${REPLICAS[@]}"; do
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                            for consistency in "${CONSISTENCY_LEVEL[@]}"; do
+                                for fieldLength in "${FIELD_LENGTH[@]}"; do
+                                    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                                        
+                                        # 存储所有round的CoV值
+                                        declare -a round_covs=()
+                                        
+                                        # 遍历所有rounds
+                                        for round in $(seq 1 ${ROUNDS}); do
+                                            # 获取结果目录
+                                            resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
+                                            
+                                            # 收集当前round所有节点的coordinator_read_time
+                                            declare -a coordinator_read_times=()
+                                            declare -a coordinator_read_counts=()
+                                            
+                                            # 遍历所有节点目录
+                                            for node_dir in "${resultsDir}"/node*; do
+                                                if [ -d "${node_dir}" ]; then
+                                                    breakdown_file="${node_dir}/metrics/breakdown.txt"
+                                                    
+                                                    if [ -f "${breakdown_file}" ]; then
+                                                        # 提取coordinator_read_time和count
+                                                        coordinator_read_count=$(grep "Coordinator read count" "${breakdown_file}" | awk '{print $NF}')
+                                                        coordinator_read_time=$(grep "Local read latency" "${breakdown_file}" | awk '{print $NF}')
+                                                        
+                                                        if [ -n "${coordinator_read_count}" ] && [ -n "${coordinator_read_time}" ] && [ "${coordinator_read_count}" != "0" ]; then
+                                                            # print values for debug
+                                                            # echo "Node: ${node_dir}, Coordinator Read Count: ${coordinator_read_count}, Coordinator Read Time: ${coordinator_read_time}"
+                                                            # 计算平均时间 (微秒)
+                                                            # avg_time=$(echo "scale=2; ${coordinator_read_time} / ${coordinator_read_count}" | bc)
+                                                            coordinator_read_times+=("${coordinator_read_time}")
+                                                        fi
+                                                    fi
+                                                fi
+                                            done
+                                            
+                                            # 计算当前round的CoV
+                                            if [ ${#coordinator_read_times[@]} -gt 0 ]; then
+                                                round_cov=$(calculate_cov coordinator_read_times[@])
+                                                round_covs+=("${round_cov}")
+                                            fi
+                                            
+                                            unset coordinator_read_times
+                                        done
+                                        
+                                        # 计算当前配置的平均CoV
+                                        if [ ${#round_covs[@]} -gt 0 ]; then
+                                            avg_cov=$(calculate_average round_covs[@])
+                                            all_covs+=("${avg_cov}")
+                                        fi
+                                        
+                                        unset round_covs
+                                    done
+                                done
+                            done
+                        done
+                    done
+                done
+            done
+        done
+        
+        # 计算workload的总体平均CoV
+        if [ ${#all_covs[@]} -gt 0 ]; then
+            final_cov=$(calculate_average all_covs[@])
+            
+            # 输出到屏幕和文件
+            printf "%-15s %-15s %-20s\n" \
+                "${TARGET_SCHEME}" "${workload}" "${final_cov}" | tee -a "${summary_file}"
+        fi
+        
+        unset all_covs
+    done
+    
+    echo ""
+}
+
+# 复用现有的 calculate_cov 函数
+function calculate_cov() {
+    local data=("${!1}")
+    local sum=0
+    local sum_of_squares=0
+    local mean=0
+    local std_dev=0
+    local cov=0
+
+    # 计算总和
+    for value in "${data[@]}"; do
+        sum=$(echo "${sum} + ${value}" | bc)
+    done
+
+    # 计算平均值
+    mean=$(echo "scale=6; ${sum} / ${#data[@]}" | bc)
+
+    # 计算平方和
+    for value in "${data[@]}"; do
+        diff=$(echo "${value} - ${mean}" | bc)
+        square=$(echo "${diff} * ${diff}" | bc)
+        sum_of_squares=$(echo "${sum_of_squares} + ${square}" | bc)
+    done
+
+    # 计算标准差
+    std_dev=$(echo "scale=6; sqrt(${sum_of_squares} / ${#data[@]})" | bc)
+
+    # 计算变异系数
+    if [ "$(echo "${mean} > 0" | bc)" -eq 1 ]; then
+        cov=$(echo "scale=6; (${std_dev}) / ${mean}" | bc)
+    else
+        cov="0"
+    fi
+
+    echo "${cov}"
+}
+
+# function latency_distribution {
+
+# }
+
+function performance_breakdown {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 创建汇总结果目录
+    local summary_dir="/home/${UserName}/Results-${CLUSTER_NAME}-${EXP_NAME}-Summary"
+    mkdir -p "${summary_dir}"
+    local summary_file="${summary_dir}/performance_breakdown_${TARGET_SCHEME}.txt"
+    
+    # 添加表头
+    printf "%-12s %-12s %-18s %-18s %-18s %-18s %-18s %-18s %-18s %-18s %-18s\n" \
+        "Scheme" "Workload" "LocalRead(us)" "Selection(us)" "WriteMem(us)" "WriteWAL(us)" \
+        "Flush(us)" "Compaction(us)" "ReadCache(us)" "ReadMem(us)" "ReadSST(us)" | tee "${summary_file}"
+    printf "%s\n" "----------------------------------------------------------------------------------------------------------------------------" | tee -a "${summary_file}"
+
+    # 遍历所有workload
+    for workload in "${ALL_WORKLOADS[@]}"; do
+
+        if [ "${workload}" != "workloada" ] && [ "${workload}" != "workloadc" ]; then
+            continue
+        fi
+        
+        declare -a all_local_read_times=()
+        declare -a all_selection_times=()
+        declare -a all_write_memtable_times=()
+        declare -a all_write_wal_times=()
+        declare -a all_flush_times=()
+        declare -a all_compaction_times=()
+        declare -a all_read_cache_times=()
+        declare -a all_read_memtable_times=()
+        declare -a all_read_sstable_times=()
+        
+        # 遍历配置
+        for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+            for rf in "${REPLICAS[@]}"; do
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                            for consistency in "${CONSISTENCY_LEVEL[@]}"; do
+                                for fieldLength in "${FIELD_LENGTH[@]}"; do
+                                    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                                        
+                                        declare -a round_local_read_times=()
+                                        declare -a round_selection_times=()
+                                        declare -a round_write_memtable_times=()
+                                        declare -a round_write_wal_times=()
+                                        declare -a round_flush_times=()
+                                        declare -a round_compaction_times=()
+                                        declare -a round_read_cache_times=()
+                                        declare -a round_read_memtable_times=()
+                                        declare -a round_read_sstable_times=()
+                                        
+                                        # 遍历所有rounds
+                                        for round in $(seq 1 ${ROUNDS}); do
+                                            resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
+                                            
+                                            # 收集当前round所有节点的数据
+                                            declare -a coordinator_read_counts=()
+                                            declare -a coordinator_read_times=()
+                                            declare -a local_read_counts=()
+                                            declare -a local_read_times=()
+                                            declare -a selection_times=()
+                                            declare -a local_write_counts=()
+                                            declare -a write_memtable_times=()
+                                            declare -a write_wal_times=()
+                                            declare -a flush_times=()
+                                            declare -a compaction_times=()
+                                            declare -a read_cache_times=()
+                                            declare -a read_memtable_times=()
+                                            declare -a read_sstable_times=()
+                                            
+                                            # 遍历所有节点目录
+                                            for node_dir in "${resultsDir}"/node*; do
+                                                if [ -d "${node_dir}" ]; then
+                                                    breakdown_file="${node_dir}/metrics/breakdown.txt"
+                                                    
+                                                    if [ -f "${breakdown_file}" ]; then
+                                                        # 提取count和总时间(毫秒)
+                                                        local_read_count=$(grep "Local read count" "${breakdown_file}" | awk '{print $NF}')
+                                                        coordinator_read_count=$(grep "Coordinator read count" "${breakdown_file}" | awk '{print $NF}')
+                                                        local_write_count=$(grep "Local write count" "${breakdown_file}" | awk '{print $NF}')
+                                                        
+                                                        coordinator_read_time_ms=$(grep "CoordinatorReadTime" "${breakdown_file}" | awk '{print $NF}')
+                                                        local_read_time_ms=$(grep "LocalReadTime" "${breakdown_file}" | awk '{print $NF}')
+                                                        write_memtable_time_ms=$(grep "WriteMemTable" "${breakdown_file}" | awk '{print $NF}')
+                                                        write_wal_time_ms=$(grep "CommitLog" "${breakdown_file}" | awk '{print $NF}')
+                                                        flush_time_ms=$(grep "Flush" "${breakdown_file}" | awk '{print $NF}')
+                                                        compaction_time_ms=$(grep "Compaction" "${breakdown_file}" | awk '{print $NF}')
+                                                        read_cache_time_ms=$(grep "ReadCache" "${breakdown_file}" | awk '{print $NF}')
+                                                        read_memtable_time_ms=$(grep "ReadMemTable" "${breakdown_file}" | awk '{print $NF}')
+                                                        read_sstable_time_ms=$(grep "ReadSSTable" "${breakdown_file}" | awk '{print $NF}')
+                                                        
+                                                        # 计算每个节点的平均时间(微秒) = 总时间(ms) * 1000 / count
+                                                        if [ -n "${coordinator_read_count}" ] && [ "${coordinator_read_count}" -gt 0 ]; then
+                                                            coord_read_time=$(echo "scale=0; ${coordinator_read_time_ms:-0} / ${coordinator_read_count}" | bc)
+                                                            local_read_time=$(echo "scale=0; ${local_read_time_ms:-0} / ${local_read_count}" | bc)
+                                                            selection_time=$(echo "scale=0; ${coord_read_time} - ${local_read_time}" | bc)
+                                                            
+                                                            coordinator_read_counts+=("${coordinator_read_count}")
+                                                            coordinator_read_times+=("${coord_read_time}")
+                                                            local_read_counts+=("${local_read_count}")
+                                                            local_read_times+=("${local_read_time}")
+                                                            selection_times+=("${selection_time}")
+                                                        fi
+                                                        
+                                                        if [ -n "${local_write_count}" ] && [ "${local_write_count}" -gt 0 ]; then
+                                                            write_memtable_time=$(echo "scale=0; ${write_memtable_time_ms:-0} / ${local_write_count}" | bc)
+                                                            write_wal_time=$(echo "scale=0; ${write_wal_time_ms:-0} / ${local_write_count}" | bc)
+                                                            flush_time=$(echo "scale=0; ${flush_time_ms:-0} / ${local_write_count}" | bc)
+                                                            compaction_time=$(echo "scale=0; ${compaction_time_ms:-0} / ${local_write_count}" | bc)
+                                                            
+                                                            local_write_counts+=("${local_write_count}")
+                                                            write_memtable_times+=("${write_memtable_time}")
+                                                            write_wal_times+=("${write_wal_time}")
+                                                            flush_times+=("${flush_time}")
+                                                            compaction_times+=("${compaction_time}")
+                                                        fi
+                                                        
+                                                        if [ -n "${local_read_count}" ] && [ "${local_read_count}" -gt 0 ]; then
+                                                            read_cache_time=$(echo "scale=0; ${read_cache_time_ms:-0} / ${local_read_count}" | bc)
+                                                            read_memtable_time=$(echo "scale=0; ${read_memtable_time_ms:-0} / ${local_read_count}" | bc)
+                                                            read_sstable_time=$(echo "scale=0; ${read_sstable_time_ms:-0} / ${local_read_count}" | bc)
+                                                            
+                                                            read_cache_times+=("${read_cache_time}")
+                                                            read_memtable_times+=("${read_memtable_time}")
+                                                            read_sstable_times+=("${read_sstable_time}")
+                                                        fi
+                                                    fi
+                                                fi
+                                            done
+                                            
+                                            # 使用加权平均计算当前round的结果
+                                            if [ ${#local_read_times[@]} -gt 0 ]; then
+                                                round_local_read=$(calculate_weighted_average local_read_counts[@] local_read_times[@])
+                                                round_selection=$(calculate_weighted_average coordinator_read_counts[@] selection_times[@])
+                                                round_read_cache=$(calculate_weighted_average local_read_counts[@] read_cache_times[@])
+                                                round_read_memtable=$(calculate_weighted_average local_read_counts[@] read_memtable_times[@])
+                                                round_read_sstable=$(calculate_weighted_average local_read_counts[@] read_sstable_times[@])
+                                                
+                                                round_local_read_times+=("${round_local_read}")
+                                                round_selection_times+=("${round_selection}")
+                                                round_read_cache_times+=("${round_read_cache}")
+                                                round_read_memtable_times+=("${round_read_memtable}")
+                                                round_read_sstable_times+=("${round_read_sstable}")
+                                            fi
+                                            
+                                            if [ ${#write_memtable_times[@]} -gt 0 ]; then
+                                                round_write_memtable=$(calculate_weighted_average local_write_counts[@] write_memtable_times[@])
+                                                round_write_wal=$(calculate_weighted_average local_write_counts[@] write_wal_times[@])
+                                                round_flush=$(calculate_weighted_average local_write_counts[@] flush_times[@])
+                                                round_compaction=$(calculate_weighted_average local_write_counts[@] compaction_times[@])
+                                                
+                                                round_write_memtable_times+=("${round_write_memtable}")
+                                                round_write_wal_times+=("${round_write_wal}")
+                                                round_flush_times+=("${round_flush}")
+                                                round_compaction_times+=("${round_compaction}")
+                                            fi
+                                            
+                                            unset coordinator_read_counts coordinator_read_times local_read_counts local_read_times
+                                            unset selection_times local_write_counts write_memtable_times write_wal_times
+                                            unset flush_times compaction_times read_cache_times read_memtable_times read_sstable_times
+                                        done
+                                        
+                                        # 计算当前配置的平均值(对所有round求平均)
+                                        if [ ${#round_local_read_times[@]} -gt 0 ]; then
+                                            all_local_read_times+=("$(calculate_average round_local_read_times[@])")
+                                            all_selection_times+=("$(calculate_average round_selection_times[@])")
+                                            all_read_cache_times+=("$(calculate_average round_read_cache_times[@])")
+                                            all_read_memtable_times+=("$(calculate_average round_read_memtable_times[@])")
+                                            all_read_sstable_times+=("$(calculate_average round_read_sstable_times[@])")
+                                        fi
+                                        
+                                        if [ ${#round_write_memtable_times[@]} -gt 0 ]; then
+                                            all_write_memtable_times+=("$(calculate_average round_write_memtable_times[@])")
+                                            all_write_wal_times+=("$(calculate_average round_write_wal_times[@])")
+                                            all_flush_times+=("$(calculate_average round_flush_times[@])")
+                                            all_compaction_times+=("$(calculate_average round_compaction_times[@])")
+                                        fi
+                                        
+                                        unset round_local_read_times round_selection_times round_write_memtable_times
+                                        unset round_write_wal_times round_flush_times round_compaction_times
+                                        unset round_read_cache_times round_read_memtable_times round_read_sstable_times
+                                    done
+                                done
+                            done
+                        done
+                    done
+                done
+            done
+        done
+        
+        # 计算workload的总体平均值
+        final_local_read=$(calculate_average all_local_read_times[@])
+        final_selection=$(calculate_average all_selection_times[@])
+        final_write_memtable=$(calculate_average all_write_memtable_times[@])
+        final_write_wal=$(calculate_average all_write_wal_times[@])
+        final_flush=$(calculate_average all_flush_times[@])
+        final_compaction=$(calculate_average all_compaction_times[@])
+        final_read_cache=$(calculate_average all_read_cache_times[@])
+        final_read_memtable=$(calculate_average all_read_memtable_times[@])
+        final_read_sstable=$(calculate_average all_read_sstable_times[@])
+        
+        # 输出到屏幕和文件
+        printf "%-12s %-12s %-18.0f %-18.0f %-18.0f %-18.0f %-18.0f %-18.0f %-18.0f %-18.0f %-18.0f\n" \
+            "${TARGET_SCHEME}" "${workload}" "${final_local_read}" "${final_selection}" "${final_write_memtable}" \
+            "${final_write_wal}" "${final_flush}" "${final_compaction}" "${final_read_cache}" \
+            "${final_read_memtable}" "${final_read_sstable}" | tee -a "${summary_file}"
+        
+        unset all_local_read_times all_selection_times all_write_memtable_times
+        unset all_write_wal_times all_flush_times all_compaction_times
+        unset all_read_cache_times all_read_memtable_times all_read_sstable_times
+    done
+    
+    echo ""
+}
+
+# 辅助函数: 计算加权平均值 (等同于 processResult.sh 中的 calculate_arithmetic_mean)
+function calculate_weighted_average {
+    local count_array=("${!1}")
+    local value_array=("${!2}")
+    
+    local num_attributes="${#count_array[@]}"
+    
+    if [ "$num_attributes" -ne "${#value_array[@]}" ]; then
+        echo "0"
+        return
+    fi
+    
+    local total_sum=0
+    local total_count=0
+    
+    for ((i=0; i<num_attributes; i++)); do
+        local count="${count_array[$i]}"
+        local value="${value_array[$i]}"
+        
+        if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+            continue
+        fi
+        
+        if ! [[ "$value" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+            continue
+        fi
+        
+        local sum=$(echo "scale=0; $count * $value" | bc)
+        total_sum=$(echo "scale=0; $total_sum + $sum" | bc)
+        total_count=$((total_count + count))
+    done
+    
+    if [ "$total_count" -eq 0 ]; then
+        echo "0"
+        return
+    fi
+    
+    local arithmetic_mean=$(echo "scale=0; $total_sum / $total_count" | bc)
+    echo "$arithmetic_mean"
+}
+
+
+function resource_usage {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 创建汇总结果目录
+    local summary_dir="/home/${UserName}/Results-${CLUSTER_NAME}-${EXP_NAME}-Summary"
+    mkdir -p "${summary_dir}"
+    local summary_file="${summary_dir}/resource_usage_${TARGET_SCHEME}.txt"
+    
+    # 添加表头
+    printf "%-12s %-12s %-18s %-18s %-18s %-18s\n" \
+        "Scheme" "Workload" "DiskIO(MiB)" "NetworkIO(MiB)" "CPU(s)" "Memory(GiB)" | tee "${summary_file}"
+    printf "%s\n" "------------------------------------------------------------------------------------" | tee -a "${summary_file}"
+
+    # 遍历所有workload
+    for workload in "${ALL_WORKLOADS[@]}"; do
+        if [ "${workload}" != "workloada" ] && [ "${workload}" != "workloadb" ] && [ "${workload}" != "workloadc" ]; then
+            continue
+        fi
+        
+        declare -a all_disk_io=()
+        declare -a all_network_io=()
+        declare -a all_cpu_time=()
+        declare -a all_mem_size=()
+        
+        # 遍历配置
+        for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+            for rf in "${REPLICAS[@]}"; do
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                            for consistency in "${CONSISTENCY_LEVEL[@]}"; do
+                                for fieldLength in "${FIELD_LENGTH[@]}"; do
+                                    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                                        
+                                        declare -a round_disk_io=()
+                                        declare -a round_network_io=()
+                                        declare -a round_cpu_time=()
+                                        declare -a round_mem_size=()
+                                        
+                                        # 遍历所有rounds
+                                        for round in $(seq 1 ${ROUNDS}); do
+                                            resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
+                                            
+                                            # 收集当前round所有节点的资源使用数据
+                                            declare -a overall_disk_io_of_all_nodes=()
+                                            declare -a overall_network_io_of_all_nodes=()
+                                            declare -a overall_cpu_time_of_all_nodes=()
+                                            declare -a mem_size_of_all_nodes=()
+                                            
+                                            # 遍历所有节点目录
+                                            for node_dir in "${resultsDir}"/node*; do
+                                                if [ -d "${node_dir}" ]; then
+                                                    # 读取CPU时间
+                                                    cpu_file="${node_dir}/metrics/After-normal-run_cpu_summary.txt"
+                                                    if [ -f "${cpu_file}" ]; then
+                                                        user_time=$(grep "User time" "${cpu_file}" | awk '{printf "%.0f", $NF}')
+                                                        sys_time=$(grep "System time" "${cpu_file}" | awk '{printf "%.0f", $NF}')
+                                                        overall_cpu_time=$(echo "scale=0; ${user_time:-0} + ${sys_time:-0}" | bc)
+                                                        overall_cpu_time_of_all_nodes+=("${overall_cpu_time}")
+                                                    fi
+                                                    
+                                                    # 读取磁盘IO
+                                                    disk_io_after="${node_dir}/metrics/After-normal-run_disk_io_total.txt"
+                                                    disk_io_before="${node_dir}/metrics/Before-run_disk_io_total.txt"
+                                                    if [ -f "${disk_io_after}" ] && [ -f "${disk_io_before}" ]; then
+                                                        after_read=$(grep "Disk KiB read" "${disk_io_after}" | awk '{printf "%f", $NF}')
+                                                        before_read=$(grep "Disk KiB read" "${disk_io_before}" | awk '{printf "%f", $NF}')
+                                                        disk_read_io=$(echo "scale=0; (${after_read:-0} - ${before_read:-0}) / 1024" | bc)
+                                                        
+                                                        after_written=$(grep "Disk KiB written" "${disk_io_after}" | awk '{printf "%f", $NF}')
+                                                        before_written=$(grep "Disk KiB written" "${disk_io_before}" | awk '{printf "%f", $NF}')
+                                                        disk_write_io=$(echo "scale=0; (${after_written:-0} - ${before_written:-0}) / 1024" | bc)
+                                                        
+                                                        overall_disk_io=$(echo "scale=0; ${disk_read_io} + ${disk_write_io}" | bc)
+                                                        overall_disk_io_of_all_nodes+=("${overall_disk_io}")
+                                                    fi
+                                                    
+                                                    # 读取网络IO
+                                                    network_after="${node_dir}/metrics/After-normal-run_network_summary.txt"
+                                                    network_before="${node_dir}/metrics/Before-run_network_summary.txt"
+                                                    if [ -f "${network_after}" ] && [ -f "${network_before}" ]; then
+                                                        after_received=$(grep "Bytes received" "${network_after}" | awk '{printf "%f", $NF}')
+                                                        before_received=$(grep "Bytes received" "${network_before}" | awk '{printf "%f", $NF}')
+                                                        network_recv_io=$(echo "scale=0; (${after_received:-0} - ${before_received:-0}) / 1048576" | bc)
+                                                        
+                                                        after_sent=$(grep "Bytes sent" "${network_after}" | awk '{printf "%f", $NF}')
+                                                        before_sent=$(grep "Bytes sent" "${network_before}" | awk '{printf "%f", $NF}')
+                                                        network_send_io=$(echo "scale=0; (${after_sent:-0} - ${before_sent:-0}) / 1048576" | bc)
+                                                        
+                                                        overall_network_io=$(echo "scale=0; ${network_recv_io} + ${network_send_io}" | bc)
+                                                        overall_network_io_of_all_nodes+=("${overall_network_io}")
+                                                    fi
+                                                    
+                                                    # 读取内存使用 (这里简化处理,实际可能需要从memory_usage.txt计算平均值)
+                                                    # mem_size_of_all_nodes+=("0")
+                                                fi
+                                            done
+                                            
+                                            # 计算当前round所有节点的平均值
+                                            if [ ${#overall_disk_io_of_all_nodes[@]} -gt 0 ]; then
+                                                avg_disk_io=$(echo "scale=0; ($(IFS=+; echo "${overall_disk_io_of_all_nodes[*]}")) / ${#overall_disk_io_of_all_nodes[@]}" | bc)
+                                                round_disk_io+=("${avg_disk_io}")
+                                            fi
+                                            
+                                            if [ ${#overall_network_io_of_all_nodes[@]} -gt 0 ]; then
+                                                avg_network_io=$(echo "scale=0; ($(IFS=+; echo "${overall_network_io_of_all_nodes[*]}")) / ${#overall_network_io_of_all_nodes[@]}" | bc)
+                                                round_network_io+=("${avg_network_io}")
+                                            fi
+                                            
+                                            if [ ${#overall_cpu_time_of_all_nodes[@]} -gt 0 ]; then
+                                                avg_cpu_time=$(echo "scale=0; ($(IFS=+; echo "${overall_cpu_time_of_all_nodes[*]}")) / ${#overall_cpu_time_of_all_nodes[@]}" | bc)
+                                                round_cpu_time+=("${avg_cpu_time}")
+                                            fi
+                                            
+                                            # if [ ${#mem_size_of_all_nodes[@]} -gt 0 ]; then
+                                            #     avg_mem_size=$(echo "scale=2; ($(IFS=+; echo "${mem_size_of_all_nodes[*]}")) / ${#mem_size_of_all_nodes[@]}" | bc)
+                                            #     round_mem_size+=("${avg_mem_size}")
+                                            # fi
+                                            
+                                            unset overall_disk_io_of_all_nodes overall_network_io_of_all_nodes
+                                            unset overall_cpu_time_of_all_nodes mem_size_of_all_nodes
+                                        done
+                                        
+                                        # 计算当前配置的平均值(对所有round求平均)
+                                        if [ ${#round_disk_io[@]} -gt 0 ]; then
+                                            all_disk_io+=("$(calculate_average round_disk_io[@])")
+                                        fi
+                                        
+                                        if [ ${#round_network_io[@]} -gt 0 ]; then
+                                            all_network_io+=("$(calculate_average round_network_io[@])")
+                                        fi
+                                        
+                                        if [ ${#round_cpu_time[@]} -gt 0 ]; then
+                                            all_cpu_time+=("$(calculate_average round_cpu_time[@])")
+                                        fi
+                                        
+                                        # if [ ${#round_mem_size[@]} -gt 0 ]; then
+                                        #     all_mem_size+=("$(calculate_average round_mem_size[@])")
+                                        # fi
+                                        
+                                        unset round_disk_io round_network_io round_cpu_time round_mem_size
+                                    done
+                                done
+                            done
+                        done
+                    done
+                done
+            done
+        done
+        
+        # 计算workload的总体平均值
+        final_disk_io=$(calculate_average all_disk_io[@])
+        final_network_io=$(calculate_average all_network_io[@])
+        final_cpu_time=$(calculate_average all_cpu_time[@])
+        # final_mem_size=$(calculate_average all_mem_size[@])
+        final_mem_size="N/A"
+        
+        # 输出到屏幕和文件
+        printf "%-12s %-12s %-18.0f %-18.0f %-18.0f %-18s\n" \
+            "${TARGET_SCHEME}" "${workload}" "${final_disk_io}" "${final_network_io}" \
+            "${final_cpu_time}" "${final_mem_size}" | tee -a "${summary_file}"
+        
+        unset all_disk_io all_network_io all_cpu_time all_mem_size
+    done
+    
+    echo ""
+}
+
+
+
+function analyze_ycsb_results {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 创建汇总结果目录
+    local summary_dir="/home/${UserName}/Results-${CLUSTER_NAME}-${EXP_NAME}-Summary"
+    mkdir -p "${summary_dir}"
+    local summary_file="${summary_dir}/summary_${TARGET_SCHEME}.txt"
+    
+    # 如果是第一次写入该scheme的文件,添加表头
+    # if [ ! -f "${summary_file}" ]; then
+    printf "%-15s %-15s %-20s %-15s %-15s %-15s\n" "Scheme" "Workload" "Throughput(ops/s)" "P50(us)" "P99(us)" "P999(us)" | tee "${summary_file}"
+    printf "%s\n" "--------------------------------------------------------------------------------" | tee -a "${summary_file}"
+    # fi
+
+    # 遍历所有workload
+    for workload in "${ALL_WORKLOADS[@]}"; do
+        
+        # 存储当前workload所有配置的指标值
+        declare -a all_throughputs=()
+        declare -a all_p50s=()
+        declare -a all_p99s=()
+        declare -a all_p999s=()
+        
+        # 遍历配置
+        for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+            for rf in "${REPLICAS[@]}"; do
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                            for consistency in "${CONSISTENCY_LEVEL[@]}"; do
+                                for fieldLength in "${FIELD_LENGTH[@]}"; do
+                                    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                                        
+                                        # 存储所有round的指标
+                                        declare -a round_throughputs=()
+                                        declare -a round_p50s=()
+                                        declare -a round_p99s=()
+                                        declare -a round_p999s=()
+                                        
+                                        # 遍历所有rounds
+                                        for round in $(seq 1 ${ROUNDS}); do
+                                            # 获取结果目录
+                                            resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
+                                            
+                                            # 查找YCSB日志文件
+                                            log_file=$(find "${resultsDir}" -maxdepth 1 -name "Run-*.log" -type f 2>/dev/null | head -n 1)
+                                            
+                                            if [ -n "${log_file}" ] && [ -f "${log_file}" ]; then
+                                                # 提取OVERALL指标
+                                                throughput=$(grep "^\[OVERALL\], Throughput(ops/sec)," "${log_file}" | awk -F', ' '{print $3}')
+                                                p50=$(grep "^\[OVERALL\], MedianLatency(us)," "${log_file}" | awk -F', ' '{print $3}')
+                                                p99=$(grep "^\[OVERALL\], 99thPercentileLatency(us)," "${log_file}" | awk -F', ' '{print $3}')
+                                                p999=$(grep "^\[OVERALL\], 999thPercentileLatency(us)," "${log_file}" | awk -F', ' '{print $3}')
+                                                
+                                                if [ -n "${throughput}" ]; then
+                                                    round_throughputs+=("${throughput}")
+                                                    round_p50s+=("${p50}")
+                                                    round_p99s+=("${p99}")
+                                                    round_p999s+=("${p999}")
+                                                fi
+                                            fi
+                                        done
+                                        
+                                        # 计算当前配置的平均值并添加到总体统计
+                                        if [ ${#round_throughputs[@]} -gt 0 ]; then
+                                            avg_throughput=$(calculate_average round_throughputs[@])
+                                            avg_p50=$(calculate_average round_p50s[@])
+                                            avg_p99=$(calculate_average round_p99s[@])
+                                            avg_p999=$(calculate_average round_p999s[@])
+                                            
+                                            all_throughputs+=("${avg_throughput}")
+                                            all_p50s+=("${avg_p50}")
+                                            all_p99s+=("${avg_p99}")
+                                            all_p999s+=("${avg_p999}")
+                                        fi
+                                        
+                                    done
+                                done
+                            done
+                        done
+                    done
+                done
+            done
+        done
+        
+        # 计算workload的总体平均值并输出
+        if [ ${#all_throughputs[@]} -gt 0 ]; then
+            final_throughput=$(calculate_average all_throughputs[@])
+            final_p50=$(calculate_average all_p50s[@])
+            final_p99=$(calculate_average all_p99s[@])
+            final_p999=$(calculate_average all_p999s[@])
+            
+            # 输出到屏幕和文件
+            printf "%-15s %-15s %-20s %-15s %-15s %-15s\n" \
+                "${TARGET_SCHEME}" "${workload}" "${final_throughput}" "${final_p50}" "${final_p99}" "${final_p999}" | tee -a "${summary_file}"
+        fi
+        
+    done
+    
+    echo ""
+}
+
+
+# 辅助函数: 计算数组平均值
+function calculate_average {
+    local values=("${!1}")
+    local sum=0
+    local count=${#values[@]}
+    
+    if [ ${count} -eq 0 ]; then
+        echo "0"
+        return
+    fi
+    
+    for val in "${values[@]}"; do
+        sum=$(echo "${sum} + ${val}" | bc)
+    done
+    
+    echo "scale=2; ${sum} / ${count}" | bc
+}
+
 
 function runExp {
     
