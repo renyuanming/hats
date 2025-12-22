@@ -390,7 +390,8 @@ function startFromBackup {
         targetScheme="mlsm"
     fi
 
-    echo "Startup the system from backup, motivation is ${motivation}"
+
+    echo "Startup the system from backup, motivation is ${motivation}, rebuild is ${rebuild}, useDirectIO is ${useDirectIO}, branch is ${branch}, schedulingInitialDelay is ${schedulingInitialDelay}, schedulingInterval is ${schedulingInterval}, statesUpdateInterval is ${statesUpdateInterval}, readSensitivity is ${readSensitivity}, enableHats is ${enableHats}, throttleDataRate is ${throttleDataRate}, enableFineSchedule is ${enableFineSchedule}, enableBackgroundSchedule is ${enableBackgroundSchedule}" 
     # Modify playbook
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
     sed -i "s|PATH_TO_SCRIPTS|${PathToScripts}|g" ${playbook}
@@ -1518,8 +1519,6 @@ function runExp {
     SSTABLE_SIZE_IN_MB=${30}
     compaction_strategy=${31}
     CONSISTENCY_LEVEL=("${!32}")
-    enableFineSchedule=${33}
-    enableBackgroundSchedule=${34}
 
     # test the parameters
     echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, Workloads: ${WORKLOAD}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${RF}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH[@]}, KEY_LENGTH: ${KEY_LENGTH[@]}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]} readConsistencyLevel: ${CONSISTENCY_LEVEL[@]}, throttleDataRate: ${THROTLLE_DATA_RATE[@]}, JDK_VERSION: ${JDK_VERSION}, compaction_strategy: ${compaction_strategy}"

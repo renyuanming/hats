@@ -60,4 +60,4 @@ function restartCassandra {
     # nohup bin/cassandra >logs/debug.log 2>&1 &
 }
 
-restartCassandra "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" 
+restartCassandra "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}"

@@ -6,8 +6,8 @@ EXP_NAME="Exp1-effectiveness"
 PURE_READ_WORKLOADS=("workloadc")
 MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=50000000
-KV_NUMBER=100000000
+OPERATION_NUMBER=25000
+KV_NUMBER=100000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
 KEY_LENGTHMin=24
@@ -27,8 +27,8 @@ COMPACTION_STRATEGY=("LCS")
 CONSISTENCY_LEVEL=("ONE")
 
 # Debug Settings
-REBUILD_SERVER="true"
-REBUILD_CLIENT="true"
+REBUILD_SERVER="false"
+REBUILD_CLIENT="false"
 
 # Server settings
 ROUNDS=1
@@ -42,7 +42,7 @@ THROTLLE_DATA_RATE=(90) # MB/s
 
 JDK_VERSION="17"
 
-SCHEMES=("hats" "fineschedule" "coarseschedule" "mlsm")
+SCHEMES=("hats")
 
 function exportEnv {
     

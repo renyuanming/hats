@@ -5,7 +5,7 @@
   become_user: ymren
   tasks:
     - name: Initialize the cluster
-      command: bash PATH_TO_SCRIPTS/run/restartCassandra.sh {{ configurationFile }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ rebuild }} {{useDirectIO}} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHats }} {{ throttleDataRate }} {{ enableFineSchedule }} {{ enableBackgroundSchedule }}
+      command: bash PATH_TO_SCRIPTS/run/restartCassandra.sh {{ configurationFile }} {{ projectBaseDir }} {{ memtableSize }} {{ motivation }} {{ rebuild }} {{ useDirectIO }} {{ branch }} {{ schedulingInitialDelay }} {{ schedulingInterval }} {{ statesUpdateInterval }} {{ readSensitivity }} {{ enableHats }} {{ throttleDataRate }} {{ enableFineSchedule }} {{ enableBackgroundSchedule }}
       vars:
         configurationFile: "PATH_TO_SERVER/conf/cassandra.yaml"
         projectBaseDir: "PATH_TO_SERVER"
