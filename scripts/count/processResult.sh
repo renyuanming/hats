@@ -142,7 +142,7 @@ function process_sub_directory {
 
             # Get the Memory
             mem_file="$node_dir/metrics/SampleExpName_Running_memory_usage.txt"
-            # mem_size=$(calculate_average_memory_usage "$mem_file")
+            mem_size=$(calculate_average_memory_usage "$mem_file")
             
             # Get the CPU 
             cpu_file="$node_dir/metrics/After-normal-run_cpu_summary.txt"

@@ -376,6 +376,8 @@ function startFromBackup {
     throttleDataRate=$1
     sstableSize=$2
     compactionStrategy=$3
+    enableFineSchedule=$4
+    enableBackgroundSchedule=$5
 
 
 
@@ -415,6 +417,8 @@ function startFromBackup {
     sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" ${playbook}
     sed -i "s|ENABLE_HATS|${enableHats}|g" ${playbook}
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
+    sed -i "s|ENABLE_FINE_SCHEDULE|${enableFineSchedule}|g" ${playbook}
+    sed -i "s|ENABLE_BACKGROUND_SCHEDULE|${enableBackgroundSchedule}|g" ${playbook}
 
     
     ansible-playbook -v -i hosts.ini ${playbook} -f 100
@@ -435,12 +439,14 @@ function restartCassandra {
     readSensitivity=$1
     enableHats=$2
     throttleDataRate=$3
+    enableFineSchedule=$4
+    enableBackgroundSchedule=$5
     
     # Copy playbook
     resetPlaybook "restartCassandra"
     playbook="playbook-restartCassandra.yaml"
 
-    echo "Restart the server with enableHats ${enableHats}, motivation ${motivation}, rebuild ${rebuild}, useDirectIO ${useDirectIO}, branch ${branch}, schedulingInitialDelay ${schedulingInitialDelay}, schedulingInterval ${schedulingInterval}, statesUpdateInterval ${statesUpdateInterval}, readSensitivity ${readSensitivity}, throttleDataRate ${throttleDataRate}"
+    echo "Restart the server with enableHats ${enableHats}, motivation ${motivation}, rebuild ${rebuild}, useDirectIO ${useDirectIO}, branch ${branch}, schedulingInitialDelay ${schedulingInitialDelay}, schedulingInterval ${schedulingInterval}, statesUpdateInterval ${statesUpdateInterval}, readSensitivity ${readSensitivity}, throttleDataRate ${throttleDataRate}, enableFineSchedule ${enableFineSchedule}, enableBackgroundSchedule ${enableBackgroundSchedule}"
 
     # Modify playbook
     sed -i "s|PATH_TO_SERVER|${PathToServer}|g" ${playbook}
@@ -457,6 +463,8 @@ function restartCassandra {
     sed -i "s/\(readSensitivity: \)".*"/readSensitivity: ${readSensitivity}/" ${playbook}
     sed -i "s|ENABLE_HATS|${enableHats}|g" ${playbook}
     sed -i "s|THROTTLE_DATA_RATE|${throttleDataRate}|g" ${playbook}
+    sed -i "s|ENABLE_FINE_SCHEDULE|${enableFineSchedule}|g" ${playbook}
+    sed -i "s|ENABLE_BACKGROUND_SCHEDULE|${enableBackgroundSchedule}|g" ${playbook}
 
     ansible-playbook -v -i hosts.ini ${playbook} -f 100
 }
@@ -487,7 +495,7 @@ function collectResults {
 function getResultsDir
 {   
     CLUSTER_NAME=$1
-    TARGET_SCHEME=$2
+    MODEL=$2
     EXP_NAME=$3
     SETTING=$4
     workload=$5
@@ -509,8 +517,8 @@ function getResultsDir
     local valueSize=$1
 
 
-    # resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
-    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${TARGET_SCHEME}/workload_${workload}-schedulingInterval_${schedulingInterval}-dist_${requestDist}-clients-${threadsNum}-kvNumber_${kvNumber}-operationNumber_${operationNumber}-consistency_${readConsistencyLevel}-rf_${replication_factor}-valueSize_${valueSize}/round_${round}"
+    # resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${MODEL}/workload_${workload}-dist_${requestDist}-compactionLevel_${compactionLevel}-threads_${threadsNum}-schedulingInterval-${schedulingInterval}-throttleDataRate_${throttleDataRate}-kvNumber-${kvNumber}-operationNumber_${operationNumber}-sstableSize_${sstableSize}-compactionStrategy-${compactionStrategy}-CL-${readConsistencyLevel}/round_${round}"
+    resultsDir="/home/ymren/Results-${CLUSTER_NAME}-${EXP_NAME}/${MODEL}/workload_${workload}-schedulingInterval_${schedulingInterval}-dist_${requestDist}-clients-${threadsNum}-kvNumber_${kvNumber}-operationNumber_${operationNumber}-consistency_${readConsistencyLevel}-rf_${replication_factor}-valueSize_${valueSize}/round_${round}"
 
     echo ${resultsDir}
 }
@@ -1235,8 +1243,12 @@ function resource_usage {
                                                         overall_network_io_of_all_nodes+=("${overall_network_io}")
                                                     fi
                                                     
-                                                    # 读取内存使用 (这里简化处理,实际可能需要从memory_usage.txt计算平均值)
-                                                    # mem_size_of_all_nodes+=("0")
+                                                    # 读取内存使用 - 调用 calculate_average_memory_usage 函数
+                                                    mem_file="${node_dir}/metrics/SampleExpName_Running_memory_usage.txt"
+                                                    if [ -f "${mem_file}" ]; then
+                                                        mem_size=$(calculate_average_memory_usage "${mem_file}")
+                                                        mem_size_of_all_nodes+=("${mem_size}")
+                                                    fi
                                                 fi
                                             done
                                             
@@ -1256,10 +1268,10 @@ function resource_usage {
                                                 round_cpu_time+=("${avg_cpu_time}")
                                             fi
                                             
-                                            # if [ ${#mem_size_of_all_nodes[@]} -gt 0 ]; then
-                                            #     avg_mem_size=$(echo "scale=2; ($(IFS=+; echo "${mem_size_of_all_nodes[*]}")) / ${#mem_size_of_all_nodes[@]}" | bc)
-                                            #     round_mem_size+=("${avg_mem_size}")
-                                            # fi
+                                            if [ ${#mem_size_of_all_nodes[@]} -gt 0 ]; then
+                                                avg_mem_size=$(echo "scale=2; ($(IFS=+; echo "${mem_size_of_all_nodes[*]}")) / ${#mem_size_of_all_nodes[@]}" | bc)
+                                                round_mem_size+=("${avg_mem_size}")
+                                            fi
                                             
                                             unset overall_disk_io_of_all_nodes overall_network_io_of_all_nodes
                                             unset overall_cpu_time_of_all_nodes mem_size_of_all_nodes
@@ -1278,9 +1290,9 @@ function resource_usage {
                                             all_cpu_time+=("$(calculate_average round_cpu_time[@])")
                                         fi
                                         
-                                        # if [ ${#round_mem_size[@]} -gt 0 ]; then
-                                        #     all_mem_size+=("$(calculate_average round_mem_size[@])")
-                                        # fi
+                                        if [ ${#round_mem_size[@]} -gt 0 ]; then
+                                            all_mem_size+=("$(calculate_average round_mem_size[@])")
+                                        fi
                                         
                                         unset round_disk_io round_network_io round_cpu_time round_mem_size
                                     done
@@ -1296,11 +1308,10 @@ function resource_usage {
         final_disk_io=$(calculate_average all_disk_io[@])
         final_network_io=$(calculate_average all_network_io[@])
         final_cpu_time=$(calculate_average all_cpu_time[@])
-        # final_mem_size=$(calculate_average all_mem_size[@])
-        final_mem_size="N/A"
+        final_mem_size=$(calculate_average all_mem_size[@])
         
         # 输出到屏幕和文件
-        printf "%-12s %-12s %-18.0f %-18.0f %-18.0f %-18s\n" \
+        printf "%-12s %-12s %-18.0f %-18.0f %-18.0f %-18.2f\n" \
             "${TARGET_SCHEME}" "${workload}" "${final_disk_io}" "${final_network_io}" \
             "${final_cpu_time}" "${final_mem_size}" | tee -a "${summary_file}"
         
@@ -1308,6 +1319,30 @@ function resource_usage {
     done
     
     echo ""
+}
+
+# 添加 calculate_average_memory_usage 函数 (从 processResult.sh 复制)
+function calculate_average_memory_usage() {
+    local file="$1"
+    local total_gib=0
+    local count=0
+
+    while read -r line; do
+        memory_kib=$(echo "$line" | grep -oP 'using \K[0-9]+')
+
+        if [ -n "$memory_kib" ]; then
+            memory_gib=$(echo "scale=6; $memory_kib / (1024 * 1024)" | bc)
+            total_gib=$(echo "$total_gib + $memory_gib" | bc)
+            count=$((count + 1))
+        fi
+    done < "$file"
+
+    if [ $count -gt 0 ]; then
+        average_gib=$(echo "scale=6; $total_gib / $count" | bc)
+        echo "$average_gib"
+    else
+        echo "0"
+    fi
 }
 
 
@@ -1483,13 +1518,27 @@ function runExp {
     SSTABLE_SIZE_IN_MB=${30}
     compaction_strategy=${31}
     CONSISTENCY_LEVEL=("${!32}")
+    enableFineSchedule=${33}
+    enableBackgroundSchedule=${34}
 
     # test the parameters
     echo "EXP_NAME: ${EXP_NAME}, TARGET_SCHEME: ${TARGET_SCHEME}, Workloads: ${WORKLOAD}, REQUEST_DISTRIBUTIONS: ${REQUEST_DISTRIBUTIONS[@]}, REPLICAS: ${RF}, THREAD_NUMBER: ${THREAD_NUMBER[@]}, MEMTABLE_SIZE: ${MEMTABLE_SIZE[@]}, SSTABLE_SIZE_IN_MB: ${SSTABLE_SIZE_IN_MB}, OPERATION_NUMBER: ${OPERATION_NUMBER}, KV_NUMBER: ${KV_NUMBER}, FIELD_LENGTH: ${FIELD_LENGTH[@]}, KEY_LENGTH: ${KEY_LENGTH[@]}, KEY_LENGTHMin: ${KEY_LENGTHMin}, KEY_LENGTHMax: ${KEY_LENGTHMax}, ROUND_NUMBER: ${ROUND_NUMBER}, COMPACTION_LEVEL: ${COMPACTION_LEVEL[@]}, ENABLE_AUTO_COMPACTION: ${ENABLE_AUTO_COMPACTION}, ENABLE_COMPACTION_CFS: ${ENABLE_COMPACTION_CFS}, MOTIVATION: ${MOTIVATION[@]}, MEMORY_LIMIT: ${MEMORY_LIMIT}, USE_DIRECTIO: ${USE_DIRECTIO[@]}, REBUILD_SERVER: ${REBUILD_SERVER}, REBUILD_CLIENT: ${REBUILD_CLIENT}, LOG_LEVEL: ${LOG_LEVEL}, BRANCH: ${BRANCH}, PURPOSE: ${PURPOSE}, SETTING: ${SETTING}, SCHEDULING_INITIAL_DELAY: ${SCHEDULING_INITIAL_DELAY}, SCHEDULING_INTERVAL: ${SCHEDULING_INTERVAL[@]}, STATES_UPDATE_INTERVAL: ${STATES_UPDATE_INTERVAL}, READ_SENSISTIVITY: ${READ_SENSISTIVITY}, STEP_SIZE: ${STEP_SIZE[@]}, OFFLOAD_THRESHOLD: ${OFFLOAD_THRESHOLD[@]}, RECOVER_THRESHOLD: ${RECOVER_THRESHOLD[@]} readConsistencyLevel: ${CONSISTENCY_LEVEL[@]}, throttleDataRate: ${THROTLLE_DATA_RATE[@]}, JDK_VERSION: ${JDK_VERSION}, compaction_strategy: ${compaction_strategy}"
 
     ENABLE_HATS="false"
-    if [[ "${TARGET_SCHEME}" == "hats" ]]; then
+    enableFineSchedule="false"
+    enableBackgroundSchedule="false"
+    MODEL="${TARGET_SCHEME}"
+    if [[ "${TARGET_SCHEME}" == "coarseschedule" ]]; then
         ENABLE_HATS="true"
+        TARGET_SCHEME="hats"
+    elif [[ "${TARGET_SCHEME}" == "fineschedule" ]]; then
+        ENABLE_HATS="true"
+        enableFineSchedule="true"
+        TARGET_SCHEME="hats"
+    elif [[ "${TARGET_SCHEME}" == "hats" ]]; then
+        ENABLE_HATS="true"
+        enableFineSchedule="true"
+        enableBackgroundSchedule="true"
     fi
 
 
@@ -1552,11 +1601,11 @@ function runExp {
                                                 # startup from preload dataset
                                                 if [ "${WORKLOAD}" == "workloadc" ]; then
                                                     echo "Start from current data"
-                                                    restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HATS} ${throttleDataRate}
+                                                    restartCassandra ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HATS} ${throttleDataRate} ${enableFineSchedule} ${enableBackgroundSchedule}
                                                 # modify the seeds as the specific nodes, and reload the configuration file
                                                 else
                                                     echo "Start from backup"
-                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${keyLength} ${fieldLength} ${RF} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HATS} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy}
+                                                    startFromBackup "LoadDB" $TARGET_SCHEME ${KV_NUMBER} ${keyLength} ${fieldLength} ${RF} ${memtableSize} ${motivation} ${REBUILD_SERVER} "${directIO}" "${LOG_LEVEL}" "${BRANCH}" "${SCHEDULING_INITIAL_DELAY}" "${schedulingInterval}" "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" ${ENABLE_HATS} ${throttleDataRate} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${enableFineSchedule} ${enableBackgroundSchedule}
                                                 fi
                                                 # fi
                                                 initConf "true"
@@ -1580,7 +1629,7 @@ function runExp {
 
 
                                                 # Collect load results
-                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${TARGET_SCHEME} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HATS} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistency} ${RF} ${fieldLength}) 
+                                                resultsDir=$(getResultsDir ${CLUSTER_NAME} ${MODEL} ${EXP_NAME} ${SETTING} ${workload} ${requestDist} ${compactionLevel} ${threadsNum} ${schedulingInterval} ${ROUND_NUMBER} ${ENABLE_HATS} ${throttleDataRate} ${OPERATION_NUMBER} ${KV_NUMBER} ${SSTABLE_SIZE_IN_MB} ${compaction_strategy} ${consistency} ${RF} ${fieldLength}) 
 
                                                 # echo "Collect results to ${resultsDir}"
                                                 collectResults ${resultsDir}

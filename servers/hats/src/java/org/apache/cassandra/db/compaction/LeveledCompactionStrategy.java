@@ -165,7 +165,7 @@ public class LeveledCompactionStrategy extends AbstractCompactionStrategy
             }
 
             // HATS: We decide whether perform compaction here
-            if(DatabaseDescriptor.getEnableHats())
+            if(DatabaseDescriptor.getEnableHats() && DatabaseDescriptor.getEnableBackgroundSchedule())
             {
                 if(cfs.name.contains("usertable") && !cfs.name.equals("usertable"))
                 {

@@ -17,6 +17,8 @@ function restartCassandra {
     readSensitivity=$2
     enableHats=$3
     throttleDataRate=$4
+    enableFineSchedule=$5
+    enableBackgroundSchedule=$6
 
     echo "Restart the node with configure file ${configureFilePath}, project base dir ${projectBaseDir}, memtable size ${memtableSize}, motivation ${motivation}, enable hats ${enableHats}"
 
@@ -43,6 +45,8 @@ function restartCassandra {
     if [ "${enableHats}" == "true" ]; then
         sed -i "s/enable_hats:.*$/enable_hats: "${enableHats}"/" conf/cassandra.yaml
         sed -i "s/throttle_data_rate:.*$/throttle_data_rate: "${throttleDataRate}"/" conf/cassandra.yaml
+        sed -i "s/enable_fine_schedule:.*$/enable_fine_schedule: "${enableFineSchedule}"/" conf/cassandra.yaml
+        sed -i "s/enable_background_schedule:.*$/enable_background_schedule: "${enableBackgroundSchedule}"/" conf/cassandra.yaml
     fi
 
 

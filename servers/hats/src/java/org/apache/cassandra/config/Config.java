@@ -144,9 +144,11 @@ public class Config
     public double step_size = 0.05;
     public double offload_threshold = 0.5;
     public double recover_threshold = 0.1;
-    public boolean enable_hats = true;
     public double throttle_data_rate = 60; //  MB/s
     public int replication_factor = 3;
+    public boolean enable_hats = true; // it will enable coarse schedule only
+    public boolean enable_fine_schedule = true;
+    public boolean enable_background_schedule = true;
 
 
 

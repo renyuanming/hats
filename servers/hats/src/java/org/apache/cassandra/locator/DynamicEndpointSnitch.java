@@ -196,7 +196,7 @@ public class DynamicEndpointSnitch extends AbstractEndpointSnitch implements Lat
         // of the sort() call. As we copy the scores map on write, it is thus enough to alias the current
         // version of it during this call.
         final HashMap<InetAddressAndPort, Double> scores = this.scores;
-        if(DatabaseDescriptor.getEnableHats() && !isRangeRequest)
+        if(DatabaseDescriptor.getEnableHats() && !isRangeRequest && DatabaseDescriptor.getEnableFineSchedule())
         {
             InetAddressAndPort replicationGroup = unsortedAddresses.get(0).endpoint();
             return unsortedAddresses.sorted((r1, r2) -> compareEndpoints(address, r1, r2, replicationGroup, isRangeRequest));

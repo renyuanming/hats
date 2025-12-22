@@ -2,7 +2,7 @@
 #!/bin/bash
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp1-ycsb"
+EXP_NAME="Exp2-ycsb"
 PURE_READ_WORKLOADS=("workloadc")
 MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb" "workloadd")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform

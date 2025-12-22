@@ -5157,6 +5157,21 @@ public class DatabaseDescriptor
         conf.recover_threshold = recover_threshold;
     }
 
+    public static boolean getEnableCoarseSchedule()
+    {
+        return conf.enable_coarse_schedule;
+    }
+
+    public static boolean getEnableFineSchedule()
+    {
+        return conf.enable_fine_schedule;
+    }
+
+    public static boolean getEnableBackgroundSchedule()
+    {
+        return conf.enable_background_schedule;
+    }
+
     public static boolean getEnableHats()
     {
         return conf.enable_hats;

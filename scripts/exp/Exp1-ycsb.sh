@@ -6,16 +6,16 @@
 # Workload Settings
 EXP_NAME="Exp1-ycsb"
 PURE_READ_WORKLOADS=("workloadc")
-MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb" "workloadd" "workloade" "workloadf")
+MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb" "workloadd")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
-OPERATION_NUMBER=25000000
+OPERATION_NUMBER=50000000
 KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
 KEY_LENGTHMin=24
 KEY_LENGTHMax=24
 REPLICAS=(3)
-THREAD_NUMBER=(50)
+THREAD_NUMBER=(100)
 MEMTABLE_SIZE=(2048)
 MOTIVATION=("false") # true is only forward the read request to the primary lsm-tree
 MEMORY_LIMIT="12G"
@@ -29,8 +29,8 @@ COMPACTION_STRATEGY=("LCS")
 CONSISTENCY_LEVEL=("ONE")
 
 # Debug Settings
-REBUILD_SERVER="false"
-REBUILD_CLIENT="false"
+REBUILD_SERVER="true"
+REBUILD_CLIENT="true"
 
 # Server settings
 ROUNDS=1
