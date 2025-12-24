@@ -2,18 +2,25 @@
 
 
 ## Introduction
-HATS is a distributed key-value store that provides a holistic and automatic task scheduling framework. This is the repo contains the source code for the HATS prototype, scripts for running the experiments.
+HATS is a distributed key-value store that provides a holistic and automatic task scheduling framework. This is the repo contains the source code for the HATS prototype, YCSB benchmark tool, and the scripts used in our USENIX FAST'26 paper: [Holistic and Automated Task Scheduling for Distributed LSM-tree-based Storage](https://www.usenix.org/conference/fast26/presentation/ren).
 
 - `clients/`: includes the implementation of the HATS client, which is based on the [DataStax Java Driver for Apache Cassandra, v3.0.0](https://github.com/apache/cassandra-java-driver/releases/tag/3.0.0) and the benchmark tool [YCSB-0.17.0](https://github.com/brianfrankcooper/YCSB/releases/download/0.17.0/ycsb-0.17.0.tar.gz).
 - `server/`: includes the implementation of the HATS server and the baselines, which are all based on [Apache Cassandra 5.0](https://github.com/apache/cassandra/releases/tag/cassandra-5.0-beta1). The Raft library is based on [sofa-jraft](https://github.com/sofastack/sofa-jraft).
 - `scripts/`: includes the scripts for running the experiments, which are implemented based on shell scripts and Ansible.
 
 
+
+## Artifact Evaluation Instructions
+
+
+For FAST'26 AE reviewers, please refer to the [Artifact Evaluation Instructions](./AE_INSTRUCTIONS.md) for details.
+
+
 ## Prerequisites
 
 ### Testbed
 
-As a distributed KV store, HATS requires a cluster of machines to run. We recommend using a cluster of 12 machines, where 10 machines are used as storage nodes and 2 machines are used as client nodes.
+As a distributed KV store, HATS requires a cluster of machines to run. We recommend using multiple machines for both server nodes and client nodes to fully evaluate the performance of HATS. For example, we a cluster of 12 machines, where 10 machines are used as storage nodes and 2 machines are used as client nodes in the paper.
 
 ### Dependencies
 - For Java project build: openjdk-17-jdk, openjdk-17-jre, ant, ant-optional Maven.
@@ -33,18 +40,19 @@ Note that the dependencies for both HATS and YCSB will be automatically installe
 
 ### Environment Setup
 
-The build procedure of both the HATS prototype and YCSB requires an internet connection to download the dependencies via Maven. In case the internet connection requires a proxy, we provide an example maven setting file `./scripts/env/settings.xml`. Please modify the file according to your proxy settings and then put it into the local Maven directory, as shown below.
+The build procedure of both the HATS prototype and YCSB requires an internet connection to download the dependencies via Maven. In case the internet connection requires a proxy, we provide an example maven setting file `./scripts/conf/settings.xml`. Please modify the file according to your proxy settings and then put it into the local Maven directory, as shown below.
 
 ```shell
 mkdir -p ~/.m2
-cp ./scripts/env/settings.xml ~/.m2/
+vim ./scripts/conf/settings.xml # Modify the proxy settings in the file.
+cp ./scripts/conf/settings.xml ~/.m2/
 ```
 ### Step 1: HATS's client
 
 First, we build the HATS's client:
 
 ```shell
-# Build with java 17
+# Build with java 17, maven 3.6+
 cd clients/
 mvn -pl cassandra -am clean package -U -Dcheckstyle.skip
 ```
@@ -242,24 +250,3 @@ bin/ycsb run cassandra-cql -p hosts=${NodesList} -p cassandra.readconsistencylev
 # ${threads}: the number of threads (number of simulated clients) of the YCSB benchmark. E.g., 1, 2, 4, 8, 16, 32, 64
 # ${workload}: the workload file of the YCSB benchmark. E.g., workloads/workloada, workloads/workloadb, workloads/workloadc
 ```
-
-
-
-
-
-
-## Running Experiments
-
-We provide scripts to run the experiments in `./scripts`. The script assumes that the steps before have been tested. **Note that the scripts are designed to run on an additional node, which is not included in server or client nodes, but can access all the nodes in the cluster.**
-
-```shell
-cd scripts/exp
-# Note that all the scripts can output the throughput, latency, performance breakdown, latency distribution across the cluster, and the resource usage results. The output files are stored in the `~/results` directory.
-bash Exp1-ycsb.sh # Run the six core workloads of YCSB. 
-bash Exp5-consistentcy.sh # Run with different consistency levels.
-bash Exp6-distribution.sh # Run with different request distributions.
-bash Exp7-rf.sh # Run with different replication factors.
-bash Exp8-valueSize.sh # Run with different value sizes for HATS and the baselines.
-bash Exp9-client.sh # Run with different client number.
-```
-

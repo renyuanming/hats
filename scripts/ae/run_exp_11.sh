@@ -1,13 +1,13 @@
-# Obtain the results for Exp#3 (Facebook's production workload performance)
+# Obtain the results for Exp#11 (Impact of value size)
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp3-facebook"
+EXP_NAME="Exp11-value"
 PURE_READ_WORKLOADS=()
-MIXED_READ_WRITE_WORKLOADS=("workload_mixgraph")
-REQUEST_DISTRIBUTIONS=("mixgraph") # zipfian uniform
-OPERATION_NUMBER=25000000
+MIXED_READ_WRITE_WORKLOADS=("workloada")
+REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
+OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
-FIELD_LENGTH=(1000)
+FIELD_LENGTH=(512 1000 2048)
 KEY_LENGTH=(24)
 KEY_LENGTHMin=24
 KEY_LENGTHMax=24
@@ -64,10 +64,10 @@ for ROUND_NUMBER in $(seq 1 $ROUNDS); do
         done
     done
 done
-echo "Run Exp#3 took $SECONDS seconds." >> "${ALL_RESULTS}"
+echo "Run Exp#11 took $SECONDS seconds." >> "${ALL_RESULTS}"
 
 echo "##############################################################"
-echo "#     Exp#3 (Facebook's production workload performance)     #"
+echo "#     Exp#11 (Impact of value size)                          #"
 echo "##############################################################"
 for scheme in "${SCHEMES[@]}"; do
     exportEnv "${scheme}"

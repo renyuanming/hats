@@ -1,11 +1,11 @@
-# Obtain the results for Exp#3 (Facebook's production workload performance)
+# Obtain the results for Exp#9 (Different read consistency levels)
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp3-facebook"
+EXP_NAME="Exp9-consistency"
 PURE_READ_WORKLOADS=()
-MIXED_READ_WRITE_WORKLOADS=("workload_mixgraph")
-REQUEST_DISTRIBUTIONS=("mixgraph") # zipfian uniform
-OPERATION_NUMBER=25000000
+MIXED_READ_WRITE_WORKLOADS=("workloada")
+REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
+OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
@@ -23,7 +23,7 @@ BRANCH="main"
 LOG_LEVEL="error"
 SSTABLE_SIZE_IN_MB=160
 COMPACTION_STRATEGY=("LCS")
-CONSISTENCY_LEVEL=("ONE")
+CONSISTENCY_LEVEL=("ONE" "TWO" "ALL")
 
 # Debug Settings
 REBUILD_SERVER="false"
@@ -64,10 +64,10 @@ for ROUND_NUMBER in $(seq 1 $ROUNDS); do
         done
     done
 done
-echo "Run Exp#3 took $SECONDS seconds." >> "${ALL_RESULTS}"
+echo "Run Exp#9 took $SECONDS seconds." >> "${ALL_RESULTS}"
 
 echo "##############################################################"
-echo "#     Exp#3 (Facebook's production workload performance)     #"
+echo "#     Exp#9 (Different read consistency levels)              #"
 echo "##############################################################"
 for scheme in "${SCHEMES[@]}"; do
     exportEnv "${scheme}"

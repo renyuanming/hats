@@ -1408,7 +1408,7 @@ function analyze_ycsb_results {
                                             resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
                                             
                                             # 查找YCSB日志文件
-                                            log_file=$(find "${resultsDir}" -maxdepth 1 -name "Run-*.log" -type f 2>/dev/null | head -n 1)
+                                            log_file=$(find "${resultsDir}" -maxdepth 1 -name "Run-*proj18*.log" -type f 2>/dev/null | head -n 1)
                                             
                                             if [ -n "${log_file}" ] && [ -f "${log_file}" ]; then
                                                 # 提取OVERALL指标
@@ -1646,6 +1646,15 @@ function runExp {
     done
 }
 
+function getModel {
+    local scheme=${1}
+    if [[ "${scheme}" == "coarseschedule" ]] || [[ "${scheme}" == "fineschedule" ]] || [[ "${scheme}" == "hats" ]]; then
+        echo "hats"
+    else
+        echo "${scheme}"
+    fi
+}
+
 function runPureReadExp {
     
     EXP_NAME=${1}
@@ -1685,9 +1694,9 @@ function runPureReadExp {
 
     for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
         for rf in "${REPLICAS[@]}"; do
-            loadDataset "${EXP_NAME}" "$TARGET_SCHEME" "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "${rf}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
+            loadDataset "${EXP_NAME}" $(getModel "$TARGET_SCHEME") "${KV_NUMBER}" "${KEY_LENGTH}" "${FIELD_LENGTH}" "${rf}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}"
             runExp "${EXP_NAME}" "$TARGET_SCHEME" $WORKLOAD REQUEST_DISTRIBUTIONS[@] ${rf} THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" FIELD_LENGTH[@] KEY_LENGTH[@] "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
-            cleanup $TARGET_SCHEME
+            cleanup $(getModel "$TARGET_SCHEME")
         done
     done
 
@@ -1734,7 +1743,7 @@ function runMixedReadWriteExp {
     for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
         for rf in "${REPLICAS[@]}"; do
             runExp "${EXP_NAME}" "$TARGET_SCHEME" $WORKLOAD REQUEST_DISTRIBUTIONS[@] ${rf} THREAD_NUMBER[@] MEMTABLE_SIZE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" FIELD_LENGTH[@] KEY_LENGTH[@] "${KEY_LENGTHMin}" "${KEY_LENGTHMax}" "${ROUND_NUMBER}" COMPACTION_LEVEL[@]  MOTIVATION[@] "${MEMORY_LIMIT}" USE_DIRECTIO[@] "${REBUILD_SERVER}" "${REBUILD_CLIENT}" "${LOG_LEVEL}" "${BRANCH}" "${PURPOSE}" "${SCHEDULING_INITIAL_DELAY}" SCHEDULING_INTERVAL[@] "${STATES_UPDATE_INTERVAL}" "${READ_SENSISTIVITY}" THROTLLE_DATA_RATE[@] "${JDK_VERSION}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" CONSISTENCY_LEVEL[@]
-            cleanup $TARGET_SCHEME
+            cleanup $(getModel "$TARGET_SCHEME")
         done
     done
 

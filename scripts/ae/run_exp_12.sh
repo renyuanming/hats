@@ -1,18 +1,18 @@
-# Obtain the results for Exp#3 (Facebook's production workload performance)
+# Obtain the results for Exp#12 (Impact of system saturation levels)
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp3-facebook"
+EXP_NAME="Exp12-saturation"
 PURE_READ_WORKLOADS=()
-MIXED_READ_WRITE_WORKLOADS=("workload_mixgraph")
-REQUEST_DISTRIBUTIONS=("mixgraph") # zipfian uniform
-OPERATION_NUMBER=25000000
+MIXED_READ_WRITE_WORKLOADS=("workloada")
+REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
+OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
 KEY_LENGTHMin=24
 KEY_LENGTHMax=24
 REPLICAS=(3)
-THREAD_NUMBER=(50)
+THREAD_NUMBER=(50 75 100)
 MEMTABLE_SIZE=(2048)
 MOTIVATION=("false") # true is only forward the read request to the primary lsm-tree
 MEMORY_LIMIT="12G"
@@ -64,10 +64,10 @@ for ROUND_NUMBER in $(seq 1 $ROUNDS); do
         done
     done
 done
-echo "Run Exp#3 took $SECONDS seconds." >> "${ALL_RESULTS}"
+echo "Run Exp#12 took $SECONDS seconds." >> "${ALL_RESULTS}"
 
 echo "##############################################################"
-echo "#     Exp#3 (Facebook's production workload performance)     #"
+echo "#     Exp#12 (Impact of system saturation levels)            #"
 echo "##############################################################"
 for scheme in "${SCHEMES[@]}"; do
     exportEnv "${scheme}"

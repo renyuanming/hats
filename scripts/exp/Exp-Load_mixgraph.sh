@@ -9,8 +9,8 @@ SSTABLE_SIZE_IN_MB=160
 KV_NUMBER=50000000
 FIELD_LENGTH=2000
 KEY_LENGTH=48
-REBUILD_SERVER="true"
-WAIT_TIME=7200
+REBUILD_SERVER="false"
+WAIT_TIME=3600
 COMPACTION_STRATEGY=("LCS")
 
 JDK_VERSION="17"
@@ -19,8 +19,8 @@ BRANCH="main"
 
 
 function exportEnv {
-    
-    scheme=$1
+
+    local scheme=$1
 
     export BACKUP_MODE="local"
     export SCHEME=$scheme # hats or depart
@@ -46,7 +46,7 @@ function main {
         for rf in "${REPLICAS[@]}"; do
             for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
                 # Load data
-                load $scheme 32 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_mixgraph" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
+                load $scheme 10 "${SSTABLE_SIZE_IN_MB}" 2048 "${rf}" "workload_mixgraph" ${KV_NUMBER} ${FIELD_LENGTH} ${KEY_LENGTH} ${compaction_strategy} ${LOG_LEVEL} ${BRANCH}
                 # Wait for flush or compaction ready
                 flush "LoadDB" $scheme $WAIT_TIME
                 # Backup the DB and the logs

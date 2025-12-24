@@ -1,10 +1,10 @@
-# Get the results for Exp#1 (Effectiveness of each technique)
+# Obtain the results for Exp#2, #4, #5, #6, #7
 #!/bin/bash
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp1-effectiveness"
+EXP_NAME="Exp0-simple"
 PURE_READ_WORKLOADS=("workloadc")
-MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb")
+MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb" "workloadd")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
 OPERATION_NUMBER=25000000
 KV_NUMBER=100000000
@@ -35,21 +35,18 @@ ROUNDS=1
 COMPACTION_LEVEL=("all") # zero one all
 
 # Hats
-SCHEDULING_INITIAL_DELAY=60 # seconds
+SCHEDULING_INITIAL_DELAY=120 # seconds
 SCHEDULING_INTERVAL=(60) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 THROTLLE_DATA_RATE=(90) # MB/s
 
 JDK_VERSION="17"
 
-SCHEMES=("hats" "fineschedule" "coarseschedule" "mlsm")
+SCHEMES=("hats" "depart-5.0" "c3" "mlsm")
 
 function exportEnv {
     
-    local scheme=$1
-    if [[ "${scheme}" == "fineschedule" ]] || [[ "${scheme}" == "coarseschedule" ]]; then
-        scheme="hats"
-    fi
+    scheme=$1
     
     export BACKUP_MODE="local"
     export SCHEME=$scheme # hats or depart
@@ -70,6 +67,7 @@ function exportEnv {
 #     done
 # done
 
+
 # for ROUND_NUMBER in $(seq 1 $ROUNDS); do
 #     for WORKLOAD in "${MIXED_READ_WRITE_WORKLOADS[@]}"; do
 #         for scheme in "${SCHEMES[@]}"; do
@@ -80,18 +78,51 @@ function exportEnv {
 #         done
 #     done
 # done
-# echo "Run Exp#1 took $SECONDS seconds." >> "${ALL_RESULTS}"
-
+# echo "Run Exp#2 took $SECONDS seconds." >> "${ALL_RESULTS}"
 # combine the pure read workloads and mixed read write workloads
 ALL_WORKLOADS=("${PURE_READ_WORKLOADS[@]}" "${MIXED_READ_WRITE_WORKLOADS[@]}")
 # sort ALL_WORKLOADS
 ALL_WORKLOADS=($(printf "%s\n" "${ALL_WORKLOADS[@]}" | sort -u))
 
 
-echo "##############################################################"
-echo "#           Exp#1 (Effectiveness of each technique)          #"
+
+## Output the results for exp#2
+echo "##############################################################" 
+echo "#         Exp#2 (YCSB synthetic workload performance)        #"
 echo "##############################################################"
 for scheme in "${SCHEMES[@]}"; do
     exportEnv "${scheme}"
     analyze_ycsb_results "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+done
+
+
+## output the results for exp#4
+echo "#################################################################"
+echo "#       Exp#4 (Latency balance degree across the cluster)       #"
+echo "#################################################################"
+for scheme in "${SCHEMES[@]}"; do
+    exportEnv "${scheme}"
+    latency_balance "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+
+done
+
+
+## output the results for exp#6
+echo "##############################################################"
+echo "#                Exp#6 (Performance breakdown)               #"
+echo "##############################################################"
+for scheme in "${SCHEMES[@]}"; do
+    exportEnv "${scheme}"
+    performance_breakdown "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+done
+
+
+
+## output the results for exp#7
+echo "##############################################################"
+echo "#                    Exp#7 (Resource usage)                  #"
+echo "##############################################################"
+for scheme in "${SCHEMES[@]}"; do
+    exportEnv "${scheme}"
+    resource_usage "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
 done

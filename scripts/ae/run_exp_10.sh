@@ -1,11 +1,11 @@
-# Obtain the results for Exp#3 (Facebook's production workload performance)
+# Obtain the results for Exp#10 (Impact of key distribution)
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp3-facebook"
+EXP_NAME="Exp10-distribution"
 PURE_READ_WORKLOADS=()
-MIXED_READ_WRITE_WORKLOADS=("workload_mixgraph")
-REQUEST_DISTRIBUTIONS=("mixgraph") # zipfian uniform
-OPERATION_NUMBER=25000000
+MIXED_READ_WRITE_WORKLOADS=("workloada")
+REQUEST_DISTRIBUTIONS=("uniform" "0.9" "zipfian") # zipfian uniform
+OPERATION_NUMBER=10000000
 KV_NUMBER=100000000
 FIELD_LENGTH=(1000)
 KEY_LENGTH=(24)
@@ -64,10 +64,10 @@ for ROUND_NUMBER in $(seq 1 $ROUNDS); do
         done
     done
 done
-echo "Run Exp#3 took $SECONDS seconds." >> "${ALL_RESULTS}"
+echo "Run Exp#10 took $SECONDS seconds." >> "${ALL_RESULTS}"
 
 echo "##############################################################"
-echo "#     Exp#3 (Facebook's production workload performance)     #"
+echo "#     Exp#10 (Impact of key distribution)                    #"
 echo "##############################################################"
 for scheme in "${SCHEMES[@]}"; do
     exportEnv "${scheme}"
