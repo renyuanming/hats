@@ -601,8 +601,9 @@ function run {
     logLevel=$3
     enableHats=$4
     local readConsistencyLevel=$5
+    local enableStartProbe=$6
 
-    echo "Run ${targetScheme} with distribution: ${requestDist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHats: ${enableHats} readConsistencyLevel: ${readConsistencyLevel}"
+    echo "Run ${targetScheme} with distribution: ${requestDist} workload: ${workload} threads: ${threads} kvNumber: ${kvNumber} operations: ${operations} keyLen: ${keyLen} fieldLen: ${fieldLen} enableAutoCompaction: ${enableAutoCompaction} enableAutoCompactionCFs: ${enableAutoCompactionCFs} memoryLimit: ${memoryLimit} logLevel: ${logLevel} enableHats: ${enableHats} readConsistencyLevel: ${readConsistencyLevel} enableStartProbe: ${enableStartProbe}"
 
     resetPlaybook "run"
     playbook="playbook-run.yaml"
@@ -644,6 +645,7 @@ function run {
     sed -i "s|ENABLE_HATS|${enableHats}|g" ${playbook}
     sed -i "s|PATH_TO_LOG_DIR|${PathToLogDir}|g" ${playbook}
     sed -i "s|CONSISTENCY|${readConsistencyLevel}|g" ${playbook}
+    sed -i "s|ENABLE_START_PROBE|${EnableStartProbe}|g" ${playbook}
 
     if [ $targetScheme == "depart" ]|| [ $targetScheme == "cassandra-3.11.4" ]; then
         sed -i 's|NODETOOL_OPTION|-h ::FFFF:127.0.0.1|g' ${playbook}
@@ -859,10 +861,6 @@ function calculate_cov() {
 
     echo "${cov}"
 }
-
-# function latency_distribution {
-
-# }
 
 function performance_breakdown {
     local ROUNDS=${1}
@@ -1346,7 +1344,174 @@ function calculate_average_memory_usage() {
     fi
 }
 
+function analyze_facebook_results {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
 
+    # 创建汇总结果目录
+    local summary_dir="/home/${UserName}/Results-${CLUSTER_NAME}-${EXP_NAME}-Summary"
+    mkdir -p "${summary_dir}"
+    local summary_file="${summary_dir}/facebook_results_${TARGET_SCHEME}.txt"
+    
+    # 添加表头
+    printf "%-15s %-15s %-20s %-20s\n" "Scheme" "Operation" "Average(us)" "P99(us)" | tee "${summary_file}"
+    printf "%s\n" "--------------------------------------------------------------------------------" | tee -a "${summary_file}"
+
+    # 定义操作类型 (用于从日志文件中提取)
+    local operations=("READ" "UPDATE" "SCAN")
+    
+    # 定义操作名称映射 (用于输出显示)
+    declare -A operation_names
+    operation_names["READ"]="Get"
+    operation_names["UPDATE"]="Put"
+    operation_names["SCAN"]="Seek"
+
+    # 遍历所有workload
+    for workload in "${ALL_WORKLOADS[@]}"; do
+        
+        # 为每个operation类型存储指标
+        declare -A all_avg_latencies
+        declare -A all_p99_latencies
+        
+        # 初始化数组
+        for op in "${operations[@]}"; do
+            all_avg_latencies[$op]=""
+            all_p99_latencies[$op]=""
+        done
+        
+        # 遍历配置
+        for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+            for rf in "${REPLICAS[@]}"; do
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                            for consistency in "${CONSISTENCY_LEVEL[@]}"; do
+                                for fieldLength in "${FIELD_LENGTH[@]}"; do
+                                    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                                        
+                                        # 为每个operation存储所有round的数据
+                                        declare -A round_avg_latencies
+                                        declare -A round_p99_latencies
+                                        
+                                        # 初始化
+                                        for op in "${operations[@]}"; do
+                                            round_avg_latencies[$op]=""
+                                            round_p99_latencies[$op]=""
+                                        done
+                                        
+                                        # 遍历所有rounds
+                                        for round in $(seq 1 ${ROUNDS}); do
+                                            # 获取结果目录
+                                            resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
+                                            
+                                            # 查找YCSB日志文件
+                                            log_file=$(find "${resultsDir}" -maxdepth 1 -name "Run-*proj18*.log" -type f 2>/dev/null | head -n 1)
+                                            
+                                            if [ -n "${log_file}" ] && [ -f "${log_file}" ]; then
+                                                # 为每个operation提取指标
+                                                for op in "${operations[@]}"; do
+                                                    # 提取平均延迟: [READ], AverageLatency(us), 828.24
+                                                    avg_latency=$(grep "^\[${op}\], AverageLatency(us)," "${log_file}" | awk -F', ' '{print $3}')
+                                                    
+                                                    # 提取P99延迟: [READ], 99thPercentileLatency(us), 1234
+                                                    p99_latency=$(grep "^\[${op}\], 99thPercentileLatency(us)," "${log_file}" | awk -F', ' '{print $3}')
+                                                    
+                                                    # 如果提取到数据,添加到round数组
+                                                    if [ -n "${avg_latency}" ] && [ "${avg_latency}" != "0" ]; then
+                                                        if [ -z "${round_avg_latencies[$op]}" ]; then
+                                                            round_avg_latencies[$op]="${avg_latency}"
+                                                        else
+                                                            round_avg_latencies[$op]="${round_avg_latencies[$op]} ${avg_latency}"
+                                                        fi
+                                                    fi
+                                                    
+                                                    if [ -n "${p99_latency}" ] && [ "${p99_latency}" != "0" ]; then
+                                                        if [ -z "${round_p99_latencies[$op]}" ]; then
+                                                            round_p99_latencies[$op]="${p99_latency}"
+                                                        else
+                                                            round_p99_latencies[$op]="${round_p99_latencies[$op]} ${p99_latency}"
+                                                        fi
+                                                    fi
+                                                done
+                                            fi
+                                        done
+                                        
+                                        # 计算当前配置的平均值
+                                        for op in "${operations[@]}"; do
+                                            if [ -n "${round_avg_latencies[$op]}" ]; then
+                                                # 将字符串转换为数组并计算平均值
+                                                read -ra avg_array <<< "${round_avg_latencies[$op]}"
+                                                if [ ${#avg_array[@]} -gt 0 ]; then
+                                                    avg=$(calculate_average avg_array[@])
+                                                    if [ -z "${all_avg_latencies[$op]}" ]; then
+                                                        all_avg_latencies[$op]="${avg}"
+                                                    else
+                                                        all_avg_latencies[$op]="${all_avg_latencies[$op]} ${avg}"
+                                                    fi
+                                                fi
+                                            fi
+                                            
+                                            if [ -n "${round_p99_latencies[$op]}" ]; then
+                                                read -ra p99_array <<< "${round_p99_latencies[$op]}"
+                                                if [ ${#p99_array[@]} -gt 0 ]; then
+                                                    p99=$(calculate_average p99_array[@])
+                                                    if [ -z "${all_p99_latencies[$op]}" ]; then
+                                                        all_p99_latencies[$op]="${p99}"
+                                                    else
+                                                        all_p99_latencies[$op]="${all_p99_latencies[$op]} ${p99}"
+                                                    fi
+                                                fi
+                                            fi
+                                        done
+                                        
+                                    done
+                                done
+                            done
+                        done
+                    done
+                done
+            done
+        done
+        
+        # 计算并输出每个operation的最终平均值
+        for op in "${operations[@]}"; do
+            if [ -n "${all_avg_latencies[$op]}" ]; then
+                # 转换为数组并计算总体平均值
+                read -ra final_avg_array <<< "${all_avg_latencies[$op]}"
+                read -ra final_p99_array <<< "${all_p99_latencies[$op]}"
+                
+                if [ ${#final_avg_array[@]} -gt 0 ]; then
+                    final_avg=$(calculate_average final_avg_array[@])
+                    final_p99=$(calculate_average final_p99_array[@])
+                    
+                    # 使用映射后的操作名称输出
+                    display_op="${operation_names[$op]}"
+                    
+                    # 输出到屏幕和文件
+                    printf "%-15s %-15s %-20.2f %-20.2f\n" \
+                        "${TARGET_SCHEME}" "${display_op}" "${final_avg}" "${final_p99}" | tee -a "${summary_file}"
+                fi
+            fi
+        done
+        
+    done
+    
+    echo ""
+}
 
 function analyze_ycsb_results {
     local ROUNDS=${1}
@@ -1484,6 +1649,239 @@ function calculate_average {
     echo "scale=2; ${sum} / ${count}" | bc
 }
 
+# 通用的分组分析函数
+function analyze_results_by_dimension {
+    local dimension_name=$1  # "Consistency" 或 "Distribution"
+    local dimension_values=("${!2}")  # 具体的值数组
+    local ROUNDS=${3}
+    local ALL_WORKLOADS=("${!4}")
+    local EXP_NAME=${5}
+    local TARGET_SCHEME=${6}
+    local REQUEST_DISTRIBUTIONS=("${!7}")
+    local REPLICAS=("${!8}")
+    local THREAD_NUMBER=("${!9}")
+    local SCHEDULING_INTERVAL=("${!10}")
+    local THROTLLE_DATA_RATE=("${!11}")
+    shift 11
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 创建汇总结果目录
+    local summary_dir="/home/${UserName}/Results-${CLUSTER_NAME}-${EXP_NAME}-Summary"
+    mkdir -p "${summary_dir}"
+    local output_filename="${dimension_name,,}_results_${TARGET_SCHEME}.txt"  # 转小写
+    local summary_file="${summary_dir}/${output_filename}"
+    
+    # 添加表头
+    printf "%-15s %-15s %-20s %-20s\n" "Scheme" "${dimension_name}" "Throughput(ops/s)" "P99(us)" | tee "${summary_file}"
+    printf "%s\n" "--------------------------------------------------------------------------------" | tee -a "${summary_file}"
+
+    # 遍历所有workload (通常只有一个)
+    for workload in "${ALL_WORKLOADS[@]}"; do
+        
+        # 为每个维度值存储指标
+        declare -A all_throughputs_by_dim
+        declare -A all_p99s_by_dim
+        
+        # 初始化数组
+        for dim_val in "${dimension_values[@]}"; do
+            all_throughputs_by_dim[$dim_val]=""
+            all_p99s_by_dim[$dim_val]=""
+        done
+        
+        # 遍历配置
+        for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
+            for rf in "${REPLICAS[@]}"; do
+                for threadsNum in "${THREAD_NUMBER[@]}"; do
+                    for schedulingInterval in "${SCHEDULING_INTERVAL[@]}"; do
+                        for throttleDataRate in "${THROTLLE_DATA_RATE[@]}"; do
+                            for consistency in "${CONSISTENCY_LEVEL[@]}"; do
+                                for fieldLength in "${FIELD_LENGTH[@]}"; do
+                                    for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
+                                        
+                                        # 根据维度类型确定当前维度值
+                                        local current_dim_value=""
+                                        if [ "${dimension_name}" == "Consistency" ]; then
+                                            current_dim_value="${consistency}"
+                                        elif [ "${dimension_name}" == "Distribution" ]; then
+                                            current_dim_value="${dist}"
+                                        fi
+                                        
+                                        # 存储当前维度值所有round的数据
+                                        declare -a round_throughputs=()
+                                        declare -a round_p99s=()
+                                        
+                                        # 遍历所有rounds
+                                        for round in $(seq 1 ${ROUNDS}); do
+                                            # 获取结果目录
+                                            resultsDir=$(getResultsDir "${CLUSTER_NAME}" "${TARGET_SCHEME}" "${EXP_NAME}" "RunE" "${workload}" "${dist}" "all" "${threadsNum}" "${schedulingInterval}" "${round}" "false" "${throttleDataRate}" "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" "${compaction_strategy}" "${consistency}" "${rf}" "${fieldLength}")
+                                            
+                                            # 查找YCSB日志文件
+                                            log_file=$(find "${resultsDir}" -maxdepth 1 -name "Run-*proj18*.log" -type f 2>/dev/null | head -n 1)
+                                            
+                                            if [ -n "${log_file}" ] && [ -f "${log_file}" ]; then
+                                                # 提取OVERALL指标
+                                                throughput=$(grep "^\[OVERALL\], Throughput(ops/sec)," "${log_file}" | awk -F', ' '{print $3}')
+                                                p99=$(grep "^\[OVERALL\], 99thPercentileLatency(us)," "${log_file}" | awk -F', ' '{print $3}')
+                                                
+                                                # 如果提取到数据,添加到round数组
+                                                if [ -n "${throughput}" ] && [ "${throughput}" != "0" ]; then
+                                                    round_throughputs+=("${throughput}")
+                                                fi
+                                                
+                                                if [ -n "${p99}" ] && [ "${p99}" != "0" ]; then
+                                                    round_p99s+=("${p99}")
+                                                fi
+                                            fi
+                                        done
+                                        
+                                        # 计算当前配置的平均值
+                                        if [ ${#round_throughputs[@]} -gt 0 ]; then
+                                            avg_throughput=$(calculate_average round_throughputs[@])
+                                            avg_p99=$(calculate_average round_p99s[@])
+                                            
+                                            # 添加到对应维度值的总体统计
+                                            if [ -z "${all_throughputs_by_dim[$current_dim_value]}" ]; then
+                                                all_throughputs_by_dim[$current_dim_value]="${avg_throughput}"
+                                                all_p99s_by_dim[$current_dim_value]="${avg_p99}"
+                                            else
+                                                all_throughputs_by_dim[$current_dim_value]="${all_throughputs_by_dim[$current_dim_value]} ${avg_throughput}"
+                                                all_p99s_by_dim[$current_dim_value]="${all_p99s_by_dim[$current_dim_value]} ${avg_p99}"
+                                            fi
+                                        fi
+                                        
+                                        unset round_throughputs round_p99s
+                                    done
+                                done
+                            done
+                        done
+                    done
+                done
+            done
+        done
+        
+        # 计算并输出每个维度值的最终平均值
+        for dim_val in "${dimension_values[@]}"; do
+            if [ -n "${all_throughputs_by_dim[$dim_val]}" ]; then
+                # 转换为数组并计算总体平均值
+                read -ra final_throughput_array <<< "${all_throughputs_by_dim[$dim_val]}"
+                read -ra final_p99_array <<< "${all_p99s_by_dim[$dim_val]}"
+                
+                if [ ${#final_throughput_array[@]} -gt 0 ]; then
+                    final_throughput=$(calculate_average final_throughput_array[@])
+                    final_p99=$(calculate_average final_p99_array[@])
+                    
+                    # 输出到屏幕和文件
+                    if [ "${dimension_name}" == "ClientNumber" ]; then
+                        # double the thread number for saturation analysis
+                        Clients
+                        dim_val=$((dim_val * ${#Clients[@]}))
+                    fi
+                    printf "%-15s %-15s %-20.2f %-20.2f\n" \
+                        "${TARGET_SCHEME}" "${dim_val}" "${final_throughput}" "${final_p99}" | tee -a "${summary_file}"
+                fi
+            fi
+        done
+        
+    done
+    
+    echo ""
+}
+
+# 简化后的 consistency 分析函数 - 只是一个包装器
+function analyze_consistency_results {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+    
+    # 调用通用函数,指定维度为 Consistency
+    analyze_results_by_dimension "Consistency" CONSISTENCY_LEVEL[@] "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${TARGET_SCHEME}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+}
+
+# 简化后的 distribution 分析函数 - 只是一个包装器
+function analyze_distribution_results {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+    
+    # 调用通用函数,指定维度为 Distribution
+    analyze_results_by_dimension "Distribution" REQUEST_DISTRIBUTIONS[@] "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${TARGET_SCHEME}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+}
+
+function analyze_value_results {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 调用通用函数,指定维度为 ValueSize
+    analyze_results_by_dimension "ValueSize" FIELD_LENGTH[@] "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${TARGET_SCHEME}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+}
+
+function analyze_saturation_results {
+    local ROUNDS=${1}
+    local ALL_WORKLOADS=("${!2}")
+    local EXP_NAME=${3}
+    local TARGET_SCHEME=${4}
+    local REQUEST_DISTRIBUTIONS=("${!5}")
+    local REPLICAS=("${!6}")
+    local THREAD_NUMBER=("${!7}")
+    local SCHEDULING_INTERVAL=("${!8}")
+    local THROTLLE_DATA_RATE=("${!9}")
+    shift 9
+    local OPERATION_NUMBER=${1}
+    local KV_NUMBER=${2}
+    local SSTABLE_SIZE_IN_MB=${3}
+    local COMPACTION_STRATEGY=("${!4}")
+    local CONSISTENCY_LEVEL=("${!5}")
+    local FIELD_LENGTH=("${!6}")
+
+    # 调用通用函数,指定维度为 Client number
+    analyze_results_by_dimension "ClientNumber" THREAD_NUMBER[@] "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${TARGET_SCHEME}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+}
+
 
 function runExp {
     
@@ -1618,9 +2016,11 @@ function runExp {
                                                 # if [ "${WORKLOAD}" == "workloadd" ]; then
                                                 #     requestDist="latest"
                                                 # fi
-                                                
-
-                                                run ${TARGET_SCHEME} ${requestDist} ${WORKLOAD} ${threadsNum} ${KV_NUMBER} ${opsNum} ${keyLength} ${fieldLength} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HATS}" "${consistency}"
+                                                enableStartProbe="false"
+                                                if [ "${EXP_NAME}" == "Exp5-timescale" ]; then
+                                                    enableStartProbe="true"
+                                                fi
+                                                run ${TARGET_SCHEME} ${requestDist} ${WORKLOAD} ${threadsNum} ${KV_NUMBER} ${opsNum} ${keyLength} ${fieldLength} ${ENABLE_AUTO_COMPACTION} "${ENABLE_COMPACTION_CFS}" "${MEMORY_LIMIT}" "${LOG_LEVEL}" "${ENABLE_HATS}" "${consistency}" "${enableStartProbe}"
 
                                                 # Set the seed nodes as all the nodes, and reload the configuration file
                                                 initConf "false"

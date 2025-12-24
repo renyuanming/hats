@@ -20,16 +20,18 @@ If you want to configure the testbed from scratch, please refer to [./README.md]
 This section describes how to reproduce the evaluations in our paper. To simplify the reproduction process, we provide Ansible-based scripts to run all the experiments. The script will automatically run the experiments and generate the result logs. 
 > **The scripts will take ~45 days to finish all the experiments. We suggest running the scripts of Exp#0 first, which can reproduce the main results of our paper while including most of the functionality verification.**
 
+Note on the experiment scripts:
+> These evaluation scripts require a long time to run. To avoid the interruption of the experiments, we suggest running the scripts in the background with `tmux`, `nohup`, `screen`, etc. In addition, please make sure that all scripts have been given execution permissions.
 
-### Simple experiment (Exp#0: quick verification)
+### Quick verification (Exp#0: quick verification)
 
-#### Exp#0: Simple experiment (1 human-minute + ~10 compute-hours / per-round)
+#### Exp#0: Quick verification (1 human-minute + ~10 compute-hours / per-round)
 
-We provide this simple experiment to verify our main experimental results quickly.
+We provide this quick verification experiment to verify our main experimental results quickly.
 Specifically, we use 100M KV pairs to run the six YCSB core workloads (A-F), issue 50M operations per workload and run 1 round for each workload.
 This experiment will provide the throughput and latency results of HATS and the baselines across the six workloads (Exp#2), latency balance degree across the cluster (Exp#4), the performance breakdown of each system (Exp#6), and the resource usage of each system (Exp#7) in our paper.
 
-Your can run this simple experiment via the following command:
+Your can run this quick verification experiment via the following command:
 
 ```shell
 bash scripts/ae/run_exp_0.sh
@@ -94,6 +96,8 @@ bash scripts/ae/run_exp_1.sh
 
 ### Macrobenchmarks and system-level analysis (Exp#2-8 in our paper)
 #### Exp#2,4,6,7: YCSB synthetic workloads and system-level analysis (3 human-minutes + 10 compute-hours / per-round)
+**NOTE: This script is the same as Exp#0, so you don't need to run this one if you tested Exp#0.**
+
 *Running:*
 ```shell
 bash scripts/ae/run_exp_2_4_6_7.sh

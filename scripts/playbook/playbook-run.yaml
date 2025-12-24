@@ -100,16 +100,17 @@
       pause:
         seconds: 1
 
-# - name: Start probe
-#   hosts: cassandra_servers
-#   become: yes
-#   become_user: ymren
-#   tasks:
-#     - name: Start probe
-#       shell: |
-#         . /etc/profile && cd PATH_TO_SERVER && bin/nodetool startprobe
-#       register: command_result
-#       ignore_errors: true
+- name: Start probe
+  hosts: cassandra_servers
+  become: yes
+  become_user: ymren
+  tasks:
+    - name: Start probe
+      shell: |
+        . /etc/profile && cd PATH_TO_SERVER && bin/nodetool startprobe
+      register: command_result
+      ignore_errors: true
+      when: "ENABLE_START_PROBE" == "true"
 
 - name: Run benchmark and enable compaction
   hosts: cassandra_clients
