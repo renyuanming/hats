@@ -485,6 +485,12 @@ public class CoreWorkload extends Workload {
       int expectednewkeys = (int) ((opcount) * insertproportion * 2.0); // 2 is fudge factor
 
       keychooser = new ScrambledZipfianGenerator(insertstart, insertstart + insertcount + expectednewkeys);
+    } else if (requestdistrib.compareTo("0.9") == 0) {
+      final double insertproportion = Double.parseDouble(
+          p.getProperty(INSERT_PROPORTION_PROPERTY, INSERT_PROPORTION_PROPERTY_DEFAULT));
+      int opcount = Integer.parseInt(p.getProperty(Client.OPERATION_COUNT_PROPERTY));
+      int expectednewkeys = (int) ((opcount) * insertproportion * 2.0); // 2 is fudge factor
+      keychooser = new ScrambledZipfianGenerator(insertstart, insertstart + insertcount + expectednewkeys, 0.9);
     } else if (requestdistrib.compareTo("latest") == 0) {
       keychooser = new SkewedLatestGenerator(transactioninsertkeysequence);
     } else if (requestdistrib.equals("hotspot")) {
