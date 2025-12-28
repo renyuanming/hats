@@ -732,15 +732,16 @@ function latency_balance {
     mkdir -p "${summary_dir}"
     local summary_file="${summary_dir}/latency_balance_${TARGET_SCHEME}.txt"
     
-    # 添加表头
-    printf "%-15s %-15s %-20s\n" "Scheme" "Workload" "Avg CoV" | tee "${summary_file}"
-    printf "%s\n" "------------------------------------------------" | tee -a "${summary_file}"
+    # 添加表头 - 增加标准差列
+    printf "%-15s %-15s %-20s %-20s\n" "Scheme" "Workload" "Avg CoV" "Latency Standard Deviation(us)" | tee "${summary_file}"
+    printf "%s\n" "--------------------------------------------------------------------" | tee -a "${summary_file}"
 
     # 遍历所有workload
     for workload in "${ALL_WORKLOADS[@]}"; do
         
-        # 存储当前workload所有配置的CoV值
+        # 存储当前workload所有配置的CoV值和标准差
         declare -a all_covs=()
+        declare -a all_std_devs=()
         
         # 遍历配置
         for dist in "${REQUEST_DISTRIBUTIONS[@]}"; do
@@ -752,8 +753,9 @@ function latency_balance {
                                 for fieldLength in "${FIELD_LENGTH[@]}"; do
                                     for compaction_strategy in "${COMPACTION_STRATEGY[@]}"; do
                                         
-                                        # 存储所有round的CoV值
+                                        # 存储所有round的CoV值和标准差
                                         declare -a round_covs=()
+                                        declare -a round_std_devs=()
                                         
                                         # 遍历所有rounds
                                         for round in $(seq 1 ${ROUNDS}); do
@@ -771,36 +773,36 @@ function latency_balance {
                                                     
                                                     if [ -f "${breakdown_file}" ]; then
                                                         # 提取coordinator_read_time和count
-                                                        coordinator_read_count=$(grep "Coordinator read count" "${breakdown_file}" | awk '{print $NF}')
+                                                        coordinator_read_count=$(grep "Local read count" "${breakdown_file}" | awk '{print $NF}')
                                                         coordinator_read_time=$(grep "Local read latency" "${breakdown_file}" | awk '{print $NF}')
                                                         
                                                         if [ -n "${coordinator_read_count}" ] && [ -n "${coordinator_read_time}" ] && [ "${coordinator_read_count}" != "0" ]; then
-                                                            # print values for debug
-                                                            # echo "Node: ${node_dir}, Coordinator Read Count: ${coordinator_read_count}, Coordinator Read Time: ${coordinator_read_time}"
-                                                            # 计算平均时间 (微秒)
-                                                            # avg_time=$(echo "scale=2; ${coordinator_read_time} / ${coordinator_read_count}" | bc)
                                                             coordinator_read_times+=("${coordinator_read_time}")
                                                         fi
                                                     fi
                                                 fi
                                             done
                                             
-                                            # 计算当前round的CoV
+                                            # 计算当前round的CoV和标准差
                                             if [ ${#coordinator_read_times[@]} -gt 0 ]; then
                                                 round_cov=$(calculate_cov coordinator_read_times[@])
+                                                round_std=$(calculate_std_dev coordinator_read_times[@])
                                                 round_covs+=("${round_cov}")
+                                                round_std_devs+=("${round_std}")
                                             fi
                                             
                                             unset coordinator_read_times
                                         done
                                         
-                                        # 计算当前配置的平均CoV
+                                        # 计算当前配置的平均CoV和平均标准差
                                         if [ ${#round_covs[@]} -gt 0 ]; then
                                             avg_cov=$(calculate_average round_covs[@])
+                                            avg_std=$(calculate_average round_std_devs[@])
                                             all_covs+=("${avg_cov}")
+                                            all_std_devs+=("${avg_std}")
                                         fi
                                         
-                                        unset round_covs
+                                        unset round_covs round_std_devs
                                     done
                                 done
                             done
@@ -810,19 +812,49 @@ function latency_balance {
             done
         done
         
-        # 计算workload的总体平均CoV
+        # 计算workload的总体平均值
         if [ ${#all_covs[@]} -gt 0 ]; then
             final_cov=$(calculate_average all_covs[@])
+            final_std=$(calculate_average all_std_devs[@])
             
             # 输出到屏幕和文件
-            printf "%-15s %-15s %-20s\n" \
-                "${TARGET_SCHEME}" "${workload}" "${final_cov}" | tee -a "${summary_file}"
+            printf "%-15s %-15s %-20s %-20.2f\n" \
+                "${TARGET_SCHEME}" "${workload}" "${final_cov}" "${final_std}" | tee -a "${summary_file}"
         fi
         
-        unset all_covs
+        unset all_covs all_std_devs
     done
     
     echo ""
+}
+
+# 添加计算标准差的辅助函数
+function calculate_std_dev() {
+    local data=("${!1}")
+    local sum=0
+    local sum_of_squares=0
+    local mean=0
+    local std_dev=0
+
+    # 计算总和
+    for value in "${data[@]}"; do
+        sum=$(echo "${sum} + ${value}" | bc)
+    done
+
+    # 计算平均值
+    mean=$(echo "scale=6; ${sum} / ${#data[@]}" | bc)
+
+    # 计算平方和
+    for value in "${data[@]}"; do
+        diff=$(echo "${value} - ${mean}" | bc)
+        square=$(echo "${diff} * ${diff}" | bc)
+        sum_of_squares=$(echo "${sum_of_squares} + ${square}" | bc)
+    done
+
+    # 计算标准差
+    std_dev=$(echo "scale=2; sqrt(${sum_of_squares} / ${#data[@]})" | bc)
+
+    echo "${std_dev}"
 }
 
 # 复用现有的 calculate_cov 函数

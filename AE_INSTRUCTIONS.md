@@ -5,7 +5,7 @@ Here are the detailed instructions to perform the same experiments in our paper.
 ## Artifact claims
 
 We claim that the results might differ from those in our paper due to various factors (e.g., cluster sizes, hardware specifications, OS, software packages, etc.). 
-**The hardware in the provided testbeds is not identical to that used for the original paper; for example, we replaced some broken nodes and faulty SSDs with healthy ones, so the provided cluster is heterogeneous.** These changes may cause performance to vary from the results originally published. Nevertheless, we expect HATS will continue to outperform its baselines.
+**The hardware in the provided testbeds is not identical to that used for the original paper; for example, we replaced some broken nodes and faulty SSDs with healthy ones, and the provided cluster is heterogeneous.** These changes may cause performance to vary from the results originally published. Nevertheless, we expect HATS will continue to outperform its baselines.
 
 
 ## Testbed setup
@@ -14,57 +14,30 @@ We claim that the results might differ from those in our paper due to various fa
 
 If you want to configure the testbed from scratch, please refer to [./README.md](./README.md).
 
-### Load the datasets (Optional)
+### Load the datasets (Skip this for FAST'26 AE reviewers)
 
-If you really want to load the datasets by yourself, you can use the following commands to load the YCSB and Facebook datasets.
+We already pre-loaded all the datasets. If you really want to load the datasets by yourself, you can use the following commands to load the YCSB and Facebook datasets. **Please modify the script if you want to change the dataset size or other parameters. The default settings for the YCSB benchmarks contain 100M KV pairs for YCSB workloads, 3-way replication, key size of 24 bytes, and value size of 1000 bytes. Refer to the `Parameters` section for more details.**
 
 ```shell
 cd scripts/ae
 bash load_ycsb.sh # for ycsb benchmark
 bash load_fb.sh # for facebook workload
 ```
-Please modify the script if you want to change the dataset size or other parameters. The default settings for the YCSB benchmarks contain 100M KV pairs for YCSB workloads, 3-way replication, key size of 24 bytes, and value size of 1000 bytes. The main parameters are defined in the above scripts, which contains:
-```shell
-SCHEMES=("mlsm" "depart-5.0") # The schemes to be tested. Note that mLSM, HATS, and C3 share the same underlying data loading process, so we only need to load the data once for them.
-CLUSTER_NAMES=("1x") # The cluster names defined in settings.sh, it contains the information of the nodes in the cluster.
-REPLICAS=(3) # Number of replicas
-KV_NUMBER=100000000 # number of KV pairs
-FIELD_LENGTH=(512 1000 2048) # value size in bytes
-KEY_LENGTH=24 # key size in bytes
-REBUILD_SERVER="true" # whether to rebuild the server before loading data
-WAIT_TIME=3600 # wait time (in seconds) after loading data to make sure the LSM-tree are fully compacted
-```
 
 ## Evaluations
 
 This section describes how to reproduce the evaluations in our paper. To simplify the reproduction process, we provide Ansible-based scripts to run all the experiments. The script will automatically run the experiments and generate the result logs. 
-> **The scripts will take ~45 days to finish all the experiments. We suggest running the scripts of Exp#0 first, which can reproduce the main results of our paper while including most of the functionality verification.**
+> **The scripts will take ~45 days to finish the identical experiments as the paper. We set the `ROUNDS` parameter to 1 for all experiments to reduce the overall runtime.**
 
 Note on the experiment scripts:
 - **How to avoid interruptions?** These evaluation scripts require a long time to run. To avoid the interruption of the experiments, we suggest running the scripts in the background with `tmux`, `nohup`, `screen`, etc.
     - We suggest using `tmux` to run the scripts. You can create a new tmux session via `tmux new -s control`, run the script inside the tmux session, and then detach the session via `Ctrl+b d`. You can re-attach the session later via `tmux attach -t control`.
-- **How to modify the experiment settings?** You can modify the experiment settings by changing the parameters in the corresponding script files. The configurable parameters include:
-    - `REBUILD_SERVER`: Whether to rebuild the server before running the experiment.
-    - `SCHEMES`: The schemes to be tested. You can add or remove the schemes in the list.
-    - `CLUSTER_NAMES`: The cluster names defined in `settings.sh`, which contains the information of the nodes in the cluster.
-    - `REPLICAS`: Number of replicas.
-    - `KV_NUMBER`: Number of KV pairs.
-    - `KEY_LENGTH`: Key size in bytes.
-    - `OPERATION_NUMBER`: Number of operations to be issued in each workload.
-    - `ROUNDS`: Number of rounds to run for each workload. The default value is 1. If the value is larger than 1, the script will run multiple rounds and report the average results.
-    - `CONSISTENCY_LEVEL`: Read consistency level. (Exp#9)
-    - `REQUEST_DISTRIBUTIONS`: The key distribution to be used in the experiment. (Exp#10)
-    - `FIELD_LENGTH`: Value size in bytes. (Exp#11)
-    - `THREAD_NUMBER`: Number of client threads in each client machine to be used in the experiment. (Exp#12)
-
 - **Where are the experiment results stored?** The experiment results will be stored in the `~/Results/` directory on the control node. Each experiment will be logged in a separate file named `exp#_summary.txt`, where `#` is the experiment number.
 
 
 ### Quick verification
 
 We suggest the reviewers run Exp#1 and Exp#2 first for a quick verification of our main results. Please see the instructions below.
-
-
 
 ### Microbenchmarks (Exp#1 in our paper)
 
@@ -318,3 +291,21 @@ bash run_exp_11.sh
 cd scripts/ae
 bash run_exp_12.sh
 ```
+
+
+## Parameters
+
+You can modify the experiment settings by changing the parameters in the corresponding script files. The configurable parameters include:
+
+- `REBUILD_SERVER`: Whether to rebuild the server before running the experiment.
+- `SCHEMES`: The schemes to be tested. You can add or remove the schemes in the list.
+- `CLUSTER_NAMES`: The cluster names defined in `settings.sh`, which contains the information of the nodes in the cluster.
+- `REPLICAS`: Number of replicas.
+- `KV_NUMBER`: Number of KV pairs.
+- `KEY_LENGTH`: Key size in bytes.
+- `OPERATION_NUMBER`: Number of operations to be issued in each workload.
+- `ROUNDS`: Number of rounds to run for each workload. The default value is 1. If the value is larger than 1, the script will run multiple rounds and report the average results.
+- `CONSISTENCY_LEVEL`: Read consistency level. (Exp#9)
+- `REQUEST_DISTRIBUTIONS`: The key distribution to be used in the experiment. (Exp#10)
+- `FIELD_LENGTH`: Value size in bytes. (Exp#11)
+- `THREAD_NUMBER`: Number of client threads in each client machine to be used in the experiment. (Exp#12)
