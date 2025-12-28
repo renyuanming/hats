@@ -1,8 +1,8 @@
-# Obtain the results for Exp#2, #4, #5, #6, #7
+# Obtain the results for Exp#5 (Latency distribution at the highest-latency node)
 #!/bin/bash
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp5-timescale"
+EXP_NAME="exp5"
 MIXED_READ_WRITE_WORKLOADS=("workloadb")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
 OPERATION_NUMBER=25000000
@@ -65,7 +65,7 @@ function exportEnv {
 #         done
 #     done
 # done
-# echo "Run Exp#2 took $SECONDS seconds." >> "${ALL_RESULTS}"
+# echo "Run Exp#5 took $SECONDS seconds." >> "${ALL_RESULTS}"
 # combine the pure read workloads and mixed read write workloads
 ALL_WORKLOADS=("${PURE_READ_WORKLOADS[@]}" "${MIXED_READ_WRITE_WORKLOADS[@]}")
 # sort ALL_WORKLOADS
@@ -73,9 +73,16 @@ ALL_WORKLOADS=($(printf "%s\n" "${ALL_WORKLOADS[@]}" | sort -u))
 
 
 
-
-## output the results for exp#5
-echo "##############################################################"
-echo "#  Exp#5 (Latency distribution at the highest-latency node)  #"
-echo "##############################################################"
-# TODO: implement the results analysis for Exp#5
+mkdir -p ~/Results
+echo "" > ~/Results/${EXP_NAME}_summary.txt
+{
+    ## output the results for exp#5
+    echo "##############################################################"
+    echo "#  Exp#5 (Latency distribution at the highest-latency node)  #"
+    echo "##############################################################"
+    # TODO: implement the results analysis for Exp#5
+    for scheme in "${SCHEMES[@]}"; do
+        exportEnv "${scheme}"
+        analyze_timescale_results "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+    done
+} | tee ~/Results/${EXP_NAME}_summary.txt

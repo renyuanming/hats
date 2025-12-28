@@ -2,7 +2,7 @@
 #!/bin/bash
 . /etc/profile
 # Workload Settings
-EXP_NAME="Exp1-effectiveness"
+EXP_NAME="exp1"
 PURE_READ_WORKLOADS=("workloadc")
 MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
@@ -35,7 +35,7 @@ ROUNDS=1
 COMPACTION_LEVEL=("all") # zero one all
 
 # Hats
-SCHEDULING_INITIAL_DELAY=60 # seconds
+SCHEDULING_INITIAL_DELAY=30 # seconds
 SCHEDULING_INTERVAL=(60) # seconds
 STATES_UPDATE_INTERVAL=10 # seconds
 THROTLLE_DATA_RATE=(90) # MB/s
@@ -88,10 +88,14 @@ ALL_WORKLOADS=("${PURE_READ_WORKLOADS[@]}" "${MIXED_READ_WRITE_WORKLOADS[@]}")
 ALL_WORKLOADS=($(printf "%s\n" "${ALL_WORKLOADS[@]}" | sort -u))
 
 
-echo "##############################################################"
-echo "#           Exp#1 (Effectiveness of each technique)          #"
-echo "##############################################################"
-for scheme in "${SCHEMES[@]}"; do
-    exportEnv "${scheme}"
-    analyze_ycsb_results "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
-done
+mkdir -p ~/Results
+echo "" > ~/Results/${EXP_NAME}_summary.txt
+{
+    echo "##############################################################"
+    echo "#           Exp#1 (Effectiveness of each technique)          #"
+    echo "##############################################################"
+    for scheme in "${SCHEMES[@]}"; do
+        exportEnv "${scheme}"
+        analyze_ycsb_results "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+    done
+} | tee ~/Results/${EXP_NAME}_summary.txt

@@ -4,7 +4,7 @@
 # Workload Settings
 EXP_NAME="Exp0-simple"
 PURE_READ_WORKLOADS=("workloadc")
-MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb" "workloadd")
+MIXED_READ_WRITE_WORKLOADS=("workloada" "workloadb" "workloadd" "workloade" "workloadf")
 REQUEST_DISTRIBUTIONS=("zipfian") # zipfian uniform
 OPERATION_NUMBER=25000000
 KV_NUMBER=100000000
@@ -78,51 +78,53 @@ function exportEnv {
 #         done
 #     done
 # done
-# echo "Run Exp#2 took $SECONDS seconds." >> "${ALL_RESULTS}"
+# echo "Run Exp#0 took $SECONDS seconds." >> "${ALL_RESULTS}"
 # combine the pure read workloads and mixed read write workloads
 ALL_WORKLOADS=("${PURE_READ_WORKLOADS[@]}" "${MIXED_READ_WRITE_WORKLOADS[@]}")
 # sort ALL_WORKLOADS
 ALL_WORKLOADS=($(printf "%s\n" "${ALL_WORKLOADS[@]}" | sort -u))
 
+mkdir -p ~/Results
+echo "" > ~/Results/${EXP_NAME}_summary.txt
+{
+    ## Output the results for exp#2
+    echo "##############################################################" 
+    echo "#         Exp#2 (YCSB synthetic workload performance)        #"
+    echo "##############################################################"
+    for scheme in "${SCHEMES[@]}"; do
+        exportEnv "${scheme}"
+        analyze_ycsb_results "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+    done
 
 
-## Output the results for exp#2
-echo "##############################################################" 
-echo "#         Exp#2 (YCSB synthetic workload performance)        #"
-echo "##############################################################"
-for scheme in "${SCHEMES[@]}"; do
-    exportEnv "${scheme}"
-    analyze_ycsb_results "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
-done
+    ## output the results for exp#4
+    echo "#################################################################"
+    echo "#       Exp#4 (Latency balance degree across the cluster)       #"
+    echo "#################################################################"
+    for scheme in "${SCHEMES[@]}"; do
+        exportEnv "${scheme}"
+        latency_balance "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+
+    done
 
 
-## output the results for exp#4
-echo "#################################################################"
-echo "#       Exp#4 (Latency balance degree across the cluster)       #"
-echo "#################################################################"
-for scheme in "${SCHEMES[@]}"; do
-    exportEnv "${scheme}"
-    latency_balance "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
-
-done
-
-
-## output the results for exp#6
-echo "##############################################################"
-echo "#                Exp#6 (Performance breakdown)               #"
-echo "##############################################################"
-for scheme in "${SCHEMES[@]}"; do
-    exportEnv "${scheme}"
-    performance_breakdown "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
-done
+    ## output the results for exp#6
+    echo "##############################################################"
+    echo "#                Exp#6 (Performance breakdown)               #"
+    echo "##############################################################"
+    for scheme in "${SCHEMES[@]}"; do
+        exportEnv "${scheme}"
+        performance_breakdown "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+    done
 
 
 
-## output the results for exp#7
-echo "##############################################################"
-echo "#                    Exp#7 (Resource usage)                  #"
-echo "##############################################################"
-for scheme in "${SCHEMES[@]}"; do
-    exportEnv "${scheme}"
-    resource_usage "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
-done
+    ## output the results for exp#7
+    echo "##############################################################"
+    echo "#                    Exp#7 (Resource usage)                  #"
+    echo "##############################################################"
+    for scheme in "${SCHEMES[@]}"; do
+        exportEnv "${scheme}"
+        resource_usage "${ROUNDS}" ALL_WORKLOADS[@] "${EXP_NAME}" "${scheme}" REQUEST_DISTRIBUTIONS[@] REPLICAS[@] THREAD_NUMBER[@] SCHEDULING_INTERVAL[@] THROTLLE_DATA_RATE[@] "${OPERATION_NUMBER}" "${KV_NUMBER}" "${SSTABLE_SIZE_IN_MB}" COMPACTION_STRATEGY[@] CONSISTENCY_LEVEL[@] FIELD_LENGTH[@]
+    done
+} | tee ~/Results/${EXP_NAME}_summary.txt
